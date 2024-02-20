@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:AvaloniaApplication1.ViewModels"
+             xmlns:control="clr-namespace:AvaloniaApplication1.Control"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+             x:Class="AvaloniaApplication1.Views.MainView"
+             x:DataType="vm:MainViewModel">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE,
+         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+    <vm:MainViewModel />
+  </Design.DataContext>
+  <UserControl.Resources>
+
+  </UserControl.Resources>
+
+  <DockPanel Name="DockPanelMain" LastChildFill="True">
+    <Border  BorderBrush="Black" BorderThickness="1" DockPanel.Dock="Top">
+      <Grid>
+         
+          <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+          <Border BorderBrush="Black" BorderThickness="1" Grid.Row="1">
+         <UniformGrid  Height="35" Columns="3">
+             <control:FileActionControl ></control:FileActionControl>
+           <control:MacroControl></control:MacroControl>
+             <Button   HorizontalAlignment="Right" Height="40" Width="110" Margin="0,0,5,0" Content="Reset" HorizontalContentAlignment="Center"
+                      VerticalAlignment="Center" VerticalContentAlignment="Center" Command="{Binding ResetCommand}"></Button>
+         </UniformGrid>
+
+          </Border>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="2">
+          <Button Content="Job" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"   Width="140" Margin="1,0,1,0" ></Button>
+          <Button Content="Probe"  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"   Width="140" Margin="1,0,1,0" ></Button>
+          <Button Content="SD Card" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+              
+                  Width="140" Margin="1,0,1,0" ></Button>
+          <Button Content="Offset"  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  Width="140" Margin="1,0,1,0" ></Button>
+          <Button Content="Utility" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  Width="140" Margin="1,0,1,0" ></Button>
+          <Button Content="Tools" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                   Width="140" Margin="1,0,1,0" ></Button>
+          <Button Content="Grbl Settings"  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  Width="140" Margin="1,0,1,0"  ></Button>
+          <Button Content="App Settings"  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  Width="140" Margin="1,0,1,0" ></Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Border DockPanel.Dock="Top"></Border>
+  </DockPanel>
+</UserControl>
