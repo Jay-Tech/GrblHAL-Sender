@@ -322,10 +322,11 @@ namespace AvaloniaApplication1.Comms
 #endif
                         if (Reply.Length != 0 && DataReceived != null)
                         {
-                            DataReceived?.Invoke(Reply);
+                            Dispatcher.Invoke(() => DataReceived(Reply));
+                            //DataReceived?.Invoke(Reply);
                         }
-                        // Dispatcher.BeginInvoke(DataReceived, Reply);
-                        //                            Dispatcher.Invoke(addEdge, Reply);
+                        
+                        
 
                         state = Reply == "ok" ? Comms.State.ACK : Reply.StartsWith("error") ? Comms.State.NAK : Comms.State.DataReceived;
                     }

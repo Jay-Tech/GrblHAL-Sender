@@ -45,6 +45,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 using AvaloniaApplication1.Commands;
 using AvaloniaApplication1.Comms;
 using AvaloniaApplication1.GrblCore;
@@ -215,14 +216,20 @@ namespace CNC.Core
         {
             _a = _pn = _fs = _sc = _tool = string.Empty;
             Clear();
-          
+            pollThread = new Thread(Poller.Run);
+            pollThread.Start();
+            var testSerialPort = new SerialStream("COM7:115200,N,8,1,,DTR", 1000, Dispatcher.UIThread);
+            Comms.com.DataReceived += DataReceived;
+            Poller.SetState(400);
             Keyboard = new KeypressHandler(this);
             Keyboard.LoadMappings("KeyMap0");
             MDICommand = new Command(o => ExecuteMDI(o.ToString()));
 
-            pollThread = new Thread(new ThreadStart(Poller.Run));
-            pollThread.Start();
+           
+            
+            //pollThread.Start();
 
+           // Poller.SetState(400);
             _grblState.LastAlarm = 0;
 
             AxisLetter.PropertyChanged += Axisletter_PropertyChanged;
@@ -265,6 +272,7 @@ namespace CNC.Core
             SetDefaults();
             Connected = false;
             SetToolCommand();
+            
         }
 
 

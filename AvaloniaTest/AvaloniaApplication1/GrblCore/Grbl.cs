@@ -2883,7 +2883,7 @@ namespace AvaloniaApplication1.GrblCore
         public void Run()
         {
             pollTimer = new System.Timers.Timer();
-            pollTimer.Elapsed += new System.Timers.ElapsedEventHandler(pollTimer_Elapsed);
+            pollTimer.Elapsed += pollTimer_Elapsed;
             //  this.pollTimer.SynchronizingObject = this;
         }
 
@@ -2904,7 +2904,7 @@ namespace AvaloniaApplication1.GrblCore
                 pollTimer.Stop();
         }
 
-        void pollTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        void pollTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
             if (!suspend)
                 Comms.Comms.com.WriteByte(RTCommand);
