@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GrbLHAL_Sender.ViewModels
+namespace GrbLHAL_Sender.Probe
 {
-    public class ConnectionDialogViewModel
+    public class Probe
     {
     }
 }

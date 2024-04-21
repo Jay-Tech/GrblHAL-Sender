@@ -3,130 +3,288 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:GrbLHAL_Sender.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:ctl="clr-namespace:GrbLHAL_Sender.Views"
+             xmlns:behaviors="clr-namespace:GrbLHAL_Sender.Behaviors"
+             xmlns:convertors="clr-namespace:GrbLHAL_Sender.Convertors"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
              x:Class="GrbLHAL_Sender.Views.MainView"
              x:DataType="vm:MainViewModel">
-  <Design.DataContext>
-    <vm:MainViewModel />
-  </Design.DataContext>
-  <DockPanel Name="MainDockPanel">
-    <Border  Height="35"  BorderBrush="Black" BorderThickness="1" DockPanel.Dock="Top">
-      <Button Margin="3,0,0,0" HorizontalAlignment="Left" HorizontalContentAlignment="Center" Height="30" Width="100" Content="Connect" Command="{Binding ConnectCommand}"></Button>
 
+  <UserControl.Resources>
+    <convertors:AlignmentConvertor x:Key="AlignmentConvertor" />
+  </UserControl.Resources>
+  <DockPanel  Background="Transparent" Name="MainDockPanel" LastChildFill="True">
+    <Border  Height="35" BorderThickness="1" DockPanel.Dock="Top">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="70"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Button Styles="" Grid.Column="0" Margin="3,0,0,0" HorizontalAlignment="Left"
+                HorizontalContentAlignment="Center" Height="30" Width="100" FontSize="18"
+                Content="Connect" Command="{Binding ConnectCommand}"></Button>
+        <Label Grid.Column="1" FontSize="22" Margin="10,0,0,0" Content="{Binding State.GrblHALState}" ></Label>
+        <Button Grid.Column="2" Height="30" Content="{Binding State.SubState,StringFormat={}Alarm {0}}" FontSize="18"
+                VerticalAlignment="Center" HorizontalAlignment="Right"
+                Command="{Binding ClearAlarmCommand}" Margin="2,0" Background ="Red" IsVisible="{Binding AlarmActive}"
+                Width="100"></Button>
+        <Button Grid.Column="3" Height="30" Content="UnLock" FontSize="18" Margin="2,0" VerticalAlignment="Center" HorizontalAlignment="Right"
+                Command="{Binding UnLockCommand}" Width="100"></Button>
+      </Grid>
     </Border>
-    <Border Height="35"  BorderBrush="Black" BorderThickness="1" DockPanel.Dock="Top">
+
+    <!--  Menu Selection  Header-->
+    <!--<Border Height="35"   BorderThickness="1" DockPanel.Dock="Top">
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-        <Button Content="Job" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"   Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="Probe" IsEnabled="{Binding IsJobRunning}" IsVisible="{Binding  Path= HasProbing}" HorizontalContentAlignment="Center"
+        <Button Content="Job" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"   Width="140"
+                Margin="1,0,1,0" ></Button>
+        <Button Content="Probe" IsEnabled="{Binding IsJobRunning}" IsVisible="{Binding  Path= HasProbing}"
+                HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"   Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="SD Card" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"  IsVisible="{Binding  Path= HasSdCard}"
+        <Button Content="SD Card" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                IsVisible="{Binding  Path= HasSdCard}"
                 IsEnabled="{Binding IsJobRunning}"
                 Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="Offset" IsEnabled="{Binding IsJobRunning,  Converter={x:Static BoolConverters.Not}}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+        <Button Content="Offset" IsEnabled="{Binding IsJobRunning,  Converter={x:Static BoolConverters.Not}}"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                 Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="Utility" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+        <Button Content="Utility" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                 Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="Tools" IsEnabled="{Binding IsJobRunning}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+        <Button Content="Tools" IsEnabled="{Binding IsJobRunning}" HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
                 IsVisible="{Binding  Path= HasATC }" Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="Grbl Settings" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+        <Button Content="GrblHALSettings" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                 Width="140" Margin="1,0,1,0"  ></Button>
-        <Button Content="App Settings" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+        <Button Content="App Settings" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                 Width="140" Margin="1,0,1,0" ></Button>
       </StackPanel>
-    </Border>
+    </Border>-->
 
-    <Border Name="MainControlBorder" Margin="1,5,0,0" VerticalAlignment="Stretch"   BorderBrush="Black" BorderThickness="1" DockPanel.Dock="Left">
-      <ItemsControl ItemsSource="{Binding AxisCollection}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <StackPanel  HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Orientation="Horizontal">
-              <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" Margin="2,0,2,0"></TextBlock>
-              <TextBox  Focusable="False" Text="{Binding    Path=Position,StringFormat=N4}"   FontSize="32" MinWidth="150" Height="50"
-                       VerticalContentAlignment="Center"      TextAlignment="DetectFromContent"  IsReadOnly="True" HorizontalContentAlignment="Center" HorizontalAlignment ="Center" VerticalAlignment="Center"></TextBox>
-              <Button Name ="{Binding Name}"  Content="{Binding Name, StringFormat={}{0}0}"  FontSize="24"  Height="50" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
-                      VerticalContentAlignment="Center" Margin="2" Width="55" 
-                          Command="{Binding ZeroWcsCommand}" CommandParameter="{Binding Name}"></Button>
-            </StackPanel>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-    </Border>
-     
-      <Border DockPanel.Dock="Bottom"></Border>
-      <Border DockPanel.Dock="Right"></Border>
-      <Border DockPanel.Dock="Right"></Border>
-  </DockPanel>
-   
-</UserControl>
-
-
-<!--<StackPanel Name="MainStackPanel"  Orientation="Horizontal" Margin="0,0,0,0" >
-      <StackPanel Orientation="Vertical" Width="300" DockPanel.Dock="Left" IsEnabled="{Binding Connected}">
-        <StackPanel  HorizontalAlignment="Stretch" Height="Auto"  VerticalAlignment="Stretch" Orientation="Horizontal">
-          <TextBlock Text="X" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" Margin="2,0,2,0"></TextBlock>
-          <TextBox Text="{Binding  PosX,StringFormat={}{0.000}}" FontSize="25" MinWidth="150" Width="Auto" Height="50" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                       HorizontalAlignment ="Center" VerticalAlignment="Center" IsReadOnly="True" ></TextBox>
-          <Button Name ="X" Content="X0" FontSize="20"  HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,9,0,4" Width="55" Height="Auto"
-                      Command="{Binding ZeroWcsCommand}" CommandParameter="{Binding Name, ElementName= X}"></Button>
-        </StackPanel>-->
-<!--<Button Content="Zero All" Margin="2,10,0,2"></Button>
-        <Button  Margin="2,10,0,2" Height="50" Command="{Binding HomeCommand}" >
-          <StackPanel>
-            <TextBlock Text="Home" HorizontalAlignment="Center " Margin="5,0,0,0"></TextBlock>
-            <Label Name="HomingState" HorizontalAlignment="Stretch" Width="100" Height="10" Background="{Binding HomeStateColor}"></Label>
-          </StackPanel>
-        </Button>
-
-      </StackPanel>
-    </StackPanel>-->
-<!--</Border>-->
-<!--<controls:MDIControl  x:Name="MdiControl" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="415" Height="Auto" Margin="5,3,0,5"/>
-      <controls:DROControl x:Name="DRO" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="3,3,0,5"  VerticalContentAlignment="Stretch"/>
-      <controls:WorkParametersControlTouch x:Name="workParametersControl"  Margin="3,3,0,5"
-                                           Height="Auto"  VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
-
-      <controls:FeedControl  x:Name="feedControl"  HorizontalAlignment="Center" VerticalAlignment="Stretch"  Margin="3,3,0,5" Width="260" Height="Auto" />
-      <local:JogControlT x:Name="jogControl" Margin="3,3,0,5" Height="Auto" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" />
-      <controls:SpindleControl x:Name="spindleControl" HorizontalAlignment="Stretch" Margin="3,3,3,5" Width="262"  VerticalAlignment="Stretch"/>-->
-
-
-
-<!--<Grid DockPanel.Dock="Left" Width="440">
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="29*"/>
-      <ColumnDefinition Width="81*"/>
-    </Grid.ColumnDefinitions>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="30"></RowDefinition>
-      <RowDefinition Height="*"></RowDefinition>
-    </Grid.RowDefinitions>
-    <StackPanel Grid.Row="0" VerticalAlignment ="Top" Height="35" Grid.ColumnSpan="2" Grid.RowSpan="2" >
-      <Button  Name="btnShowConsole" Content="Console"   IsVisible="{Binding Path=IsFileLoaded}"></Button>
-    </StackPanel>
-    -->
-<!--<controls:ConsoleControl Grid.Row="1" Name="ConsoleControl" Margin="2,5,0,0" Grid.ColumnSpan="2" />
-    <controls:GCodeListControl Grid.Row="1" Name ="CodeListControl" Margin="2,5,0,0" Visibility="{Binding Path=IsFileLoaded, Converter= {StaticResource IsVisibleConverter}}" Grid.ColumnSpan="2"/>-->
-<!--
-    -->
-<!--<controls:MDIControl Grid.Row="2" x:Name="MdiControl" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="Auto" Height="Auto" Margin="5,3,0,5"/>-->
-<!--
-  </Grid>-->
-
-<!--<Border Name="RightMenuBorder" BorderBrush="Black" BorderThickness="1" Width="250" DockPanel.Dock="Right">
-      <Grid Name ="RightStackPanel">
+    <!-- DataTemplate Axis Control-->
+    <Border  Name="MainControlBorder" Margin="1,40,0,0" VerticalAlignment="Stretch"  BorderThickness="1" DockPanel.Dock="Left">
+      <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"></RowDefinition>
           <RowDefinition Height="Auto"></RowDefinition>
-          <RowDefinition Height="*" ></RowDefinition>
+          <RowDefinition Height="Auto"></RowDefinition>
+          <RowDefinition Height="Auto"></RowDefinition>
+          <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
-        -->
-<!--<controls:JobControl x:Name="GCodeSender" Margin="3,3,0,5" Width="244" VerticalAlignment="Top"/>
-      <controls:CoolantControl Grid.Row="1" x:Name="coolantControl" Margin="3,3,3,3"   VerticalAlignment="Top" Height="Auto" Width="Auto"/>
-      <local:UtilityMacroControl Grid.Row="2" Margin="3,3,3,3" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch"></local:UtilityMacroControl>-->
-<!--
+        <Button FontSize="20" Grid.Row="0" Height="45" Content="Home All" HorizontalAlignment="Stretch" Command="{Binding HomeCommand}"></Button>
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding AxisCollection}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <StackPanel  HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Orientation="Horizontal">
+                <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="35" Margin="2,0,2,0"></TextBlock>
+                <Border BorderThickness="1" >
+                  <StackPanel>
+                    <Label  Focusable="False" Content="{Binding Path=Position.Wco,StringFormat=N4}"   FontSize="32" MinWidth="175" Height="50"
+                            VerticalContentAlignment="Center"    HorizontalContentAlignment="Left" HorizontalAlignment ="Center" VerticalAlignment="Center"></Label>
+                    <Label  Focusable="False" Content="{Binding Path=Position.MPos,StringFormat=N4}"   FontSize="16" MinWidth="175" Height="25"
+                            VerticalContentAlignment="Center" HorizontalContentAlignment="Left" HorizontalAlignment ="Center" VerticalAlignment="Center"></Label>
+                  </StackPanel>
+                </Border>
+                <Button  Name ="{Binding Name}"  Content="{Binding Name, StringFormat={}{0}0}"  FontSize="20"  Height="60" HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center" Margin="2" Width="55" Focusable="False"
+                        Command="{Binding ZeroWcsCommand}" CommandParameter="{Binding Name}"></Button>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Grid.Row="2" FontSize="20"  Content="Zero All" Height="45" HorizontalAlignment="Stretch" Command="{Binding ZeroAllCommand}" ></Button>
+        <!--WCS-->
+        <StackPanel Grid.Row="3" Margin="0,2">
+          <Label  Content="WCS" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
+          <Button Height="40" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  FontSize="20" Margin="0,1" Content="G54"
+                  Command="{Binding WcsCommand}" CommandParameter="G54"></Button>
+          <Button Height="40" FontSize="20" Margin="0,1" Content="G55"
+                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  Command="{Binding WcsCommand}" CommandParameter="G55"></Button>
+          <Button Height="40" FontSize="20" Margin="0,1" Content="G56"
+                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  Command="{Binding WcsCommand}" CommandParameter="G56"></Button>
+          <Button Height="40" FontSize="20" Margin="0,1" Content="G57"
+                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  Command="{Binding WcsCommand}" CommandParameter="G57"></Button>
+          <Button></Button>
+        </StackPanel>
+        <!--MDI-->
+        <StackPanel Grid.Row="4">
+          <Label  Content="MDI" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
+            <TextBox x:Name="MdiTb" Height="45" FontSize="20"></TextBox>
+          <Button Height="40" FontSize="20" Content="Send" Command="{Binding MdiTextCommand}"
+                  CommandParameter="{Binding #MdiTb.Text}"></Button>
+        </StackPanel>
       </Grid>
     </Border>
-    <Border  BorderBrush="Black" BorderThickness="1"  DockPanel.Dock="Right">
-      <ContentControl Name="CenterView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></ContentControl>-->
 
+    <!-- Jog Control-->
+    <Border DockPanel.Dock="Right">
+
+      <Grid Margin="0,40,5,0"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="*">
+          </RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid Margin="0,0,0,25" Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="0"
+              HorizontalAlignment="Stretch"  ColumnDefinitions="auto,*,*,*" >
+
+          <Label Grid.Column="0" FontSize="20" Content="Feed" HorizontalContentAlignment="Center"
+                 HorizontalAlignment="Stretch" VerticalAlignment="Center"> </Label>
+          <Button Grid.Column="1" Height="45" Margin="0,0" Content="Rapid" HorizontalAlignment="Stretch" FontSize="20" ></Button>
+          <Button Grid.Column="2" Height="45" Margin="0,0" Content="Fast"  HorizontalAlignment="Stretch" FontSize="20"></Button>
+          <Button Grid.Column="3" Height="45" Margin="0,0" Content="Slow"  HorizontalAlignment="Stretch" FontSize="20"></Button>
+        </Grid>
+        <Button Grid.Row="2" CornerRadius="10" Name="XDown" Height="65" Width="65"
+                Grid.Column="0"
+                Margin="4"
+                Command="{Binding JogXDownCommand}"
+                CommandParameter="X" Foreground="DodgerBlue"
+                Content="{icons:MaterialIconExt ArrowLeftBoldBoxOutline, Size=90}" />
+        <Button Grid.Row="1" Name="YUp"   Height="65" Width="65"
+                Grid.Column="1"
+                Margin="4"
+                Command="{Binding JogYUpCommand }"
+                CommandParameter="Y" CornerRadius="10" Foreground="DodgerBlue"
+                Content="{icons:MaterialIconExt ArrowUpBoldBoxOutline, Size=90}"/>
+        <Button Grid.Row="2" Name="Xup" Height="65" Width="65"
+                Grid.Column="2"
+                Margin="4"
+                Command="{Binding JogXUpCommand}"
+                CommandParameter= "X" CornerRadius="10" Foreground="DodgerBlue"
+                Content="{icons:MaterialIconExt ArrowRightBoldBoxOutline, Size=90}" />
+        <Button Grid.Row="3" Name="YDown" CornerRadius="10" Height="65" Width="65"
+                Grid.Column="1" Foreground="DodgerBlue"
+                Margin="4"
+                Command="{Binding JogYDownCommand}"
+                CommandParameter="Y"
+                Content="{icons:MaterialIconExt ArrowDownBoldBoxOutline, Size=90}" />
+        <Button CornerRadius="20,20,20,20" Grid.Row="2" Name="StopAll"
+                Height="65" Width="65" Grid.Column="1"
+                Margin="4" Content="{icons:MaterialIconExt ArrowAll, Size=30}"/>
+        <Button Grid.Row="1" Name="ZUp" CornerRadius="10" Height="65" Width="65"
+                Grid.Column="3"
+                Margin="4"
+                Command="{Binding JogZUpCommand}"
+                CommandParameter="Z" Foreground="DodgerBlue"
+                Content="{icons:MaterialIconExt ArrowUpBoldBoxOutline, Size=90}"/>
+        <Button Grid.Row="3" CornerRadius="10" Name="ZDown"  Height="65" Width="65"
+                Grid.Column="3"
+                Margin="5,4,4,4"
+                Command="{Binding JogZDownCommand }"
+                CommandParameter="Z" Foreground="DodgerBlue"
+                Content="{icons:MaterialIconExt ArrowDownBoldBoxOutline,  Size=90}"/>
+        <Grid Margin="0,25,0,25" Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="4"
+              HorizontalAlignment="Stretch"  ColumnDefinitions="auto,*,*,*" >
+          <Label Grid.Column="0" FontSize="20" Content="Step" HorizontalContentAlignment="Center"
+                 HorizontalAlignment="Stretch" VerticalAlignment="Center"> </Label>
+          <Button Grid.Column="1" Height="45" Margin="0,0" Content="Rapid" HorizontalAlignment="Stretch"
+                  FontSize="20" ></Button>
+          <Button Grid.Column="2" Height="45" Margin="0,0" Content="Fast"  HorizontalAlignment="Stretch"
+                  FontSize="20"></Button>
+          <Button Grid.Column="3" Height="45" Margin="0,0" Content="Slow"  HorizontalAlignment="Stretch"
+                  FontSize="20"></Button>
+        </Grid>
+      </Grid>
+    </Border>
+
+    <!-- Bottom ContentControl Host -->
+    <Border DockPanel.Dock="Bottom" Height="2" Margin="1">
+    </Border>
+
+    <!-- Center ContentControl Host -->
+    <Border  DockPanel.Dock="Right" BorderBrush="DarkGray">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"></ColumnDefinition>
+          <ColumnDefinition Width="auto"></ColumnDefinition>
+          <ColumnDefinition Width="Auto"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <TabControl Grid.Column="0" Grid.ColumnSpan="2" >
+          <TabItem Header="Home">
+            <Canvas Background="White" HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Margin="1,1,1,2" >
+            </Canvas>
+          </TabItem>
+          <TabItem Header="GrblHAL Settings">
+            <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"
+                             VerticalAlignment="Stretch"></ctl:SettingView>
+          </TabItem>
+        </TabControl>
+        <Grid x:Name="PopOutGrid"
+            Grid.Row="0" Grid.Column="0" MinWidth="50" MinHeight="200"  Margin="0,45,0,0"
+            Background="Transparent" HorizontalAlignment="Left"
+            behaviors:DoubleTappedBehav.Command="{Binding DoubleTapCommand}"
+            behaviors:DoubleTappedBehav.CommandParameter="{Binding #LB.IsVisible}">
+          <Grid.VerticalAlignment>
+            <MultiBinding  Converter="{StaticResource AlignmentConvertor}" ConverterParameter="{Binding #LB.IsVisible}">
+              <Binding Path="IsVisible" ElementName="LB"  ></Binding>
+
+            </MultiBinding>
+          </Grid.VerticalAlignment>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+          </Grid.RowDefinitions>
+          <ListBox Grid.Row="0" x:Name="LB" Width="400" ItemsSource="{Binding ConsoleOutput}"
+                   VerticalAlignment="Stretch"
+                   HorizontalAlignment="Stretch"
+                   Background="{StaticResource DarkReduceBrushAlpha }"
+                   Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                   IsVisible="{Binding ShowConsole}"
+                   FontSize="18"   >
+            <Interaction.Behaviors>
+              <behaviors:ScrollToEndBehavior />
+            </Interaction.Behaviors>
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Foreground="DeepSkyBlue" Text="{Binding}" FontSize="16"
+                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  />
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <Grid Grid.Row="1"
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Stretch"
+                     IsVisible="{Binding ShowConsole}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition></ColumnDefinition>
+              <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"  Height="40" Command="{Binding ClearConsoleCommand}"  Content="Clear" DockPanel.Dock="Top"
+                     VerticalAlignment="Stretch"
+                     HorizontalAlignment="Stretch"
+                     FontSize="20"></Button>
+            <Button Grid.Column="1"  Height="40" Command="{Binding ToggleRTCommand}"
+                    Content="Toggle Rt" DockPanel.Dock="Bottom"
+                     VerticalAlignment="Stretch"
+                     HorizontalAlignment="Stretch"
+                     FontSize="20"></Button>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Border>
+  </DockPanel>
+</UserControl>
 
