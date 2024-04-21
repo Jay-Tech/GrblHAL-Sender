@@ -1,10 +1,44 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="GrbLHAL_Sender.App"
-             RequestedThemeVariant="Dark">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Dark"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             >
+  <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+  <Application.Resources>
+    <SolidColorBrush Color="#99111111" x:Key="TheKeyToOverride" />
+    <SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#99111111"> </SolidColorBrush>
+    
+    <Color x:Key="DarkReduceColorAlpha">#99111111</Color>
+    <Color x:Key="BlackPrimaryBackGround">#EF111111</Color>
+    <Color x:Key="DarkBoarder">#FF111111</Color>
 
-    <Application.Styles>
-      <SimpleTheme  />
-    </Application.Styles>
+  </Application.Resources>
+  <Application.Styles>
+    <!--<Style Selector="TextBox.h1">
+      <Setter Property="FontSize" Value="20"/>
+      <Setter Property="Background" Value="White"/>
+    </Style>
+      <Style Selector="TextBlock.h1">
+          <Setter Property="FontSize" Value="20"/>
+          <Setter Property="Background" Value="White"/>
+          <Setter Property="Foreground" Value="Blue"/>
+      </Style>-->
+    <materialIcons:MaterialIconStyles />
+
+    <!--<FluentTheme DensityStyle="Normal">
+      <FluentTheme.Palettes>
+        -->
+    <!--Palette for Light theme variant-->
+    <!--
+        <ColorPaletteResources x:Key="Light" Accent="Green" RegionColor="WhiteSmoke" ErrorText="Red" />
+        -->
+    <!--Palette for Dark theme variant-->
+    <!--
+        <ColorPaletteResources x:Key="Dark"   Accent="DodgerBlue" RegionColor="{StaticResource DarkBoarder}"  ErrorText="Yellow" />
+      </FluentTheme.Palettes>
+    </FluentTheme >-->
+
+    <SimpleTheme />
+  </Application.Styles>
 </Application>

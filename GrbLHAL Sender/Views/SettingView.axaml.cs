@@ -1,10 +1,12 @@
 using Avalonia.Controls;
 
+
+
 namespace GrbLHAL_Sender.Views
 {
-    public partial class ConnectionDialog : Window
+    public partial class SettingView : UserControl
     {
-        public ConnectionDialog()
+        public SettingView()
         {
             InitializeComponent();
         }
