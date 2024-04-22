@@ -63,7 +63,7 @@ namespace GrbLHAL_Sender.Communication
 
         public void SendCommand(string command)
         {
-            Adapter.WriteCommand(command);
+            Adapter?.WriteCommand(command);
         }
         public void GetSettings()
         {
@@ -71,12 +71,12 @@ namespace GrbLHAL_Sender.Communication
             {
                 PendingMessage = PendingMessageSet.Options;
                 Adapter.WriteCommand("$I+");
-                await Task.Delay(500);
+                await Task.Delay(400);
                 Adapter.WriteCommand("$ES");
-                await Task.Delay(500);
+                await Task.Delay(400);
                 PendingMessage = PendingMessageSet.Setting;
                 Adapter.WriteCommand("$+");
-                await Task.Delay(500);
+                await Task.Delay(400);
                 SetupPoll(250);
             });
         }
@@ -259,7 +259,7 @@ namespace GrbLHAL_Sender.Communication
         {
             currentState = currentState[0].Split(':');
         }
-        rtState.GrblHALState = currentState[0];
+        rtState.GrblHalState = currentState[0];
         if (currentState.Length > 1)
         {
             rtState.SubState = currentState[1];
@@ -288,7 +288,7 @@ namespace GrbLHAL_Sender.Communication
                     case "Pn":
                         break;
                     case "WCO":
-                        rtState.WCO = value.Split(",");
+                        rtState.Wco = value.Split(",");
                         break;
                     case "A":
                         break;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
@@ -17,7 +18,6 @@ namespace GrbLHAL_Sender.Convertors
     public class StringToBool : IValueConverter
     {
         public static readonly StringToBool Instance = new();
-
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is GrblHalSetting source)
@@ -35,28 +35,42 @@ namespace GrbLHAL_Sender.Convertors
             }
             return new BindingNotification(new InvalidCastException(), BindingErrorType.Error);
         }
-
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotSupportedException();
         }
     }
 
-    public class StringToRadioButton : IValueConverter
+
+    public class IndexToBool : IValueConverter
     {
-        public static readonly StringToBool Instance = new();
+        private int index = 0;
+        public static readonly IndexToBool Instance = new();
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is GrblHalSetting s)
+
+
+
+
+            return new BindingNotification(new InvalidCastException(), BindingErrorType.Error);
+        }
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+    public class StringToRadioButton : IValueConverter
+    {
+        public static readonly StringToRadioButton Instance = new();
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is GrblHalSetting { SettingValue: not null } s)
             {
-                if (s.SettingValue != null)
+                var d = int.Parse(s.SettingValue);
+                if (parameter?.ToString() != null)
                 {
-                    var d = int.Parse(s.SettingValue);
-                    if (parameter?.ToString() != null)
-                    {
-                        var v = int.Parse(parameter.ToString());
-                        return d == v;
-                    }
+                    var v = int.Parse(parameter.ToString() ?? string.Empty);
+                    return d == v;
                 }
             }
             return new BindingNotification(new InvalidCastException(), BindingErrorType.Error);
@@ -67,10 +81,9 @@ namespace GrbLHAL_Sender.Convertors
             throw new NotSupportedException();
         }
     }
-
     public class StringToBitMask : IValueConverter
     {
-        public static readonly StringToBool Instance = new();
+        public static readonly StringToBitMask Instance = new();
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is GrblHalSetting s)
@@ -112,10 +125,6 @@ namespace GrbLHAL_Sender.Convertors
         {
             throw new NotSupportedException();
         }
-
-        
     }
-
-
 }
 

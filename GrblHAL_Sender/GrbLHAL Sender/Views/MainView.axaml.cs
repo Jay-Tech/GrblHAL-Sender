@@ -10,4 +10,9 @@ public partial class MainView : UserControl
         InitializeComponent();
     }
 
+    private void ToolLb_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        
+        SplitB.Flyout?.Hide();
+    }
 }
