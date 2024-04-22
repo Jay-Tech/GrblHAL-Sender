@@ -2,40 +2,46 @@
 using Avalonia.Threading;
 using DynamicData.Kernel;
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Ports;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using Avalonia.Animation;
 
 namespace GrbLHAL_Sender.Communication
 {
     public class Serial : ICommsAdapter
     {
-       
+
         public event EventHandler<string>? OnDataReceived;
-        private  SerialSettings _serialSettings;
+        private SerialSettings _serialSettings;
         private SerialPort _serialPort;
-      
+        private ConcurrentQueue<byte[]> _sendQue = new();
+        private char[] Split = new[]
+        {
+            '\r',
+            '\n'
+        };
 
-        public Serial(SerialSettings serialSettings, SerialPort serialPort)
+        private static readonly object _sncLock = new();
+        public Serial(string connection, SerialSettings serialSettings = null!)
         {
-            _serialSettings = serialSettings;
-            this._serialPort = serialPort;
-        }
-        public Serial(string connection)
-        {
-             TryConnect(connection);
+            TryConnect(connection, serialSettings);
         }
 
-        private bool TryConnect(string portName)
+        private bool TryConnect(string portName, SerialSettings serialSettings = null)
         {
-            _serialSettings = new SerialSettings(portName);
-           return TryConnect(_serialSettings);
+            if (serialSettings == null)
+            {
+                _serialSettings = new SerialSettings(portName);
+            }
+
+            return TryConnect(_serialSettings);
         }
         public bool TryConnect(SerialSettings settings)
         {
-            _serialSettings = settings;
             _serialPort = new SerialPort
             {
                 BaudRate = _serialSettings.BaudRate,
@@ -91,6 +97,8 @@ namespace GrbLHAL_Sender.Communication
 
         public void WriteCommand(string command)
         {
+            //lock (_sncLock)
+            //{
             if (!_serialPort.IsOpen) return;
             if (command.Length == 1)
                 WriteByte((byte)command.ToCharArray()[0]);
@@ -101,47 +109,30 @@ namespace GrbLHAL_Sender.Communication
                 if (_serialPort.IsOpen)
                     _serialPort.BaseStream.Write(bytes, 0, bytes.Length);
             }
+            //}
         }
 
-        private  char[] Split = new []
+        private void SendQue(byte[] command)
         {
-            '\r',
-            '\n'
-        };
+            _sendQue.Enqueue(command);
+        }
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            var inputStream = _serialPort.ReadExisting().AsSpan();
-            while (inputStream.Length > 0)
+            lock (_sncLock)
             {
-                var indexSlice = inputStream.IndexOfAny('\r', '\n');
-                if (indexSlice < 0) return;
-                var data = inputStream[..indexSlice];
-                if (data.Length != 0)
+                var inputStream = _serialPort.ReadExisting().AsSpan();
+                while (inputStream.Length > 0)
                 {
-                    OnDataReceived?.Invoke(this, data.ToString() ?? string.Empty);
+                    var indexSlice = inputStream.IndexOfAny('\r', '\n');
+                    if (indexSlice < 0) return;
+                    var data = inputStream[..indexSlice];
+                    if (data.Length != 0)
+                    {
+                        OnDataReceived?.Invoke(this, data.ToString() ?? string.Empty);
+                    }
+                    inputStream = inputStream.Slice(indexSlice).Trim(Split);
                 }
-                inputStream = inputStream.Slice(indexSlice).Trim(Split);
-                //Debug.WriteLine( data.ToString() );
-                //Debug.WriteLine("************************"+ inputStream.Length +"********************");
             }
         }
-
-        //private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        //{
-        //    var inputStream = _serialPort.ReadExisting();
-        //    while (inputStream.Length >0)
-        //    {
-        //        var index= inputStream.IndexOfAny(Split);
-        //        if(index == -1)continue;
-        //        var data = inputStream.Substring(0, index);
-        //        inputStream = inputStream.Remove(0,index + 1);
-
-        //        if (data.Length != 0)
-        //        {
-        //            OnDataReceived?.Invoke(this,  data.ToString() ?? string.Empty);
-        //        }
-        //    }
-        //}
-
     }
 }

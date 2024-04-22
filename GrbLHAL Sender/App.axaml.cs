@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using GrbLHAL_Sender.Communication;
+using GrbLHAL_Sender.Configuration;
 using GrbLHAL_Sender.ViewModels;
 using GrbLHAL_Sender.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,10 +49,10 @@ public static class ServiceCollectionExtensions
 {
     public static void AddCommonServices(this IServiceCollection collection)
     {
+        collection.AddSingleton<ConfigManager>();
         collection.AddSingleton<CommunicationManager>();
         collection.AddTransient<SettingsViewModel>();
         collection.AddTransient<MainViewModel>();
-
     }
 
 }
