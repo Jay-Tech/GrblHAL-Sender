@@ -18,7 +18,9 @@ using Avalonia.Threading;
 using DynamicData;
 using GrbLHAL_Sender.Settings;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using GrbLHAL_Sender.Configuration;
+using Microsoft.CodeAnalysis;
 
 namespace GrbLHAL_Sender.ViewModels;
 
@@ -32,7 +34,8 @@ public class MainViewModel : ViewModelBase
     private readonly ConfigManager _configManager;
     private ObservableCollection<Axis> _axis;
     private ObservableCollection<string> _consoleOutput = new();
-    private ObservableCollection<int> _toolList = new ();
+    private ObservableCollection<int> _toolList = new();
+    private ObservableCollection<Signal> _signalList = [];
     private RealTImeState _state;
     private bool _showConsole;
     private bool _isJobRunning;
@@ -58,7 +61,6 @@ public class MainViewModel : ViewModelBase
     private bool _connected;
     private Color _homeStateColor;
     private SettingsViewModel _settingsViewModel1;
-    private List<char> _signalList;
     private bool _alarmActive;
     private bool _needsSetup;
     private readonly GHalSenderConfig _config;
@@ -96,16 +98,17 @@ public class MainViewModel : ViewModelBase
         get => _unitSystem;
         set => _unitSystem = value;
     }
-    public bool Connected
-    {
-        get => _connected;
-        set => _connected = value;
-    }
     public Color HomeStateColor
     {
         get => _homeStateColor;
         set => _homeStateColor = value;
     }
+    public bool Connected
+    {
+        get => _connected;
+        set => this.RaiseAndSetIfChanged(ref _connected, value);
+    }
+
     public bool HideToolChangeList
     {
         get => _hideToolChangeList;
@@ -126,7 +129,7 @@ public class MainViewModel : ViewModelBase
         get => _selectedTool;
         set => this.RaiseAndSetIfChanged(ref _selectedTool, value);
     }
-  
+
     public RealTImeState State
     {
         get => _state;
@@ -212,10 +215,10 @@ public class MainViewModel : ViewModelBase
         get => _hideBoxCommand;
         set => _hideBoxCommand = value;
     }
-    public List<char> SignalList
+    public ObservableCollection<Signal> SignalList
     {
         get => _signalList;
-        set => _signalList = value;
+        set => this.RaiseAndSetIfChanged(ref _signalList, value);
     }
     public ObservableCollection<Axis> AxisCollection
     {
@@ -239,13 +242,13 @@ public class MainViewModel : ViewModelBase
         _needsSetup = true;
         _commManager = commManager;
         _configManager = configManager;
-         _config = _configManager.LoadConfig();
+        _config = _configManager.LoadConfig();
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
         _commManager.OnStateReceived += _commManager_OnStateReceived;
         _commManager.onOptionsUpdated += _commManager_onOptionsUpdated;
         _commManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
-        
+
         ConnectCommand = ReactiveCommand.Create(Connect);
         ZeroAxis = ReactiveCommand.Create<string>(Zero);
         HomeCommand = ReactiveCommand.Create(Home);
@@ -258,7 +261,7 @@ public class MainViewModel : ViewModelBase
         JogYDownCommand = ReactiveCommand.Create<string>(JogYDown);
         ZeroAllCommand = ReactiveCommand.Create(ZeroAll);
         ClearAlarmCommand = ReactiveCommand.Create(ClearAlarm);
-       
+
         ClearConsoleCommand = ReactiveCommand.Create(ClearConsole);
         ToggleRTCommand = ReactiveCommand.Create(ToggleConsoleRt);
         MdiTextCommand = ReactiveCommand.Create<string>(MDIText);
@@ -307,22 +310,18 @@ public class MainViewModel : ViewModelBase
     {
         HideToolChangeList = !Convert.ToBoolean(obj);
     }
-  
+
     private void ToolSelected(int tool)
     {
-        var command = _isJobRunning  ? $"T{tool}M6" : $"M61Q{tool}";
+        var command = _isJobRunning ? $"T{tool}M6" : $"M61Q{tool}";
         SendCommand(command);
     }
     private void SetUpUiSettings()
     {
         UnitSystem = _config.UseMetric ? "G21" : "G20";
         AutoConnect = _config.AutoConnect;
-        List<int> toolNumber = new List<int>();
-        foreach (var tool in _config.ToolList.Tools)
-        {
-            toolNumber.Add(tool.ToolNumber);
-        }
-        ToolList.AddRange<int>(toolNumber); 
+        var toolNumber = _config.ToolList.Tools.Select(tool => tool.ToolNumber).ToList();
+        ToolList.AddRange<int>(toolNumber);
     }
 
     private void Wcs(string command)
@@ -391,6 +390,7 @@ public class MainViewModel : ViewModelBase
     }
     private void _commManager_OnStateReceived(object? sender, RealTImeState e)
     {
+        Connected = true;
         for (int i = 0; i < e.MPos.Length; i++)
         {
             var pos = new Position
@@ -406,6 +406,7 @@ public class MainViewModel : ViewModelBase
         }
         State = e;
         AlarmActive = e.GrblHalState == "Alarm";
+
         if (ConsoleOutput.Count > 200)
         {
             ConsoleOutput.Clear();
@@ -414,7 +415,27 @@ public class MainViewModel : ViewModelBase
         {
             ConsoleOutput.Add(e.RawRt);
         }
+        ProcessSignals(e.SignalStatus);
     }
+
+    private void ProcessSignals(List<string> signals)
+    {
+        if (signals.Count == 0)
+        {
+            if (!SignalList.Any(x => x.Triggered)) return;
+
+            foreach (var signal in from signal in SignalList where signal.Triggered select signal)
+            {
+                signal.Triggered = false;
+            }
+            return;
+        }
+        foreach (var signal in from signal in signals from sig in SignalList where sig.Id == signal select sig)
+        {
+            signal.Triggered = true;
+        }
+    }
+
     private void _commManager_onOptionsUpdated(object? sender, GrblHALOptions e)
     {
         if (_needsSetup)
@@ -431,8 +452,13 @@ public class MainViewModel : ViewModelBase
                     });
                 }
             }
-
-            SignalList = e.SignalLabels;
+            foreach (var signal in e.SignalLabels)
+            {
+                SignalList.Add(new Signal
+                {
+                    Id = signal.ToString()
+                });
+            }
             _needsSetup = false;
         }
     }
@@ -470,6 +496,7 @@ public class MainViewModel : ViewModelBase
     {
         _commManager.NewSerialConnection(_config.SerialSettings.PortName);
         _commManager.GetSettings();
+
     }
 }
 
@@ -493,4 +520,12 @@ public class Axis : ViewModelBase
     {
         Position = new Position();
     }
+}
+
+public partial class Signal : ObservableObject
+{
+    public string Id { get; set; }
+
+    [ObservableProperty]
+    private bool _triggered;
 }

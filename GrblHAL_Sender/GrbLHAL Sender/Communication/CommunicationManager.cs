@@ -191,135 +191,149 @@ namespace GrbLHAL_Sender.Communication
                 var valuePair = data.Split(':');
                 Debug.Write("***Warning Data Not Parsed " + valuePair[0] + valuePair[1] + "***" + Environment.NewLine);
             }
-            else 
+            else
             {
                 Debug.Write("***Warning Data Not Parsed " + data + "***");
             }
         }
-    
 
-    private void ParseOptionsData(Span<string> asSpan)
-    {
-        if (asSpan[0].StartsWith("OPT"))
+
+        private void ParseOptionsData(Span<string> asSpan)
         {
-            var op = asSpan[1].Split(',');
-            if (op.Length >= 4)
+            if (asSpan[0].StartsWith("OPT"))
             {
-                grblHalOptions.ToolTableCount = int.Parse(op[4]);
-            }
-        }
-
-        if (asSpan[0].StartsWith("NEWOPT"))
-        {
-            grblHalOptions.Options = asSpan[1].Split(',').ToList();
-        }
-
-        if (asSpan[0].StartsWith("AXS"))
-        {
-            GrblHalSettingsConst.AxisCount = grblHalOptions.AxesCount = int.Parse(asSpan[1]);
-            GrblHalSettingsConst.Axis = asSpan[2].ToCharArray();
-            grblHalOptions.AxisLabels = asSpan[2].ToCharArray().ToList();
-        }
-
-        if (asSpan[0].StartsWith("SIGNALS"))
-        {
-            grblHalOptions.SignalLabels = asSpan[1].ToCharArray().ToList();
-            if (grblHalOptions.AxisLabels.Count > 0)
-            {
-                grblHalOptions.SignalLabels.AddOrInsertRange(grblHalOptions.AxisLabels, 0);
-            }
-        }
-    }
-    private void ParseTabSettings(Span<string> asSpan)
-    {
-        _grblHalSettings.SettingCollection.Add(new GrblHalSetting(asSpan));
-    }
-
-    private void ParseSettingsValueData(Span<string> data)
-    {
-        _grblHalSettings.AddSettingValue(data);
-    }
-
-    private void ParseSettingsData(Span<string> asSpan)
-    {
-        _grblHalSettings.SettingCollection.Add(new GrblHalSetting(asSpan));
-    }
-
-    private void ParseRealTimeData(string data)
-    {
-        var rtState = new RealTImeState
-        {
-            RawRt = data
-        };
-        PendingMessage = PendingMessageSet.NotPending;
-        data = data.Trim('<', '>');
-        var substring = data.Split('|').AsSpan();
-        var currentState = substring.Slice(0, 1);
-        if (currentState[0].Contains(':'))
-        {
-            currentState = currentState[0].Split(':');
-        }
-        rtState.GrblHalState = currentState[0];
-        if (currentState.Length > 1)
-        {
-            rtState.SubState = currentState[1];
-        }
-        foreach (var state in substring)
-        {
-            var pair = state.Split(':');
-            if (pair.Length > 1)
-            {
-                var topic = pair[0];
-                var value = pair[1];
-                switch (topic)
+                var op = asSpan[1].Split(',');
+                if (op.Length >= 4)
                 {
-                    case "WPos":
-                        var wpos = value.Split(',');
-                        break;
-                    case "MPos":
-                        rtState.MPos = value.Split(',');
-                        break;
-                    case "Bf":
-                        break;
-                    case "Ln":
-                        break;
-                    case "Fs":
-                        break;
-                    case "Pn":
-                        break;
-                    case "WCO":
-                        rtState.Wco = value.Split(",");
-                        break;
-                    case "A":
-                        break;
-                    case "Ov":
-                        break;
-                    case "MPG":
-                        var mpg = value.Split(":");
-                        rtState.MpgActive = mpg[0].StringToBool();
-                        break;
-                    case "H":
-                        var h = value.Split(":");
-                        rtState.Home = h[0].StringToBool();
-                        break;
-                    case "D":
-                        break;
-                    case "Sc":
-                        break;
-                    case "TLR":
-                        break;
-                    case "FW":
-                        break;
-                    case "In":
-                        var signals = value.Split();
-                        break;
+                    grblHalOptions.ToolTableCount = int.Parse(op[4]);
+                }
+            }
+
+            if (asSpan[0].StartsWith("NEWOPT"))
+            {
+                grblHalOptions.Options = asSpan[1].Split(',').ToList();
+            }
+
+            if (asSpan[0].StartsWith("AXS"))
+            {
+                GrblHalSettingsConst.AxisCount = grblHalOptions.AxesCount = int.Parse(asSpan[1]);
+                GrblHalSettingsConst.Axis = asSpan[2].ToCharArray();
+                grblHalOptions.AxisLabels = asSpan[2].ToCharArray().ToList();
+            }
+
+            if (asSpan[0].StartsWith("SIGNALS"))
+            {
+                grblHalOptions.SignalLabels = asSpan[1].ToCharArray().ToList();
+                grblHalOptions.SignalLabels.Add("P");
+                if (grblHalOptions.AxisLabels.Count > 0)
+                {
+                    grblHalOptions.SignalLabels.AddOrInsertRange(grblHalOptions.AxisLabels, 0);
                 }
             }
         }
+        private void ParseTabSettings(Span<string> asSpan)
+        {
+            _grblHalSettings.SettingCollection.Add(new GrblHalSetting(asSpan));
+        }
 
-        SendState(rtState);
+        private void ParseSettingsValueData(Span<string> data)
+        {
+            _grblHalSettings.AddSettingValue(data);
+        }
+
+        private void ParseSettingsData(Span<string> asSpan)
+        {
+            _grblHalSettings.SettingCollection.Add(new GrblHalSetting(asSpan));
+        }
+
+        private void ParseRealTimeData(string data)
+        {
+            var rtState = new RealTImeState
+            {
+                RawRt = data
+            };
+            PendingMessage = PendingMessageSet.NotPending;
+            data = data.Trim('<', '>');
+            var substring = data.Split('|').AsSpan();
+            var currentState = substring.Slice(0, 1);
+            if (currentState[0].Contains(':'))
+            {
+                currentState = currentState[0].Split(':');
+            }
+            rtState.GrblHalState = currentState[0];
+            if (currentState.Length > 1)
+            {
+                rtState.SubState = currentState[1];
+            }
+            foreach (var state in substring)
+            {
+                var pair = state.Split(':');
+                if (pair.Length > 1)
+                {
+                    var topic = pair[0];
+                    var value = pair[1];
+                    switch (topic)
+                    {
+                        case "WPos":
+                            var wpos = value.Split(',');
+                            break;
+                        case "MPos":
+                            rtState.MPos = value.Split(',');
+                            break;
+                        case "Bf":
+                            break;
+                        case "Ln":
+                            break;
+                        case "FS":
+                            var speed = value.Split(",");
+                            rtState.ProgramedSpeed = speed[0];
+                            rtState.ActualSpeed = speed[1];
+                            break;
+                        case "WCS":
+                            rtState.WCS = value;
+                            break;
+                        case "Pn":
+                            rtState.SignalStatus = value.Split(',').ToList();
+                            break;                                                              /*"Idle|MPos:0.000,0.000,254.000|Bf:100,1023|FS:0,0|WCO:0.000,0.000,254.000|WCS:G54|A:|Sc:|MPG:0|H:0|T:4|TLR:0|FW:grblHAL"*/
+                        case "WCO":
+                            rtState.Wco = value.Split(",");
+                            break;
+                        case "A":
+                            var a = value;
+                            break;
+                        case "Ov":
+                            break;
+                        case "MPG":
+                            rtState.MpgActive = value.StringToBool();
+                            break;
+                        case "H":
+                            var h = value.Split(":");
+                            rtState.Home = h[0].StringToBool();
+                            break;
+                        case "D":
+                            break;
+                        case "Sc":
+                         
+                            break;
+                        case "T":
+                            rtState.Tool = value;
+                            break;
+                        case "TLR":
+                            rtState.TLR = value.StringToBool();
+                            break;
+                        case "FW":
+                            break;
+                        case "In":
+                            var signals = value.Split();
+                            break;
+                       
+                    }
+                }
+            }
+
+            SendState(rtState);
+        }
     }
-}
 }
 
 // settings being constructed in ref grblHAL  Report extensions

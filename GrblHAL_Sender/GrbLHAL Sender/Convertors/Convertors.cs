@@ -6,10 +6,14 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.Converters;
+using Avalonia.Media;
+using Avalonia.Platform;
 using GrbLHAL_Sender.Settings;
 
 namespace GrbLHAL_Sender.Convertors
@@ -41,7 +45,33 @@ namespace GrbLHAL_Sender.Convertors
         }
     }
 
+   
 
+    public class LedBackGround : IValueConverter
+
+    {
+        private int index = 0;
+        public static readonly LedBackGround Instance = new();
+       
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+
+            if (value is bool v)
+            {
+                return v ? new SolidColorBrush(Color.FromRgb(255, 51, 51)) :  new SolidColorBrush(Color.FromArgb(255,51,51,51));
+            }
+
+
+            return new BindingNotification(new InvalidCastException(), BindingErrorType.Error);
+        }
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+        
+    }
     public class IndexToBool : IValueConverter
     {
         private int index = 0;
