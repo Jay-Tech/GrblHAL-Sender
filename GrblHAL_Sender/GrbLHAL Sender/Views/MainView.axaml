@@ -18,7 +18,6 @@
   </UserControl.Resources>
   <!--Header-->
   <DockPanel  Background="Transparent" Name="MainDockPanel" LastChildFill="True">
-    <Grid>
       <Border  Height="45" BorderThickness="1" DockPanel.Dock="Top">
         <Grid>
           <Grid.ColumnDefinitions>
@@ -404,7 +403,6 @@
           </Grid>
         </Grid>
       </Border>
-    </Grid>
   </DockPanel>
 </UserControl>
 
