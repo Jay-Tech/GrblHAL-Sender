@@ -7,9 +7,10 @@ using System.Timers;
 using Avalonia.Threading;
 using DynamicData;
 using DynamicData.Binding;
+using GrbLHAL_Sender.Probe;
 using GrbLHAL_Sender.Settings;
 using GrbLHAL_Sender.Utility;
-using static GrbLHAL_Sender.Settings.GrblHalSetting;
+
 
 namespace GrbLHAL_Sender.Communication
 {
@@ -21,16 +22,16 @@ namespace GrbLHAL_Sender.Communication
         private readonly Dispatcher _dispatcher;
         private GrblHALSettings _grblHalSettings;
         private GrblHALOptions grblHalOptions = new();
-        private PendingMessageSet _pendingMessageSet;
+        private GrblHalSetting.PendingMessageSet _pendingMessageSet;
 
         public event EventHandler<string> OnConsoleLogReceived;
         public event EventHandler<RealTImeState> OnStateReceived;
         public event EventHandler<List<GrblHalSetting>> onSettingUpdated;
         public event EventHandler<GrblHALOptions> onOptionsUpdated;
-        public event EventHandler<Probe.Probe> onOptionsResults;
+        public event EventHandler<ProbeState> onOptionsResults;
         public ICommsAdapter Adapter { get; set; }
 
-        public PendingMessageSet PendingMessage
+        public GrblHalSetting.PendingMessageSet PendingMessage
         {
             get => _pendingMessageSet;
             set
@@ -48,6 +49,7 @@ namespace GrbLHAL_Sender.Communication
             _grblHalSettings = new GrblHALSettings();
             _pollTimer = new Timer();
             _pollTimer.Elapsed += _pollTimer_Elapsed;
+            _probe = new ProbeState();
         }
 
         public void ShutDown()
@@ -69,12 +71,12 @@ namespace GrbLHAL_Sender.Communication
         {
             var t = Task.Factory.StartNew(async () =>
             {
-                PendingMessage = PendingMessageSet.Options;
+                PendingMessage = GrblHalSetting.PendingMessageSet.Options;
                 Adapter.WriteCommand("$I+");
                 await Task.Delay(400);
                 Adapter.WriteCommand("$ES");
                 await Task.Delay(400);
-                PendingMessage = PendingMessageSet.Setting;
+                PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
                 Adapter.WriteCommand("$+");
                 await Task.Delay(400);
                 SetupPoll(250);
@@ -96,15 +98,17 @@ namespace GrbLHAL_Sender.Communication
             Adapter.WriteByte(0x87);
         }
 
-        private PendingMessageSet? _pendingMessageComplete = null;
-        private void PendingJobComplete(PendingMessageSet job)
+        private GrblHalSetting.PendingMessageSet? _pendingMessageComplete = null;
+        private readonly ProbeState _probe;
+
+        private void PendingJobComplete(GrblHalSetting.PendingMessageSet job)
         {
             _pendingMessageComplete ??= job;
-            if (job != PendingMessageSet.Options && _pendingMessageComplete == PendingMessageSet.Options)
+            if (job != GrblHalSetting.PendingMessageSet.Options && _pendingMessageComplete == GrblHalSetting.PendingMessageSet.Options)
             {
                 SendOptions();
             }
-            if (job != PendingMessageSet.Setting && _pendingMessageComplete == PendingMessageSet.Setting)
+            if (job != GrblHalSetting.PendingMessageSet.Setting && _pendingMessageComplete == GrblHalSetting.PendingMessageSet.Setting)
             {
                 SendSettings();
             }
@@ -147,7 +151,7 @@ namespace GrbLHAL_Sender.Communication
             }
             if (string.Equals(data, "ok", StringComparison.OrdinalIgnoreCase))
             {
-                PendingMessage = PendingMessageSet.NotPending;
+                PendingMessage = GrblHalSetting.PendingMessageSet.NotPending;
                 return;
             }
             if (data.StartsWith("<") || data.EndsWith(">"))
@@ -157,7 +161,7 @@ namespace GrbLHAL_Sender.Communication
             }
             if (data.StartsWith("[SETTING"))
             {
-                PendingMessage = PendingMessageSet.Setting;
+                PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
                 data = data.Trim('[', ']');
                 var substring = data.Split('|');
                 ParseSettingsData(substring.AsSpan());
@@ -252,7 +256,7 @@ namespace GrbLHAL_Sender.Communication
             {
                 RawRt = data
             };
-            PendingMessage = PendingMessageSet.NotPending;
+            PendingMessage = GrblHalSetting.PendingMessageSet.NotPending;
             data = data.Trim('<', '>');
             var substring = data.Split('|').AsSpan();
             var currentState = substring.Slice(0, 1);

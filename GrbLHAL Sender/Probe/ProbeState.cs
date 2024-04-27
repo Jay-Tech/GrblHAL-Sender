@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace GrbLHAL_Sender.Probe
 {
-    public class Probe
+    public class ProbeState
     {
+        public ProbeState() { }
     }
 }
