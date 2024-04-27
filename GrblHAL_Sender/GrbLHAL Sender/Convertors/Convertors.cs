@@ -14,6 +14,7 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml.Converters;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using GrbLHAL_Sender.Settings;
 
 namespace GrbLHAL_Sender.Convertors
@@ -56,12 +57,17 @@ namespace GrbLHAL_Sender.Convertors
 
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-
+            var themeVariant = Application.Current?.ActualThemeVariant;
+            SolidColorBrush b = null;
+            if (Application.Current!.TryFindResource("ThemeControlMidBrush", themeVariant, out Object? output) && output is SolidColorBrush brush)
+            {
+                 b = brush;
+            }
             if (value is bool v)
             {
-                return v ? new SolidColorBrush(Color.FromRgb(255, 51, 51)) :  new SolidColorBrush(Color.FromArgb(255,51,51,51));
+                return v ? new SolidColorBrush(Color.FromRgb(255, 51, 51)) : b ?? new SolidColorBrush(Color.FromArgb(255, 80, 80,80));
             }
-
+            
 
             return new BindingNotification(new InvalidCastException(), BindingErrorType.Error);
         }

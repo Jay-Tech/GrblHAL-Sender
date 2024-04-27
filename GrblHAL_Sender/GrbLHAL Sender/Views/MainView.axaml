@@ -7,78 +7,86 @@
              xmlns:ctl="clr-namespace:GrbLHAL_Sender.Views"
              xmlns:behaviors="clr-namespace:GrbLHAL_Sender.Behaviors"
              xmlns:convertors="clr-namespace:GrbLHAL_Sender.Convertors"
-             xmlns:controls="clr-namespace:GrbLHAL_Sender.Controls"
+              d:DesignHeight="1080" d:DesignWidth="1920"
              x:Class="GrbLHAL_Sender.Views.MainView"
              x:DataType="vm:MainViewModel">
 
   <UserControl.Resources>
+
     <convertors:LedBackGround x:Key="LedBackGround"></convertors:LedBackGround>
     <convertors:AlignmentConvertor x:Key="AlignmentConvertor" />
     <convertors:IndexToBool x:Key="IndexToBool"/>
   </UserControl.Resources>
   <!--Header-->
-  <DockPanel  Background="Transparent" Name="MainDockPanel" LastChildFill="True">
-      <Border  Height="45" BorderThickness="1" DockPanel.Dock="Top">
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="90"/>
-            <ColumnDefinition Width="145"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-          </Grid.ColumnDefinitions>
 
-          <Button Styles="" Grid.Column="0" Margin="3,0,0,0" HorizontalAlignment="Left"
-                  HorizontalContentAlignment="Center" Height="30"  FontSize="18"
-                  Content="Connect" Command="{Binding ConnectCommand}"></Button>
-          <Label Grid.Column="1" FontSize="24" Margin="15,0,0,0" HorizontalAlignment="Center"
-                 VerticalAlignment="Center"
-                 Content="{Binding State.GrblHalState}"  ></Label>
-          <Label Grid.Column="2" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
-                 HorizontalAlignment="Center"
-                 Content="{Binding State.WCS, StringFormat={}WCO:{0}}"
-                 IsVisible="{Binding Connected}"></Label>
-          <Label Grid.Column="3" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
-                 HorizontalAlignment="Center"
-                 Content="{Binding State.Tool, StringFormat={} Tool:{0}}"
-                 IsVisible="{Binding Connected}"></Label>
-          <ItemsRepeater Grid.Column="4"  ItemsSource="{Binding SignalList}" Margin="15,0">
-            <ItemsRepeater.Layout>
-              <StackLayout
-                           Orientation="Horizontal"   />
-            </ItemsRepeater.Layout>
-            <ItemsRepeater.ItemTemplate>
-              <DataTemplate>
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"    Orientation="Horizontal" Width="35">
-                  <!--<Label VerticalAlignment="Top" Width="10"  HorizontalAlignment="Center"
-                                       HorizontalContentAlignment="Center" CornerRadius="25" 
-                                       Background="DarkRed" Height="10"/>-->
-                  <Label x:Name="" VerticalAlignment="Center"
-                          Foreground="White" VerticalContentAlignment="Center"
-                          HorizontalAlignment="Center" CornerRadius="45"
-                          HorizontalContentAlignment="Center" Margin="3 0" Height="30" Width="30" FontWeight="Bold" FontSize="20"
-                          Content="{Binding Path=Id }" Background="{Binding Path=Triggered,
+  <DockPanel   Background="Transparent" Name="MainDockPanel" LastChildFill="True">
+    <Border  Height="45" BorderThickness="1" DockPanel.Dock="Top">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="90"/>
+          <ColumnDefinition Width="145"/>
+          <ColumnDefinition Width="110"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="200"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <Button  Grid.Column="0" Margin="3,0,0,0" HorizontalAlignment="Left"
+                HorizontalContentAlignment="Center" Height="30"  FontSize="18"
+                Content="Connect" Command="{Binding ConnectCommand}"></Button>
+        <Label Grid.Column="1" FontSize="24" Margin="15,0,0,0" HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Content="{Binding State.GrblHalState}"  ></Label>
+        <Label Grid.Column="2" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
+               HorizontalAlignment="Center"
+               Content="{Binding State.WCS, StringFormat={}WCO:{0}}"
+               IsVisible="{Binding Connected}"></Label>
+        <Label Grid.Column="3" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
+               HorizontalAlignment="Center"
+               Content="{Binding State.Tool, StringFormat={} Tool:{0}}"
+               IsVisible="{Binding Connected}"></Label>
+        <Label Grid.Column="4" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
+               HorizontalAlignment="Center"
+               Content="{Binding JogStep, StringFormat={} Step:{0}}"
+               IsVisible="{Binding Connected}"></Label>
+        <Label Grid.Column="5" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
+               HorizontalAlignment="Center"
+               Content="{Binding JogRate, StringFormat={} Rate:{0}}"
+               IsVisible="{Binding Connected}"></Label>
+        <ItemsRepeater Grid.Column="6" HorizontalAlignment="Right" ItemsSource="{Binding SignalList}" Margin="15,0">
+          <ItemsRepeater.Layout>
+            <StackLayout Orientation="Horizontal"/>
+          </ItemsRepeater.Layout>
+          <ItemsRepeater.ItemTemplate>
+            <DataTemplate>
+              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"    Orientation="Horizontal" Width="35">
+                <Label x:Name="" VerticalAlignment="Center"
+                        Foreground="White" VerticalContentAlignment="Center"
+                        HorizontalAlignment="Center" CornerRadius="45"
+                        HorizontalContentAlignment="Center" Margin="3 0" Height="30" Width="30" FontWeight="Bold" FontSize="20"
+                        Content="{Binding Path=Id }" Background="{Binding Path=Triggered,
                         Converter={StaticResource LedBackGround}, ConverterParameter={Binding Path=Triggered}}"/>
-                </StackPanel>
+              </StackPanel>
 
-              </DataTemplate>
-            </ItemsRepeater.ItemTemplate>
-          </ItemsRepeater>
+            </DataTemplate>
+          </ItemsRepeater.ItemTemplate>
+        </ItemsRepeater>
 
-          <Button Grid.Column="5" x:Name="AlButton" IsVisible="{Binding AlarmActive}" Height="30" Content="{Binding State.SubState,StringFormat={} Alarm{0}}" FontSize="18"
-                  VerticalAlignment="Center" HorizontalAlignment="Right"
-                  Command="{Binding ClearAlarmCommand}" Margin="2,0"
-                  Background ="Red" Width="100">
-          </Button>
-          <Button Grid.Column="6" Height="30" Content="UnLock" FontSize="18" Margin="2,0" VerticalAlignment="Center" HorizontalAlignment="Right"
-                  Command="{Binding UnLockCommand}" Width="100"></Button>
-        </Grid>
-      </Border>
+        <Button Grid.Column="7" x:Name="AlButton" IsVisible="{Binding AlarmActive}" Height="30" Content="{Binding State.SubState,StringFormat={} Alarm{0}}" FontSize="18"
+                VerticalAlignment="Center" HorizontalAlignment="Right"
+                Command="{Binding ClearAlarmCommand}" Margin="2,0"
+                Background ="Red" Width="100">
+        </Button>
+        <Button Grid.Column="8" Height="30" Content="UnLock" FontSize="18" Margin="2,0" VerticalAlignment="Center" HorizontalAlignment="Right"
+                Command="{Binding UnLockCommand}" Width="100"></Button>
+      </Grid>
+    </Border>
 
-      <!--  Menu Selection  Header Not Active but may come back to it-->
-      <!--<Border Height="35"   BorderThickness="1" DockPanel.Dock="Top">
+    <!--  Menu Selection  Header Not Active but may come back to it-->
+    <!--<Border Height="35"   BorderThickness="1" DockPanel.Dock="Top">
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
         <Button Content="Job" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"   Width="140"
                 Margin="1,0,1,0" ></Button>
@@ -107,302 +115,420 @@
       </StackPanel>
     </Border>-->
 
-      <!-- DataTemplate Axis Control-->
-      <Border  Name="MainControlBorder" Margin="1,40,0,0" VerticalAlignment="Stretch"
-               BorderThickness="1" DockPanel.Dock="Left">
-        <Grid>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="Auto"></RowDefinition>
-          </Grid.RowDefinitions>
-          <Button FontSize="20" Grid.Row="0" Height="40" Content="Home All" HorizontalAlignment="Stretch" Command="{Binding HomeCommand}"></Button>
-          <ItemsControl Grid.Row="1" ItemsSource="{Binding AxisCollection}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <StackPanel  HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Orientation="Horizontal">
-                  <TextBlock Text="{Binding Name}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="35" Margin="2,0,0,0"></TextBlock>
-                  <Border BorderThickness="1" >
-                    <StackPanel>
-                      <Label  Focusable="False" Content="{Binding Path=Position.Wco,StringFormat=N3}"   FontSize="32" MinWidth="175" Height="45"
-                              VerticalContentAlignment="Center"    HorizontalContentAlignment="Left" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Label>
-                      <Label  Focusable="False" Content="{Binding Path=Position.MPos,StringFormat=N3}"   FontSize="16" MinWidth="175" Height="25"
-                              VerticalContentAlignment="Center" HorizontalContentAlignment="Left" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Label>
-                    </StackPanel>
-                  </Border>
-                  <Button  Name ="{Binding Name}"  Content="{Binding Name, StringFormat={}{0}0}"  FontSize="20"  Height="60" HorizontalAlignment="Stretch"
-                           HorizontalContentAlignment="Center" VerticalAlignment="Stretch"
-                          VerticalContentAlignment="Center" Margin="2" Width="55" Focusable="False"
-                          Command="{Binding ZeroWcsCommand}" CommandParameter="{Binding Name}"></Button>
-                </StackPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-          <Button Grid.Row="2" FontSize="20"  Content="Zero All" Height="40" HorizontalAlignment="Stretch" Command="{Binding ZeroAllCommand}" ></Button>
-          <!--WCS-->
-          <Grid Grid.Row="3" Margin="0,2" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-            <Label  Content="WCS" HorizontalContentAlignment="Center" FontSize="18" VerticalContentAlignment="Center"
-                    HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
-            <Button Grid.Row="1"  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                    FontSize="20" Margin="0,1" Content="G54" Height="40"
-                    HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"
-                    Command="{Binding WcsCommand}" CommandParameter="G54"></Button>
-            <Button Grid.Row="2"  FontSize="20" Margin="0,1" Content="G55"
-                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                    HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="40"
-                    Command="{Binding WcsCommand}" CommandParameter="G55"></Button>
-            <Button Grid.Row="3"  FontSize="20" Margin="0,1" Content="G56"
-                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                    HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="40"
-                    Command="{Binding WcsCommand}" CommandParameter="G56"></Button>
-            <Button Grid.Row="4"  FontSize="20" Margin="0,1" Content="G57"
-                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                    HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="40"
-                    Command="{Binding WcsCommand}" CommandParameter="G57"></Button>
-          </Grid>
-          <!--MDI-->
-          <Grid Grid.Row="4" RowDefinitions="*,*,*">
-            <Label  Content="MDI" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                    FontSize="18" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
-            <AutoCompleteBox Grid.Row="1" x:Name="MdiTb"  FontSize="20"  Height="50" MaxDropDownHeight="300"
-                      HorizontalAlignment ="Stretch"  VerticalAlignment="Stretch">
-              <AutoCompleteBox.ItemTemplate>
-                <DataTemplate>
-                  <TextBox x:Name="TB" IsReadOnly="False" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-                            Text="{Binding #MdiTb.Text}" />
-                </DataTemplate>
-              </AutoCompleteBox.ItemTemplate>
-            </AutoCompleteBox>
-            <Button Grid.Row="2"  FontSize="20" Content="Send"  Height="40" Command="{Binding MdiTextCommand}"
-                    CommandParameter="{Binding #MdiTb.Text}"
-                    HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Button>
-          </Grid>
-          <UniformGrid x:Name="keyP" Grid.Row="5" Columns="5" Rows="5" Margin="0,5,0,5"
-                       HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
-            <Button Classes="h1" Content="7" ></Button>
-            <Button Classes="h1" Content="8"></Button>
-            <Button Classes="h1" Content="9"></Button>
-            <Button Classes="h1" Content="G"></Button>
-            <Button Classes="h1" Content="M"></Button>
-            <Button Classes="h1" Content="4"></Button>
-            <Button Classes="h1" Content="5"></Button>
-            <Button Classes="h1" Content="6"></Button>
-            <Button Classes="h1" Content="-"></Button>
-            <Button Classes="h1" Content="X"></Button>
-            <Button Classes="h1" Content="1"></Button>
-            <Button Classes="h1" Content="2" ></Button>
-            <Button Classes="h1" Content="3" ></Button>
-            <Button Classes="h1" Content="." ></Button>
-            <Button Classes="h1" Content="Y" ></Button>
-            <Button Classes="h1" Content="$"></Button>
-            <Button Classes="h1" Content="0" ></Button>
-            <Button Classes="h1" Content="=" ></Button>
-            <Button Classes="h1" Content="T" ></Button>
-            <Button Classes="h1" Content="Z" ></Button>
-            <Button Classes="h1" Content="Spc" ></Button>
-            <Button Classes="h1" Content="Del"></Button>
-            <Button Classes="h1" Content="Ent" ></Button>
-            <Button Classes="h1" Content="H"></Button>
-            <Button Classes="h1" Content="F"></Button>
-          </UniformGrid>
+    <!-- DataTemplate Axis Control-->
+    <Border  Name="MainControlBorder" Margin="1,38,0,5" VerticalAlignment="Stretch"
+             BorderThickness="1" DockPanel.Dock="Left">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"></RowDefinition>
+          <RowDefinition Height="Auto"></RowDefinition>
+          <RowDefinition Height="Auto"></RowDefinition>
+          <RowDefinition Height="Auto"></RowDefinition>
+          <RowDefinition Height="Auto"></RowDefinition>
+          <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Button FontSize="20" CornerRadius="6" Grid.Row="0" Height="40" Content="Home All" HorizontalAlignment="Stretch" 
+                Command="{Binding HomeCommand}"></Button>
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding AxisCollection}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <StackPanel  HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Orientation="Horizontal">
+                <TextBlock Text="{Binding Name}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="35" Margin="2,0,0,0"></TextBlock>
+                <Border BorderThickness="1" >
+                  <StackPanel>
+                    <Label  Focusable="False" Content="{Binding Path=Position.Wco,StringFormat=N3}"   FontSize="32" MinWidth="175" Height="45"
+                            VerticalContentAlignment="Center"    HorizontalContentAlignment="Left" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Label>
+                    <Label  Focusable="False" Content="{Binding Path=Position.MPos,StringFormat=N3}"   FontSize="16" MinWidth="175" Height="25"
+                            VerticalContentAlignment="Center" HorizontalContentAlignment="Left" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Label>
+                  </StackPanel>
+                </Border>
+                <Button  Name ="{Binding Name}" CornerRadius="6" Content="{Binding Name, StringFormat={}{0}0}"  FontSize="20"  Height="60" HorizontalAlignment="Stretch"
+                         HorizontalContentAlignment="Center" VerticalAlignment="Stretch"
+                        VerticalContentAlignment="Center" Margin="2" Width="55" Focusable="False"
+                        Command="{Binding ZeroWcsCommand}" CommandParameter="{Binding Name}"></Button>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Grid.Row="2" FontSize="20"  Content="Zero All" Height="40" HorizontalAlignment="Stretch" Command="{Binding ZeroAllCommand}" ></Button>
+
+        <!--WCS-->
+        <Grid Grid.Row="3" Margin="0,2" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+          <Label  Content="WCS" HorizontalContentAlignment="Center" FontSize="18" VerticalContentAlignment="Center"
+                  HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
+          <Button Grid.Row="1" CornerRadius="6" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  FontSize="20" Margin="0,2" Content="G54" Height="50"
+                  HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"
+                  Command="{Binding WcsCommand}" CommandParameter="G54"></Button>
+          <Button Grid.Row="2" CornerRadius="6" FontSize="20" Margin="0,2" Content="G55"
+                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="50"
+                  Command="{Binding WcsCommand}" CommandParameter="G55"></Button>
+          <Button Grid.Row="3"  CornerRadius="6" FontSize="20" Margin="0,2" Content="G56"
+                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="50"
+                  Command="{Binding WcsCommand}" CommandParameter="G56"></Button>
+          <Button Grid.Row="4" CornerRadius="6" FontSize="20" Margin="0,2" Content="G57"
+                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="50"
+                  Command="{Binding WcsCommand}" CommandParameter="G57"></Button>
         </Grid>
-      </Border>
 
-      <!-- Jog Control-->
-      <Border DockPanel.Dock="Right">
+        <!--MDI-->
+        <Grid Grid.Row="4" RowDefinitions="*,*,*">
+          <Label  Content="MDI" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  FontSize="18" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
+          <AutoCompleteBox Grid.Row="1" x:Name="MdiTb"  FontSize="20"  Height="50" MaxDropDownHeight="300"
+                    HorizontalAlignment ="Stretch"  VerticalAlignment="Stretch" Text="{Binding MdiText}">
+            <AutoCompleteBox.ItemTemplate>
+              <DataTemplate>
+                <TextBox x:Name="TB" IsReadOnly="False" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                          Text="{Binding #MdiTb.Text}" />
+              </DataTemplate>
+            </AutoCompleteBox.ItemTemplate>
+          </AutoCompleteBox>
+          <Button Grid.Row="2"  CornerRadius="6" FontSize="20" Content="Send"  Height="45" 
+                  Command="{Binding MdiTextCommand}"
+                  CommandParameter="{Binding #MdiTb.Text}"
+                  HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Button>
+        </Grid>
+        <UniformGrid x:Name="keyP" Grid.Row="5" Columns="5" Rows="5" Margin="0,3,0,5"
+                     HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
+          <Button Classes="h1"  Content="7"  
+                  CommandParameter="7"
+                  Command="{Binding KeyPressCommand}"> </Button>
+          <Button Classes="h1" Content="8"
+                  CommandParameter="8"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="9" CommandParameter="9"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="G" 
+                  CommandParameter="G"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="M"
+                  CommandParameter="M"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="4"
+                  CommandParameter="4"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="5"
+                  CommandParameter="5"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="6"
+                  CommandParameter="6"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="-"
+                  CommandParameter="-"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="X"
+                  CommandParameter="X"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="1"
+                  CommandParameter="1"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="2" 
+                  CommandParameter="2"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="3" 
+                  CommandParameter="3"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="." 
+                  CommandParameter="."
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="Y" 
+                  CommandParameter="Y"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="$"
+                  CommandParameter="$"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="0"
+                  CommandParameter="0"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="="
+                  CommandParameter="="
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="T"
+                  CommandParameter="T"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="Z"
+                  CommandParameter="Z"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="Spc"
+                  CommandParameter="Spc"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="Del"
+                  CommandParameter="Del"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="Ent"
+                  CommandParameter="Ent"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="H"
+                  CommandParameter="H"
+                  Command="{Binding KeyPressCommand}"/>
+          <Button Classes="h1" Content="F"
+                  CommandParameter="F"
+                  Command="{Binding KeyPressCommand}"/>
+        </UniformGrid>
+      </Grid>
+    </Border>
 
-        <Grid Margin="0,40,5,0"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <!-- Jog Control-->
+    <Border DockPanel.Dock="Right">
+      <Grid x:Name="Grid" Margin="0,40,5,0" RowDefinitions="Auto, Auto,Auto,Auto"  
+            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <StackPanel x:Name="Panel" Grid.Row="0" Orientation="Horizontal"  HorizontalAlignment="Stretch" 
+                    VerticalAlignment="Stretch">
+          <Label  FontSize="24" Content="Feed" HorizontalContentAlignment="Center"
+                 HorizontalAlignment="Stretch" VerticalContentAlignment="Center" VerticalAlignment="Stretch"> </Label>
+          <ItemsRepeater   HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
+                          ItemsSource="{Binding JogRateList}">
+            <ItemsRepeater.Layout >
+              <StackLayout Orientation="Horizontal"  Spacing="5"/>
+            </ItemsRepeater.Layout>
+            <ItemsRepeater.ItemTemplate>
+              <DataTemplate>
+                  <Button Content="{Binding }"  VerticalAlignment="Stretch"
+                          HorizontalAlignment="Stretch" Margin="3,0" CornerRadius="6" Width="75"
+                          CommandParameter="{Binding }"  Height="45" FontSize="20"
+                          Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).FeedRateChangeCommand}">
+                
+                  </Button>
+              </DataTemplate>
+            </ItemsRepeater.ItemTemplate>
+          </ItemsRepeater>
+        </StackPanel>
+        <Grid Grid.Row="1" Margin="0,20,0,0">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*">
+            <RowDefinition Height="Auto">
             </RowDefinition>
           </Grid.RowDefinitions>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
-          <Grid Margin="0,0,0,25" Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="0"
-                HorizontalAlignment="Stretch"  ColumnDefinitions="auto,*,*,*" >
 
-            <Label Grid.Column="0" FontSize="20" Content="Feed" HorizontalContentAlignment="Center"
-                   HorizontalAlignment="Stretch" VerticalAlignment="Center"> </Label>
-            <Button Grid.Column="1" Height="45" Margin="0,0" Content="Rapid" HorizontalAlignment="Stretch" FontSize="20" ></Button>
-            <Button Grid.Column="2" Height="45" Margin="0,0" Content="Fast"  HorizontalAlignment="Stretch" FontSize="20"></Button>
-            <Button Grid.Column="3" Height="45" Margin="0,0" Content="Slow"  HorizontalAlignment="Stretch" FontSize="20"></Button>
-          </Grid>
-          <Button Grid.Row="2" CornerRadius="10" Name="XDown" Height="65" Width="65"
+          <Button Grid.Row="1" CornerRadius="10" Name="XDown" Height="65" Width="65"
                   Grid.Column="0"
                   Margin="4"
-                  Command="{Binding JogXDownCommand}"
+                  Command="{Binding JogNegCommand}"
                   CommandParameter="X" Foreground="DodgerBlue"
                   Content="{icons:MaterialIconExt ArrowLeftBoldBoxOutline, Size=90}" />
-          <Button Grid.Row="1" Name="YUp"   Height="65" Width="65"
+          <Button Grid.Row="0" Name="YUp"   Height="65" Width="65"
                   Grid.Column="1"
                   Margin="4"
-                  Command="{Binding JogYUpCommand }"
+                  Command="{Binding JogPosCommand }"
                   CommandParameter="Y" CornerRadius="10" Foreground="DodgerBlue"
                   Content="{icons:MaterialIconExt ArrowUpBoldBoxOutline, Size=90}"/>
-          <Button Grid.Row="2" Name="Xup" Height="65" Width="65"
-                  Grid.Column="2"
-                  Margin="4"
-                  Command="{Binding JogXUpCommand}"
+          <Button Grid.Row="1" Name="Xup" Height="65" Width="65"
+                  Grid.Column="2" Margin="4"
+                  Command="{Binding JogPosCommand}"
                   CommandParameter= "X" CornerRadius="10" Foreground="DodgerBlue"
                   Content="{icons:MaterialIconExt ArrowRightBoldBoxOutline, Size=90}" />
-          <Button Grid.Row="3" Name="YDown" CornerRadius="10" Height="65" Width="65"
+          <Button Grid.Row="2" Name="YDown" CornerRadius="10" Height="65" Width="65"
                   Grid.Column="1" Foreground="DodgerBlue"
                   Margin="4"
-                  Command="{Binding JogYDownCommand}"
+                  Command="{Binding JogNegCommand}"
                   CommandParameter="Y"
                   Content="{icons:MaterialIconExt ArrowDownBoldBoxOutline, Size=90}" />
-          <Button CornerRadius="20,20,20,20" Grid.Row="2" Name="StopAll"
+          <Button CornerRadius="20,20,20,20" Grid.Row="1" Name="StopAll"
                   Height="65" Width="65" Grid.Column="1"
                   Margin="4" Content="{icons:MaterialIconExt ArrowAll, Size=30}"/>
-          <Button Grid.Row="1" Name="ZUp" CornerRadius="10" Height="65" Width="65"
+          <Button Grid.Row="0" Name="ZUp" CornerRadius="10" Height="65" Width="65"
                   Grid.Column="3"
                   Margin="4"
-                  Command="{Binding JogZUpCommand}"
+                  Command="{Binding JogNegCommand}"
                   CommandParameter="Z" Foreground="DodgerBlue"
                   Content="{icons:MaterialIconExt ArrowUpBoldBoxOutline, Size=90}"/>
-          <Button Grid.Row="3" CornerRadius="10" Name="ZDown"  Height="65" Width="65"
+          <Button Grid.Row="2" CornerRadius="10" Name="ZDown"  Height="65" Width="65"
                   Grid.Column="3"
                   Margin="5,4,4,4"
-                  Command="{Binding JogZDownCommand }"
+                  Command="{Binding JogPosCommand}"
                   CommandParameter="Z" Foreground="DodgerBlue"
                   Content="{icons:MaterialIconExt ArrowDownBoldBoxOutline,  Size=90}"/>
-          <Grid Margin="0,25,0,25" Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="4"
-                HorizontalAlignment="Stretch"  ColumnDefinitions="auto,*,*,*" >
-            <Label Grid.Column="0" FontSize="20" Content="Step" HorizontalContentAlignment="Center"
-                   HorizontalAlignment="Stretch" VerticalAlignment="Center"> </Label>
-            <Button Grid.Column="1" Height="45" Margin="0,0" Content="Long" HorizontalAlignment="Stretch"
-                    FontSize="20" ></Button>
-            <Button Grid.Column="2" Height="45" Margin="0,0" Content="Short"  HorizontalAlignment="Stretch"
-                    FontSize="20"></Button>
-            <Button Grid.Column="3" Height="45" Margin="0,0" Content="Fine"  HorizontalAlignment="Stretch"
-                    FontSize="20"></Button>
-          </Grid>
-          <!--ToolControl-->
-          <Grid Grid.Column="0" Grid.ColumnSpan="4"  Grid.Row="5" Grid.ColumnDefinitions="*,*">
-            <Button x:Name="SplitB" Content="{Binding SelectedTool, StringFormat={}Tool# {0}}"
-                         HorizontalAlignment="Stretch"
-                         HorizontalContentAlignment="Center"  VerticalContentAlignment="Center"
-                         VerticalAlignment="Stretch" Margin="2,0" FontSize="20">
-              <Button.Flyout >
-                <Flyout  Placement="LeftEdgeAlignedBottom">
-                  <ListBox x:Name="ToolLb" SelectionMode="Single"  ItemsSource="{Binding ToolList}"
-                           SelectedItem="{Binding SelectedTool, Mode=TwoWay}"
-                           SelectionChanged="ToolLb_OnSelectionChanged"
-                           Height="275" FontSize="25"  VerticalAlignment="Stretch"  Width="125" Margin="2,2"
-                           behaviors:CloseMenuOnItemSelection.Command ="{Binding HideBoxCommand}"
-                           behaviors:CloseMenuOnItemSelection.CommandParameter="{Binding SelectedTool}">
-                    <ListBox.ItemTemplate>
-                      <DataTemplate>
-                        <Border BorderBrush="Gray" Opacity=".8" BorderThickness="1"
-                                CornerRadius="4" Padding="4" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" >
-                          <TextBlock Text="{Binding}" Width="65" Height="40" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                     TextAlignment="Center"/>
-                        </Border>
-                      </DataTemplate>
-                    </ListBox.ItemTemplate>
-                  </ListBox>
-                </Flyout>
-              </Button.Flyout>
-            </Button>
-            <Button Grid.Column="1" Content="Change Tool" Margin="2,0" FontSize="20"
-                    HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
-                    CommandParameter="{Binding SelectedTool}"
-                    VerticalAlignment="Stretch"></Button>
-          </Grid>
-
-
         </Grid>
-      </Border>
+        <StackPanel Grid.Row="2" Margin="0,20,0,0"  Orientation="Horizontal"
+                    VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+          <Label  FontSize="24" Content="Step" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                 HorizontalAlignment="Stretch" VerticalAlignment="Center"> </Label>
+          <ItemsRepeater  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding JogStepList}" >
+            <ItemsRepeater.Layout>
+              <StackLayout
+                  Orientation="Horizontal"  Spacing="5" />
+            </ItemsRepeater.Layout>
+            <ItemsRepeater.ItemTemplate>
+              <DataTemplate>
+                  <Button Content="{Binding }"  CornerRadius="6"  Margin="3,0" HorizontalAlignment="Stretch"
+                          CommandParameter="{Binding }" FontSize="20" Height="45" Width="75" VerticalAlignment="Stretch"
+                          Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).StepRateChangeCommand}">
+                  </Button>
+              </DataTemplate>
+            </ItemsRepeater.ItemTemplate>
+          </ItemsRepeater>
+        </StackPanel>
+    
 
-      <!-- Bottom ContentControl Host -->
-      <Border DockPanel.Dock="Bottom" Height="2" Margin="1">
-      </Border>
+      <!--ToolControl-->
+      <Grid Grid.Row="3"  Margin="3,20,3,0" ColumnDefinitions="*,*">
+        <Button Height="45" x:Name="SplitB" Content="{Binding SelectedTool, StringFormat={}Tool# {0}}"
+                     HorizontalAlignment="Stretch" CornerRadius="6"
+                     HorizontalContentAlignment="Center"  VerticalContentAlignment="Center"
+                     VerticalAlignment="Stretch" Margin="2,0" FontSize="20">
+          <Button.Flyout  >
+            <Flyout  Placement="LeftEdgeAlignedBottom">
+              <ListBox x:Name="ToolLb" SelectionMode="Single"  ItemsSource="{Binding ToolList}"
+                       SelectedItem="{Binding SelectedTool, Mode=TwoWay}"
+                       SelectionChanged="ToolLb_OnSelectionChanged"
+                       Height="275" FontSize="25"  VerticalAlignment="Stretch"  Width="125" Margin="2,2"
+                       behaviors:CloseMenuOnItemSelection.Command ="{Binding HideBoxCommand}"
+                       behaviors:CloseMenuOnItemSelection.CommandParameter="{Binding SelectedTool}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Border BorderBrush="Gray" Opacity=".8" BorderThickness="1"
+                            CornerRadius="4" Padding="4" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" >
+                      <TextBlock Text="{Binding}" Width="65" Height="40" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                 TextAlignment="Center"/>
+                    </Border>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Flyout>
+          </Button.Flyout>
+        </Button>
+        <Button Grid.Column="1" Height="45" CornerRadius="6" Content="Change Tool" Margin="3,0" FontSize="20"
+                HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
+                CommandParameter="{Binding SelectedTool}"
+                VerticalAlignment="Stretch"></Button>
+      </Grid>
+      </Grid>
+    </Border>
 
-      <!-- Center ContentControl Host -->
-      <Border  DockPanel.Dock="Right" BorderBrush="DarkGray">
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"></ColumnDefinition>
-            <ColumnDefinition Width="auto"></ColumnDefinition>
-            <ColumnDefinition Width="Auto"></ColumnDefinition>
-          </Grid.ColumnDefinitions>
-          <TabControl Grid.Column="0" Grid.ColumnSpan="2" >
-            <TabItem Header="Home">
-              <Canvas Background="White" HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch"
-                      Margin="1,1,1,2" >
-              </Canvas>
-            </TabItem>
-            <TabItem Header="GrblHAL Settings">
-              <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"
-                               VerticalAlignment="Stretch"></ctl:SettingView>
-            </TabItem>
-          </TabControl>
-          <Grid x:Name="PopOutGrid"
-              Grid.Row="0" Grid.Column="0" MinWidth="50" MinHeight="200"  Margin="0,45,0,0"
-              Background="Transparent" HorizontalAlignment="Left"
-              behaviors:DoubleTappedBehav.Command="{Binding DoubleTapCommand}"
-              behaviors:DoubleTappedBehav.CommandParameter="{Binding #LB.IsVisible}">
-            <Grid.VerticalAlignment>
-              <MultiBinding  Converter="{StaticResource AlignmentConvertor}" ConverterParameter="{Binding #LB.IsVisible}">
-                <Binding Path="IsVisible" ElementName="LB"  ></Binding>
-              </MultiBinding>
-            </Grid.VerticalAlignment>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="*"></RowDefinition>
-              <RowDefinition Height="Auto"></RowDefinition>
-            </Grid.RowDefinitions>
-            <ListBox Grid.Row="0" x:Name="LB" Width="400" ItemsSource="{Binding ConsoleOutput}"
+    <!-- Bottom ContentControl Host Macro section -->
+    <Border DockPanel.Dock="Bottom" Height="55" Margin="0,0,0,0">
+      <Grid RowDefinitions= "Auto" >
+        <ItemsRepeater Grid.Row="0"  ItemsSource="{Binding MacroList}" Margin="5,0">
+          <ItemsRepeater.Layout>
+            <StackLayout
+                Orientation="Horizontal"/>
+          </ItemsRepeater.Layout>
+          <ItemsRepeater.ItemTemplate>
+            <DataTemplate>
+              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"   Orientation="Horizontal">
+                <Button Content="{Binding Path=Id}" Width="85" Height="45" Margin="10,3,0,5"
+                        CommandParameter="{Binding Id}"
+                        FontSize="20" Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).RunMacroCommand}">
+                </Button>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsRepeater.ItemTemplate>
+        </ItemsRepeater>
+      </Grid>
+    </Border>
+
+    <!-- Center ContentControl Host -->
+    <Border  DockPanel.Dock="Right" BorderBrush="DarkGray">
+      <Grid ColumnDefinitions="*,auto,Auto">
+        <TabControl Grid.Column="0" Grid.ColumnSpan="2" >
+          <TabItem Header="Home">
+            <Canvas Background="White" HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Margin="1,0.5,1,2" >
+              <Grid  Bounds="" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <ItemsRepeater Grid.Column="0" Grid.Row="0"  HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" ItemsSource="{Binding MacroList}" Margin="5,0">
+                  <ItemsRepeater.Layout>
+                    <StackLayout
+                        Orientation="Horizontal" Spacing="10"   />
+                  </ItemsRepeater.Layout>
+                  <ItemsRepeater.ItemTemplate>
+                    <DataTemplate>
+                      <Button Content="{Binding Path=Id}" Width="110" Height="45" CornerRadius="0,0,10,10" Margin="10,0,0,0"
+                              CommandParameter="{Binding Id}" FontSize="26" Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).RunMacroCommand}">
+                      </Button>
+                    </DataTemplate>
+                  </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+                <StackPanel Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                            Orientation="Horizontal"  Grid.Column="0">
+                  <Button HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                          CornerRadius="0,0,10,10" Height="45" Width="110" Content="Start"
+                          FontSize="26" Margin="10,0,0, 0"/>
+                  <Button HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                          CornerRadius="0,0,10,10" Height="45" Width="110" Content="Pause"
+                          FontSize="26" Margin="10,0,0, 0"/>
+                  <Button HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                          Height="45" CornerRadius="0,0,10,10" Width="110" Content="Hold"
+                          FontSize="26" Margin="10,0,0, 0"/>
+                  <Button HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                          Height="45" CornerRadius="0,0,10,10" Width="110" Content="Stop"
+                          FontSize="26" Margin="10,0,0, 0"/>
+                </StackPanel>
+              </Grid>
+            </Canvas>
+          </TabItem>
+
+          <TabItem Header="GrblHAL Settings">
+            <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"
+                             VerticalAlignment="Stretch"></ctl:SettingView>
+          </TabItem>
+        </TabControl>
+
+        <Grid x:Name="PopOutGrid"
+            Grid.Row="0" Grid.Column="0" MinWidth="50" MinHeight="200"  Margin="0,45,0,0"
+            Background="Transparent" HorizontalAlignment="Left"
+            behaviors:DoubleTappedBehav.Command="{Binding DoubleTapCommand}"
+            behaviors:DoubleTappedBehav.CommandParameter="{Binding #LB.IsVisible}">
+          <Grid.VerticalAlignment>
+            <MultiBinding  Converter="{StaticResource AlignmentConvertor}" ConverterParameter="{Binding #LB.IsVisible}">
+              <Binding Path="IsVisible" ElementName="LB"  ></Binding>
+            </MultiBinding>
+          </Grid.VerticalAlignment>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+          </Grid.RowDefinitions>
+          <ListBox Grid.Row="0" x:Name="LB" Width="400" ItemsSource="{Binding ConsoleOutput}"
+                   VerticalAlignment="Stretch"
+                   HorizontalAlignment="Stretch"
+                   Background="{StaticResource DarkReduceBrushAlpha }"
+                   Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                   IsVisible="{Binding ShowConsole}"
+                   FontSize="18"   >
+            <Interaction.Behaviors>
+              <behaviors:ScrollToEndBehavior />
+            </Interaction.Behaviors>
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Foreground="{StaticResource SmokeWhiteText}" Margin="0,1" FontWeight="Bold" Opacity="1.0"  Text="{Binding}" FontSize="18"
+                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  />
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <Grid Grid.Row="1"
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Stretch"
+                     IsVisible="{Binding ShowConsole}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition></ColumnDefinition>
+              <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"  Height="40" Command="{Binding ClearConsoleCommand}"  Content="Clear" DockPanel.Dock="Top"
                      VerticalAlignment="Stretch"
                      HorizontalAlignment="Stretch"
-                     Background="{StaticResource DarkReduceBrushAlpha }"
-                     Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     IsVisible="{Binding ShowConsole}"
-                     FontSize="18"   >
-              <Interaction.Behaviors>
-                <behaviors:ScrollToEndBehavior />
-              </Interaction.Behaviors>
-              <ListBox.ItemTemplate>
-                <DataTemplate>
-                  <TextBlock Foreground="DeepSkyBlue" Text="{Binding}" FontSize="16"
-                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  />
-                </DataTemplate>
-              </ListBox.ItemTemplate>
-            </ListBox>
-            <Grid Grid.Row="1"
-                       HorizontalAlignment="Stretch"
-                       VerticalAlignment="Stretch"
-                       IsVisible="{Binding ShowConsole}">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition></ColumnDefinition>
-                <ColumnDefinition></ColumnDefinition>
-              </Grid.ColumnDefinitions>
-              <Button Grid.Column="0"  Height="40" Command="{Binding ClearConsoleCommand}"  Content="Clear" DockPanel.Dock="Top"
-                       VerticalAlignment="Stretch"
-                       HorizontalAlignment="Stretch"
-                       FontSize="20"></Button>
-              <Button Grid.Column="1"  Height="40" Command="{Binding ToggleRTCommand}"
-                      Content="Toggle Rt" DockPanel.Dock="Bottom"
-                       VerticalAlignment="Stretch"
-                       HorizontalAlignment="Stretch"
-                       FontSize="20"></Button>
-            </Grid>
+                     FontSize="20"></Button>
+            <Button Grid.Column="1"  Height="40" Command="{Binding ToggleRTCommand}"
+                    Content="Toggle Rt" DockPanel.Dock="Bottom"
+                     VerticalAlignment="Stretch"
+                     HorizontalAlignment="Stretch"
+                     FontSize="20"></Button>
           </Grid>
         </Grid>
-      </Border>
+      </Grid>
+    </Border>
+
   </DockPanel>
 </UserControl>
-

@@ -293,7 +293,7 @@ namespace GrbLHAL_Sender.Communication
                             rtState.WCS = value;
                             break;
                         case "Pn":
-                            rtState.SignalStatus = value.Split(',').ToList();
+                            rtState.SignalStatus = value.ToCharArray().ToList();
                             break;                                                              /*"Idle|MPos:0.000,0.000,254.000|Bf:100,1023|FS:0,0|WCO:0.000,0.000,254.000|WCS:G54|A:|Sc:|MPG:0|H:0|T:4|TLR:0|FW:grblHAL"*/
                         case "WCO":
                             rtState.Wco = value.Split(",");

@@ -5,10 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="clr-namespace:GrbLHAL_Sender.Views"
         mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
-        Height="1080" Width="1920" 
+        Height="1080" Width="1920"
         x:Class="GrbLHAL_Sender.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico" 
+        Icon="/Assets/avalonia-logo.ico"
         Title="GrblHAL Sender">
-        <views:MainView />
-
+  <!--<LayoutTransformControl HorizontalAlignment="Stretch" ClipToBounds="True"  
+                          VerticalAlignment="Stretch"  UseLayoutRounding="True" 
+                          SizeChanged="Control_OnSizeChanged" LayoutTransform="" >-->
+      <views:MainView />
+  <!--</LayoutTransformControl>-->
 </Window>
+
