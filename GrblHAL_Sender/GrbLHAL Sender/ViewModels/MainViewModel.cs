@@ -223,7 +223,6 @@ public class MainViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _jogStepList, value);
     }
 
-
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager)
     {
@@ -519,7 +518,6 @@ public class MainViewModel : ViewModelBase
 public class Axis : ViewModelBase
 {
     private Position _position;
-    //private double _mPosition;
     public int Order { get; set; }
     public string Name { get; set; }
     public ICommand? ZeroWcsCommand { get; set; }
@@ -549,8 +547,4 @@ public class Macro
 {
     public string Id { get; set; }
     public string Command { get; set; }
-    public Macro()
-    {
-
-    }
 }
