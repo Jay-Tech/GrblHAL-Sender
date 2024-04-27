@@ -51,44 +51,76 @@ public class GHalSenderConfig
     public bool UseSerial { get; set; } = true;
     public bool AutoConnect { get; set; } = false;
     public SerialSettings SerialSettings { get; set; } = new("COM1");
-    public JogInformation JogInformation { get; set; } = new();
     public ToolList ToolList { get; set; } = new();
+
+    public double[] JogDistance { get; set; } =
+    [
+        .01,
+        1,
+        10
+    ];
+
+    public double[] JogSpeed { get; set; } =
+    [
+        100,
+        800,
+        1500,
+    ];
+
+
 }
 
-public class JogInformation
+public class JogSpeedInformation
 {
     public double Slow { get; set; } = 100;
     public double Fast { get; set; } = 800;
     public double Rapid { get; set; } = 1500;
+
+    public JogSpeedInformation()
+    {
+        Slow = 100;
+        Fast = 800;
+        Rapid = 1500;
+    }
+}
+public class JogDistanceInformation
+{
+
     public double Fine { get; set; } = .001;
     public double Short { get; set; } = 1;
     public double Large { get; set; } = 10;
 
-    public JogInformation()
+    public JogDistanceInformation()
     {
+        Fine = .001;
+        Short = 1;
+        Large = 10;
 
     }
 }
+
 public class ToolList
 {
-    public List<Tool> Tools { get; set; } = new()
+    public List<int> Tools { get; set; } = new()
     {
-        new(1),
-        new(2),
-        new(3),
-        new(4),
-        new(5),
-        new(6),
-        new(7),
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
 
     };
 }
 
-public struct Tool
-{
-    public int ToolNumber { get; set; }
-    public Tool(int number)
-    {
-        ToolNumber = number;
-    }
-}
+//public class Tool
+//{
+//    public int ToolNumber { get; set; }
+//    public Tool(int tool)
+//    {
+//        ToolNumber = tool;
+//    }
+//}

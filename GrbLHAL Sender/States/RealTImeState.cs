@@ -16,7 +16,7 @@ public class RealTImeState
     public string Tool { get; set; }
     public string ProgramedSpeed { get; set; }
     public string ActualSpeed { get; set; }
-    public List<string> SignalStatus { get; set; } = [];
+    public List<char> SignalStatus { get; set; } = [];
 
     public RealTImeState()
     {

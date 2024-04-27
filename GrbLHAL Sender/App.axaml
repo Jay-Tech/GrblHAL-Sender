@@ -5,19 +5,21 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
   <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
   <Application.Resources>
-    <!--<SolidColorBrush Color="#99111111" x:Key="TheKeyToOverride" />
-    <SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#99111111"> </SolidColorBrush>
-    <SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{DynamicResource SystemAccentColor}" />
-    <Color x:Key="DarkReduceColorAlpha">#99111111</Color>
-    <Color x:Key="BlackPrimaryBackGround">#EF111111</Color>
+
+    <SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#59111111"> </SolidColorBrush>
+    <SolidColorBrush x:Key="SmokeWhiteText" Color="#FF111111"> </SolidColorBrush>
+    <!--<SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{DynamicResource SystemAccentColor}" />-->
+    <!--<Color x:Key="DarkReduceColorAlpha">#70111111</Color>-->
+    <!--<Color x:Key="BlackPrimaryBackGround">#EF111111</Color>
     <Color x:Key="DarkBoarder">#99000000</Color>
     <Color x:Key="SystemBaseLowColor">#33000000</Color>
-    <Color x:Key="SystemBaseLColor">#33FFFFFF</Color>-->
-    <!--<Color x:Key="DarkBoarder">#676767</Color>-->
-    <Color x:Key="DarkBoarder">#333333</Color>
+    <Color x:Key="SystemBaseLColor">#33FFFFFF</Color>
+    <Color x:Key="DarkBoarder">#676767</Color>
+    <Color x:Key="DarkBoarder">#FF505050</Color>-->
+
   </Application.Resources>
   <Application.Styles>
-      <materialIcons:MaterialIconStyles />
+    <materialIcons:MaterialIconStyles />
 
     <Style Selector="TextBox.h1">
       <Setter Property="FontSize" Value="20"/>
@@ -27,31 +29,28 @@
     <Style Selector="Button.h1">
       <Setter Property="FontSize" Value="18"/>
       <Setter Property="Height" Value="58"/>
-      <Setter Property="Width" Value="50"/>
+      <Setter Property="Width" Value="51"/>
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
       <Setter Property="VerticalAlignment" Value="Stretch"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
-      <Setter Property="Margin" Value=".2,.4"></Setter>
+      <Setter Property="Margin" Value="1,1"></Setter>
     </Style>
-    <FluentTheme>
-        <FluentTheme.Palettes>
-            <ColorPaletteResources x:Key="Light" Accent="#ff0073cf" AltHigh="White" AltLow="White" AltMedium="White" AltMediumHigh="White" AltMediumLow="White" BaseHigh="Black" BaseLow="#e9cccccc" BaseMedium="#f6898989" BaseMediumHigh="#ff5d5d5d" BaseMediumLow="#fb737373" ChromeAltLow="#ff5d5d5d" ChromeBlackHigh="Black" ChromeBlackLow="#e9cccccc" ChromeBlackMedium="#ff5d5d5d" ChromeBlackMediumLow="#f6898989" ChromeDisabledHigh="#e9cccccc" ChromeDisabledLow="#f6898989" ChromeGray="#fb737373" ChromeHigh="#e9cccccc" ChromeLow="#ffececec" ChromeMedium="#fbe6e6e6" ChromeMediumLow="#ffececec" ChromeWhite="White" ListLow="#fbe6e6e6" ListMedium="#e9cccccc" RegionColor="#f6ffffff" />
-            <ColorPaletteResources x:Key="Dark" Accent="#ff0073cf" AltHigh="Black" AltLow="Black" AltMedium="Black" AltMediumHigh="Black" AltMediumLow="Black" BaseHigh="White" BaseLow="#ff333333" BaseMedium="#ff9a9a9a" BaseMediumHigh="#ffb4b4b4" BaseMediumLow="#ff676767" ChromeAltLow="#ffb4b4b4" ChromeBlackHigh="Black" ChromeBlackLow="#ffb4b4b4" ChromeBlackMedium="Black" ChromeBlackMediumLow="Black" ChromeDisabledHigh="#ff333333" ChromeDisabledLow="#ff9a9a9a" ChromeGray="Gray" ChromeHigh="Gray" ChromeLow="#a3151515" ChromeMedium="#ff1d1d1d" ChromeMediumLow="#ff2c2c2c" ChromeWhite="White" ListLow="#ff1d1d1d" ListMedium="#ff333333" RegionColor="#f0808080" />
-        </FluentTheme.Palettes>
-    </FluentTheme>
-
-
-
-
-    <!--<FluentTheme>
+    <!--FluentTheme>
           <FluentTheme.Palettes>
-              <ColorPaletteResources x:Key="Light" Accent="#ff0073cf" AltHigh="White" AltLow="White" AltMedium="White" AltMediumHigh="White" AltMediumLow="White" BaseHigh="Black" BaseLow="#ffcccccc" BaseMedium="#ff898989" BaseMediumHigh="#ff5d5d5d" BaseMediumLow="#ff737373" ChromeAltLow="#ff5d5d5d" ChromeBlackHigh="Black" ChromeBlackLow="#ffcccccc" ChromeBlackMedium="#ff5d5d5d" ChromeBlackMediumLow="#ff898989" ChromeDisabledHigh="#ffcccccc" ChromeDisabledLow="#ff898989" ChromeGray="#ff737373" ChromeHigh="#ffcccccc" ChromeLow="#ffececec" ChromeMedium="#ffe6e6e6" ChromeMediumLow="#ffececec" ChromeWhite="White" ListLow="#ffe6e6e6" ListMedium="#ffcccccc" RegionColor="White" />
-              <ColorPaletteResources x:Key="Dark" Accent="#ffa180cf" AltHigh="Black" AltLow="Black" AltMedium="Black" AltMediumHigh="Black" AltMediumLow="Black" BaseHigh="White" BaseLow="#8772cf7e" BaseMedium="#e7b2e9b9" BaseMediumHigh="#ffc2f0c8" BaseMediumLow="#b792dc9c" ChromeAltLow="#ffc2f0c8" ChromeBlackHigh="Black" ChromeBlackLow="#ffc2f0c8" ChromeBlackMedium="Black" ChromeBlackMediumLow="Black" ChromeDisabledHigh="#8772cf7e" ChromeDisabledLow="#e7b2e9b9" ChromeGray="#cfa2e3aa" ChromeHigh="#cfa2e3aa" ChromeLow="#e7177927" ChromeMedium="#cf2e8f3d" ChromeMediumLow="#9f5bba68" ChromeWhite="White" ListLow="#cf2e8f3d" ListMedium="#8772cf7e" RegionColor="#ff68768a" />
+              <ColorPaletteResources x:Key="Light" Accent="#ff0073cf" AltHigh="White" AltLow="White" AltMedium="White" AltMediumHigh="White" AltMediumLow="White" BaseHigh="Black" BaseLow="#e9cccccc" BaseMedium="#f6898989" BaseMediumHigh="#ff5d5d5d" BaseMediumLow="#fb737373" ChromeAltLow="#ff5d5d5d" ChromeBlackHigh="Black" ChromeBlackLow="#e9cccccc" ChromeBlackMedium="#ff5d5d5d" ChromeBlackMediumLow="#f6898989" ChromeDisabledHigh="#e9cccccc" ChromeDisabledLow="#f6898989" ChromeGray="#fb737373" ChromeHigh="#e9cccccc" ChromeLow="#ffececec" ChromeMedium="#fbe6e6e6" ChromeMediumLow="#ffececec" ChromeWhite="White" ListLow="#fbe6e6e6" ListMedium="#e9cccccc" RegionColor="#f6ffffff" />
+              <ColorPaletteResources x:Key="Dark" Accent="#ff0073cf" AltHigh="Black" AltLow="Black" AltMedium="Black" AltMediumHigh="Black" 
+                                     AltMediumLow="Black" BaseHigh="White" BaseLow="#ff333333" BaseMedium="#ff9a9a9a" BaseMediumHigh="#ffb4b4b4" 
+                                     BaseMediumLow="#ff676767" ChromeAltLow="#ffb4b4b4" ChromeBlackHigh="Black" ChromeBlackLow="#ffb4b4b4" ChromeBlackMedium="Black" 
+                                     ChromeBlackMediumLow="Black" ChromeDisabledHigh="#ff333333" ChromeDisabledLow="#ff9a9a9a" ChromeGray="Gray" ChromeHigh="Gray"
+                                     ChromeLow="#a3151515"
+                                     ChromeMedium="#ff1d1d1d" ChromeMediumLow="#ff2c2c2c" ChromeWhite="White" ListLow="#ff1d1d1d" ListMedium="#ff333333" RegionColor="#f5808080" />
           </FluentTheme.Palettes>
-      </FluentTheme>-->
+    </FluentTheme>-->
 
+    <FluentTheme DensityStyle="Compact">
 
-    <!--<SimpleTheme />-->
+    </FluentTheme>
+    <SimpleTheme />
   </Application.Styles>
 </Application>

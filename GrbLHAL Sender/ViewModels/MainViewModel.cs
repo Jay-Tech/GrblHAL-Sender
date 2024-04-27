@@ -18,6 +18,7 @@ using Avalonia.Threading;
 using DynamicData;
 using GrbLHAL_Sender.Settings;
 using System.Threading.Tasks;
+using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using GrbLHAL_Sender.Configuration;
 using Microsoft.CodeAnalysis;
@@ -26,89 +27,88 @@ namespace GrbLHAL_Sender.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    public string jogDataDistance = "10";
-    public string FeedRate = "1000";
-
-    private readonly SettingsViewModel _settingsViewModel;
     private readonly CommunicationManager _commManager;
     private readonly ConfigManager _configManager;
     private ObservableCollection<Axis> _axis;
     private ObservableCollection<string> _consoleOutput = new();
     private ObservableCollection<int> _toolList = new();
     private ObservableCollection<Signal> _signalList = [];
+    private ObservableCollection<Macro> _macroList;
+    private ObservableCollection<double> _jogStepList;
+    private ObservableCollection<double> _jogRateList;
+    private readonly GHalSenderConfig _config;
     private RealTImeState _state;
     private bool _showConsole;
     private bool _isJobRunning;
-    private bool _hasAtc;
-    private bool _hasSdCard;
-    private bool _hasProbing;
-    private bool _isFileLoaded;
-    private ICommand _connectCommand;
-    private ICommand _zeroAxis;
-    private ICommand _jogXDownCommand;
-    private ICommand _jogXUpCommand;
-    private ICommand _jogYUpCommand;
-    private ICommand _jogYDownCommand;
-    private ICommand _jogZDownCommand;
-    private ICommand _jogZUpCommand;
-    private ICommand _zeroAllCommand;
-    private ICommand _unLockCommand;
-    private ICommand _homeCommand;
-    private ICommand _clearAlarmCommand;
+
+    //private bool _hasAtc;
+    //private bool _hasSdCard;
+    //private bool _hasProbing;
+    //private bool _isFileLoaded;
     private ReactiveCommand<object, Unit> _doubleTapCommand;
     private ReactiveCommand<object, Unit> _hideBoxCommand;
-    private string _unitSystem = "G21";
     private bool _connected;
     private Color _homeStateColor;
-    private SettingsViewModel _settingsViewModel1;
     private bool _alarmActive;
     private bool _needsSetup;
-    private readonly GHalSenderConfig _config;
     private int _selectedTool;
     private bool _hideToolChangeList;
+    private double _jogStep;
+    private double _jogRate;
+    private readonly ICommand _toggleRtCommand;
+    private string _mdiText;
+
     public bool ShowRTCommands { get; set; }
+
     public bool AutoConnect { get; set; }
-    public bool IsJobRunning
-    {
-        get => _isJobRunning;
-        set => _isJobRunning = value;
-    }
-    public bool HasATC
-    {
-        get => _hasAtc;
-        set => _hasAtc = value;
-    }
-    public bool HasSdCard
-    {
-        get => _hasSdCard;
-        set => _hasSdCard = value;
-    }
-    public bool HasProbing
-    {
-        get => _hasProbing;
-        set => _hasProbing = value;
-    }
-    public bool IsFileLoaded
-    {
-        get => _isFileLoaded;
-        set => _isFileLoaded = value;
-    }
-    public string UnitSystem
-    {
-        get => _unitSystem;
-        set => _unitSystem = value;
-    }
+
+    //public bool IsJobRunning
+    //{
+    //    get => _isJobRunning;
+    //    set => _isJobRunning = value;
+    //}
+    //public bool HasATC
+    //{
+    //    get => _hasAtc;
+    //    set => _hasAtc = value;
+    //}
+    //public bool HasSdCard
+    //{
+    //    get => _hasSdCard;
+    //    set => _hasSdCard = value;
+    //}
+    //public bool HasProbing
+    //{
+    //    get => _hasProbing;
+    //    set => _hasProbing = value;
+    //}
+    //public bool IsFileLoaded
+    //{
+    //    get => _isFileLoaded;
+    //    set => _isFileLoaded = value;
+    //}
+    public string UnitSystem { get; set; } = "G20";
+
     public Color HomeStateColor
     {
         get => _homeStateColor;
         set => _homeStateColor = value;
+    }
+    public double JogStep
+    {
+        get => _jogStep;
+        set => this.RaiseAndSetIfChanged(ref _jogStep, value);
+    }
+    public double JogRate
+    {
+        get => _jogRate;
+        set => this.RaiseAndSetIfChanged(ref _jogRate, value);
     }
     public bool Connected
     {
         get => _connected;
         set => this.RaiseAndSetIfChanged(ref _connected, value);
     }
-
     public bool HideToolChangeList
     {
         get => _hideToolChangeList;
@@ -124,87 +124,59 @@ public class MainViewModel : ViewModelBase
         get => _alarmActive;
         set => this.RaiseAndSetIfChanged(ref _alarmActive, value);
     }
+
+    public string MdiText
+    {
+        get => _mdiText;
+        set => this.RaiseAndSetIfChanged(ref _mdiText, value);
+    }
+
     public int SelectedTool
     {
         get => _selectedTool;
         set => this.RaiseAndSetIfChanged(ref _selectedTool, value);
     }
-
     public RealTImeState State
     {
         get => _state;
         set => this.RaiseAndSetIfChanged(ref _state, value);
     }
-    public SettingsViewModel SettingsViewModel
-    {
-        get => _settingsViewModel1;
-        set => _settingsViewModel1 = value;
-    }
-    public ICommand ConnectCommand
-    {
-        get => _connectCommand;
-        set => _connectCommand = value;
-    }
-    public ICommand ZeroAxis
-    {
-        get => _zeroAxis;
-        set => _zeroAxis = value;
-    }
-    public ICommand JogXDownCommand
-    {
-        get => _jogXDownCommand;
-        set => _jogXDownCommand = value;
-    }
-    public ICommand JogXUpCommand
-    {
-        get => _jogXUpCommand;
-        set => _jogXUpCommand = value;
-    }
-    public ICommand JogYUpCommand
-    {
-        get => _jogYUpCommand;
-        set => _jogYUpCommand = value;
-    }
-    public ICommand JogYDownCommand
-    {
-        get => _jogYDownCommand;
-        set => _jogYDownCommand = value;
-    }
-    public ICommand JogZDownCommand
-    {
-        get => _jogZDownCommand;
-        set => _jogZDownCommand = value;
-    }
-    public ICommand JogZUpCommand
-    {
-        get => _jogZUpCommand;
-        set => _jogZUpCommand = value;
-    }
-    public ICommand ZeroAllCommand
-    {
-        get => _zeroAllCommand;
-        set => _zeroAllCommand = value;
-    }
-    public ICommand UnLockCommand
-    {
-        get => _unLockCommand;
-        set => _unLockCommand = value;
-    }
-    public ICommand HomeCommand
-    {
-        get => _homeCommand;
-        set => _homeCommand = value;
-    }
-    public ICommand ClearAlarmCommand
-    {
-        get => _clearAlarmCommand;
-        set => _clearAlarmCommand = value;
-    }
+    public SettingsViewModel SettingsViewModel { get; set; }
+
+    public ICommand ConnectCommand { get; set; }
+
+    public ICommand ZeroAxis { get; set; }
+
+    public ICommand ZeroAllCommand { get; set; }
+
+    public ICommand UnLockCommand { get; set; }
+
+    public ICommand HomeCommand { get; set; }
+
+    public ICommand ClearAlarmCommand { get; set; }
+
+    public ICommand JogNegCommand { get; }
+
+    public ICommand JogPosCommand { get; }
+
     public ICommand ClearConsoleCommand { get; }
-    public ICommand ToggleRTCommand { get; }
+
+    public ICommand ToggleRTCommand => _toggleRtCommand;
+
     public ICommand MdiTextCommand { get; }
+
     public ICommand WcsCommand { get; }
+
     public ICommand ToolSelectedCommand { get; }
+
+    public ICommand FeedRateChangeCommand { get; }
+
+    public ICommand StepRateChangeCommand { get; }
+
+    public ICommand RunMacroCommand { get; }
+
+    public ICommand KeyPressCommand { get; }
+
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
         get => _doubleTapCommand;
@@ -235,8 +207,25 @@ public class MainViewModel : ViewModelBase
         get => _consoleOutput;
         set => this.RaiseAndSetIfChanged(ref _consoleOutput, value);
     }
+    public ObservableCollection<Macro> MacroList
+    {
+        get => _macroList;
+        set => this.RaiseAndSetIfChanged(ref _macroList, value);
+    }
+    public ObservableCollection<double> JogRateList
+    {
+        get => _jogRateList;
+        set => this.RaiseAndSetIfChanged(ref _jogRateList, value);
+    }
+    public ObservableCollection<double> JogStepList
+    {
+        get => _jogStepList;
+        set => this.RaiseAndSetIfChanged(ref _jogStepList, value);
+    }
 
-    public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel, ConfigManager configManager)
+
+    public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
+        ConfigManager configManager)
     {
         SettingsViewModel = settingsViewModel;
         _needsSetup = true;
@@ -253,43 +242,55 @@ public class MainViewModel : ViewModelBase
         ZeroAxis = ReactiveCommand.Create<string>(Zero);
         HomeCommand = ReactiveCommand.Create(Home);
         UnLockCommand = ReactiveCommand.Create(Unlock);
-        JogXDownCommand = ReactiveCommand.Create<string>(JogXDown);
-        JogXUpCommand = ReactiveCommand.Create<string>(JogXUp);
-        JogZUpCommand = ReactiveCommand.Create<string>(JogZUp);
-        JogZDownCommand = ReactiveCommand.Create<string>(JogZDown);
-        JogYUpCommand = ReactiveCommand.Create<string>(JogYUp);
-        JogYDownCommand = ReactiveCommand.Create<string>(JogYDown);
+        JogNegCommand = ReactiveCommand.Create<string>(JogNeg);
+        JogPosCommand = ReactiveCommand.Create<string>(JogPos);
         ZeroAllCommand = ReactiveCommand.Create(ZeroAll);
         ClearAlarmCommand = ReactiveCommand.Create(ClearAlarm);
-
         ClearConsoleCommand = ReactiveCommand.Create(ClearConsole);
-        ToggleRTCommand = ReactiveCommand.Create(ToggleConsoleRt);
+        _toggleRtCommand = ReactiveCommand.Create(ToggleConsoleRt);
         MdiTextCommand = ReactiveCommand.Create<string>(MDIText);
         WcsCommand = ReactiveCommand.Create<string>(Wcs);
         ToolSelectedCommand = ReactiveCommand.Create<int>(ToolSelected);
         DoubleTapCommand = ReactiveCommand.Create<object>(DoubleTap);
         HideBoxCommand = ReactiveCommand.Create<object>(HideToolList);
-        //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
+        KeyPressCommand = ReactiveCommand.Create<string>(KeyPressed);
+        FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
+        StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
+        RunMacroCommand = ReactiveCommand.Create<string>(RunMacro);
 
+        //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
+        MacroList =
+        [
+            new Macro
+            {
+                Id = "M1",
+                Command = "Test",
+
+            },
+            new Macro
+            {
+                Id = "M2",
+                Command = "G0X0Y0Z0",
+            }
+        ];
         _axis = new ObservableCollection<Axis>
         {
             new()
             {
                 Name = "X",
-                ZeroWcsCommand  =  ZeroAxis,
+                ZeroWcsCommand = ZeroAxis,
                 Order = 0
             },
             new()
             {
                 Name = "Y",
-                ZeroWcsCommand  =  ZeroAxis,
+                ZeroWcsCommand = ZeroAxis,
                 Order = 1
-
             },
             new()
             {
                 Name = "Z",
-                ZeroWcsCommand  =  ZeroAxis,
+                ZeroWcsCommand = ZeroAxis,
                 Order = 2
             },
         };
@@ -306,11 +307,56 @@ public class MainViewModel : ViewModelBase
 
         }
     }
+
+    private void KeyPressed(string key)
+    {
+        string text;
+        switch (key)
+        {
+            case "Ent":
+                text = "\r\n";
+                break;
+            case "Spc":
+                text = " ";
+                break;
+            case "Del":
+                { 
+                    if (MdiText.EndsWith("\r\n"))
+                    {
+                        MdiText = MdiText.TrimEnd();
+                        return;
+                    }
+
+                    if (MdiText.Length >= 1)
+                        MdiText = MdiText.Remove(MdiText.Length - 1);
+                    return;
+
+                }
+            default:
+                text = key;
+                break;
+        }
+
+        MdiText += text;
+    }
+
+    private void RunMacro(string macroId)
+    {
+        var command = MacroList.First(x => x.Id == macroId);
+        SendCommand(command.Command);
+    }
+    private void ChangeStepRate(double step)
+    {
+        JogStep = step;
+    }
+    private void ChangeFeedRate(double feed)
+    {
+        JogRate = feed;
+    }
     private void HideToolList(object obj)
     {
         HideToolChangeList = !Convert.ToBoolean(obj);
     }
-
     private void ToolSelected(int tool)
     {
         var command = _isJobRunning ? $"T{tool}M6" : $"M61Q{tool}";
@@ -320,15 +366,16 @@ public class MainViewModel : ViewModelBase
     {
         UnitSystem = _config.UseMetric ? "G21" : "G20";
         AutoConnect = _config.AutoConnect;
-        var toolNumber = _config.ToolList.Tools.Select(tool => tool.ToolNumber).ToList();
-        ToolList.AddRange<int>(toolNumber);
+        JogRateList = new ObservableCollection<double>(_config.JogSpeed);
+        JogStepList = new ObservableCollection<double>(_config.JogDistance);
+        JogStep = JogStepList[^1];
+        JogRate = JogRateList[^1];
+        ToolList.AddRange(_config.ToolList.Tools);
     }
-
     private void Wcs(string command)
     {
         SendCommand(command);
     }
-
     private void SendCommand(string command)
     {
         if (string.IsNullOrEmpty(command)) return;
@@ -339,12 +386,10 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand(command);
     }
-
     private void DoubleTap(object p)
     {
         ShowConsole = !Convert.ToBoolean(p);
     }
-
     private void ToggleConsoleRt()
     {
         ShowRTCommands = !ShowRTCommands;
@@ -378,7 +423,6 @@ public class MainViewModel : ViewModelBase
     {
         _commManager.Adapter.WriteByte(Cmd_Reset);
     }
-
     private void UIThread_ShutdownStarted(object? sender, EventArgs e)
     {
         _commManager.ShutDown();
@@ -406,7 +450,6 @@ public class MainViewModel : ViewModelBase
         }
         State = e;
         AlarmActive = e.GrblHalState == "Alarm";
-
         if (ConsoleOutput.Count > 200)
         {
             ConsoleOutput.Clear();
@@ -417,8 +460,7 @@ public class MainViewModel : ViewModelBase
         }
         ProcessSignals(e.SignalStatus);
     }
-
-    private void ProcessSignals(List<string> signals)
+    private void ProcessSignals(List<char> signals)
     {
         if (signals.Count == 0)
         {
@@ -435,71 +477,45 @@ public class MainViewModel : ViewModelBase
             signal.Triggered = true;
         }
     }
-
     private void _commManager_onOptionsUpdated(object? sender, GrblHALOptions e)
     {
         if (_needsSetup)
         {
-            foreach (var axis in e.AxisLabels)
+            foreach (var axis in e.AxisLabels.Where(axis => _axis.All(x => x.Name != axis.ToString())))
             {
-                if (_axis.All(x => x.Name != axis.ToString()))
+                _axis.Add(new Axis
                 {
-                    _axis.Add(new Axis
-                    {
-                        Name = axis.ToString(),
-                        Order = e.AxisLabels.IndexOf(axis),
-                        ZeroWcsCommand = ZeroAxis
-                    });
-                }
+                    Name = axis.ToString(),
+                    Order = e.AxisLabels.IndexOf(axis),
+                    ZeroWcsCommand = ZeroAxis
+                });
             }
             foreach (var signal in e.SignalLabels)
             {
                 SignalList.Add(new Signal
                 {
-                    Id = signal.ToString()
+                    Id = signal
                 });
             }
             _needsSetup = false;
         }
     }
-    private void JogYDown(string axis)
+    private void JogNeg(string axis)
     {
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{jogDataDistance}F{FeedRate}";
+        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{JogStep}F{JogRate}";
         SendCommand(command);
     }
-    private void JogYUp(string axis)
+    private void JogPos(string axis)
     {
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{jogDataDistance}F{FeedRate}";
-        SendCommand(command);
-    }
-    private void JogZUp(string axis)
-    {
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{jogDataDistance}F{FeedRate}";
-        SendCommand(command);
-    }
-    private void JogZDown(string axis)
-    {
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{jogDataDistance}F{FeedRate}";
-        SendCommand(command);
-    }
-    private void JogXUp(string axis)
-    {
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{jogDataDistance}F{FeedRate}";
-        SendCommand(command);
-    }
-    private void JogXDown(string axis)
-    {
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{jogDataDistance}F{FeedRate}";
+        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{JogStep}F{JogRate}";
         SendCommand(command);
     }
     public void Connect()
     {
         _commManager.NewSerialConnection(_config.SerialSettings.PortName);
         _commManager.GetSettings();
-
     }
 }
-
 public class Axis : ViewModelBase
 {
     private Position _position;
@@ -524,8 +540,17 @@ public class Axis : ViewModelBase
 
 public partial class Signal : ObservableObject
 {
-    public string Id { get; set; }
-
+    public char Id { get; set; }
     [ObservableProperty]
     private bool _triggered;
+}
+
+public class Macro
+{
+    public string Id { get; set; }
+    public string Command { get; set; }
+    public Macro()
+    {
+
+    }
 }
