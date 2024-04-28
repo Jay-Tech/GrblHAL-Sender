@@ -54,6 +54,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<SettingsViewModel>();
         collection.AddTransient<JobViewModel>();
         collection.AddTransient<MainViewModel>();
+        collection.AddTransient<ProbeViewModel>();
     }
 
 }

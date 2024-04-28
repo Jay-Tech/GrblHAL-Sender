@@ -34,9 +34,11 @@ namespace GrbLHAL_Sender.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
+    private bool _fine;
     private readonly CommunicationManager _commManager;
     private readonly ConfigManager _configManager;
     private JobViewModel _jobViewModel;
+    private ProbeViewModel _probeViewModel;
     private ObservableCollection<Axis> _axis;
     private ObservableCollection<string> _consoleOutput = new();
     private ObservableCollection<int> _toolList = new();
@@ -60,7 +62,7 @@ public class MainViewModel : ViewModelBase
     private int _rpm;
     private int _feedRate;
     private int _feedOverRide;
-
+    private int _spindleSetRpm;
     //private bool _hasAtc;
     //private bool _hasSdCard;
     //private bool _hasProbing;
@@ -72,6 +74,11 @@ public class MainViewModel : ViewModelBase
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
     public SettingsViewModel SettingsViewModel { get; set; }
+    public ProbeViewModel ProbeViewModel 
+    {
+        get => _probeViewModel;
+        set => _probeViewModel = value;
+    }
     //public bool IsJobRunning
     //{
     //    get => _isJobRunning;
@@ -98,7 +105,6 @@ public class MainViewModel : ViewModelBase
     //    set => _isFileLoaded = value;
     //}
     public string UnitSystem { get; set; } = "G21";
-
     public Color HomeStateColor
     {
         get => _homeStateColor;
@@ -134,13 +140,11 @@ public class MainViewModel : ViewModelBase
         get => _alarmActive;
         set => this.RaiseAndSetIfChanged(ref _alarmActive, value);
     }
-
     public string MdiText
     {
         get => _mdiText;
         set => this.RaiseAndSetIfChanged(ref _mdiText, value);
     }
-
     public int SelectedTool
     {
         get => _selectedTool;
@@ -151,7 +155,6 @@ public class MainViewModel : ViewModelBase
         get => _spindleRpm;
         set => this.RaiseAndSetIfChanged(ref _spindleRpm, value);
     }
-
     public int RPM
     {
         get => _rpm;
@@ -162,7 +165,6 @@ public class MainViewModel : ViewModelBase
         get => _state;
         set => this.RaiseAndSetIfChanged(ref _state, value);
     }
-
     public int FeedRate
     {
         get => _feedRate;
@@ -172,6 +174,11 @@ public class MainViewModel : ViewModelBase
     {
         get => _feedOverRide;
         set => this.RaiseAndSetIfChanged(ref _feedOverRide, value);
+    }
+    public int SpindleSetRpm
+    {
+        get => _spindleSetRpm;
+        set => this.RaiseAndSetIfChanged(ref _spindleSetRpm, value);
     }
 
     public ICommand ConnectCommand { get; set; }
@@ -244,20 +251,11 @@ public class MainViewModel : ViewModelBase
         get => _jogStepList;
         set => this.RaiseAndSetIfChanged(ref _jogStepList, value);
     }
-
     public ReactiveCommand<object, Unit> FocusedCommand
     {
         get => _focusedCommand;
         set => _focusedCommand = value;
     }
-
-
-
-
-    private Action<string> MessageTarget;
-    bool _routedKeyStroke = false;
-    private bool _fine;
-    public string Tnputs { get; set; }
 
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel)
@@ -306,9 +304,7 @@ public class MainViewModel : ViewModelBase
         RapidOrFineCommand = ReactiveCommand.Create(RapidFine);
         ResetRapidCommand = ReactiveCommand.Create(RapidReset);
 
-
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
-
         _axis = new ObservableCollection<Axis>
         {
             new()
@@ -414,6 +410,12 @@ public class MainViewModel : ViewModelBase
             Tnputs = string.Empty;
         }
     }
+    private Action<string> MessageTarget;
+    bool _routedKeyStroke = false;
+    public string Tnputs { get; set; }
+
+    
+
     private void KeyPressed(string key)
     {
         string text;
@@ -443,13 +445,13 @@ public class MainViewModel : ViewModelBase
                 break;
         }
 
-        if (_routedKeyStroke)
-        {
+        //if (_routedKeyStroke)
+        //{
 
-            Tnputs += text;
-            MessageTarget = s => FocusTextInput(s);
-            return;
-        }
+        //    Tnputs += text;
+        //    MessageTarget = s => FocusTextInput(s);
+        //    return;
+        //}
 
         MdiText += text;
     }
