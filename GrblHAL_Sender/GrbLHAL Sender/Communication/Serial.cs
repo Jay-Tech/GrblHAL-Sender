@@ -73,8 +73,8 @@ namespace GrbLHAL_Sender.Communication
             _serialPort.DataReceived -= SerialPort_DataReceived;
             _serialPort.DtrEnable = false;
             _serialPort.RtsEnable = false;
-            _serialPort?.DiscardInBuffer();
-            _serialPort?.DiscardOutBuffer();
+            //_serialPort?.DiscardInBuffer();
+            //_serialPort?.DiscardOutBuffer();
             _serialPort?.Dispose();
         }
 
@@ -82,6 +82,7 @@ namespace GrbLHAL_Sender.Communication
         {
             if (_serialPort.IsOpen)
                 _serialPort.BaseStream.Write([data], 0, 1);
+            Debug.Write(data);
         }
 
         public void WriteBytes(byte[] bytes, int len)

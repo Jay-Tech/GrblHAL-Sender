@@ -289,13 +289,20 @@ namespace GrbLHAL_Sender.Communication
                             rtState.MPos = value.Split(',');
                             break;
                         case "Bf":
+                            var y = value.Split(",");
                             break;
                         case "Ln":
+                            var ln = value.Split(",");
+                            break;
+                        case "F":
+                            var feed = value.Split(",");
                             break;
                         case "FS":
                             var speed = value.Split(",");
-                            rtState.ProgramedSpeed = speed[0];
-                            rtState.ActualSpeed = speed[1];
+                            rtState.FeedRate = speed[0];
+                            rtState.ProgramRPM = speed[1];
+                            if(speed.Length >2)
+                                rtState.ActualRpm = speed[2];
                             break;
                         case "WCS":
                             rtState.WCS = value;
@@ -310,9 +317,17 @@ namespace GrbLHAL_Sender.Communication
                             var a = value;
                             break;
                         case "Ov":
+                            var overRides = value.Split(",");
+                            if (overRides.Length > 0)
+                                rtState.FeedOverRide = overRides[0];
+                            if (overRides.Length > 1)
+                                rtState.RapidOverRide = overRides[1];
+                            if (overRides.Length > 2)
+                                rtState.RpmOverRide = overRides[2];
                             break;
                         case "MPG":
                             rtState.MpgActive = value.StringToBool();
+
                             break;
                         case "H":
                             var h = value.Split(":");
@@ -321,7 +336,7 @@ namespace GrbLHAL_Sender.Communication
                         case "D":
                             break;
                         case "Sc":
-                         
+                            var scale = value.Split(":");
                             break;
                         case "T":
                             rtState.Tool = value;
@@ -332,9 +347,9 @@ namespace GrbLHAL_Sender.Communication
                         case "FW":
                             break;
                         case "In":
-                            var signals = value.Split();
+                            var signals = int.Parse(value);
                             break;
-                       
+
                     }
                 }
             }

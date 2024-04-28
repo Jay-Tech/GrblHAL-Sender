@@ -5,20 +5,27 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace GrbLHAL_Sender.Gcode
 {
     public class GCodeParser 
     {
+        private string? _line;
         public List<GCodeLine> GCodeJob { get; set; }
         
         public void ParseGCodeFile(string file, Action<List<GCodeLine>> callBack)
         {
-           callBack(ParseJob(file, callBack));
+
+            Task.Factory.StartNew((() =>
+            {
+                callBack(ParseJob(file, callBack));
+            }));
+
         }
 
-        private string? _line;
         private List<GCodeLine> ParseJob(string file, Action<List<GCodeLine>> callback)
         {
             GCodeJob = new List<GCodeLine>(); 
@@ -32,8 +39,7 @@ namespace GrbLHAL_Sender.Gcode
                     GCodeJob.Add(new GCodeLine(_line, index));
                     index++;
                 }
-                
-                Debug.WriteLine(_line);
+                // Debug.WriteLine(_line);
                 _line = sr.ReadLine();
                
             }
