@@ -14,8 +14,12 @@ public class RealTImeState
     public string SubState { get; set; }
     public string WCS { get; set; }
     public string Tool { get; set; }
-    public string ProgramedSpeed { get; set; }
-    public string ActualSpeed { get; set; }
+    public string FeedRate { get; set; }
+    public string FeedOverRide { get; set; }
+    public string RapidOverRide { get; set; }
+    public string RpmOverRide { get; set; }
+    public string ProgramRPM { get; set; }
+    public string ActualRpm { get; set; }
     public List<char> SignalStatus { get; set; } = [];
 
     public RealTImeState()

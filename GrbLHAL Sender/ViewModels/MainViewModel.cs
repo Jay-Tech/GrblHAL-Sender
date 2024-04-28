@@ -20,6 +20,7 @@ using DynamicData;
 using GrbLHAL_Sender.Settings;
 using System.Threading.Tasks;
 using Avalonia.Input;
+using Avalonia.Metadata;
 using CommunityToolkit.Mvvm.ComponentModel;
 using GrbLHAL_Sender.Configuration;
 using Microsoft.CodeAnalysis;
@@ -27,6 +28,7 @@ using CommunityToolkit.Mvvm.Input;
 using GrbLHAL_Sender.Gcode;
 using Avalonia.Platform.Storage;
 using GrbLHAL_Sender.Behaviors;
+using GrbLHAL_Sender.Utility;
 
 namespace GrbLHAL_Sender.ViewModels;
 
@@ -39,20 +41,13 @@ public class MainViewModel : ViewModelBase
     private ObservableCollection<string> _consoleOutput = new();
     private ObservableCollection<int> _toolList = new();
     private ObservableCollection<Signal> _signalList = [];
-
     private ObservableCollection<double> _jogStepList;
     private ObservableCollection<double> _jogRateList;
     private readonly GHalSenderConfig _config;
     private RealTImeState _state;
     private bool _showConsole;
     private bool _isJobRunning;
-
-    //private bool _hasAtc;
-    //private bool _hasSdCard;
-    //private bool _hasProbing;
-    //private bool _isFileLoaded;
-    private ReactiveCommand<object, Unit> _doubleTapCommand;
-    private ReactiveCommand<object, Unit> _hideBoxCommand;
+    private int _spindleRpm;
     private bool _connected;
     private Color _homeStateColor;
     private bool _alarmActive;
@@ -62,11 +57,21 @@ public class MainViewModel : ViewModelBase
     private double _jogStep;
     private double _jogRate;
     private string _mdiText;
-    private JobViewModel _jobViewModel1;
+    private int _rpm;
+    private int _feedRate;
+    private int _feedOverRide;
+
+    //private bool _hasAtc;
+    //private bool _hasSdCard;
+    //private bool _hasProbing;
+    //private bool _isFileLoaded;
+    private ReactiveCommand<object, Unit> _doubleTapCommand;
+    private ReactiveCommand<object, Unit> _hideBoxCommand;
     private ReactiveCommand<object, Unit> _focusedCommand;
     public bool ShowRTCommands { get; set; }
     public bool AutoConnect { get; set; }
-
+    public JobViewModel JobViewModel { get; set; }
+    public SettingsViewModel SettingsViewModel { get; set; }
     //public bool IsJobRunning
     //{
     //    get => _isJobRunning;
@@ -92,7 +97,7 @@ public class MainViewModel : ViewModelBase
     //    get => _isFileLoaded;
     //    set => _isFileLoaded = value;
     //}
-    public string UnitSystem { get; set; } = "G20";
+    public string UnitSystem { get; set; } = "G21";
 
     public Color HomeStateColor
     {
@@ -141,46 +146,62 @@ public class MainViewModel : ViewModelBase
         get => _selectedTool;
         set => this.RaiseAndSetIfChanged(ref _selectedTool, value);
     }
-    public JobViewModel JobViewModel { get; set; }
+    public int SpindleRPM
+    {
+        get => _spindleRpm;
+        set => this.RaiseAndSetIfChanged(ref _spindleRpm, value);
+    }
 
+    public int RPM
+    {
+        get => _rpm;
+        set => this.RaiseAndSetIfChanged(ref _rpm, value);
+    }
     public RealTImeState State
     {
         get => _state;
         set => this.RaiseAndSetIfChanged(ref _state, value);
     }
-    public SettingsViewModel SettingsViewModel { get; set; }
+
+    public int FeedRate
+    {
+        get => _feedRate;
+        set => this.RaiseAndSetIfChanged(ref _feedRate, value);
+    }
+    public int FeedOverRide
+    {
+        get => _feedOverRide;
+        set => this.RaiseAndSetIfChanged(ref _feedOverRide, value);
+    }
 
     public ICommand ConnectCommand { get; set; }
-
     public ICommand ZeroAxis { get; set; }
-
     public ICommand ZeroAllCommand { get; set; }
-
     public ICommand UnLockCommand { get; set; }
-
     public ICommand HomeCommand { get; set; }
-
     public ICommand ClearAlarmCommand { get; set; }
-
     public ICommand JogNegCommand { get; }
-
     public ICommand JogPosCommand { get; }
-
     public ICommand ClearConsoleCommand { get; }
-
     public ICommand ToggleRtCommand { get; }
-
     public ICommand MdiTextCommand { get; }
-
     public ICommand WcsCommand { get; }
-
     public ICommand ToolSelectedCommand { get; }
-
     public ICommand FeedRateChangeCommand { get; }
-
     public ICommand StepRateChangeCommand { get; }
-
     public ICommand KeyPressCommand { get; }
+    public ICommand SpindleCWCommand { get; }
+    public ICommand SpindleCCWCommand { get; }
+    public ICommand SpindleOffCommand { get; }
+    public ICommand SpindleResetCommand { get; }
+    public ICommand SpindleIncreaseCommand { get; }
+    public ICommand SpindleDecreaseCommand { get; }
+    public ICommand FeedOrPlus { get; }
+    public ICommand FeedOrMinus { get; }
+    public ICommand FeedOrReset { get; }
+    public ICommand RapidOrMediumCommand { get; }
+    public ICommand RapidOrFineCommand { get; }
+    public ICommand ResetRapidCommand { get; }
 
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
@@ -230,6 +251,14 @@ public class MainViewModel : ViewModelBase
         set => _focusedCommand = value;
     }
 
+
+
+
+    private Action<string> MessageTarget;
+    bool _routedKeyStroke = false;
+    private bool _fine;
+    public string Tnputs { get; set; }
+
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel)
     {
@@ -264,6 +293,19 @@ public class MainViewModel : ViewModelBase
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
         FocusedCommand = ReactiveCommand.Create<object>(FocusTextInput);
+        SpindleCWCommand = ReactiveCommand.Create(SpindleCw);
+        SpindleCCWCommand = ReactiveCommand.Create(SpindleCcw);
+        SpindleOffCommand = ReactiveCommand.Create(SpindleOff);
+        SpindleResetCommand = ReactiveCommand.Create(SpindleReset);
+        SpindleIncreaseCommand = ReactiveCommand.Create(SpindleIncrease);
+        SpindleDecreaseCommand = ReactiveCommand.Create(SpindleDecrease);
+        FeedOrPlus = ReactiveCommand.Create(FeedPlus);
+        FeedOrMinus = ReactiveCommand.Create(FeedMinus);
+        FeedOrReset = ReactiveCommand.Create(FeedReset);
+        RapidOrMediumCommand = ReactiveCommand.Create(RapidMedium);
+        RapidOrFineCommand = ReactiveCommand.Create(RapidFine);
+        ResetRapidCommand = ReactiveCommand.Create(RapidReset);
+
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
 
@@ -302,16 +344,70 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    bool _routedKeyStroke = false;
-    public string Tnputs { get; set; }
-    private Action<string> MessageTarget;
+    private void RapidReset()
+    {
+        SendByteCommand(GrblHalConstants.RapidOrReset);
+    }
+
+    private void RapidFine()
+    {
+        SendByteCommand(GrblHalConstants.RapidOrLow);
+    }
+
+    private void RapidMedium()
+    {
+        SendByteCommand(GrblHalConstants.RapidOrMedium);
+    }
+
+    private void FeedReset()
+    {
+        SendByteCommand(GrblHalConstants.FeedOrReset);
+    }
+
+    private void FeedMinus()
+    {
+        var command = _fine ? GrblHalConstants.FeedOrFineMinus : GrblHalConstants.FeedOrCoarseMinus;
+        SendByteCommand(command);
+    }
+    public void SendByteCommand(byte command)
+    {
+        _commManager.Adapter.WriteByte(command);
+    }
+    private void FeedPlus()
+    {
+        var command = _fine ? GrblHalConstants.FeedOrFinePlus : GrblHalConstants.FeedOrCoarsePlus;
+        SendByteCommand(command);
+    }
+    private void SpindleDecrease()
+    {
+        SendByteCommand(GrblHalConstants.SpindleFineMinus);
+    }
+    private void SpindleIncrease()
+    {
+        SendByteCommand(GrblHalConstants.SpindleFinePlus);
+    }
+    private void SpindleReset()
+    {
+        SendByteCommand(GrblHalConstants.SpindleReset);
+    }
+    private void SpindleOff()
+    {
+        SendCommand(GrblHalConstants.SpindleOff);
+    }
+    private void SpindleCcw()
+    {
+        SendCommand($"{GrblHalConstants.SpindleCCw}{SpindleRPM}");
+    }
+    private void SpindleCw()
+    {
+        SendCommand($"{GrblHalConstants.SpindleCw}{SpindleRPM}");
+    }
     private void FocusTextInput(object obj)
     {
         if (obj is not AutoCompleteBox tb) return;
         tb.LostFocus += TbLostFocus;
         _routedKeyStroke = true;
         return;
-
         void TbLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
             tb.LostFocus -= TbLostFocus;
@@ -357,8 +453,6 @@ public class MainViewModel : ViewModelBase
 
         MdiText += text;
     }
-  
-
     private void ChangeStepRate(double step)
     {
         JogStep = step;
@@ -431,11 +525,9 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand("$X");
     }
-
-    public const byte Cmd_Reset = 0x18;
     private void Unlock()
     {
-        _commManager.Adapter.WriteByte(Cmd_Reset);
+        _commManager.Adapter.WriteByte(GrblHalConstants.GrblReset);
     }
     private void UIThread_ShutdownStarted(object? sender, EventArgs e)
     {
@@ -462,7 +554,9 @@ public class MainViewModel : ViewModelBase
 
             AxisCollection[i].Position = pos;
         }
+
         State = e;
+        SetFeedAndSpeeds(State);
         AlarmActive = e.GrblHalState == "Alarm";
         if (ConsoleOutput.Count > 200)
         {
@@ -473,6 +567,26 @@ public class MainViewModel : ViewModelBase
             ConsoleOutput.Add(e.RawRt);
         }
         ProcessSignals(e.SignalStatus);
+    }
+
+    private void SetFeedAndSpeeds(RealTImeState rt)
+    {
+        if(int.TryParse(rt.FeedRate, out var aSpeed ))
+        {
+            FeedRate = aSpeed;
+        }
+        if (int.TryParse(rt.FeedOverRide, out var fo))
+        {
+            FeedOverRide = fo;
+        }
+        if(int.TryParse(rt.ProgramRPM, out var ps))
+        {
+            SpindleRPM = ps;
+        }
+        if(int.TryParse(rt.ActualRpm,out var rpm))
+        {
+            RPM = rpm;
+        }
     }
     private void ProcessSignals(List<char> signals)
     {

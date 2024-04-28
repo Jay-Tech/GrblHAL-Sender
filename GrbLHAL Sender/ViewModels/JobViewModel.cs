@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
@@ -217,8 +218,12 @@ namespace GrbLHAL_Sender.ViewModels
         }
         public void FileComplete(List<GCodeLine> gCodeJob)
         {
-            GCodeOutPut.Clear();
-            GCodeOutPut.AddRange(gCodeJob);
+            Dispatcher.UIThread.Invoke((() =>
+            {
+                GCodeOutPut.Clear();
+                GCodeOutPut.AddRange(gCodeJob);
+            }));
+          
         }
 
         public void StartJob()
