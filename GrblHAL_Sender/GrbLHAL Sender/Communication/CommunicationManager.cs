@@ -28,7 +28,7 @@ namespace GrbLHAL_Sender.Communication
         public event EventHandler<RealTImeState> OnStateReceived;
         public event EventHandler<List<GrblHalSetting>> onSettingUpdated;
         public event EventHandler<GrblHALOptions> onOptionsUpdated;
-        public event EventHandler<ProbeState> onOptionsResults;
+        public event EventHandler<ProbeState> OnProbeResults;
         public ICommsAdapter Adapter { get; set; }
 
         public GrblHalSetting.PendingMessageSet PendingMessage
@@ -52,6 +52,10 @@ namespace GrbLHAL_Sender.Communication
             _probe = new ProbeState();
         }
 
+        public void StartJob()
+        {
+
+        }
         public void ShutDown()
         {
             _pollTimer?.Stop();

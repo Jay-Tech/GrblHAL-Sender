@@ -52,6 +52,7 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<ConfigManager>();
         collection.AddSingleton<CommunicationManager>();
         collection.AddTransient<SettingsViewModel>();
+        collection.AddTransient<JobViewModel>();
         collection.AddTransient<MainViewModel>();
     }
 
