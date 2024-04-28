@@ -13,6 +13,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
 using GrbLHAL_Sender.Communication;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using Avalonia.Threading;
 using DynamicData;
@@ -22,6 +23,10 @@ using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using GrbLHAL_Sender.Configuration;
 using Microsoft.CodeAnalysis;
+using CommunityToolkit.Mvvm.Input;
+using GrbLHAL_Sender.Gcode;
+using Avalonia.Platform.Storage;
+using GrbLHAL_Sender.Behaviors;
 
 namespace GrbLHAL_Sender.ViewModels;
 
@@ -29,11 +34,12 @@ public class MainViewModel : ViewModelBase
 {
     private readonly CommunicationManager _commManager;
     private readonly ConfigManager _configManager;
+    private JobViewModel _jobViewModel;
     private ObservableCollection<Axis> _axis;
     private ObservableCollection<string> _consoleOutput = new();
     private ObservableCollection<int> _toolList = new();
     private ObservableCollection<Signal> _signalList = [];
-    private ObservableCollection<Macro> _macroList;
+
     private ObservableCollection<double> _jogStepList;
     private ObservableCollection<double> _jogRateList;
     private readonly GHalSenderConfig _config;
@@ -55,11 +61,10 @@ public class MainViewModel : ViewModelBase
     private bool _hideToolChangeList;
     private double _jogStep;
     private double _jogRate;
-    private readonly ICommand _toggleRtCommand;
     private string _mdiText;
-
+    private JobViewModel _jobViewModel1;
+    private ReactiveCommand<object, Unit> _focusedCommand;
     public bool ShowRTCommands { get; set; }
-
     public bool AutoConnect { get; set; }
 
     //public bool IsJobRunning
@@ -136,6 +141,8 @@ public class MainViewModel : ViewModelBase
         get => _selectedTool;
         set => this.RaiseAndSetIfChanged(ref _selectedTool, value);
     }
+    public JobViewModel JobViewModel { get; set; }
+
     public RealTImeState State
     {
         get => _state;
@@ -161,7 +168,7 @@ public class MainViewModel : ViewModelBase
 
     public ICommand ClearConsoleCommand { get; }
 
-    public ICommand ToggleRTCommand => _toggleRtCommand;
+    public ICommand ToggleRtCommand { get; }
 
     public ICommand MdiTextCommand { get; }
 
@@ -172,8 +179,6 @@ public class MainViewModel : ViewModelBase
     public ICommand FeedRateChangeCommand { get; }
 
     public ICommand StepRateChangeCommand { get; }
-
-    public ICommand RunMacroCommand { get; }
 
     public ICommand KeyPressCommand { get; }
 
@@ -207,11 +212,7 @@ public class MainViewModel : ViewModelBase
         get => _consoleOutput;
         set => this.RaiseAndSetIfChanged(ref _consoleOutput, value);
     }
-    public ObservableCollection<Macro> MacroList
-    {
-        get => _macroList;
-        set => this.RaiseAndSetIfChanged(ref _macroList, value);
-    }
+
     public ObservableCollection<double> JogRateList
     {
         get => _jogRateList;
@@ -223,13 +224,20 @@ public class MainViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _jogStepList, value);
     }
 
+    public ReactiveCommand<object, Unit> FocusedCommand
+    {
+        get => _focusedCommand;
+        set => _focusedCommand = value;
+    }
+
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
-        ConfigManager configManager)
+        ConfigManager configManager, JobViewModel jobViewModel)
     {
         SettingsViewModel = settingsViewModel;
         _needsSetup = true;
         _commManager = commManager;
         _configManager = configManager;
+        JobViewModel = jobViewModel;
         _config = _configManager.LoadConfig();
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
@@ -246,7 +254,7 @@ public class MainViewModel : ViewModelBase
         ZeroAllCommand = ReactiveCommand.Create(ZeroAll);
         ClearAlarmCommand = ReactiveCommand.Create(ClearAlarm);
         ClearConsoleCommand = ReactiveCommand.Create(ClearConsole);
-        _toggleRtCommand = ReactiveCommand.Create(ToggleConsoleRt);
+        ToggleRtCommand = ReactiveCommand.Create(ToggleConsoleRt);
         MdiTextCommand = ReactiveCommand.Create<string>(MDIText);
         WcsCommand = ReactiveCommand.Create<string>(Wcs);
         ToolSelectedCommand = ReactiveCommand.Create<int>(ToolSelected);
@@ -255,23 +263,10 @@ public class MainViewModel : ViewModelBase
         KeyPressCommand = ReactiveCommand.Create<string>(KeyPressed);
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
-        RunMacroCommand = ReactiveCommand.Create<string>(RunMacro);
+        FocusedCommand = ReactiveCommand.Create<object>(FocusTextInput);
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
-        MacroList =
-        [
-            new Macro
-            {
-                Id = "M1",
-                Command = "Test",
 
-            },
-            new Macro
-            {
-                Id = "M2",
-                Command = "G0X0Y0Z0",
-            }
-        ];
         _axis = new ObservableCollection<Axis>
         {
             new()
@@ -307,6 +302,22 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    bool _routedKeyStroke = false;
+    public string Tnputs { get; set; }
+    private Action<string> MessageTarget;
+    private void FocusTextInput(object obj)
+    {
+        if (obj is not AutoCompleteBox tb) return;
+        tb.LostFocus += TbLostFocus;
+        _routedKeyStroke = true;
+        return;
+
+        void TbLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            tb.LostFocus -= TbLostFocus;
+            Tnputs = string.Empty;
+        }
+    }
     private void KeyPressed(string key)
     {
         string text;
@@ -319,7 +330,7 @@ public class MainViewModel : ViewModelBase
                 text = " ";
                 break;
             case "Del":
-                { 
+                {
                     if (MdiText.EndsWith("\r\n"))
                     {
                         MdiText = MdiText.TrimEnd();
@@ -336,14 +347,18 @@ public class MainViewModel : ViewModelBase
                 break;
         }
 
+        if (_routedKeyStroke)
+        {
+
+            Tnputs += text;
+            MessageTarget = s => FocusTextInput(s);
+            return;
+        }
+
         MdiText += text;
     }
+  
 
-    private void RunMacro(string macroId)
-    {
-        var command = MacroList.First(x => x.Id == macroId);
-        SendCommand(command.Command);
-    }
     private void ChangeStepRate(double step)
     {
         JogStep = step;
@@ -543,8 +558,3 @@ public partial class Signal : ObservableObject
     private bool _triggered;
 }
 
-public class Macro
-{
-    public string Id { get; set; }
-    public string Command { get; set; }
-}

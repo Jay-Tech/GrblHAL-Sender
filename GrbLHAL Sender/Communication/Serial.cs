@@ -73,9 +73,9 @@ namespace GrbLHAL_Sender.Communication
             _serialPort.DataReceived -= SerialPort_DataReceived;
             _serialPort.DtrEnable = false;
             _serialPort.RtsEnable = false;
-            _serialPort.DiscardInBuffer();
-            _serialPort.DiscardOutBuffer();
-            _serialPort.Dispose();
+            _serialPort?.DiscardInBuffer();
+            _serialPort?.DiscardOutBuffer();
+            _serialPort?.Dispose();
         }
 
         public void WriteByte(byte data)
