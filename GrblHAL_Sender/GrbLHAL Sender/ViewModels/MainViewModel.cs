@@ -209,7 +209,7 @@ public class MainViewModel : ViewModelBase
     public ICommand RapidOrMediumCommand { get; }
     public ICommand RapidOrFineCommand { get; }
     public ICommand ResetRapidCommand { get; }
-
+    public ICommand OpenConsolePanel { get; }
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
         get => _doubleTapCommand;
@@ -258,8 +258,9 @@ public class MainViewModel : ViewModelBase
     }
 
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
-        ConfigManager configManager, JobViewModel jobViewModel)
+        ConfigManager configManager, JobViewModel jobViewModel, ProbeViewModel probeViewModel)
     {
+        ProbeViewModel =probeViewModel;
         SettingsViewModel = settingsViewModel;
         _needsSetup = true;
         _commManager = commManager;
@@ -291,8 +292,8 @@ public class MainViewModel : ViewModelBase
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
         FocusedCommand = ReactiveCommand.Create<object>(FocusTextInput);
-        SpindleCWCommand = ReactiveCommand.Create(SpindleCw);
-        SpindleCCWCommand = ReactiveCommand.Create(SpindleCcw);
+        SpindleCWCommand = ReactiveCommand.Create<string>(SpindleCw);
+        SpindleCCWCommand = ReactiveCommand.Create<string>(SpindleCcw);
         SpindleOffCommand = ReactiveCommand.Create(SpindleOff);
         SpindleResetCommand = ReactiveCommand.Create(SpindleReset);
         SpindleIncreaseCommand = ReactiveCommand.Create(SpindleIncrease);
@@ -303,6 +304,7 @@ public class MainViewModel : ViewModelBase
         RapidOrMediumCommand = ReactiveCommand.Create(RapidMedium);
         RapidOrFineCommand = ReactiveCommand.Create(RapidFine);
         ResetRapidCommand = ReactiveCommand.Create(RapidReset);
+        OpenConsolePanel = ReactiveCommand.Create(OpenConsole);
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
         _axis = new ObservableCollection<Axis>
@@ -338,6 +340,12 @@ public class MainViewModel : ViewModelBase
         {
 
         }
+    }
+
+    private void OpenConsole()
+    {
+
+        ShowConsole =! ShowConsole;
     }
 
     private void RapidReset()
@@ -390,32 +398,14 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand(GrblHalConstants.SpindleOff);
     }
-    private void SpindleCcw()
+    private void SpindleCcw(string rpm)
     {
-        SendCommand($"{GrblHalConstants.SpindleCCw}{SpindleRPM}");
+        SendCommand($"{GrblHalConstants.SpindleCCw}{rpm}");
     }
-    private void SpindleCw()
+    private void SpindleCw(string rpm)
     {
-        SendCommand($"{GrblHalConstants.SpindleCw}{SpindleRPM}");
+        SendCommand($"{GrblHalConstants.SpindleCw}{rpm}");
     }
-    private void FocusTextInput(object obj)
-    {
-        if (obj is not AutoCompleteBox tb) return;
-        tb.LostFocus += TbLostFocus;
-        _routedKeyStroke = true;
-        return;
-        void TbLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            tb.LostFocus -= TbLostFocus;
-            Tnputs = string.Empty;
-        }
-    }
-    private Action<string> MessageTarget;
-    bool _routedKeyStroke = false;
-    public string Tnputs { get; set; }
-
-    
-
     private void KeyPressed(string key)
     {
         string text;
@@ -455,6 +445,28 @@ public class MainViewModel : ViewModelBase
 
         MdiText += text;
     }
+
+    private void FocusTextInput(object obj)
+    {
+        if (obj is not AutoCompleteBox tb) return;
+        tb.LostFocus += TbLostFocus;
+        _routedKeyStroke = true;
+        return;
+        void TbLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            tb.LostFocus -= TbLostFocus;
+            Tnputs = string.Empty;
+        }
+    }
+
+    private Action<string> MessageTarget;
+    bool _routedKeyStroke = false;
+    public string Tnputs { get; set; }
+
+   
+    
+    
+
     private void ChangeStepRate(double step)
     {
         JogStep = step;

@@ -8,6 +8,8 @@ using System.IO.Ports;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Animation;
 
 namespace GrbLHAL_Sender.Communication
@@ -19,6 +21,7 @@ namespace GrbLHAL_Sender.Communication
         private SerialSettings _serialSettings;
         private SerialPort _serialPort;
         private ConcurrentQueue<byte[]> _sendQue = new();
+        private CancellationToken _token;
         private char[] Split = new[]
         {
             '\r',
@@ -26,6 +29,8 @@ namespace GrbLHAL_Sender.Communication
         };
 
         private static readonly object _sncLock = new();
+        private CancellationTokenSource _tokenSource;
+
         public Serial(string connection, SerialSettings serialSettings = null!)
         {
             TryConnect(connection, serialSettings);
@@ -60,6 +65,11 @@ namespace GrbLHAL_Sender.Communication
                 _serialPort.Open();
                 _serialPort.DataReceived += SerialPort_DataReceived;
                 _serialPort.DtrEnable = true;
+                if (_serialPort.IsOpen)
+                {
+                    _tokenSource = new CancellationTokenSource();
+                    Task.Factory.StartNew(() => SendLoop(_tokenSource.Token), TaskCreationOptions.LongRunning);
+                }
                 return _serialPort.IsOpen;
             }
             catch (Exception e)
@@ -71,35 +81,23 @@ namespace GrbLHAL_Sender.Communication
         public void Close()
         {
             _serialPort.DataReceived -= SerialPort_DataReceived;
+            _tokenSource.Cancel();
+             Thread.Sleep(100);
             _serialPort.DtrEnable = false;
             _serialPort.RtsEnable = false;
-            //_serialPort?.DiscardInBuffer();
-            //_serialPort?.DiscardOutBuffer();
+            _serialPort?.DiscardInBuffer();
+            _serialPort?.DiscardOutBuffer();
             _serialPort?.Dispose();
         }
 
         public void WriteByte(byte data)
         {
-            if (_serialPort.IsOpen)
-                _serialPort.BaseStream.Write([data], 0, 1);
-            Debug.Write(data);
+            var ca = new byte[1];
+            ca[0] = data;
+            SendQue(ca);
         }
-
-        public void WriteBytes(byte[] bytes, int len)
-        {
-            _serialPort.BaseStream.WriteAsync(bytes, 0, len);
-        }
-
-        public void WriteString(string data)
-        {
-            var bytes = Encoding.Default.GetBytes(data);
-            WriteBytes(bytes, bytes.Length);
-        }
-
         public void WriteCommand(string command)
         {
-            //lock (_sncLock)
-            //{
             if (!_serialPort.IsOpen) return;
             if (command.Length == 1)
                 WriteByte((byte)command.ToCharArray()[0]);
@@ -107,15 +105,29 @@ namespace GrbLHAL_Sender.Communication
             {
                 command += "\r";
                 byte[] bytes = Encoding.UTF8.GetBytes(command);
-                if (_serialPort.IsOpen)
-                    _serialPort.BaseStream.Write(bytes, 0, bytes.Length);
+                SendQue(bytes);
             }
-            //}
         }
 
         private void SendQue(byte[] command)
         {
             _sendQue.Enqueue(command);
+        }
+
+        private void SendLoop(CancellationToken token)
+        {
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                    break;
+                if (_sendQue.IsEmpty) continue;
+                _sendQue.TryDequeue(out var command);
+                if (command == null) return;
+                if (_serialPort.IsOpen)
+                    _serialPort.BaseStream.Write(command, 0, command.Length);
+
+                Thread.Sleep(10);
+            }
         }
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -131,6 +143,7 @@ namespace GrbLHAL_Sender.Communication
                     {
                         OnDataReceived?.Invoke(this, data.ToString() ?? string.Empty);
                     }
+                   
                     inputStream = inputStream.Slice(indexSlice).Trim(Split);
                 }
             }

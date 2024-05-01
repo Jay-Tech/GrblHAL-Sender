@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -52,9 +53,14 @@ namespace GrbLHAL_Sender.Communication
             _probe = new ProbeState();
         }
 
-        public void StartJob()
+        //  set a call back directly 
+        public void StartJob(Action<string>? callBack)
         {
-
+            _callBack = callBack;
+        }
+        public void EndJob()
+        {
+            _callBack = null;
         }
         public void ShutDown()
         {
@@ -77,13 +83,16 @@ namespace GrbLHAL_Sender.Communication
             {
                 PendingMessage = GrblHalSetting.PendingMessageSet.Options;
                 Adapter.WriteCommand("$I+");
-                await Task.Delay(400);
+                await Task.Delay(300);
                 Adapter.WriteCommand("$ES");
-                await Task.Delay(400);
+                await Task.Delay(300);
                 PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
                 Adapter.WriteCommand("$+");
-                await Task.Delay(400);
-                SetupPoll(250);
+                await Task.Delay(300);
+                Adapter.WriteCommand(GrblHalConstants.Alarmcodes);
+                await Task.Delay(300);
+                Adapter.WriteCommand(GrblHalConstants.Errorcodes);
+                SetupPoll(300);
             });
         }
         public void SetupPoll(int rate)
@@ -104,6 +113,7 @@ namespace GrbLHAL_Sender.Communication
 
         private GrblHalSetting.PendingMessageSet? _pendingMessageComplete = null;
         private readonly ProbeState _probe;
+        private Action<string>? _callBack;
 
         private void PendingJobComplete(GrblHalSetting.PendingMessageSet job)
         {
@@ -155,8 +165,13 @@ namespace GrbLHAL_Sender.Communication
             }
             if (string.Equals(data, "ok", StringComparison.OrdinalIgnoreCase))
             {
+                if (_callBack != null)
+                {
+                    _callBack(data);
+                }
+
                 PendingMessage = GrblHalSetting.PendingMessageSet.NotPending;
-                return;
+
             }
             if (data.StartsWith("<") || data.EndsWith(">"))
             {
@@ -170,6 +185,27 @@ namespace GrbLHAL_Sender.Communication
                 var substring = data.Split('|');
                 ParseSettingsData(substring.AsSpan());
                 return;
+            }
+            if (data.StartsWith("[ALARMCODE:"))
+            {
+                PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
+                data = data.Trim('[', ']');
+                var substring = data.Split('|');
+                ParseAlarm(substring.AsSpan());
+                return;
+            }
+            if (data.StartsWith("[ERRORCODE:"))
+            {
+                PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
+                data = data.Trim('[', ']');
+                var substring = data.Split('|');
+                ParseError(substring.AsSpan());
+                return;
+            }
+
+            if (data.StartsWith("[MSG:Pgm End"))
+            {
+                
             }
             if (data.StartsWith("["))
             {
@@ -196,13 +232,43 @@ namespace GrbLHAL_Sender.Communication
 
             if (data.StartsWith("error"))
             {
+
                 var valuePair = data.Split(':');
-                Debug.Write("***Warning Data Not Parsed " + valuePair[0] + valuePair[1] + "***" + Environment.NewLine);
+                var error = _errorCodes[valuePair[1].StringToInt()];
+                Debug.Write("***Warning Error Code " + error + valuePair[1] + error  + "***" + Environment.NewLine);
+            }
+            if (data.StartsWith("ALARM"))
+            {
+
+                var valuePair = data.Split(':');
+                var alarm = _alarmCodes[valuePair[1].StringToInt()];
+                Debug.Write("***Alarm Code " + alarm + valuePair[1] + alarm  + "***" + Environment.NewLine);
             }
             else
             {
-                Debug.Write("***Warning Data Not Parsed " + data + "***");
+                if (data == "ok")
+                {
+                    Debug.Write("***" + data + "***" + Environment.NewLine);
+                }
+                else
+                    Debug.Write("***Warning Data Not Parsed " + data + "***");
             }
+        }
+        private Dictionary<int, string> _errorCodes = new Dictionary<int, string>();
+        private void ParseError(Span<string> asSpan)
+        {
+            var code = asSpan[0].Split(':')[1].StringToInt();
+            var errorData = asSpan[2];
+            _errorCodes.Add(code, errorData);
+
+        }
+
+        private Dictionary<int, string> _alarmCodes = new Dictionary<int, string>();
+        private void ParseAlarm(Span<string> asSpan)
+        {
+            var code = asSpan[0].Split(':')[1].StringToInt();
+            var alarmData = asSpan[2];
+            _alarmCodes.Add(code, alarmData);
         }
 
 
@@ -227,6 +293,9 @@ namespace GrbLHAL_Sender.Communication
                 GrblHalSettingsConst.AxisCount = grblHalOptions.AxesCount = int.Parse(asSpan[1]);
                 GrblHalSettingsConst.Axis = asSpan[2].ToCharArray();
                 grblHalOptions.AxisLabels = asSpan[2].ToCharArray().ToList();
+                grblHalOptions.SignalLabels = asSpan[2].ToCharArray().ToList();
+                grblHalOptions.SignalLabels.AddRange(GrblHalSettingsConst.DefaultSignals);
+                grblHalOptions.SignalLabels.Add("P");
             }
 
             if (asSpan[0].StartsWith("SIGNALS"))
@@ -238,6 +307,7 @@ namespace GrbLHAL_Sender.Communication
                     grblHalOptions.SignalLabels.AddOrInsertRange(grblHalOptions.AxisLabels, 0);
                 }
             }
+            
         }
         private void ParseTabSettings(Span<string> asSpan)
         {
@@ -301,7 +371,7 @@ namespace GrbLHAL_Sender.Communication
                             var speed = value.Split(",");
                             rtState.FeedRate = speed[0];
                             rtState.ProgramRPM = speed[1];
-                            if(speed.Length >2)
+                            if (speed.Length > 2)
                                 rtState.ActualRpm = speed[2];
                             break;
                         case "WCS":
@@ -309,7 +379,7 @@ namespace GrbLHAL_Sender.Communication
                             break;
                         case "Pn":
                             rtState.SignalStatus = value.ToCharArray().ToList();
-                            break;                                                              /*"Idle|MPos:0.000,0.000,254.000|Bf:100,1023|FS:0,0|WCO:0.000,0.000,254.000|WCS:G54|A:|Sc:|MPG:0|H:0|T:4|TLR:0|FW:grblHAL"*/
+                            break;                                                            
                         case "WCO":
                             rtState.Wco = value.Split(",");
                             break;
@@ -353,10 +423,11 @@ namespace GrbLHAL_Sender.Communication
                     }
                 }
             }
-
             SendState(rtState);
         }
     }
+
+
 }
 
 // settings being constructed in ref grblHAL  Report extensions

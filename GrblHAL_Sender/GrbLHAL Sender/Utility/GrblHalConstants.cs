@@ -42,8 +42,8 @@ namespace GrbLHAL_Sender.Utility
         public const string Getsettingsdetails = "$ES";
         public const string Getsettingsgroups = "$EG";
         //Alarm
-        public const string Getalarmcodes = "$EA";
-        public const string Geterrorcodes = "$EE";
+        public const string Alarmcodes = "$EA";
+        public const string Errorcodes = "$EE";
         public const string ProgramDemarcation = "%";
         //sd Card
         public const string SdcardMount = "$FM";

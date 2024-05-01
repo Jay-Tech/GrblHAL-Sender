@@ -18,12 +18,10 @@ namespace GrbLHAL_Sender.Gcode
         
         public void ParseGCodeFile(string file, Action<List<GCodeLine>> callBack)
         {
-
             Task.Factory.StartNew((() =>
             {
                 callBack(ParseJob(file, callBack));
             }));
-
         }
 
         private List<GCodeLine> ParseJob(string file, Action<List<GCodeLine>> callback)
@@ -39,7 +37,6 @@ namespace GrbLHAL_Sender.Gcode
                     GCodeJob.Add(new GCodeLine(_line, index));
                     index++;
                 }
-                // Debug.WriteLine(_line);
                 _line = sr.ReadLine();
                
             }
