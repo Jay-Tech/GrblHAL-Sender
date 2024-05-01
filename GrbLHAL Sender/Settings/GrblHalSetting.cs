@@ -160,7 +160,7 @@ public partial class GrblHalSetting
             if (DataType == DataTypes.AXISMASK || Format == "axes")
             {
                 var axisCount = GrblHalSettingsConst.AxisCount ?? 3;
-                var axisLabel = GrblHalSettingsConst.Axis ?? GrblHalSettingsConst.BackUpAxis;
+                var axisLabel = GrblHalSettingsConst.Axis ?? GrblHalSettingsConst.BackUpAxis[1..axisCount];
                 for (int i = 0; i < axisCount; i++)
                 {
                     labels += (labels == string.Empty ? "" : ",") + axisLabel[i] + " axis";

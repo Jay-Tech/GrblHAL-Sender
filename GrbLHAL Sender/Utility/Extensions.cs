@@ -18,5 +18,12 @@ namespace GrbLHAL_Sender.Utility
             };
             return result;
         }
+
+        
+        public static int StringToInt(this string str)
+        {
+            int.TryParse(str, out int result);
+            return result;
+        }
     }
 }

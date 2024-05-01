@@ -162,5 +162,49 @@ namespace GrbLHAL_Sender.Convertors
             throw new NotSupportedException();
         }
     }
+
+    public class HorizontalAlignmentConvertor : IMultiValueConverter
+
+    {
+        public static readonly HorizontalAlignmentConvertor Instance = new();
+
+        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (values is null || values.Count == 0) return HorizontalAlignment.Stretch;
+            else
+            {
+                var b = (bool)(values[0] ?? HorizontalAlignment.Left);
+                return b ? HorizontalAlignment.Stretch : HorizontalAlignment.Left;
+            }
+
+        }
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+    public class InverseAlignmentConvertor : IMultiValueConverter
+
+    {
+        public static readonly HorizontalAlignmentConvertor Instance = new();
+
+        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (values is null || values.Count == 0) return VerticalAlignment.Top;
+            else
+            {
+                var b = (bool)(values[0] ?? VerticalAlignment.Top);
+                return b ? VerticalAlignment.Stretch : VerticalAlignment.Top;
+            }
+
+        }
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+       
+       
+    }
 }
 

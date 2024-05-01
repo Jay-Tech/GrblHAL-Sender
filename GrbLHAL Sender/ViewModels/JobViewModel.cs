@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
 using System.Text;
@@ -23,7 +24,7 @@ namespace GrbLHAL_Sender.ViewModels
         private ObservableCollection<Macro> _macroList;
         private ObservableCollection<GCodeLine> _gCodeOutPut;
 
-        private readonly CommunicationManager _manager;
+        private readonly CommunicationManager _commsManager;
         private readonly ConfigManager _configManger;
         private ReactiveCommand<object, Unit> _doubleTapConsoleCommand;
         private ReactiveCommand<object, Unit> _doubleMacroTapCommand;
@@ -34,7 +35,8 @@ namespace GrbLHAL_Sender.ViewModels
         private string _macroName;
         private bool _displayMacroControl;
         private string _macroCommandText;
-  
+        private int _gCodeFileIndex;
+
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
         public ICommand RunMacroCommand { get; }
@@ -44,6 +46,12 @@ namespace GrbLHAL_Sender.ViewModels
         public ICommand SaveMacroCommand { get; }
         public ICommand NewMacroCommand { get; }
         public ICommand CloseMacroCommand { get; }
+        public ICommand OpenGCodePanel { get; }
+        public ICommand OpenMacroPanel { get; }
+        public ICommand CloseFilesCommand { get; }
+        public ICommand PauseJobCommand { get; }
+        public ICommand StopJobCommand { get; }
+        public bool FileLoaded { get; set; }
         public ReactiveCommand<object, Unit> DoubleTapConsoleCommand
         {
             get => _doubleTapConsoleCommand;
@@ -75,7 +83,7 @@ namespace GrbLHAL_Sender.ViewModels
             get => _selectedItem;
             set
             {
-                MacroCommandText = value?.Command?? " ";
+                MacroCommandText = value?.Command ?? " ";
                 this.RaiseAndSetIfChanged(ref _selectedItem, value);
             }
         }
@@ -110,9 +118,15 @@ namespace GrbLHAL_Sender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _macroCommandText, value);
         }
 
+        public int GcodeFileIndex
+        {
+            get => _gCodeFileIndex;
+            set => this.RaiseAndSetIfChanged(ref _gCodeFileIndex, value);
+        }
+
         public JobViewModel(CommunicationManager manager, ConfigManager configManger)
         {
-            _manager = manager;
+            _commsManager = manager;
             _configManger = configManger;
             _configManger.OnConfigLoaded += _configManger_OnConfigLoaded;
             GCodeOutPut = new ObservableCollection<GCodeLine>();
@@ -125,6 +139,21 @@ namespace GrbLHAL_Sender.ViewModels
             SaveMacroCommand = ReactiveCommand.Create<string>(SaveMacro);
             NewMacroCommand = ReactiveCommand.Create(NewMacro);
             CloseMacroCommand = ReactiveCommand.Create(CloseMacroControl);
+            OpenGCodePanel = ReactiveCommand.Create(GCodeControl);
+            OpenMacroPanel = ReactiveCommand.Create(MacroControl);
+            CloseFilesCommand = ReactiveCommand.Create(CloseFile);
+            PauseJobCommand = ReactiveCommand.Create(PauseJob);
+            StopJobCommand = ReactiveCommand.Create(StopJob);
+        }
+
+        private void MacroControl()
+        {
+            DisplayMacroControl = !DisplayMacroControl;
+        }
+
+        private void GCodeControl()
+        {
+            ShowGCodeConsole = !ShowGCodeConsole;
         }
 
         private void _configManger_OnConfigLoaded(object? sender, GHalSenderConfig e)
@@ -144,6 +173,11 @@ namespace GrbLHAL_Sender.ViewModels
 
         private void SaveMacro(string macroId)
         {
+            if (string.IsNullOrEmpty(macroId))
+            {
+                if (SelectedItem?.Id == " ") return;
+                macroId = SelectedItem.Id;
+            }
             if (MacroList.Count == 0)
             {
                 MacroList.Add(BuildMacro());
@@ -158,13 +192,13 @@ namespace GrbLHAL_Sender.ViewModels
                 {
                     if (m.Id == macroId)
                     {
-                        m.Command = m.Command;
+                        m.Command = MacroCommandText;
                     }
                 }
             }
             Macro BuildMacro()
             {
-              var m =  new Macro
+                var m = new Macro
                 {
                     Id = macroId,
                     Command = MacroCommandText
@@ -175,7 +209,7 @@ namespace GrbLHAL_Sender.ViewModels
             MacroName = string.Empty;
             MacroCommandText = string.Empty;
             MacroSelectedIndex = -1;
-           _configManger.GHalSenderConfig.MacroList = MacroList;
+            _configManger.GHalSenderConfig.MacroList = MacroList;
             _configManger.SaveConfig();
         }
         private void DeleteMacro(Macro macro)
@@ -214,7 +248,7 @@ namespace GrbLHAL_Sender.ViewModels
         }
         private void SendCommand(string command)
         {
-            _manager.SendCommand(command);
+            _commsManager.SendCommand(command);
         }
         public void FileComplete(List<GCodeLine> gCodeJob)
         {
@@ -222,13 +256,53 @@ namespace GrbLHAL_Sender.ViewModels
             {
                 GCodeOutPut.Clear();
                 GCodeOutPut.AddRange(gCodeJob);
+                GcodeFileIndex = 0;
             }));
-          
+
         }
 
-        public void StartJob()
+        private void StopJob()
         {
 
+        }
+
+        private void PauseJob()
+        {
+
+        }
+
+        private void CloseFile()
+        {
+            GCodeOutPut.Clear();
+            FileLoaded = false;
+        }
+        public void StartJob()
+        {
+            _commsManager.StartJob(SendJobLoop);
+            SendJobLoop("start");
+        }
+
+        private int index = 0;
+        public void SendJobLoop(string lineProcessed)
+        {
+            var startWatch = new Stopwatch();
+            startWatch.Start();
+            if (index <= GCodeOutPut.Count - 1)
+            {
+                _commsManager.SendCommand(GCodeOutPut[index].Text);
+                GcodeFileIndex = index;
+                index++;
+            }
+            else
+            {
+                JobCompete();
+            }
+        }
+
+        private void JobCompete()
+        {
+            _commsManager.EndJob();
+            index = 0;
         }
     }
 }
