@@ -9,6 +9,16 @@ namespace GrbLHAL_Sender.Utility
     public static class GrblHalConstants
     {
         public const byte GrblReset = 0x18;
+        public const byte Exit = 0x03;
+        public const byte Reset = 0x18;
+        public const byte Stop = 0x19;
+        public const byte StatusReport = 0x80;
+        public const byte CycleStart = 0x81;
+        public const byte FeedHold = 0x82;
+        public const byte GcodeReport = 0x83;
+        public const byte SafetyDoor = 0x84;
+        public const byte JogCancel = 0x85;
+        public const byte OptionalStopToggle = 0x88;
 
         //Spindle
         public const byte SpindleReset = 0x99;
