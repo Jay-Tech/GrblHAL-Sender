@@ -15,6 +15,7 @@ using DynamicData;
 using GrbLHAL_Sender.Communication;
 using GrbLHAL_Sender.Configuration;
 using GrbLHAL_Sender.Gcode;
+using GrbLHAL_Sender.Utility;
 using ReactiveUI;
 
 namespace GrbLHAL_Sender.ViewModels
@@ -36,6 +37,7 @@ namespace GrbLHAL_Sender.ViewModels
         private bool _displayMacroControl;
         private string _macroCommandText;
         private int _gCodeFileIndex;
+        private int _index = 0;
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
@@ -144,8 +146,32 @@ namespace GrbLHAL_Sender.ViewModels
             CloseFilesCommand = ReactiveCommand.Create(CloseFile);
             PauseJobCommand = ReactiveCommand.Create(PauseJob);
             StopJobCommand = ReactiveCommand.Create(StopJob);
+
         }
 
+        private void _commsManager_OnStateReceived(object? sender, RealTImeState e)
+        {
+            var state = e.GrblHalState;
+            JobState = state switch
+            {
+                "Hold" => JobState.Pause,
+                "Tool" => JobState.Tool,
+                "Running" => JobState.Running,
+                "Alarm" => JobState.Alarm,
+                "Stop" => JobState.Stop,
+                _ => JobState
+            };
+        }
+
+        private void ListenToState(bool b)
+        {
+            if (b)
+                _commsManager.OnStateReceived += _commsManager_OnStateReceived;
+            else
+            {
+                _commsManager.OnStateReceived -= _commsManager_OnStateReceived;
+            }
+        }
         private void MacroControl()
         {
             DisplayMacroControl = !DisplayMacroControl;
@@ -260,17 +286,18 @@ namespace GrbLHAL_Sender.ViewModels
             }));
 
         }
-
+        public JobState JobState { get; set; }
         private void StopJob()
         {
-
+             JobState = JobState.Stop;
+            _commsManager.Adapter.WriteByte(GrblHalConstants.Stop);
+            JobCompete();
+            GcodeFileIndex = 1;
         }
-
         private void PauseJob()
         {
-
+            _commsManager.Adapter.WriteByte(GrblHalConstants.FeedHold);
         }
-
         private void CloseFile()
         {
             GCodeOutPut.Clear();
@@ -278,20 +305,27 @@ namespace GrbLHAL_Sender.ViewModels
         }
         public void StartJob()
         {
+            ListenToState(true);
             _commsManager.StartJob(SendJobLoop);
             SendJobLoop("start");
         }
 
-        private int index = 0;
         public void SendJobLoop(string lineProcessed)
         {
-            var startWatch = new Stopwatch();
-            startWatch.Start();
-            if (index <= GCodeOutPut.Count - 1)
+
+            if (JobState == JobState.Tool)
+                _commsManager.Adapter.WriteByte(GrblHalConstants.ToolAck);
+            if (JobState == JobState.Pause)
             {
-                _commsManager.SendCommand(GCodeOutPut[index].Text);
-                GcodeFileIndex = index;
-                index++;
+                _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
+                JobState = JobState.Running;
+            }
+            if (JobState != JobState.Running) return;
+            if (_index <= GCodeOutPut.Count - 1)
+            {
+                _commsManager.SendCommand(GCodeOutPut[_index].Text);
+                GcodeFileIndex = _index;
+                _index++;
             }
             else
             {
@@ -302,8 +336,19 @@ namespace GrbLHAL_Sender.ViewModels
         private void JobCompete()
         {
             _commsManager.EndJob();
-            index = 0;
+            _index = 0;
+            ListenToState(false);
+           
         }
+    }
+
+    public enum JobState
+    {
+        Running,
+        Pause,
+        Tool,
+        Stop,
+        Alarm
     }
 }
 public partial class Macro : ObservableObject
