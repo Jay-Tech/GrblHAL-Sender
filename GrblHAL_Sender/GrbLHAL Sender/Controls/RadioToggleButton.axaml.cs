@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace GrbLHAL_Sender.Controls
 {
-    public partial class SettingsControl : UserControl
+    public partial class RadioToggleButton : RadioButton
     {
-        public SettingsControl()
+        public RadioToggleButton()
         {
             InitializeComponent();
         }

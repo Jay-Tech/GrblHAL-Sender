@@ -38,6 +38,8 @@ namespace GrbLHAL_Sender.ViewModels
         private string _macroCommandText;
         private int _gCodeFileIndex;
         private int _index = 0;
+        private bool _fileLoaded;
+        private string _fileName;
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
@@ -53,7 +55,13 @@ namespace GrbLHAL_Sender.ViewModels
         public ICommand CloseFilesCommand { get; }
         public ICommand PauseJobCommand { get; }
         public ICommand StopJobCommand { get; }
-        public bool FileLoaded { get; set; }
+
+        public bool FileLoaded
+        {
+            get => _fileLoaded;
+            set => this.RaiseAndSetIfChanged(ref _fileLoaded, value);
+        }
+
         public ReactiveCommand<object, Unit> DoubleTapConsoleCommand
         {
             get => _doubleTapConsoleCommand;
@@ -65,21 +73,25 @@ namespace GrbLHAL_Sender.ViewModels
             get => _doubleMacroTapCommand;
             set => _doubleMacroTapCommand = value;
         }
+
         public bool ShowGCodeConsole
         {
             get => _showGCodeConsole;
             set => this.RaiseAndSetIfChanged(ref _showGCodeConsole, value);
         }
+
         public ObservableCollection<Macro> MacroList
         {
             get => _macroList;
             set => this.RaiseAndSetIfChanged(ref _macroList, value);
         }
+
         public ObservableCollection<GCodeLine> GCodeOutPut
         {
             get => _gCodeOutPut;
             set => this.RaiseAndSetIfChanged(ref _gCodeOutPut, value);
         }
+
         public Macro SelectedItem
         {
             get => _selectedItem;
@@ -89,6 +101,7 @@ namespace GrbLHAL_Sender.ViewModels
                 this.RaiseAndSetIfChanged(ref _selectedItem, value);
             }
         }
+
         public int MacroSelectedIndex
         {
             get => _macroSelectedIndex;
@@ -98,16 +111,19 @@ namespace GrbLHAL_Sender.ViewModels
                 this.RaiseAndSetIfChanged(ref _macroSelectedIndex, value);
             }
         }
+
         public bool MacroNameEnabled
         {
             get => _macroNameEnabled;
             set => this.RaiseAndSetIfChanged(ref _macroNameEnabled, value);
         }
+
         public string MacroName
         {
             get => _macroName;
             set => this.RaiseAndSetIfChanged(ref _macroName, value);
         }
+
         public bool DisplayMacroControl
         {
             get => _displayMacroControl;
@@ -124,6 +140,12 @@ namespace GrbLHAL_Sender.ViewModels
         {
             get => _gCodeFileIndex;
             set => this.RaiseAndSetIfChanged(ref _gCodeFileIndex, value);
+        }
+
+        public string FileName
+        {
+            get => _fileName;
+            set => this.RaiseAndSetIfChanged(ref _fileName, value);
         }
 
         public JobViewModel(CommunicationManager manager, ConfigManager configManger)
@@ -172,6 +194,7 @@ namespace GrbLHAL_Sender.ViewModels
                 _commsManager.OnStateReceived -= _commsManager_OnStateReceived;
             }
         }
+
         private void MacroControl()
         {
             DisplayMacroControl = !DisplayMacroControl;
@@ -204,10 +227,12 @@ namespace GrbLHAL_Sender.ViewModels
                 if (SelectedItem?.Id == " ") return;
                 macroId = SelectedItem.Id;
             }
+
             if (MacroList.Count == 0)
             {
                 MacroList.Add(BuildMacro());
             }
+
             if (MacroList.All(x => x.Id != macroId))
             {
                 MacroList.Add(BuildMacro());
@@ -222,6 +247,7 @@ namespace GrbLHAL_Sender.ViewModels
                     }
                 }
             }
+
             Macro BuildMacro()
             {
                 var m = new Macro
@@ -238,6 +264,7 @@ namespace GrbLHAL_Sender.ViewModels
             _configManger.GHalSenderConfig.MacroList = MacroList;
             _configManger.SaveConfig();
         }
+
         private void DeleteMacro(Macro macro)
         {
             if (macro?.Id != null)
@@ -245,10 +272,12 @@ namespace GrbLHAL_Sender.ViewModels
                 MacroList.Remove(macro);
             }
         }
+
         private void NewMacro()
         {
             MacroSelectedIndex = -1;
         }
+
         private void CloseGcodeConsole()
         {
             ShowGCodeConsole = !ShowGCodeConsole;
@@ -260,22 +289,27 @@ namespace GrbLHAL_Sender.ViewModels
             SelectedFiles = await SelectFilesInteraction.HandleAsync("Choose .NC File");
             var selectFile = SelectedFiles;
             if (selectFile?.Count <= 0) return;
+            FileName = SelectedFiles[0]?.Name;
             var file = new GCodeParser();
             file.ParseGCodeFile(SelectedFiles[0].Path.AbsolutePath, FileComplete);
         }
+
         private void DoubleTap(object p)
         {
             ShowGCodeConsole = !Convert.ToBoolean(p);
         }
+
         private void RunMacro(string macroId)
         {
             var command = MacroList.First(x => x.Id == macroId);
             SendCommand(command.Command);
         }
+
         private void SendCommand(string command)
         {
             _commsManager.SendCommand(command);
         }
+
         public void FileComplete(List<GCodeLine> gCodeJob)
         {
             Dispatcher.UIThread.Invoke((() =>
@@ -283,26 +317,32 @@ namespace GrbLHAL_Sender.ViewModels
                 GCodeOutPut.Clear();
                 GCodeOutPut.AddRange(gCodeJob);
                 GcodeFileIndex = 0;
+                FileLoaded = true;
             }));
 
         }
+
         public JobState JobState { get; set; }
+
         private void StopJob()
         {
-             JobState = JobState.Stop;
+            JobState = JobState.Stop;
             _commsManager.Adapter.WriteByte(GrblHalConstants.Stop);
             JobCompete();
-            GcodeFileIndex = 1;
+            GcodeFileIndex = 0;
         }
+
         private void PauseJob()
         {
             _commsManager.Adapter.WriteByte(GrblHalConstants.FeedHold);
         }
+
         private void CloseFile()
         {
             GCodeOutPut.Clear();
             FileLoaded = false;
         }
+
         public void StartJob()
         {
             ListenToState(true);
@@ -320,6 +360,7 @@ namespace GrbLHAL_Sender.ViewModels
                 _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
                 JobState = JobState.Running;
             }
+
             if (JobState != JobState.Running) return;
             if (_index <= GCodeOutPut.Count - 1)
             {
@@ -338,7 +379,7 @@ namespace GrbLHAL_Sender.ViewModels
             _commsManager.EndJob();
             _index = 0;
             ListenToState(false);
-           
+
         }
     }
 
@@ -350,7 +391,9 @@ namespace GrbLHAL_Sender.ViewModels
         Stop,
         Alarm
     }
+
 }
+
 public partial class Macro : ObservableObject
 {
     [ObservableProperty]

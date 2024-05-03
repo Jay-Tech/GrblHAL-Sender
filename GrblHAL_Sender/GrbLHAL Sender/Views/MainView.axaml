@@ -8,6 +8,7 @@
              xmlns:behaviors="clr-namespace:GrbLHAL_Sender.Behaviors"
              xmlns:convertors="clr-namespace:GrbLHAL_Sender.Convertors"
              xmlns:global="clr-namespace:"
+             xmlns:controls="clr-namespace:GrbLHAL_Sender.Controls"
              d:DesignHeight="1080" d:DesignWidth="1920"
              x:Class="GrbLHAL_Sender.Views.MainView"
              x:DataType="vm:MainViewModel">
@@ -15,9 +16,6 @@
   <UserControl.Resources>
     <convertors:LedBackGround x:Key="LedBackGround"></convertors:LedBackGround>
     <convertors:AlignmentConvertor x:Key="AlignmentConvertor" />
-    <convertors:HorizontalAlignmentConvertor x:Key="HorizontalAlignmentConvertor" />
-    <convertors:InverseAlignmentConvertor x:Key="InverseAlignmentConvertor" />
-    <convertors:IndexToBool x:Key="IndexToBool"/>
   </UserControl.Resources>
   <!--Header-->
 
@@ -39,13 +37,13 @@
                HorizontalAlignment="Center"
                Content="{Binding State.Tool, StringFormat={} Tool:{0}}"
                IsVisible="{Binding Connected}"></Label>
-        <Label Grid.Column="4" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
+        <Label Grid.Column="4" x:Name="JogStepLabel" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
                HorizontalAlignment="Center"
                Content="{Binding JogStep, StringFormat={} Step:{0}}"
                IsVisible="{Binding Connected}"></Label>
         <Label Grid.Column="5" FontSize="24" Margin="15,0,0,0" VerticalAlignment="Center"
-               HorizontalAlignment="Center"
-               Content="{Binding JogRate, StringFormat={} Rate:{0}}"
+               HorizontalAlignment="Center" x:Name="JogFeedLabel"
+               Content="{Binding JogRate, StringFormat={} Feed:{0}}"
                IsVisible="{Binding Connected}"></Label>
 
         <ItemsRepeater Grid.Column="6"  HorizontalAlignment="Right" ItemsSource="{Binding SignalList}" Margin="15,0">
@@ -75,36 +73,7 @@
                 Command="{Binding UnLockCommand}" Width="100"></Button>
       </Grid>
     </Border>
-
-    <!--  Menu Selection  Header Not Active but may come back to it-->
-    <!--<Border Height="35"   BorderThickness="1" DockPanel.Dock="Top">
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-        <Button Content="Job" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"   Width="140"
-                Margin="1,0,1,0" ></Button>
-        <Button Content="Probe" IsEnabled="{Binding IsJobRunning}" IsVisible="{Binding  Path= HasProbing}"
-                HorizontalContentAlignment="Center"
-                VerticalContentAlignment="Center"   Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="SD Card" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                IsVisible="{Binding  Path= HasSdCard}"
-                IsEnabled="{Binding IsJobRunning}"
-                Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="Offset" IsEnabled="{Binding IsJobRunning,  Converter={x:Static BoolConverters.Not}}"
-                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="Utility" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}"
-                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="Tools" IsEnabled="{Binding IsJobRunning}" HorizontalContentAlignment="Center"
-                VerticalContentAlignment="Center"
-                IsVisible="{Binding  Path= HasATC }" Width="140" Margin="1,0,1,0" ></Button>
-        <Button Content="GrblHALSettings" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}"
-                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                Width="140" Margin="1,0,1,0"  ></Button>
-        <Button Content="App Settings" IsEnabled="{Binding IsJobRunning, Converter={x:Static BoolConverters.Not}}"
-                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                Width="140" Margin="1,0,1,0" ></Button>
-      </StackPanel>
-    </Border>-->
+    <!-- End Header-->
 
     <!-- DataTemplate Axis Control-->
     <Border  Name="MainControlBorder" Margin="1,38,0,5" VerticalAlignment="Stretch"
@@ -134,7 +103,7 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
         <Button Grid.Row="2" FontSize="20"  Content="Zero All" Height="40" HorizontalAlignment="Stretch" Command="{Binding ZeroAllCommand}" ></Button>
-
+        <!-- End  Axis Control-->
         <!--WCS-->
         <Grid Grid.Row="3" Margin="0,2" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
           <Label  Content="WCS" HorizontalContentAlignment="Center" FontSize="18" VerticalContentAlignment="Center"
@@ -259,52 +228,40 @@
     </Border>
 
     <!-- Bottom ContentControl Host Probe section -->
-    <!--
-    <Border DockPanel.Dock="Bottom" Height="55" Margin="0,0,0,0">
-      <Grid RowDefinitions= "Auto" >
-        <ItemsRepeater Grid.Row="0"  ItemsSource="{Binding }" Margin="5,0">
-          <ItemsRepeater.Layout>
-            <StackLayout
-                Orientation="Horizontal"/>
-          </ItemsRepeater.Layout>
-          <ItemsRepeater.ItemTemplate>
-            <DataTemplate>
-              -->
-    <!--<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"   Orientation="Horizontal">
-                <Button Content="{Binding Path=Id}" Width="85" Height="45" Margin="10,3,0,5"
-                        CommandParameter="{Binding Id}"
-                        FontSize="20" Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).RunMacroCommand}">
-                </Button>
-              </StackPanel>-->
-    <!--
-            </DataTemplate>
-          </ItemsRepeater.ItemTemplate>
-        </ItemsRepeater>
-      </Grid>
-    </Border>
-    -->
-    <!--Bottom Section End-->
 
     <!-- Jog Control Right Section-->
     <Border DockPanel.Dock="Right">
       <Grid x:Name="Grid" Margin="0,40,5,0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
             HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <StackPanel x:Name="Panel" Grid.Row="0" Orientation="Horizontal"  HorizontalAlignment="Stretch"
+
+        <StackPanel x:Name="Panel" Orientation="Horizontal"   HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch">
-          <Label  FontSize="24" Content="Feed" HorizontalContentAlignment="Center"
+          <Label  FontSize="24" Content="Feed" Grid.Column="0" HorizontalContentAlignment="Center"
                  HorizontalAlignment="Stretch" VerticalContentAlignment="Center" VerticalAlignment="Stretch"> </Label>
-          <ItemsRepeater   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+          <ItemsRepeater   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Grid.IsSharedSizeScope="True"
                           ItemsSource="{Binding JogRateList}">
-            <ItemsRepeater.Layout >
-              <StackLayout Orientation="Horizontal"  Spacing="5"/>
+            <ItemsRepeater.Layout   >
+              <StackLayout Spacing="5" Orientation="Horizontal"/>
             </ItemsRepeater.Layout>
-            <ItemsRepeater.ItemTemplate>
+            <ItemsRepeater.ItemTemplate >
               <DataTemplate>
-                <Button Content="{Binding }"  VerticalAlignment="Stretch"
-                        HorizontalAlignment="Stretch" Margin="3,0" CornerRadius="6" Width="75"
-                        CommandParameter="{Binding }"  Height="45" FontSize="20"
-                        Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).FeedRateChangeCommand}">
-                </Button>
+
+                <controls:RadioToggleButton x:Name="ToggleButton"  Height="45" Width="75" Content="{Binding}" Tag="{Binding }"
+                                            VerticalAlignment="Stretch" FontSize="20"
+                                            CommandParameter="{Binding }" HorizontalAlignment="Stretch"
+                                            Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).FeedRateChangeCommand}">
+
+                  <Interaction.Behaviors>
+                    <DataTriggerBehavior Binding="{Binding  #JogFeedLabel.Content}"
+                                            ComparisonCondition="Equal"
+                                            Value="{Binding #ToggleButton.Tag, StringFormat={} Feed:{0}}">
+                      <ChangePropertyAction TargetObject="ToggleButton"
+                                               PropertyName="IsChecked"
+                                               Value="true" />
+                    </DataTriggerBehavior>
+                  </Interaction.Behaviors>
+                </controls:RadioToggleButton>
+
               </DataTemplate>
             </ItemsRepeater.ItemTemplate>
           </ItemsRepeater>
@@ -314,21 +271,21 @@
                   Grid.Column="0"
                   Margin="4"
                   Command="{Binding JogNegCommand}"
-                  CommandParameter="X" Foreground="DodgerBlue"
+                  CommandParameter="X" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Content="{icons:MaterialIconExt ArrowLeftBoldBoxOutline, Size=90}" />
           <Button Grid.Row="0" Name="YUp"   Height="65" Width="65"
                   Grid.Column="1"
                   Margin="4"
                   Command="{Binding JogPosCommand }"
-                  CommandParameter="Y" CornerRadius="10" Foreground="DodgerBlue"
+                  CommandParameter="Y" CornerRadius="10" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Content="{icons:MaterialIconExt ArrowUpBoldBoxOutline, Size=90}"/>
           <Button Grid.Row="1" Name="Xup" Height="65" Width="65"
                   Grid.Column="2" Margin="4"
                   Command="{Binding JogPosCommand}"
-                  CommandParameter= "X" CornerRadius="10" Foreground="DodgerBlue"
+                  CommandParameter= "X" CornerRadius="10" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Content="{icons:MaterialIconExt ArrowRightBoldBoxOutline, Size=90}" />
           <Button Grid.Row="2" Name="YDown" CornerRadius="10" Height="65" Width="65"
-                  Grid.Column="1" Foreground="DodgerBlue"
+                  Grid.Column="1" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Margin="4"
                   Command="{Binding JogNegCommand}"
                   CommandParameter="Y"
@@ -340,13 +297,13 @@
                   Grid.Column="3"
                   Margin="4"
                   Command="{Binding JogNegCommand}"
-                  CommandParameter="Z" Foreground="DodgerBlue"
+                  CommandParameter="Z" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Content="{icons:MaterialIconExt ArrowUpBoldBoxOutline, Size=90}"/>
           <Button Grid.Row="2" CornerRadius="10" Name="ZDown"  Height="65" Width="65"
                   Grid.Column="3"
                   Margin="5,4,4,4"
                   Command="{Binding JogPosCommand}"
-                  CommandParameter="Z" Foreground="DodgerBlue"
+                  CommandParameter="Z" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Content="{icons:MaterialIconExt ArrowDownBoldBoxOutline,  Size=90}"/>
         </Grid>
 
@@ -362,15 +319,27 @@
             </ItemsRepeater.Layout>
             <ItemsRepeater.ItemTemplate>
               <DataTemplate>
-                <ToggleButton Content="{Binding }"  CornerRadius="6"  Margin="3,0" HorizontalAlignment="Stretch"
-                        CommandParameter="{Binding }" FontSize="20" Height="45" Width="75" VerticalAlignment="Stretch"
-                        Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).StepRateChangeCommand}" >
-                </ToggleButton>
+                  <controls:RadioToggleButton x:Name="ToggleButton"  Height="45" Width="75" Content="{Binding}" Tag="{Binding }"
+                                              VerticalAlignment="Stretch" FontSize="20"
+                                              CommandParameter="{Binding }" HorizontalAlignment="Stretch"
+                                              Command="{Binding $parent[ItemsRepeater].((vm:MainViewModel)DataContext).StepRateChangeCommand}">
+
+                      <Interaction.Behaviors>
+                          <DataTriggerBehavior Binding="{Binding  #JogStepLabel.Content}"
+                                               ComparisonCondition="Equal"
+                                               Value="{Binding #ToggleButton.Tag, StringFormat={} Step:{0}}">
+                              <ChangePropertyAction TargetObject="ToggleButton"
+                                                    PropertyName="IsChecked"
+                                                    Value="true" />
+                          </DataTriggerBehavior>
+                      </Interaction.Behaviors>
+                  </controls:RadioToggleButton>
+
               </DataTemplate>
             </ItemsRepeater.ItemTemplate>
           </ItemsRepeater>
         </StackPanel>
-
+        <!-- End Jog Control  Section-->
 
 
         <!--ToolControl-->
@@ -411,14 +380,14 @@
         <Grid Grid.Row="4" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" Grid.ColumnDefinitions="*,*">
           <TextBlock Text="Spindle" Margin="0,15,0,0" TextAlignment="Center"
                      Grid.ColumnSpan="2" FontSize="22" Grid.Row="0" Grid.Column="0" />
-          <Button Grid.Column="0" FontSize="26" Content="CW" CornerRadius="6,6,6,6" Height="45"
+          <controls:RadioToggleButton Grid.Column="0" FontSize="26" HorizontalAlignment="Stretch" Content="CW" CornerRadius="6,6,6,6" Height="45"
                   Margin="5,0,3,0" Grid.Row="1" CommandParameter="{Binding #SpindleRPM.Text}"
-                  Command="{Binding SpindleCWCommand}"></Button>
-          <Button Grid.Column="1" CornerRadius="6,6,6,6" Height="45"
+                  Command="{Binding SpindleCWCommand}"></controls:RadioToggleButton>
+          <controls:RadioToggleButton Grid.Column="1" HorizontalAlignment="Stretch"  CornerRadius="6,6,6,6" Height="45"
                   Margin="3,0,5,0" FontSize="26" Content="CCW" Grid.Row="1"
                   Command="{Binding SpindleCCWCommand}"  CommandParameter="{Binding #SpindleRPM.Text}"/>
-          <Button Grid.Column="0" CornerRadius="6,6,6,6" Height="45"
-                  Margin="5,15,5,0" Grid.Row="2"
+          <controls:RadioToggleButton Grid.Column="0" CornerRadius="6,6,6,6" Height="45"
+                  Margin="5,15,5,0" Grid.Row="2" HorizontalAlignment="Stretch"
                   FontSize="26" Content ="Spindle Off"  Command="{Binding SpindleOffCommand}" Grid.ColumnSpan="2"/>
           <StackPanel Grid.Row="3" Grid.Column="0" Margin="5,0,0,5">
             <TextBlock Margin="0 0"></TextBlock>
@@ -431,15 +400,6 @@
               </NumericUpDown.Styles>
             </NumericUpDown>
           </StackPanel>
-          <!--<StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" >
-              <TextBlock Margin="0 5">Number of items:</TextBlock>
-              <NumericUpDown  x:Name="SpindleRPM" AllowSpin="False" ShowButtonSpinner="False"
-                             Value="{Binding SpindleSetRpm}" ButtonSpinnerLocation="Right" Minimum="1" Maximum="30000"
-                              Margin="5,15,3,0"
-                             Height="45" FontSize="26" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                             CornerRadius="6,6,6,6" ></NumericUpDown>
-          </StackPanel>-->
-
           <Slider Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,15,5,0" FontSize="24"
                    Height="30" Minimum="1" Maximum="30000"  Value="{Binding SpindleSetRpm }" />
           <TextBlock Text="{Binding RPM, StringFormat={}RPM:{0}}"  Margin="3,15,5,0" TextAlignment="Left"
@@ -517,10 +477,7 @@
       <Grid>
         <TabControl TabStripPlacement="Top"  >
           <TabItem x:Name="HomeTab" Header="Home" DataContext="{Binding Path= JobViewModel}" ZIndex="3">
-            <Canvas Background="WhiteSmoke"  HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    Margin="1,0.5,1,2" >
-            </Canvas>
+            <ctl:RenderCanvas HorizontalAlignment="Stretch" Background="WhiteSmoke" VerticalAlignment="Stretch"></ctl:RenderCanvas>
           </TabItem>
           <TabItem x:Name="SettingTab" Header="GrblHAL Settings">
             <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"
@@ -562,10 +519,11 @@
                 <Button HorizontalContentAlignment="Center" VerticalContentAlignment="Top"
                         CornerRadius="6,6,6,6" Height="45" Width="110"
                         Command="{Binding  SelectFilesCommand}" HorizontalAlignment="Center"
-                        FontSize="26" Margin="0,0,0, 0" Content="File"/>
+                        FontSize="26" Margin="0,0,0, 0" Content="{Binding FileName,  StringFormat={}File{0}}"/>
                 <Button HorizontalContentAlignment="Center" VerticalContentAlignment="Top"
                         CornerRadius="6,6,6,6" Height="45" Width="110"
-                        Command="{Binding  CloseFilesCommand}" HorizontalAlignment="Center"
+                        Command="{Binding  CloseFilesCommand}" IsEnabled="{Binding FileLoaded}"
+                        HorizontalAlignment="Center"
                         FontSize="26" Margin="0,0,0, 0" Content="Close"/>
                 <Button HorizontalContentAlignment="Center" VerticalContentAlignment="Top"
                         Height="45" CornerRadius="6,6,6,6" Width="110"
@@ -781,48 +739,12 @@
         <!--Probe Control Panel -->
         <DockPanel x:Name="ProbePanel" ZIndex="3" DataContext="{Binding ProbeViewModel}">
           <Border Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="400" IsVisible="{Binding Path=ShowProbeControl}">
-            <Grid Background="LightGray" RowDefinitions="*,*,*,*">
-
+            <Grid Background="LightGray" >
+                <ctl:ProbeView HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></ctl:ProbeView>
             </Grid>
           </Border>
         </DockPanel>
         <!--Probe Control Panel End -->
-        <!-- Probe  Control ProbeViewModel -->
-        <!--<DockPanel HorizontalAlignment="Stretch" Margin="0,44,0,0"  VerticalAlignment="Stretch" x:Name="ProbeDock"
-                   DataContext="{Binding ProbeViewModel}" >
-          <Border  HorizontalAlignment="Right" VerticalAlignment="Top" MinWidth="50" MinHeight="50" Height="450">
-            
-              <Grid Margin="0,0,0,0" DockPanel.Dock="Right" HorizontalAlignment="Right"
-                    MinWidth="50" MinHeight="50"  Width="400"
-                    behaviors:DoubleTappedBehav.Command="{Binding DoubleTapProbeControlCommand}"
-                    behaviors:DoubleTappedBehav.CommandParameter="{Binding #Tb.IsVisible}">
-              -->
-        <!--<Grid.HorizontalAlignment>
-                <MultiBinding  Converter="{StaticResource HorizontalAlignmentConvertor}"
-                               ConverterParameter="{Binding #Tb.IsVisible}">
-                  <Binding Path="IsVisible" ElementName="Tb"  ></Binding>
-                </MultiBinding>
-              </Grid.HorizontalAlignment>-->
-        <!--
-              <Grid.VerticalAlignment>
-                <MultiBinding  Converter="{StaticResource InverseAlignmentConvertor}"
-                               ConverterParameter="{Binding #Tb.IsVisible}">
-                  <Binding Path="IsVisible" ElementName="Tb"  ></Binding>
-                </MultiBinding>
-              </Grid.VerticalAlignment>
-
-              <Grid  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
-                <TextBox x:Name="Tb"  IsVisible="{Binding ShowProbeControl}"
-                         Grid.Column="0" Width="150" Height="45" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,20,0,0"></TextBox>
-              </Grid>
-
-            </Grid>
-          </Border>
-        </DockPanel>-->
-
-
-        <!--Header End-->
-
       </Grid>
     </Border>
   </DockPanel>

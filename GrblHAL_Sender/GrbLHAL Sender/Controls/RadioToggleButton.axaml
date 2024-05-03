@@ -1,0 +1,118 @@
+<RadioButton xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:themes="clr-namespace:Material.Styles.Themes;assembly=Material.Styles"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="GrbLHAL_Sender.Controls.RadioToggleButton">
+
+  <RadioButton.Theme>
+      <ControlTheme  TargetType="RadioButton">
+        <Setter Property="Background" Value="{DynamicResource ToggleButtonBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForeground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource ToggleButtonBorderThemeThickness}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="Padding" Value="{DynamicResource ButtonPadding}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <!--<Setter Property="RenderTransform" Value="none" />-->
+        <!--<Setter Property="Transitions">
+            <Transitions>
+            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:.075" />
+          </Transitions>
+        </Setter>-->
+
+        <Setter Property="Template">
+          <ControlTemplate>
+            <ContentPresenter  x:Name="PART_ContentPresenter"
+                               Background="{DynamicResource ToggleButtonBackground}"
+                               BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
+                               BorderThickness="{DynamicResource ToggleButtonBorderThemeThickness}"
+                               CornerRadius="{DynamicResource ControlCornerRadius}"
+                               Content="{TemplateBinding Content}"
+                               ContentTemplate="{TemplateBinding ContentTemplate}"
+                               Padding="{DynamicResource ButtonPadding}"
+                               RecognizesAccessKey="True"
+                               HorizontalContentAlignment="Center"
+                               VerticalContentAlignment="Center" />
+          </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundPointerOver}" />
+          <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushPointerOver}" />
+          <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundPointerOver}" />
+        </Style>
+
+        <Style Selector="^:pressed">
+          <Setter Property="RenderTransform" Value="scale(0.98)" />
+        </Style>
+
+        <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundPressed}" />
+          <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushPressed}" />
+          <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundPressed}" />
+        </Style>
+
+        <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundDisabled}" />
+          <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushDisabled}" />
+          <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundDisabled}" />
+        </Style>
+
+        <Style Selector="^:indeterminate">
+          <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundIndeterminate}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushIndeterminate}" />
+            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundIndeterminate}" />
+          </Style>
+
+          <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundIndeterminatePointerOver}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushIndeterminatePointerOver}" />
+            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundIndeterminatePointerOver}" />
+          </Style>
+
+          <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundIndeterminatePressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushIndeterminatePressed}" />
+            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundIndeterminatePressed}" />
+          </Style>
+
+          <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundIndeterminateDisabled}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushIndeterminateDisabled}" />
+            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundIndeterminateDisabled}" />
+          </Style>
+        </Style>
+
+        <Style Selector="^:checked">
+          <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}" />
+            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundChecked}" />
+            <Setter Property="BorderThickness" Value="3" />
+          </Style>
+
+          <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundPointerOver}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushCheckedPointerOver}" />
+            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundCheckedPointerOver}" />
+
+          </Style>
+
+          <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundCheckedPressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushCheckedPressed}" />
+            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundCheckedPressed}" />
+          </Style>
+
+          <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundCheckedDisabled}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrushCheckedDisabled}" />
+            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForegroundCheckedDisabled}" />
+          </Style>
+        </Style>
+      </ControlTheme>
+</RadioButton.Theme>
+</RadioButton>

@@ -30,7 +30,7 @@ namespace GrbLHAL_Sender.Communication
 
         private static readonly object _sncLock = new();
         private CancellationTokenSource _tokenSource;
-
+        public bool IsConnected { get; set; }
         public Serial(string connection, SerialSettings serialSettings = null!)
         {
             TryConnect(connection, serialSettings);
@@ -67,6 +67,7 @@ namespace GrbLHAL_Sender.Communication
                 _serialPort.DtrEnable = true;
                 if (_serialPort.IsOpen)
                 {
+                    IsConnected = true;
                     _tokenSource = new CancellationTokenSource();
                     Task.Factory.StartNew(() => SendLoop(_tokenSource.Token), TaskCreationOptions.LongRunning);
                 }

@@ -12,5 +12,6 @@ namespace GrbLHAL_Sender.Communication
         void WriteByte(byte data);
         void WriteCommand(string command);
         void Close();
+        bool IsConnected { get;  set; }
     }
 }
