@@ -205,7 +205,14 @@ namespace GrbLHAL_Sender.Communication
 
             if (data.StartsWith("[MSG:Pgm End"))
             {
-                
+
+            }
+
+            if (data.StartsWith("[PRB"))
+            {
+                data = data.Trim('[', ']');
+                var substring = data.Split(':');
+                ParseProbe(substring.AsSpan());
             }
             if (data.StartsWith("["))
             {
@@ -235,14 +242,14 @@ namespace GrbLHAL_Sender.Communication
 
                 var valuePair = data.Split(':');
                 var error = _errorCodes[valuePair[1].StringToInt()];
-                Debug.Write("***Warning Error Code " + error + valuePair[1] + error  + "***" + Environment.NewLine);
+                Debug.Write("***Warning Error Code " + error + valuePair[1] + error + "***" + Environment.NewLine);
             }
             if (data.StartsWith("ALARM"))
             {
 
                 var valuePair = data.Split(':');
                 var alarm = _alarmCodes[valuePair[1].StringToInt()];
-                Debug.Write("***Alarm Code " + alarm + valuePair[1] + alarm  + "***" + Environment.NewLine);
+                Debug.Write("***Alarm Code " + alarm + valuePair[1] + alarm + "***" + Environment.NewLine);
             }
             else
             {
@@ -254,6 +261,22 @@ namespace GrbLHAL_Sender.Communication
                     Debug.Write("***Warning Data Not Parsed " + data + "***");
             }
         }
+
+        private void ParseProbe(Span<string> span)
+        {
+            var probe = new ProbeState();
+            if (span.Length >= 2)
+            {
+                probe.ProbeSuccessful = span[2].StringToBool();
+                var cords = span[1].Split(',');
+                probe.XOffset = cords[0];
+                probe.YOffset = cords[1];
+                probe.ZOffset = cords[2];
+            }
+
+            OnProbeResults?.Invoke(this,probe);
+        }
+
         private Dictionary<int, string> _errorCodes = new Dictionary<int, string>();
         private void ParseError(Span<string> asSpan)
         {
@@ -307,7 +330,7 @@ namespace GrbLHAL_Sender.Communication
                     grblHalOptions.SignalLabels.AddOrInsertRange(grblHalOptions.AxisLabels, 0);
                 }
             }
-            
+
         }
         private void ParseTabSettings(Span<string> asSpan)
         {
@@ -379,7 +402,7 @@ namespace GrbLHAL_Sender.Communication
                             break;
                         case "Pn":
                             rtState.SignalStatus = value.ToCharArray().ToList();
-                            break;                                                            
+                            break;
                         case "WCO":
                             rtState.Wco = value.Split(",");
                             break;

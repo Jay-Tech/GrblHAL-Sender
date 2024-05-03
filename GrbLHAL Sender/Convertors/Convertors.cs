@@ -19,7 +19,6 @@ using GrbLHAL_Sender.Settings;
 
 namespace GrbLHAL_Sender.Convertors
 {
-
     public class StringToBool : IValueConverter
     {
         public static readonly StringToBool Instance = new();
@@ -46,14 +45,12 @@ namespace GrbLHAL_Sender.Convertors
         }
     }
 
-   
 
     public class LedBackGround : IValueConverter
-
     {
         private int index = 0;
         public static readonly LedBackGround Instance = new();
-       
+
 
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
@@ -61,31 +58,12 @@ namespace GrbLHAL_Sender.Convertors
             SolidColorBrush b = null;
             if (Application.Current!.TryFindResource("ThemeControlMidBrush", themeVariant, out Object? output) && output is SolidColorBrush brush)
             {
-                 b = brush;
+                b = brush;
             }
             if (value is bool v)
             {
-                return v ? new SolidColorBrush(Color.FromRgb(255, 51, 51)) : b ?? new SolidColorBrush(Color.FromArgb(255, 80, 80,80));
+                return v ? new SolidColorBrush(Color.FromRgb(255, 51, 51)) : b ?? new SolidColorBrush(Color.FromArgb(255, 80, 80, 80));
             }
-            
-
-            return new BindingNotification(new InvalidCastException(), BindingErrorType.Error);
-        }
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        
-    }
-    public class IndexToBool : IValueConverter
-    {
-        private int index = 0;
-        public static readonly IndexToBool Instance = new();
-        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-
-
 
 
             return new BindingNotification(new InvalidCastException(), BindingErrorType.Error);
@@ -95,6 +73,7 @@ namespace GrbLHAL_Sender.Convertors
             throw new NotSupportedException();
         }
     }
+
     public class StringToRadioButton : IValueConverter
     {
         public static readonly StringToRadioButton Instance = new();
@@ -143,7 +122,6 @@ namespace GrbLHAL_Sender.Convertors
         }
     }
     public class AlignmentConvertor : IMultiValueConverter
-
     {
         public static readonly AlignmentConvertor Instance = new();
 
@@ -164,7 +142,6 @@ namespace GrbLHAL_Sender.Convertors
     }
 
     public class HorizontalAlignmentConvertor : IMultiValueConverter
-
     {
         public static readonly HorizontalAlignmentConvertor Instance = new();
 
@@ -183,28 +160,6 @@ namespace GrbLHAL_Sender.Convertors
             throw new NotSupportedException();
         }
     }
-    public class InverseAlignmentConvertor : IMultiValueConverter
 
-    {
-        public static readonly HorizontalAlignmentConvertor Instance = new();
-
-        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (values is null || values.Count == 0) return VerticalAlignment.Top;
-            else
-            {
-                var b = (bool)(values[0] ?? VerticalAlignment.Top);
-                return b ? VerticalAlignment.Stretch : VerticalAlignment.Top;
-            }
-
-        }
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-       
-       
-    }
 }
 

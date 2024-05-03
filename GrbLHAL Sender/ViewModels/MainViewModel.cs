@@ -15,6 +15,7 @@ using GrbLHAL_Sender.Communication;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using Avalonia.Threading;
 using DynamicData;
 using GrbLHAL_Sender.Settings;
@@ -63,6 +64,7 @@ public class MainViewModel : ViewModelBase
     private int _feedRate;
     private int _feedOverRide;
     private int _spindleSetRpm;
+
     //private bool _hasAtc;
     //private bool _hasSdCard;
     //private bool _hasProbing;
@@ -70,6 +72,7 @@ public class MainViewModel : ViewModelBase
     private ReactiveCommand<object, Unit> _doubleTapCommand;
     private ReactiveCommand<object, Unit> _hideBoxCommand;
     private ReactiveCommand<object, Unit> _focusedCommand;
+    private bool _tlr = false;
     public bool ShowRTCommands { get; set; }
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
@@ -215,6 +218,7 @@ public class MainViewModel : ViewModelBase
         get => _doubleTapCommand;
         set => _doubleTapCommand = value;
     }
+
     public ReactiveCommand<object, Unit> HideBoxCommand
     {
         get => _hideBoxCommand;
@@ -305,6 +309,7 @@ public class MainViewModel : ViewModelBase
         RapidOrFineCommand = ReactiveCommand.Create(RapidFine);
         ResetRapidCommand = ReactiveCommand.Create(RapidReset);
         OpenConsolePanel = ReactiveCommand.Create(OpenConsole);
+ 
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
         _axis = new ObservableCollection<Axis>
@@ -435,14 +440,6 @@ public class MainViewModel : ViewModelBase
                 break;
         }
 
-        //if (_routedKeyStroke)
-        //{
-
-        //    Tnputs += text;
-        //    MessageTarget = s => FocusTextInput(s);
-        //    return;
-        //}
-
         MdiText += text;
     }
 
@@ -450,26 +447,19 @@ public class MainViewModel : ViewModelBase
     {
         if (obj is not AutoCompleteBox tb) return;
         tb.LostFocus += TbLostFocus;
-        _routedKeyStroke = true;
-        return;
+        //_routedKeyStroke = true;
+       // return;
         void TbLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
             tb.LostFocus -= TbLostFocus;
-            Tnputs = string.Empty;
+           // Tnputs = string.Empty;
         }
     }
-
-    private Action<string> MessageTarget;
-    bool _routedKeyStroke = false;
-    public string Tnputs { get; set; }
-
-   
-    
-    
 
     private void ChangeStepRate(double step)
     {
         JogStep = step;
+        
     }
     private void ChangeFeedRate(double feed)
     {
@@ -494,6 +484,21 @@ public class MainViewModel : ViewModelBase
         JogRate = JogRateList[^1];
         ToolList.AddRange(_config.ToolList.Tools);
     }
+
+    public bool TLR
+    {
+        get => _tlr;
+        set
+        {
+            if (_tlr != value)
+            {
+                _tlr = value;
+                _probeViewModel.TLR = value;
+            }
+        }
+        
+    }
+
     private void Wcs(string command)
     {
         SendCommand(command);
@@ -570,6 +575,7 @@ public class MainViewModel : ViewModelBase
         }
 
         State = e;
+        TLR = e.TLR;
         SetFeedAndSpeeds(State);
         AlarmActive = e.GrblHalState == "Alarm";
         if (ConsoleOutput.Count > 200)

@@ -25,5 +25,10 @@ namespace GrbLHAL_Sender.Utility
             int.TryParse(str, out int result);
             return result;
         }
+        public static double StringToDouble(this string str)
+        {
+            double.TryParse(str, out double result);
+            return result;
+        }
     }
 }

@@ -8,6 +8,14 @@ namespace GrbLHAL_Sender.Probe
 {
     public class ProbeState
     {
-        public ProbeState() { }
+        public bool ProbeSuccessful { get; set; }
+
+        public string XOffset { get; set; }
+        public string YOffset { get; set; }
+        public string ZOffset { get; set; }
+        public ProbeState()
+        {
+
+        }
     }
 }
