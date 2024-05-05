@@ -54,23 +54,5 @@ public partial class MainView : UserControl
         return storageFiles;
     }
 
-    //private async Task InteractionHandler(InteractionContext<string?, string[]?> context)
-    //{
-    //    // Get our parent top level control in order to get the needed service (in our sample the storage provider. Can also be the clipboard etc.)
-    //    var topLevel = TopLevel.GetTopLevel(this);
-
-    //    var storageFiles = await topLevel!.StorageProvider
-    //        .OpenFilePickerAsync(
-    //            new FilePickerOpenOptions()
-    //            {
-    //                AllowMultiple = true,
-    //                Title = context.Input
-    //            });
-
-    //    context.SetOutput(storageFiles?.Select(x => x.Name).ToArray());
-    //}
-    private void InputElement_OnPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        //throw new NotImplementedException();
-    }
+   
 }

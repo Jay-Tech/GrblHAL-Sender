@@ -120,8 +120,6 @@ namespace GrbLHAL_Sender.ViewModels
 
         private void StartProbe()
         {
-
-
             ProbeJob = [];
              _probeJob = new ProbeJobBuilder();
             
@@ -222,7 +220,6 @@ namespace GrbLHAL_Sender.ViewModels
         OutSideCenter,
         InsideCorner,
         OutSideCorner,
-
     }
 
 }
