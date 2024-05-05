@@ -7,7 +7,7 @@
              xmlns:ctl="clr-namespace:GrbLHAL_Sender.Views"
              xmlns:behaviors="clr-namespace:GrbLHAL_Sender.Behaviors"
              xmlns:convertors="clr-namespace:GrbLHAL_Sender.Convertors"
-             xmlns:global="clr-namespace:"
+             xmlns:render="clr-namespace:GrbLHAL_Sender.Views.Render.Gl"
              xmlns:controls="clr-namespace:GrbLHAL_Sender.Controls"
              d:DesignHeight="1080" d:DesignWidth="1920"
              x:Class="GrbLHAL_Sender.Views.MainView"
@@ -20,7 +20,7 @@
   <!--Header-->
 
   <DockPanel x:Name="MainDock"  Background="Transparent" Name="MainDockPanel" LastChildFill="True">
-    <Border  Height="45" BorderThickness="1" DockPanel.Dock="Top">
+    <Border  Height="45" BorderThickness="1" DockPanel.Dock="Top"  >
       <Grid ColumnDefinitions="Auto,90,145,110,Auto,Auto,*,200,Auto">
 
         <Button  Grid.Column="0" Margin="3,0,0,0" HorizontalAlignment="Left"
@@ -131,9 +131,7 @@
           <Label  Content="MDI" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                   FontSize="18" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
           <AutoCompleteBox Grid.Row="1" x:Name="MdiTb"  FontSize="20"  Height="50" MaxDropDownHeight="300"
-                    HorizontalAlignment ="Stretch"  VerticalAlignment="Stretch" Text="{Binding MdiText}"
-                    behaviors:FocusToCommand.Command="{Binding FocusedCommand}"
-                    behaviors:FocusToCommand.CommandParameter="{Binding #MdiTb}">
+                    HorizontalAlignment ="Stretch"  VerticalAlignment="Stretch" Text="{Binding MdiText}">
             <AutoCompleteBox.ItemTemplate>
               <DataTemplate>
                 <TextBox x:Name="TB" IsReadOnly="False" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
@@ -173,7 +171,7 @@
                   CommandParameter="6"
                   Command="{Binding KeyPressCommand}"/>
           <Button Classes="h1" Content="-"
-                  CommandParameter="-"
+                  CommandParameter="-" 
                   Command="{Binding KeyPressCommand}"/>
           <Button Classes="h1" Content="X"
                   CommandParameter="X"
@@ -391,9 +389,11 @@
                   FontSize="26" Content ="Spindle Off"  Command="{Binding SpindleOffCommand}" Grid.ColumnSpan="2"/>
           <StackPanel Grid.Row="3" Grid.Column="0" Margin="5,0,0,5">
             <TextBlock Margin="0 0"></TextBlock>
-            <NumericUpDown x:Name="SpindleRPM" FontSize="24"  MaxWidth="175" Increment="100"
-                           FormatString="0" Value="{Binding SpindleSetRpm}"
-                           Minimum="0" Maximum="30000" ButtonSpinnerLocation="Right" ParsingNumberStyle="AllowDecimalPoint" ClipValueToMinMax="True">
+            <NumericUpDown x:Name="SpindleRPM" FontSize="24"  MaxWidth="175" Increment="100"  Text="{Binding CallBackText}"
+                           FormatString="0" 
+                           Minimum="0" Maximum="30000" ButtonSpinnerLocation="Right" ParsingNumberStyle="AllowDecimalPoint" ClipValueToMinMax="True"
+                           behaviors:FocusToCommand.Command="{Binding FocusedCommand}"
+                           behaviors:FocusToCommand.CommandParameter="{Binding #SpindleRPM}">
               <NumericUpDown.Styles>
                 <Style Selector="NumericUpDown/template/ TextBox">
                 </Style>
@@ -424,7 +424,7 @@
           </Grid>
           <Button Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6"  CornerRadius="6,6,6,6" Height="40"
                   Content="Set Spindle Speed" FontSize="24"
-                  Margin="5,15,5,0" Command="{Binding SpindleResetCommand }" />
+                  Margin="5,15,5,0" Command="{Binding SpindleSetSpeedCommand }" CommandParameter="{Binding #SpindleRPM.Text}" />
         </Grid>
         <!--Spindle Control End-->
 
@@ -477,14 +477,14 @@
       <Grid>
         <TabControl TabStripPlacement="Top"  >
           <TabItem x:Name="HomeTab" Header="Home" DataContext="{Binding Path= JobViewModel}" ZIndex="3">
-            <ctl:RenderCanvas HorizontalAlignment="Stretch" Background="WhiteSmoke" VerticalAlignment="Stretch"></ctl:RenderCanvas>
+              <render:OpenGLRender  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
           </TabItem>
           <TabItem x:Name="SettingTab" Header="GrblHAL Settings">
             <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"
                              VerticalAlignment="Stretch"></ctl:SettingView>
           </TabItem>
         </TabControl>
-
+      
         <!--Header-->
         <Grid   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
               DataContext="{Binding JobViewModel}"  ZIndex="5">
@@ -542,7 +542,7 @@
                         HorizontalAlignment="Center"/>
               </StackPanel>
             </Border>
-
+            <!--CenterJobViewEnds-->
             <!--Bottom Tool Bar-->
             <Border  Background="Transparent" DockPanel.Dock="Bottom"  >
               <Grid Height="55" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" ColumnDefinitions="*,*,*,*" VerticalAlignment="Bottom"

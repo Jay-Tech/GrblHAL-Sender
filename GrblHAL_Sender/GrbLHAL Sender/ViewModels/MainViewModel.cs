@@ -20,6 +20,7 @@ using Avalonia.Threading;
 using DynamicData;
 using GrbLHAL_Sender.Settings;
 using System.Threading.Tasks;
+using Avalonia.Controls.Presenters;
 using Avalonia.Input;
 using Avalonia.Metadata;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -30,6 +31,8 @@ using GrbLHAL_Sender.Gcode;
 using Avalonia.Platform.Storage;
 using GrbLHAL_Sender.Behaviors;
 using GrbLHAL_Sender.Utility;
+using GrbLHAL_Sender.Views.Render.Gl;
+using System.Runtime.Intrinsics.Arm;
 
 namespace GrbLHAL_Sender.ViewModels;
 
@@ -73,11 +76,12 @@ public class MainViewModel : ViewModelBase
     private ReactiveCommand<object, Unit> _hideBoxCommand;
     private ReactiveCommand<object, Unit> _focusedCommand;
     private bool _tlr = false;
+    private string _callBackText;
     public bool ShowRTCommands { get; set; }
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
     public SettingsViewModel SettingsViewModel { get; set; }
-    public ProbeViewModel ProbeViewModel 
+    public ProbeViewModel ProbeViewModel
     {
         get => _probeViewModel;
         set => _probeViewModel = value;
@@ -213,6 +217,7 @@ public class MainViewModel : ViewModelBase
     public ICommand RapidOrFineCommand { get; }
     public ICommand ResetRapidCommand { get; }
     public ICommand OpenConsolePanel { get; }
+    public ICommand SpindleSetSpeedCommand { get; }
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
         get => _doubleTapCommand;
@@ -261,10 +266,16 @@ public class MainViewModel : ViewModelBase
         set => _focusedCommand = value;
     }
 
+    public string CallBackText
+    {
+        get => _callBackText;
+        set => this.RaiseAndSetIfChanged(ref _callBackText, value);
+    }
+
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, ProbeViewModel probeViewModel)
     {
-        ProbeViewModel =probeViewModel;
+        ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
         _needsSetup = true;
         _commManager = commManager;
@@ -309,7 +320,8 @@ public class MainViewModel : ViewModelBase
         RapidOrFineCommand = ReactiveCommand.Create(RapidFine);
         ResetRapidCommand = ReactiveCommand.Create(RapidReset);
         OpenConsolePanel = ReactiveCommand.Create(OpenConsole);
- 
+        SpindleSetSpeedCommand = ReactiveCommand.Create<string>(SetSpindleSpeed);
+
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
         _axis = new ObservableCollection<Axis>
@@ -347,10 +359,15 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    private void SetSpindleSpeed(string speed)
+    {
+        SendCommand($"S{speed}");
+    }
+
     private void OpenConsole()
     {
 
-        ShowConsole =! ShowConsole;
+        ShowConsole = !ShowConsole;
     }
 
     private void RapidReset()
@@ -445,21 +462,13 @@ public class MainViewModel : ViewModelBase
 
     private void FocusTextInput(object obj)
     {
-        if (obj is not AutoCompleteBox tb) return;
-        tb.LostFocus += TbLostFocus;
-        //_routedKeyStroke = true;
-       // return;
-        void TbLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            tb.LostFocus -= TbLostFocus;
-           // Tnputs = string.Empty;
-        }
+        
     }
 
     private void ChangeStepRate(double step)
     {
         JogStep = step;
-        
+
     }
     private void ChangeFeedRate(double feed)
     {
@@ -496,7 +505,7 @@ public class MainViewModel : ViewModelBase
                 _probeViewModel.TLR = value;
             }
         }
-        
+
     }
 
     private void Wcs(string command)
@@ -591,7 +600,7 @@ public class MainViewModel : ViewModelBase
 
     private void SetFeedAndSpeeds(RealTImeState rt)
     {
-        if(int.TryParse(rt.FeedRate, out var aSpeed ))
+        if (int.TryParse(rt.FeedRate, out var aSpeed))
         {
             FeedRate = aSpeed;
         }
@@ -599,11 +608,11 @@ public class MainViewModel : ViewModelBase
         {
             FeedOverRide = fo;
         }
-        if(int.TryParse(rt.ProgramRPM, out var ps))
+        if (int.TryParse(rt.ProgramRPM, out var ps))
         {
             SpindleRPM = ps;
         }
-        if(int.TryParse(rt.ActualRpm,out var rpm))
+        if (int.TryParse(rt.ActualRpm, out var rpm))
         {
             RPM = rpm;
         }

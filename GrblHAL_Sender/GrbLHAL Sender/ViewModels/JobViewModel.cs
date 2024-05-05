@@ -353,15 +353,17 @@ namespace GrbLHAL_Sender.ViewModels
         public void SendJobLoop(string lineProcessed)
         {
 
-            if (JobState == JobState.Tool)
-                _commsManager.Adapter.WriteByte(GrblHalConstants.ToolAck);
-            if (JobState == JobState.Pause)
+            switch (JobState)
             {
-                _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
-                JobState = JobState.Running;
+                case JobState.Tool:
+                    _commsManager.Adapter.WriteByte(GrblHalConstants.ToolAck);
+                    break;
+                case JobState.Pause:
+                    _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
+                    JobState = JobState.Running;
+                    break;
             }
 
-            if (JobState != JobState.Running) return;
             if (_index <= GCodeOutPut.Count - 1)
             {
                 _commsManager.SendCommand(GCodeOutPut[_index].Text);
