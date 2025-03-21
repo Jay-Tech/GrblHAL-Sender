@@ -287,18 +287,18 @@ public partial class GrblHalSetting
                 InternalValue = i.ToString();
                 var rb = new RadioButton
                 {
-                    [!RadioButton.IsCheckedProperty] = new Binding
+                    [!ToggleButton.IsCheckedProperty] = new Binding
                     {
                         Converter = new StringToRadioButton(),
                         ConverterParameter = InternalValue,
                         Mode = BindingMode.TwoWay,
-                        Path = SettingValue,
-                        Source = SettingValue,
+                        Path = SettingValue ?? String.Empty,
+                        
                     },
                     Tag = InternalValue,
                     Name = $"_radiobutton{i}",
                     Content = label[i].Trim(),
-                    Command  = ReactiveCommand.Create<bool>(RbChanged),
+                    Command = ReactiveCommand.Create<bool>(RbChanged),
                 };
                 stackP.Children.Add(rb);
             }

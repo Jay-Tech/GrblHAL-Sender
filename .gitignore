@@ -3,3 +3,10 @@
 ################################################################################
 
 /TestApp
+/Directory.Build.props
+/PICO_REPO/Pico_WebServer
+/TestOpenGl
+/TestOpenGl.Desktop
+/TestString
+/TestWebSocket
+/web_servcer.py

@@ -27,14 +27,23 @@ public class ScrollToEndBehavior : Behavior<ListBox>
         sw.ScrollChanged += SwOnScrollChanged;
         
         // scroll into view when loaded
-        AssociatedObject.ScrollIntoView(AssociatedObject.Items.Count - 1);
+        AssociatedObject?.ScrollIntoView(AssociatedObject.Items.Count - 1);
     }
 
     private void SwOnScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
         if (sender is ScrollViewer sw && !_scrolling)
         {
-            _shouldScrollToEnd = Math.Abs(sw.Offset.Y - sw.Extent.Height + sw.Viewport.Height) < 5; // need to define some px of tolerance here
+            _shouldScrollToEnd = Math.Abs(sw.Offset.Y - sw.Extent.Height + sw.Viewport.Height) > 5; // need to define some px of tolerance here
+        }
+
+        if (_shouldScrollToEnd && AssociatedObject?.Items.Count > 0)
+        {
+            _scrolling = true;
+            var count = AssociatedObject.Items.Count - 1;
+            AssociatedObject.SelectedIndex = count;
+            AssociatedObject.ScrollIntoView(count);
+            _scrolling = false;
         }
     }
     

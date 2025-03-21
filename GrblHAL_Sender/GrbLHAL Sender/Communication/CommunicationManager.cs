@@ -282,7 +282,8 @@ namespace GrbLHAL_Sender.Communication
         {
             var code = asSpan[0].Split(':')[1].StringToInt();
             var errorData = asSpan[2];
-            _errorCodes.Add(code, errorData);
+            
+            _errorCodes.TryAdd(code, errorData);
 
         }
 

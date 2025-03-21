@@ -341,6 +341,7 @@ namespace GrbLHAL_Sender.ViewModels
         {
             GCodeOutPut.Clear();
             FileLoaded = false;
+            FileName = string.Empty;
         }
 
         public void StartJob()

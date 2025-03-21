@@ -1,38 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reactive;
-using System.Reactive.Linq;
-using System.Transactions;
 using ReactiveUI;
 using System.Windows.Input;
-using Avalonia;
-using Avalonia.Controls.Primitives;
-using Avalonia.Controls;
-using GrbLHAL_Sender.Views;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
 using GrbLHAL_Sender.Communication;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using Avalonia.Threading;
 using DynamicData;
 using GrbLHAL_Sender.Settings;
-using System.Threading.Tasks;
-using Avalonia.Controls.Presenters;
-using Avalonia.Input;
-using Avalonia.Metadata;
 using CommunityToolkit.Mvvm.ComponentModel;
 using GrbLHAL_Sender.Configuration;
-using Microsoft.CodeAnalysis;
-using CommunityToolkit.Mvvm.Input;
-using GrbLHAL_Sender.Gcode;
-using Avalonia.Platform.Storage;
-using GrbLHAL_Sender.Behaviors;
 using GrbLHAL_Sender.Utility;
-using GrbLHAL_Sender.Views.Render.Gl;
-using System.Runtime.Intrinsics.Arm;
+
 
 namespace GrbLHAL_Sender.ViewModels;
 
@@ -68,15 +49,12 @@ public class MainViewModel : ViewModelBase
     private int _feedOverRide;
     private int _spindleSetRpm;
 
-    //private bool _hasAtc;
-    //private bool _hasSdCard;
-    //private bool _hasProbing;
-    //private bool _isFileLoaded;
     private ReactiveCommand<object, Unit> _doubleTapCommand;
     private ReactiveCommand<object, Unit> _hideBoxCommand;
     private ReactiveCommand<object, Unit> _focusedCommand;
     private bool _tlr = false;
     private string _callBackText;
+    private string _tool;
     public bool ShowRTCommands { get; set; }
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
@@ -86,31 +64,7 @@ public class MainViewModel : ViewModelBase
         get => _probeViewModel;
         set => _probeViewModel = value;
     }
-    //public bool IsJobRunning
-    //{
-    //    get => _isJobRunning;
-    //    set => _isJobRunning = value;
-    //}
-    //public bool HasATC
-    //{
-    //    get => _hasAtc;
-    //    set => _hasAtc = value;
-    //}
-    //public bool HasSdCard
-    //{
-    //    get => _hasSdCard;
-    //    set => _hasSdCard = value;
-    //}
-    //public bool HasProbing
-    //{
-    //    get => _hasProbing;
-    //    set => _hasProbing = value;
-    //}
-    //public bool IsFileLoaded
-    //{
-    //    get => _isFileLoaded;
-    //    set => _isFileLoaded = value;
-    //}
+
     public string UnitSystem { get; set; } = "G21";
     public Color HomeStateColor
     {
@@ -218,6 +172,8 @@ public class MainViewModel : ViewModelBase
     public ICommand ResetRapidCommand { get; }
     public ICommand OpenConsolePanel { get; }
     public ICommand SpindleSetSpeedCommand { get; }
+    public ICommand SetToolSelectCommand { get; }
+
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
         get => _doubleTapCommand;
@@ -309,6 +265,7 @@ public class MainViewModel : ViewModelBase
         FocusedCommand = ReactiveCommand.Create<object>(FocusTextInput);
         SpindleCWCommand = ReactiveCommand.Create<string>(SpindleCw);
         SpindleCCWCommand = ReactiveCommand.Create<string>(SpindleCcw);
+        SetToolSelectCommand = ReactiveCommand.Create<int>(SetSelectedTool);
         SpindleOffCommand = ReactiveCommand.Create(SpindleOff);
         SpindleResetCommand = ReactiveCommand.Create(SpindleReset);
         SpindleIncreaseCommand = ReactiveCommand.Create(SpindleIncrease);
@@ -321,7 +278,6 @@ public class MainViewModel : ViewModelBase
         ResetRapidCommand = ReactiveCommand.Create(RapidReset);
         OpenConsolePanel = ReactiveCommand.Create(OpenConsole);
         SpindleSetSpeedCommand = ReactiveCommand.Create<string>(SetSpindleSpeed);
-
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
         _axis = new ObservableCollection<Axis>
@@ -359,8 +315,14 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    private void SetSelectedTool(int tool)
+    {
+        SelectedTool = tool;
+    }
+
     private void SetSpindleSpeed(string speed)
     {
+        if(string.IsNullOrEmpty(speed)) return;
         SendCommand($"S{speed}");
     }
 
@@ -532,7 +494,11 @@ public class MainViewModel : ViewModelBase
     }
     private void ClearConsole()
     {
-        ConsoleOutput.Clear();
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            ConsoleOutput.Clear();
+        });
+        
     }
     private void ZeroAll()
     {
@@ -586,6 +552,8 @@ public class MainViewModel : ViewModelBase
         State = e;
         TLR = e.TLR;
         SetFeedAndSpeeds(State);
+        Tool = e.Tool;
+       
         AlarmActive = e.GrblHalState == "Alarm";
         if (ConsoleOutput.Count > 200)
         {
@@ -596,6 +564,28 @@ public class MainViewModel : ViewModelBase
             ConsoleOutput.Add(e.RawRt);
         }
         ProcessSignals(e.SignalStatus);
+    }
+
+    public string Tool
+    {
+        get => _tool;
+
+        set
+        {
+            if (_tool == value) return;
+            _tool = value;
+            SetTool(value);
+        }
+    }
+
+   
+    private void SetTool(string tool)
+    {
+        if(tool == SelectedTool.ToString())return;
+        if (int.TryParse(tool, out var t))
+        {
+            SelectedTool = t;
+        }
     }
 
     private void SetFeedAndSpeeds(RealTImeState rt)
