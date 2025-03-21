@@ -10,7 +10,6 @@ using GrbLHAL_Sender.Communication;
 using GrbLHAL_Sender.Configuration;
 using GrbLHAL_Sender.Probe;
 using GrbLHAL_Sender.Utility;
-using Microsoft.CodeAnalysis.Operations;
 using ReactiveUI;
 
 namespace GrbLHAL_Sender.ViewModels

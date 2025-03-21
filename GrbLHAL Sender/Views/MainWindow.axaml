@@ -9,10 +9,12 @@
         x:Class="GrbLHAL_Sender.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="GrblHAL Sender">
-  <!--<LayoutTransformControl HorizontalAlignment="Stretch" ClipToBounds="True"  
-                          VerticalAlignment="Stretch"  UseLayoutRounding="True" 
-                          SizeChanged="Control_OnSizeChanged" LayoutTransform="" >-->
+  <LayoutTransformControl HorizontalAlignment="Stretch" 
+                          VerticalAlignment="Stretch"  
+                          UseLayoutRounding="True" 
+                          ClipToBounds="True"
+                          SizeChanged="Control_OnSizeChanged" x:Name="TransformControl" >
       <views:MainView />
-  <!--</LayoutTransformControl>-->
+  </LayoutTransformControl>
 </Window>
 

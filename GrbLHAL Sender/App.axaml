@@ -19,8 +19,9 @@
 
   </Application.Resources>
   <Application.Styles>
+      <StyleInclude Source="/Assets/SharedStyles.axaml"/>
     <materialIcons:MaterialIconStyles />
-
+    
     <Style Selector="TextBox.h1">
       <Setter Property="FontSize" Value="20"/>
       <Setter Property="Background" Value="White"/>

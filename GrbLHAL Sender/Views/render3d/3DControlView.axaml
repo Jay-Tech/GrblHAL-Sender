@@ -1,0 +1,31 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mx3d="https://schemas.eremexcontrols.net/avalonia/controls3d"
+             xmlns:mxe="https://schemas.eremexcontrols.net/avalonia/editors"
+             xmlns:mx="https://schemas.eremexcontrols.net/avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="800"
+             xmlns:viewModels="clr-namespace:GrbLHAL_Sender.ViewModels"
+             x:Class="GrbLHAL_Sender.Views.render3d.Render3dView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+             x:DataType="viewModels:Render3dViewModel">
+
+  <Design.DataContext>
+    <viewModels:Render3dViewModel/>
+  </Design.DataContext>
+        <Grid HorizontalAlignment="Stretch" Background="WhiteSmoke" VerticalAlignment="Stretch">
+                <mx3d:Graphics3DControl Classes="DemoGraphics3DControl" ShowGrid="True" ShowAxes="True"
+                                        ModelsSource="{Binding Model}"
+                                        Logger="{Binding Logger}" x:Name="DemoControl">
+                    <mx3d:Graphics3DControl.Gizmo>
+                        <mx3d:Gizmo x:Name="Gizmo"  />
+                    </mx3d:Graphics3DControl.Gizmo>
+                    <mx3d:Graphics3DControl.Materials>
+                        <mx3d:SimplePbrMaterial Metallic="0.6" />
+                    </mx3d:Graphics3DControl.Materials>
+                </mx3d:Graphics3DControl>
+        
+
+       
+    </Grid>
+</UserControl>

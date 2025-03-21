@@ -25,7 +25,8 @@ public partial class MainWindow : Window
         var diff = Math.Abs( xScale - yScale) /2;
         double value = Math.Min(xScale, yScale);
         var s = (double)OnCoerceScaleValue(value);
-        //LayoutTransformC.LayoutTransform = new ScaleTransform(xScale,value);
+        TransformControl.LayoutTransform = new ScaleTransform(xScale,value);
+        
     }
 
 
