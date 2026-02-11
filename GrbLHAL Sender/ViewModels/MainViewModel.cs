@@ -12,6 +12,7 @@ using DynamicData;
 using GrbLHAL_Sender.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using GrbLHAL_Sender.Configuration;
+using GrbLHAL_Sender.Gcode;
 using GrbLHAL_Sender.Utility;
 
 
@@ -32,6 +33,7 @@ public class MainViewModel : ViewModelBase
     private ObservableCollection<double> _jogRateList;
     private readonly GHalSenderConfig _config;
     private RealTImeState _state;
+    private Point3D? _spindlePosition;
     private bool _showConsole;
     private bool _isJobRunning;
     private int _spindleRpm;
@@ -125,6 +127,11 @@ public class MainViewModel : ViewModelBase
     {
         get => _state;
         set => this.RaiseAndSetIfChanged(ref _state, value);
+    }
+    public Point3D? SpindlePosition
+    {
+        get => _spindlePosition;
+        set => this.RaiseAndSetIfChanged(ref _spindlePosition, value);
     }
     public int FeedRate
     {
@@ -556,6 +563,27 @@ public class MainViewModel : ViewModelBase
         TLR = e.TLR;
         SetFeedAndSpeeds(State);
         Tool = e.Tool;
+
+        // Update spindle position for 3D visualizer
+        // G-code toolpath is in work coordinates, so we must convert MPos to WPos
+        // WPos = MPos - WCO (Work Coordinate Offset)
+        if (e.MPos.Length >= 3 &&
+            float.TryParse(e.MPos[0], out float mx) &&
+            float.TryParse(e.MPos[1], out float my) &&
+            float.TryParse(e.MPos[2], out float mz))
+        {
+            float wx = mx, wy = my, wz = mz;
+            if (e.Wco.Length >= 3 &&
+                float.TryParse(e.Wco[0], out float wcoX) &&
+                float.TryParse(e.Wco[1], out float wcoY) &&
+                float.TryParse(e.Wco[2], out float wcoZ))
+            {
+                wx = mx - wcoX;
+                wy = my - wcoY;
+                wz = mz - wcoZ;
+            }
+            SpindlePosition = new Point3D(wx, wy, wz);
+        }
        
         AlarmActive = e.GrblHalState == "Alarm";
         if (ConsoleOutput.Count > 200)

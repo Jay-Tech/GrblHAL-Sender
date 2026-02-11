@@ -8,8 +8,10 @@ public class GrblHALSettings
 {
 
     public List<GrblHalSetting> SettingCollection { get; set; }
+    public Dictionary<int, GrblHalSetting> SettingDictionary { get; set; }
     public GrblHALSettings()
     {
+        SettingDictionary = new Dictionary<int, GrblHalSetting>();
         SettingCollection = new List<GrblHalSetting>();
     }
 
@@ -25,6 +27,15 @@ public class GrblHALSettings
         else
         {
             SettingCollection.Add(new GrblHalSetting(id, data[1]));
+        }
+
+        if (SettingDictionary.TryGetValue(id, out var value))
+        {
+            value.SettingValue = data[1];
+        }
+        else
+        {
+            SettingDictionary.Add( id,new GrblHalSetting(id, data[1]));
         }
     }
 }

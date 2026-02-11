@@ -14,6 +14,7 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
     {
         private readonly ToolpathData? _toolpath;
         private readonly Camera3D _camera;
+        private readonly Point3D? _spindlePosition;
 
         private static readonly SKPaint RapidPaint = new()
         {
@@ -52,11 +53,34 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
             Color = new SKColor(25, 25, 30)
         };
 
-        public GcodeRenderOperation(Rect bounds, ToolpathData? toolpath, Camera3D camera)
+        private static readonly SKPaint SpindleShaftPaint = new()
+        {
+            Color = new SKColor(180, 180, 190),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+
+        private static readonly SKPaint SpindleBitPaint = new()
+        {
+            Color = new SKColor(220, 180, 50),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+
+        private static readonly SKPaint SpindleOutlinePaint = new()
+        {
+            Color = new SKColor(100, 100, 110),
+            StrokeWidth = 1.5f,
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke
+        };
+
+        public GcodeRenderOperation(Rect bounds, ToolpathData? toolpath, Camera3D camera, Point3D? spindlePosition = null)
         {
             Bounds = bounds;
             _toolpath = toolpath;
             _camera = camera;
+            _spindlePosition = spindlePosition;
         }
 
         public Rect Bounds { get; }
@@ -116,12 +140,19 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
                 }
             }
 
+            // Draw spindle/CNC bit indicator at current machine position
+            if (_spindlePosition.HasValue)
+            {
+                DrawSpindle(canvas, viewProj, width, height, _spindlePosition.Value);
+            }
+
             canvas.Restore();
         }
 
         private void DrawGrid(SKCanvas canvas, Matrix4x4 viewProj, float width, float height)
         {
             float gridMinX, gridMaxX, gridMinY, gridMaxY, spacing;
+            float gridZ;
 
             if (_toolpath != null && _toolpath.Segments.Count > 0)
             {
@@ -131,6 +162,9 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
                 gridMaxX = MathF.Ceiling((_toolpath.MaxBounds.X + spacing) / spacing) * spacing;
                 gridMinY = MathF.Floor((_toolpath.MinBounds.Y - spacing) / spacing) * spacing;
                 gridMaxY = MathF.Ceiling((_toolpath.MaxBounds.Y + spacing) / spacing) * spacing;
+                // Place the grid at the bottom of the toolpath (deepest cut) so the
+                // workpiece appears to sit on top of the grid, not underneath it.
+                gridZ = _toolpath.MinBounds.Z;
             }
             else
             {
@@ -140,20 +174,21 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
                 gridMaxX = 600f;
                 gridMinY = -600f;
                 gridMaxY = 600f;
+                gridZ = 0f;
             }
 
             for (float x = gridMinX; x <= gridMaxX; x += spacing)
             {
-                var p1 = ProjectToScreen(new Point3D(x, gridMinY, 0), viewProj, width, height);
-                var p2 = ProjectToScreen(new Point3D(x, gridMaxY, 0), viewProj, width, height);
+                var p1 = ProjectToScreen(new Point3D(x, gridMinY, gridZ), viewProj, width, height);
+                var p2 = ProjectToScreen(new Point3D(x, gridMaxY, gridZ), viewProj, width, height);
                 if (p1.HasValue && p2.HasValue)
                     canvas.DrawLine(p1.Value, p2.Value, GridPaint);
             }
 
             for (float y = gridMinY; y <= gridMaxY; y += spacing)
             {
-                var p1 = ProjectToScreen(new Point3D(gridMinX, y, 0), viewProj, width, height);
-                var p2 = ProjectToScreen(new Point3D(gridMaxX, y, 0), viewProj, width, height);
+                var p1 = ProjectToScreen(new Point3D(gridMinX, y, gridZ), viewProj, width, height);
+                var p2 = ProjectToScreen(new Point3D(gridMaxX, y, gridZ), viewProj, width, height);
                 if (p1.HasValue && p2.HasValue)
                     canvas.DrawLine(p1.Value, p2.Value, GridPaint);
             }
@@ -164,11 +199,17 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
             float axisLen = _toolpath != null && _toolpath.Segments.Count > 0
                 ? _toolpath.MaxDimension * 0.15f
                 : 50f;
-            var origin = ProjectToScreen(new Point3D(0, 0, 0), viewProj, width, height);
+
+            // Place axes at the grid level (bottom of toolpath) so they sit with the grid
+            float originZ = _toolpath != null && _toolpath.Segments.Count > 0
+                ? _toolpath.MinBounds.Z
+                : 0f;
+
+            var origin = ProjectToScreen(new Point3D(0, 0, originZ), viewProj, width, height);
             if (!origin.HasValue) return;
 
             // X axis - Red
-            var xEnd = ProjectToScreen(new Point3D(axisLen, 0, 0), viewProj, width, height);
+            var xEnd = ProjectToScreen(new Point3D(axisLen, 0, originZ), viewProj, width, height);
             if (xEnd.HasValue)
             {
                 using var xPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 2.5f, IsAntialias = true };
@@ -178,7 +219,7 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
             }
 
             // Y axis - Green
-            var yEnd = ProjectToScreen(new Point3D(0, axisLen, 0), viewProj, width, height);
+            var yEnd = ProjectToScreen(new Point3D(0, axisLen, originZ), viewProj, width, height);
             if (yEnd.HasValue)
             {
                 using var yPaint = new SKPaint { Color = SKColors.Lime, StrokeWidth = 2.5f, IsAntialias = true };
@@ -187,8 +228,8 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
                     new SKFont(SKTypeface.Default, 14), yPaint);
             }
 
-            // Z axis - Blue
-            var zEnd = ProjectToScreen(new Point3D(0, 0, axisLen), viewProj, width, height);
+            // Z axis - Blue (extends upward from grid level)
+            var zEnd = ProjectToScreen(new Point3D(0, 0, originZ + axisLen), viewProj, width, height);
             if (zEnd.HasValue)
             {
                 using var zPaint = new SKPaint { Color = new SKColor(80, 150, 255), StrokeWidth = 2.5f, IsAntialias = true };
@@ -196,6 +237,138 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
                 canvas.DrawText("Z", zEnd.Value.X + 4, zEnd.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), zPaint);
             }
+        }
+
+        private void DrawSpindle(SKCanvas canvas, Matrix4x4 viewProj, float width, float height, Point3D pos)
+        {
+            // Scale spindle dimensions relative to the visible scene size
+            // so it remains visible regardless of the toolpath dimensions
+            float scaleRef = _toolpath != null && _toolpath.MaxDimension > 0
+                ? _toolpath.MaxDimension
+                : 600f;
+
+            float bitLength = scaleRef * 0.03f;     // Cone/bit tip length (~3% of scene)
+            float shaftLength = scaleRef * 0.07f;    // Shaft/collet length (~7% of scene)
+            float bitRadius = scaleRef * 0.008f;     // Bit radius at base of cone
+            float shaftRadius = scaleRef * 0.015f;   // Shaft radius
+
+            // CNC convention: Z negative is down (into material), Z=0 is top surface
+            // Spindle body extends ABOVE the tip in positive Z direction (away from material)
+            var tip = pos;
+            var bitTop = new Point3D(pos.X, pos.Y, pos.Z + bitLength);
+            var shaftTop = new Point3D(pos.X, pos.Y, pos.Z + bitLength + shaftLength);
+
+            var tipScreen = ProjectToScreen(tip, viewProj, width, height);
+            var bitTopScreen = ProjectToScreen(bitTop, viewProj, width, height);
+            var shaftTopScreen = ProjectToScreen(shaftTop, viewProj, width, height);
+
+            if (!tipScreen.HasValue || !bitTopScreen.HasValue || !shaftTopScreen.HasValue) return;
+
+            // Calculate perpendicular direction for width in screen space
+            float dx = bitTopScreen.Value.X - tipScreen.Value.X;
+            float dy = bitTopScreen.Value.Y - tipScreen.Value.Y;
+            float len = MathF.Sqrt(dx * dx + dy * dy);
+
+            // If the bit projects too small (e.g. looking straight down), use a fixed screen-space size
+            if (len < 3f)
+            {
+                // Draw a simple marker when viewed from directly above
+                DrawSpindleTopView(canvas, tipScreen.Value);
+                return;
+            }
+
+            // Perpendicular in screen space
+            float perpX = -dy / len;
+            float perpY = dx / len;
+
+            // Scale radius based on projection
+            float scale = len / bitLength;
+            float screenBitRadius = bitRadius * scale;
+            float screenShaftRadius = shaftRadius * scale;
+
+            // Clamp radius to reasonable screen sizes
+            screenBitRadius = Math.Clamp(screenBitRadius, 3f, 40f);
+            screenShaftRadius = Math.Clamp(screenShaftRadius, 5f, 60f);
+
+            // Draw the cone (bit) as a triangle: tip → two base corners
+            using var bitPath = new SKPath();
+            bitPath.MoveTo(tipScreen.Value);
+            bitPath.LineTo(bitTopScreen.Value.X + perpX * screenBitRadius,
+                          bitTopScreen.Value.Y + perpY * screenBitRadius);
+            bitPath.LineTo(bitTopScreen.Value.X - perpX * screenBitRadius,
+                          bitTopScreen.Value.Y - perpY * screenBitRadius);
+            bitPath.Close();
+
+            canvas.DrawPath(bitPath, SpindleBitPaint);
+            canvas.DrawPath(bitPath, SpindleOutlinePaint);
+
+            // Draw the shaft as a rectangle from bitTop to shaftTop
+            float sdx = shaftTopScreen.Value.X - bitTopScreen.Value.X;
+            float sdy = shaftTopScreen.Value.Y - bitTopScreen.Value.Y;
+            float slen = MathF.Sqrt(sdx * sdx + sdy * sdy);
+            if (slen >= 1f)
+            {
+                float sPerpX = -sdy / slen;
+                float sPerpY = sdx / slen;
+
+                using var shaftPath = new SKPath();
+                shaftPath.MoveTo(bitTopScreen.Value.X + sPerpX * screenShaftRadius,
+                                bitTopScreen.Value.Y + sPerpY * screenShaftRadius);
+                shaftPath.LineTo(shaftTopScreen.Value.X + sPerpX * screenShaftRadius,
+                                shaftTopScreen.Value.Y + sPerpY * screenShaftRadius);
+                shaftPath.LineTo(shaftTopScreen.Value.X - sPerpX * screenShaftRadius,
+                                shaftTopScreen.Value.Y - sPerpY * screenShaftRadius);
+                shaftPath.LineTo(bitTopScreen.Value.X - sPerpX * screenShaftRadius,
+                                bitTopScreen.Value.Y - sPerpY * screenShaftRadius);
+                shaftPath.Close();
+
+                canvas.DrawPath(shaftPath, SpindleShaftPaint);
+                canvas.DrawPath(shaftPath, SpindleOutlinePaint);
+            }
+
+            // Draw a small crosshair at the tip for precision
+            DrawCrosshair(canvas, tipScreen.Value);
+        }
+
+        private static void DrawSpindleTopView(SKCanvas canvas, SKPoint tipScreen)
+        {
+            // When looking straight down, draw a circular indicator with crosshair
+            float outerRadius = 12f;
+            float innerRadius = 4f;
+
+            using var outerPaint = new SKPaint
+            {
+                Color = new SKColor(220, 180, 50, 180),
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 2f
+            };
+            using var innerPaint = new SKPaint
+            {
+                Color = new SKColor(220, 180, 50),
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            };
+
+            canvas.DrawCircle(tipScreen.X, tipScreen.Y, outerRadius, outerPaint);
+            canvas.DrawCircle(tipScreen.X, tipScreen.Y, innerRadius, innerPaint);
+            DrawCrosshair(canvas, tipScreen);
+        }
+
+        private static void DrawCrosshair(SKCanvas canvas, SKPoint position)
+        {
+            float crossSize = 8f;
+            using var crossPaint = new SKPaint
+            {
+                Color = new SKColor(255, 255, 0),
+                StrokeWidth = 1.5f,
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke
+            };
+            canvas.DrawLine(position.X - crossSize, position.Y,
+                          position.X + crossSize, position.Y, crossPaint);
+            canvas.DrawLine(position.X, position.Y - crossSize,
+                          position.X, position.Y + crossSize, crossPaint);
         }
 
         private static SKPoint? ProjectToScreen(Point3D point, Matrix4x4 viewProj, float width, float height)

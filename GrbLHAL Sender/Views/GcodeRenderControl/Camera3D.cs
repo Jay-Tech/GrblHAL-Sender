@@ -6,7 +6,7 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
 {
     public class Camera3D
     {
-        public float RotationX { get; private set; } = -45f;
+        public float RotationX { get; private set; } = 45f;
         public float RotationY { get; private set; } = 0f;
         public float Distance { get; private set; } = 1900f;
         public float PanX { get; private set; }
@@ -21,7 +21,11 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
         {
             CenterX = toolpath.Center.X;
             CenterY = toolpath.Center.Y;
-            CenterZ = toolpath.Center.Z;
+            // CNC convention: Z=0 is the work surface (top of material), cuts go negative.
+            // Center the camera at Z=0 so the grid/work surface is the visual reference plane
+            // and the toolpath appears to cut down into it, rather than centering on the
+            // Z midpoint of the bounding box which pushes the grid above the toolpath.
+            CenterZ = 0f;
 
             float dim = toolpath.MaxDimension;
             if (dim < 0.001f) dim = 1f;
@@ -32,7 +36,7 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
             ModelScale = 1f;
             PanX = 0f;
             PanY = 0f;
-            RotationX = -45f;
+            RotationX = 45f;
             RotationY = 0f;
         }
 
@@ -59,18 +63,19 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
 
         public Matrix4x4 GetViewMatrix()
         {
-            // Orbit camera: rotate around the model center, then pull back by Distance
-            float radX = RotationX * MathF.PI / 180f;
-            float radY = RotationY * MathF.PI / 180f;
+            // Orbit camera using Z-up convention (CNC: Z is vertical, XY is table)
+            float radX = RotationX * MathF.PI / 180f;  // Elevation/pitch
+            float radY = RotationY * MathF.PI / 180f;  // Azimuth/yaw
 
-            // Camera position on a sphere around origin
+            // Camera position on a sphere: Z-up, XY is the horizontal plane
+            // RotationX=0 looks from the side, RotationX=90 looks straight down from above
             float camX = Distance * MathF.Cos(radX) * MathF.Sin(radY);
-            float camY = Distance * MathF.Sin(radX);
-            float camZ = Distance * MathF.Cos(radX) * MathF.Cos(radY);
+            float camY = -Distance * MathF.Cos(radX) * MathF.Cos(radY);
+            float camZ = Distance * MathF.Sin(radX);
 
-            var eye = new Vector3(camX + CenterX + PanX, camY + CenterY + PanY, camZ + CenterZ);
-            var target = new Vector3(CenterX + PanX, CenterY + PanY, CenterZ);
-            var up = new Vector3(0, 1, 0);
+            var eye = new Vector3(camX + CenterX + PanX, camY + CenterY, camZ + CenterZ + PanY);
+            var target = new Vector3(CenterX + PanX, CenterY, CenterZ + PanY);
+            var up = new Vector3(0, 0, 1);
 
             return Matrix4x4.CreateLookAt(eye, target, up);
         }

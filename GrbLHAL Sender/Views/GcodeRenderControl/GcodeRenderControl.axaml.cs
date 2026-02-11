@@ -12,10 +12,19 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
         public static readonly StyledProperty<ToolpathData?> ToolpathProperty =
             AvaloniaProperty.Register<GcodeRenderControl, ToolpathData?>(nameof(Toolpath));
 
+        public static readonly StyledProperty<Point3D?> SpindlePositionProperty =
+            AvaloniaProperty.Register<GcodeRenderControl, Point3D?>(nameof(SpindlePosition));
+
         public ToolpathData? Toolpath
         {
             get => GetValue(ToolpathProperty);
             set => SetValue(ToolpathProperty, value);
+        }
+
+        public Point3D? SpindlePosition
+        {
+            get => GetValue(SpindlePositionProperty);
+            set => SetValue(SpindlePositionProperty, value);
         }
 
         private readonly Camera3D _camera = new();
@@ -34,7 +43,7 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
 
         static GcodeRenderControl()
         {
-            AffectsRender<GcodeRenderControl>(ToolpathProperty);
+            AffectsRender<GcodeRenderControl>(ToolpathProperty, SpindlePositionProperty);
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -65,7 +74,8 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
             var op = new GcodeRenderOperation(
                 new Rect(0, 0, Bounds.Width, Bounds.Height),
                 toolpath,
-                _camera);
+                _camera,
+                SpindlePosition);
 
             context.Custom(op);
         }
