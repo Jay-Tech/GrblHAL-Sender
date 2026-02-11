@@ -1,16 +1,11 @@
-﻿using Avalonia.Controls.Documents;
-using Avalonia.Threading;
-using DynamicData.Kernel;
+﻿
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO.Ports;
-using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia.Animation;
+
 
 namespace GrbLHAL_Sender.Communication
 {

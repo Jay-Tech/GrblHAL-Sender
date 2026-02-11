@@ -5,12 +5,9 @@
              xmlns:vm="clr-namespace:GrbLHAL_Sender.ViewModels"
              xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:ctl="clr-namespace:GrbLHAL_Sender.Views"
-             xmlns:behaviors="clr-namespace:GrbLHAL_Sender.Behaviors"
              xmlns:convertors="clr-namespace:GrbLHAL_Sender.Convertors"
-             xmlns:render="clr-namespace:GrbLHAL_Sender.Views.Render.Gl"
              xmlns:controls="clr-namespace:GrbLHAL_Sender.Controls"
-             xmlns:mx3d="https://schemas.eremexcontrols.net/avalonia/controls3d"
-             xmlns:render3d="clr-namespace:GrbLHAL_Sender.Views.render3d"
+             xmlns:behaviors="clr-namespace:GrbLHAL_Sender.Behaviors"
              d:DesignHeight="1080" d:DesignWidth="1920"
              x:Class="GrbLHAL_Sender.Views.MainView"
              x:DataType="vm:MainViewModel">
@@ -288,39 +285,39 @@
                   Margin="4"
                   Command="{Binding JogNegCommand}"
                   CommandParameter="X" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
-                  Content="{icons:MaterialIconExt ArrowLeftBoldBoxOutline, Size=90}" />
+                  Content="{icons:MaterialIconExt Kind=ArrowLeftBoldBoxOutline, Size=90}"/>
           <Button Grid.Row="0" Name="YUp"   Height="65" Width="65"
                   Grid.Column="1"
                   Margin="4"
                   Command="{Binding JogPosCommand }"
                   CommandParameter="Y" CornerRadius="10" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
-                  Content="{icons:MaterialIconExt ArrowUpBoldBoxOutline, Size=90}"/>
+                  Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, Size=90}"/>
           <Button Grid.Row="1" Name="Xup" Height="65" Width="65"
                   Grid.Column="2" Margin="4"
                   Command="{Binding JogPosCommand}"
                   CommandParameter= "X" CornerRadius="10" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
-                  Content="{icons:MaterialIconExt ArrowRightBoldBoxOutline, Size=90}" />
+                  Content="{icons:MaterialIconExt Kind=ArrowRightBoldBoxOutline, Size=90}" />
           <Button Grid.Row="2" Name="YDown" CornerRadius="10" Height="65" Width="65"
                   Grid.Column="1" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Margin="4"
                   Command="{Binding JogNegCommand}"
                   CommandParameter="Y"
-                  Content="{icons:MaterialIconExt ArrowDownBoldBoxOutline, Size=90}" />
+                  Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline, Size=90}" />
           <Button CornerRadius="20,20,20,20" Grid.Row="1" Name="StopAll"
                   Height="65" Width="65" Grid.Column="1"
-                  Margin="4" Content="{icons:MaterialIconExt ArrowAll, Size=30}"/>
+                  Margin="4" Content="{icons:MaterialIconExt Kind=ArrowAll, Size=30}"/>
           <Button Grid.Row="0" Name="ZUp" CornerRadius="10" Height="65" Width="65"
                   Grid.Column="3"
                   Margin="4"
                   Command="{Binding JogNegCommand}"
                   CommandParameter="Z" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
-                  Content="{icons:MaterialIconExt ArrowUpBoldBoxOutline, Size=90}"/>
+                  Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, Size=90}"/>
           <Button Grid.Row="2" CornerRadius="10" Name="ZDown"  Height="65" Width="65"
                   Grid.Column="3"
                   Margin="5,4,4,4"
                   Command="{Binding JogPosCommand}"
                   CommandParameter="Z" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
-                  Content="{icons:MaterialIconExt ArrowDownBoldBoxOutline,  Size=90}"/>
+                  Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline,  Size=90}"/>
         </Grid>
         <Grid x:Name="StepRatePanel" Grid.Row="2" Margin="0,20,0,0"   HorizontalAlignment="Stretch"
               VerticalAlignment="Stretch" ColumnDefinitions="80,80,80,80">
@@ -421,7 +418,7 @@
                          behaviors:CloseMenuOnItemSelection.CommandParameter="{Binding SelectedTool}">
                   <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Button Margin="0,2,0,2" BorderBrush="Gray"  Background="{Binding #Button.Background}" 
+                        <Button Margin="0,2,0,2" BorderBrush="Gray"  Background="{Binding }" 
                                 Name="ToolButton"  CornerRadius="3" Content="{Binding}" Height="50" Width="90"
                                 Command="{Binding  $parent[Grid].((vm:MainViewModel)DataContext).SetToolSelectCommand}"
                                 CommandParameter="{Binding #ToolButton.Content}"  HorizontalAlignment="Stretch"
@@ -472,17 +469,17 @@
           <Grid  HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="0"
                  Grid.Row="5" ColumnDefinitions="*,*"  >
             <Button Grid.Column="0"  CornerRadius="6,6,6,6" Height="45"
-                    Content="{icons:MaterialIconExt PlusThick,  Size=50}"
+                    Content="{icons:MaterialIconExt Kind=PlusThick,  Size=50}"
                     Margin="5,10,3,0" Command="{Binding SpindleIncreaseCommand}" />
             <Button Grid.Column="1"  CornerRadius="6,6,6,6" Height="42"
-                    Content="{icons:MaterialIconExt MinusThick,  Size=45}" HorizontalContentAlignment="Center"
+                    Content="{icons:MaterialIconExt Kind=MinusThick,  Size=45}" HorizontalContentAlignment="Center"
                     VerticalAlignment="Center"
                     Margin="3,10,3,0" Command="{Binding SpindleDecreaseCommand}" />
           </Grid>
           <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch" VerticalAlignment="Center"
                       Grid.Column="1" Grid.Row="5">
             <Button Grid.Column="0"  CornerRadius="6,6,6,6" Height="40"
-                    Content="{icons:MaterialIconExt Cached,  Size=40}"
+                    Content="{icons:MaterialIconExt Kind=Cached,  Size=40}"
                     Margin="3,10,0,0" Command="{Binding SpindleResetCommand }" />
             <TextBlock Text="{Binding RPM, StringFormat={}%{0}}"  Margin="3,15,5,0"
                        TextAlignment="Left" FontSize="22"  Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"/>
@@ -506,29 +503,29 @@
           <Grid Grid.Row="2" Margin="0,8,0,0" ColumnDefinitions="*,*,*">
             <Button Grid.Column="0" Margin="5,0,3,0" VerticalAlignment="Stretch"
               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-              VerticalContentAlignment="Center" Content="{icons:MaterialIconExt PlusThick,  Size=50}"
+              VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=PlusThick,  Size=50}"
               Height="45" Command="{Binding FeedOrPlus }"></Button>
             <Button Grid.Column="1" Margin="5,0,3,0" VerticalAlignment="Stretch"
                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center" Content="{icons:MaterialIconExt MinusThick, Size=45}"
+                    VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=MinusThick, Size=45}"
                     Height="45" Command="{Binding FeedOrMinus}" ></Button>
             <Button Grid.Column="2" Margin="5,0,3,0" VerticalAlignment="Stretch"
                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Cached,  Size=45}"
+                    VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=Cached,  Size=45}"
                     Height="45" Command="{Binding FeedOrReset}" ></Button>
           </Grid>
           <Grid Grid.Row="3" Margin="0,15,0,0" ColumnDefinitions="*,*,*">
             <Button Grid.Column="0" Margin="5,0,3,0" VerticalAlignment="Stretch"
                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center" Content="{icons:MaterialIconExt MinusThick,  Size=50}"
+                    VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=MinusThick,  Size=50}"
                     Height="45" Command="{Binding RapidOrMediumCommand}" ></Button>
             <Button Grid.Column="1" Margin="5,0,3,0" VerticalAlignment="Stretch"
                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt MinusThick,  Size=45}"
+                    VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=MinusThick,  Size=45}"
                     Height="45" Command="{Binding RapidOrFineCommand}" ></Button>
             <Button Grid.Column="2" Margin="5,0,3,0" VerticalAlignment="Stretch"
                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Cached,  Size=45}"
+                    VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=Cached,  Size=45}"
                     Height="45" Command="{Binding ResetRapidCommand}" ></Button>
           </Grid>
         </Grid>
@@ -543,7 +540,7 @@
         <TabControl TabStripPlacement="Top"  >
           <TabItem x:Name="HomeTab" Header="Home" DataContext="{Binding Path= JobViewModel}" ZIndex="3">
             <!--<render:OpenGLRender  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>-->
-            <render3d:Render3dView HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></render3d:Render3dView>
+          
           </TabItem>
           <TabItem x:Name="SettingTab" Header="GrblHAL Settings">
             <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"
@@ -653,20 +650,18 @@
                   <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
                 <ListBox Grid.Row="0" x:Name="LB" Width="400"  ItemsSource="{Binding ConsoleOutput}"
-                         VerticalAlignment="Stretch"
-                         HorizontalAlignment="Stretch"
                          Background="{StaticResource DarkReduceBrushAlpha }"
-                         Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         Foreground="White" 
                          IsVisible="{Binding ShowConsole}"
                          FontSize="18"   >
-                  <Interaction.Behaviors>
-                    <behaviors:ScrollToEndBehavior />
-                  </Interaction.Behaviors>
+                    <Interaction.Behaviors>
+                        <behaviors:ScrollToEndBehavior />
+                    </Interaction.Behaviors>
                   <ListBox.ItemTemplate>
                     <DataTemplate>
                       <TextBlock Foreground="{StaticResource SmokeWhiteText}" Margin="0,1"
                                  FontWeight="Bold" Opacity="1.0"  Text="{Binding}" FontSize="18"
-                                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  />
+                                 HorizontalAlignment="Stretch"  />
                     </DataTemplate>
                   </ListBox.ItemTemplate>
                 </ListBox>
@@ -706,17 +701,17 @@
                   <RowDefinition Height="*"></RowDefinition>
                   <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
-                <ListBox Grid.Row="0" x:Name="LBGCode" Width="400"  SelectedIndex="{Binding GcodeFileIndex}"
+                <ListBox Grid.Row="0" x:Name="LBGCode" Width="400"  
+                         SelectedIndex="{Binding GcodeFileIndex, Mode=OneWay}"
                          ItemsSource="{Binding GCodeOutPut}"
                          VerticalAlignment="Stretch"
                          HorizontalAlignment="Stretch"
                          Background="{StaticResource DarkReduceBrushAlpha }"
-                         Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         Foreground="White" 
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
                          IsVisible="{Binding ShowGCodeConsole}"
                          FontSize="18"   >
-                  <Interaction.Behaviors>
-                    <behaviors:ScrollToEndBehavior />
-                  </Interaction.Behaviors>
+                 
                   <ListBox.ItemTemplate>
                     <DataTemplate>
                       <Border Margin="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="LightGray" Height="35" BorderThickness=".7">

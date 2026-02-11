@@ -9,7 +9,7 @@ public class ScrollToEndBehavior : Behavior<ListBox>
 {
     private bool _shouldScrollToEnd = true;
     private bool _scrolling;
-    
+
     protected override void OnAttached()
     {
         base.OnAttached();
@@ -25,7 +25,7 @@ public class ScrollToEndBehavior : Behavior<ListBox>
     {
         var sw = e.NameScope.Get<ScrollViewer>("PART_ScrollViewer");
         sw.ScrollChanged += SwOnScrollChanged;
-        
+
         // scroll into view when loaded
         AssociatedObject?.ScrollIntoView(AssociatedObject.Items.Count - 1);
     }
@@ -34,7 +34,7 @@ public class ScrollToEndBehavior : Behavior<ListBox>
     {
         if (sender is ScrollViewer sw && !_scrolling)
         {
-            _shouldScrollToEnd = Math.Abs(sw.Offset.Y - sw.Extent.Height + sw.Viewport.Height) > 5; // need to define some px of tolerance here
+            _shouldScrollToEnd = Math.Abs(sw.Offset.Y - sw.Extent.Height + sw.Viewport.Height) >5; // need to define some px of tolerance here
         }
 
         if (_shouldScrollToEnd && AssociatedObject?.Items.Count > 0)
@@ -42,11 +42,15 @@ public class ScrollToEndBehavior : Behavior<ListBox>
             _scrolling = true;
             var count = AssociatedObject.Items.Count - 1;
             AssociatedObject.SelectedIndex = count;
-            AssociatedObject.ScrollIntoView(count);
+            //if (!AssociatedObject.IsEffectivelyVisible)
+            //{
+            //    AssociatedObject.ScrollIntoView(count);
+            //}
+
             _scrolling = false;
         }
     }
-    
+
     private void AssociatedObjectOnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
         if (_shouldScrollToEnd && AssociatedObject?.Items.Count > 0)
@@ -57,3 +61,4 @@ public class ScrollToEndBehavior : Behavior<ListBox>
         }
     }
 }
+

@@ -1,8 +1,9 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Rendering;
 using GrbLHAL_Sender.ViewModels;
 using System;
-using Avalonia.Media;
 
 namespace GrbLHAL_Sender.Views;
 
@@ -14,6 +15,9 @@ public partial class MainWindow : Window
 #if DEBUG
 
         this.AttachDevTools();
+        this.AttachDevTools();
+        // Renderer.Diagnostics does not exist:
+      
 
 #endif
     }

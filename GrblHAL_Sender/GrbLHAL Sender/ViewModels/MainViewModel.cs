@@ -280,27 +280,30 @@ public class MainViewModel : ViewModelBase
         SpindleSetSpeedCommand = ReactiveCommand.Create<string>(SetSpindleSpeed);
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
-        _axis = new ObservableCollection<Axis>
-        {
+        _axis =
+        [
             new()
             {
                 Name = "X",
                 ZeroWcsCommand = ZeroAxis,
                 Order = 0
             },
+
             new()
             {
                 Name = "Y",
                 ZeroWcsCommand = ZeroAxis,
                 Order = 1
             },
+
             new()
             {
                 Name = "Z",
                 ZeroWcsCommand = ZeroAxis,
                 Order = 2
-            },
-        };
+            }
+
+        ];
 
         SetUpUiSettings();
 
