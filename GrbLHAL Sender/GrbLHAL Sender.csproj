@@ -37,7 +37,4 @@
     <PackageReference Include="Xaml.Behaviors.Avalonia" Version="11.3.9.5" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Views\GcodeRender\" />
-  </ItemGroup>
 </Project>
