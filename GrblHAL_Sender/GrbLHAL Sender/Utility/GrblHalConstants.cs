@@ -63,7 +63,9 @@ namespace GrbLHAL_Sender.Utility
         public const string SdcardRun = "$F=";
         public const string SdcardUnlink = "$FD=";
         public const string SdcardDump = "$F<=";
-
-
+        //  Settings
+        public const int XAxisLength = 130;
+        public const int YAxisLength = 131;
+        public const int ZAxisLength = 132;
     }
 }

@@ -310,13 +310,13 @@
           <Button Grid.Row="0" Name="ZUp" CornerRadius="10" Height="65" Width="65"
                   Grid.Column="3"
                   Margin="4"
-                  Command="{Binding JogNegCommand}"
+                  Command="{Binding JogPosCommand}"
                   CommandParameter="Z" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, Size=90}"/>
           <Button Grid.Row="2" CornerRadius="10" Name="ZDown"  Height="65" Width="65"
                   Grid.Column="3"
                   Margin="5,4,4,4"
-                  Command="{Binding JogPosCommand}"
+                  Command="{Binding JogNegCommand}"
                   CommandParameter="Z" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
                   Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline,  Size=90}"/>
         </Grid>
@@ -541,7 +541,8 @@
         <TabControl TabStripPlacement="Top"  >
           <TabItem x:Name="HomeTab" Header="Home" DataContext="{Binding Path= JobViewModel}" ZIndex="3">
             <render:GcodeRenderControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                       Toolpath="{Binding #MainDock.((vm:MainViewModel)DataContext).JobViewModel.ToolpathData}"/>
+                                       Toolpath="{Binding #MainDock.((vm:MainViewModel)DataContext).JobViewModel.ToolpathData}"
+                                       SpindlePosition="{Binding #MainDock.((vm:MainViewModel)DataContext).SpindlePosition}"/>
           </TabItem>
           <TabItem x:Name="SettingTab" Header="GrblHAL Settings">
             <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"
@@ -660,7 +661,7 @@
                     </Interaction.Behaviors>
                   <ListBox.ItemTemplate>
                     <DataTemplate>
-                      <TextBlock Foreground="{StaticResource SmokeWhiteText}" Margin="0,1"
+                      <TextBlock Foreground="GhostWhite" Margin="0,1"
                                  FontWeight="Bold" Opacity="1.0"  Text="{Binding}" FontSize="18"
                                  HorizontalAlignment="Stretch"  />
                     </DataTemplate>

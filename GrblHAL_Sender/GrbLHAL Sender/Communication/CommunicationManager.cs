@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Avalonia.Threading;
@@ -12,6 +12,8 @@ using GrbLHAL_Sender.Probe;
 using GrbLHAL_Sender.Settings;
 using GrbLHAL_Sender.Utility;
 
+using Timer = System.Timers.Timer;
+
 
 namespace GrbLHAL_Sender.Communication
 {
@@ -19,31 +21,25 @@ namespace GrbLHAL_Sender.Communication
     {
         private const string StateString = "Idle|Run|Hold|Jog|Alarm:|Door|Check|Home|Sleep|Tool";
 
-        private Timer _pollTimer;
-        private readonly Dispatcher _dispatcher;
-        private GrblHALSettings _grblHalSettings;
-        private GrblHALOptions grblHalOptions = new();
-        private GrblHalSetting.PendingMessageSet _pendingMessageSet;
-
         public event EventHandler<string> OnConsoleLogReceived;
         public event EventHandler<RealTImeState> OnStateReceived;
         public event EventHandler<List<GrblHalSetting>> onSettingUpdated;
         public event EventHandler<GrblHALOptions> onOptionsUpdated;
         public event EventHandler<ProbeState> OnProbeResults;
-        public ICommsAdapter Adapter { get; set; }
 
-        public GrblHalSetting.PendingMessageSet PendingMessage
-        {
-            get => _pendingMessageSet;
-            set
-            {
-                if (_pendingMessageSet != value)
-                {
-                    _pendingMessageSet = value;
-                    PendingJobComplete(_pendingMessageSet);
-                }
-            }
-        }
+
+        private Dictionary<int, string> _errorCodes = new Dictionary<int, string>();
+        private Dictionary<int, string> _alarmCodes = new Dictionary<int, string>();
+        private bool _messageCompleted;
+        private MachineSettings _machineData;
+        private Timer _pollTimer;
+        private readonly Dispatcher _dispatcher;
+        private GrblHALSettings _grblHalSettings;
+        private GrblHALOptions grblHalOptions = new();
+        private readonly ProbeState _probe;
+
+
+        public ICommsAdapter Adapter { get; set; }
         public CommunicationManager()
         {
             _dispatcher = Dispatcher.UIThread;
@@ -56,11 +52,11 @@ namespace GrbLHAL_Sender.Communication
         //  set a call back directly 
         public void StartJob(Action<string>? callBack)
         {
-            _callBack = callBack;
+            //_callBack = callBack;
         }
         public void EndJob()
         {
-            _callBack = null;
+            //_callBack = null;
         }
         public void ShutDown()
         {
@@ -81,17 +77,27 @@ namespace GrbLHAL_Sender.Communication
         {
             var t = Task.Factory.StartNew(async () =>
             {
-                PendingMessage = GrblHalSetting.PendingMessageSet.Options;
-                Adapter.WriteCommand("$I+");
-                await Task.Delay(300);
-                Adapter.WriteCommand("$ES");
-                await Task.Delay(300);
-                PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
-                Adapter.WriteCommand("$+");
-                await Task.Delay(300);
-                Adapter.WriteCommand(GrblHalConstants.Alarmcodes);
-                await Task.Delay(300);
-                Adapter.WriteCommand(GrblHalConstants.Errorcodes);
+                var infoResults = await SendAsyncCommand(GrblHalConstants.GetinfoExtended, timeOutMs: 1000);
+                if (!infoResults)
+                {
+                    while (!await SendAsyncCommand(GrblHalConstants.GetinfoExtended, timeOutMs: 1000))
+                    {
+                        Thread.Sleep(500);
+                    }
+                }
+                else
+                {
+                    SendOptions();
+                }
+
+                await SendAsyncCommand(GrblHalConstants.Getsettingsdetails, timeOutMs: 2000);
+                var settingResults = await SendAsyncCommand(GrblHalConstants.GetsettingsAll, timeOutMs: 1000);
+                if (settingResults)
+                {
+                    SendSettings();
+                }
+                await SendAsyncCommand(GrblHalConstants.Alarmcodes, timeOutMs: 1000);
+                await SendAsyncCommand(GrblHalConstants.Errorcodes, timeOutMs: 1000);
                 SetupPoll(200);
             });
         }
@@ -99,6 +105,10 @@ namespace GrbLHAL_Sender.Communication
         {
             _pollTimer.Interval = rate;
             _pollTimer.Start();
+        }
+        public void StopPoll()
+        {
+            _pollTimer?.Stop();
         }
 
         private void _pollTimer_Elapsed(object? sender, ElapsedEventArgs e)
@@ -110,25 +120,6 @@ namespace GrbLHAL_Sender.Communication
         {
             Adapter.WriteByte(0x87);
         }
-
-        private GrblHalSetting.PendingMessageSet? _pendingMessageComplete = null;
-        private readonly ProbeState _probe;
-        private Action<string>? _callBack;
-
-        private void PendingJobComplete(GrblHalSetting.PendingMessageSet job)
-        {
-            _pendingMessageComplete ??= job;
-            if (job != GrblHalSetting.PendingMessageSet.Options && _pendingMessageComplete == GrblHalSetting.PendingMessageSet.Options)
-            {
-                SendOptions();
-            }
-            if (job != GrblHalSetting.PendingMessageSet.Setting && _pendingMessageComplete == GrblHalSetting.PendingMessageSet.Setting)
-            {
-                SendSettings();
-            }
-            _pendingMessageComplete = job;
-        }
-
         private void SendOptions()
         {
             onOptionsUpdated?.Invoke(this, grblHalOptions);
@@ -137,6 +128,11 @@ namespace GrbLHAL_Sender.Communication
         private void SendSettings()
         {
             _grblHalSettings.SettingCollection.Sort(SortExpressionComparer<GrblHalSetting>.Ascending(s => s.GroupId));
+            _machineData = new MachineSettings();
+            
+            _machineData.SetXBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XAxisLength)?.SettingValue??"");
+            _machineData.SetYBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.YAxisLength)?.SettingValue ?? "");
+            _machineData.SetZBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ZAxisLength)?.SettingValue ?? "");
             onSettingUpdated?.Invoke(this, _grblHalSettings.SettingCollection);
         }
 
@@ -145,7 +141,7 @@ namespace GrbLHAL_Sender.Communication
             _dispatcher.InvokeAsync(() => OnStateReceived(this, rtState), DispatcherPriority.Background);
         }
 
-        public void NewWebSocketConnection()
+        public void NewTcpConnection()
         {
 
         }
@@ -158,20 +154,15 @@ namespace GrbLHAL_Sender.Communication
 
         private void Adapter_OnDataReceived(object? sender, string e)
         {
-            var data = e;
+            var data = e.Trim();
             if (!data.StartsWith("<") && !data.EndsWith(">"))
             {
                 OnConsoleLogReceived?.Invoke(this, new string(data));
             }
-            if (string.Equals(data, "ok", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(data.Trim(), "ok", StringComparison.OrdinalIgnoreCase))
             {
-                if (_callBack != null)
-                {
-                    _callBack(data);
-                }
-
-                PendingMessage = GrblHalSetting.PendingMessageSet.NotPending;
-
+                Debug.WriteLine($"OK was hit value : {e}");
+                return;
             }
             if (data.StartsWith("<") || data.EndsWith(">"))
             {
@@ -180,7 +171,6 @@ namespace GrbLHAL_Sender.Communication
             }
             if (data.StartsWith("[SETTING"))
             {
-                PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
                 data = data.Trim('[', ']');
                 var substring = data.Split('|');
                 ParseSettingsData(substring.AsSpan());
@@ -188,7 +178,6 @@ namespace GrbLHAL_Sender.Communication
             }
             if (data.StartsWith("[ALARMCODE:"))
             {
-                PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
                 data = data.Trim('[', ']');
                 var substring = data.Split('|');
                 ParseAlarm(substring.AsSpan());
@@ -196,7 +185,6 @@ namespace GrbLHAL_Sender.Communication
             }
             if (data.StartsWith("[ERRORCODE:"))
             {
-                PendingMessage = GrblHalSetting.PendingMessageSet.Setting;
                 data = data.Trim('[', ']');
                 var substring = data.Split('|');
                 ParseError(substring.AsSpan());
@@ -274,25 +262,23 @@ namespace GrbLHAL_Sender.Communication
                 probe.ZOffset = cords[2];
             }
 
-            OnProbeResults?.Invoke(this,probe);
+            OnProbeResults?.Invoke(this, probe);
         }
 
-        private Dictionary<int, string> _errorCodes = new Dictionary<int, string>();
+
         private void ParseError(Span<string> asSpan)
         {
             var code = asSpan[0].Split(':')[1].StringToInt();
             var errorData = asSpan[2];
-            
             _errorCodes.TryAdd(code, errorData);
 
         }
 
-        private Dictionary<int, string> _alarmCodes = new Dictionary<int, string>();
         private void ParseAlarm(Span<string> asSpan)
         {
             var code = asSpan[0].Split(':')[1].StringToInt();
             var alarmData = asSpan[2];
-            _alarmCodes.Add(code, alarmData);
+            _alarmCodes.TryAdd(code, alarmData);
         }
 
 
@@ -354,7 +340,6 @@ namespace GrbLHAL_Sender.Communication
             {
                 RawRt = data
             };
-            PendingMessage = GrblHalSetting.PendingMessageSet.NotPending;
             data = data.Trim('<', '>');
             var substring = data.Split('|').AsSpan();
             var currentState = substring.Slice(0, 1);
@@ -449,7 +434,39 @@ namespace GrbLHAL_Sender.Communication
             }
             SendState(rtState);
         }
+        public async Task<bool> SendAsyncCommand(string command, string resultMatch = "ok", int timeOutMs = 300)
+        {
+            try
+            {
+                var result = await FetchDataAsync(command, resultMatch)
+                    .WaitAsync(TimeSpan.FromMilliseconds(timeOutMs));
+                return result;
+            }
+            catch (TimeoutException)
+            {
+                Debug.WriteLine($"Time out hit on command {command}");
+                return false;
+            }
+        }
+
+        private Task<bool> FetchDataAsync(string command, string resultMatch)
+        {
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            void Handler(object? sender, string data)
+            {
+                if (data.Contains(resultMatch, StringComparison.OrdinalIgnoreCase))
+                {
+                    Adapter.OnDataReceived -= Handler;
+                    tcs.TrySetResult(true);
+                }
+            }
+            Adapter.OnDataReceived -= Handler;
+            Adapter.OnDataReceived += Handler;
+            SendCommand(command);
+
+            return tcs.Task;
+        }
+
     }
-
-
 }

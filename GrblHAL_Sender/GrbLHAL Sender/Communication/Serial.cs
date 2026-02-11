@@ -25,6 +25,7 @@ namespace GrbLHAL_Sender.Communication
 
         private static readonly object _sncLock = new();
         private CancellationTokenSource _tokenSource;
+        private string _receiveBuffer = string.Empty;
         public bool IsConnected { get; set; }
         public Serial(string connection, SerialSettings serialSettings = null!)
         {
@@ -113,35 +114,45 @@ namespace GrbLHAL_Sender.Communication
 
         private void SendLoop(CancellationToken token)
         {
-            while (true)
+            while (!token.IsCancellationRequested)
             {
-                if (token.IsCancellationRequested)
-                    break;
-                if (_sendQue.IsEmpty) continue;
-                _sendQue.TryDequeue(out var command);
-                if (command == null) return;
-                if (_serialPort.IsOpen)
-                    _serialPort.BaseStream.Write(command, 0, command.Length);
-
-                Thread.Sleep(10);
+                if (_sendQue.TryDequeue(out var command))
+                {
+                    if (_serialPort.IsOpen)
+                        _serialPort.BaseStream.Write(command, 0, command.Length);
+                    Thread.Sleep(10);
+                }
+                else
+                {
+                    Thread.Sleep(1);
+                }
             }
         }
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             lock (_sncLock)
             {
-                var inputStream = _serialPort.ReadExisting().AsSpan();
-                while (inputStream.Length > 0)
+                _receiveBuffer += _serialPort.ReadExisting();
+
+                while (true)
                 {
-                    var indexSlice = inputStream.IndexOfAny('\r', '\n');
-                    if (indexSlice < 0) return;
-                    var data = inputStream[..indexSlice];
+                    var indexSlice = _receiveBuffer.IndexOfAny(Split);
+                    if (indexSlice < 0) break; // Keep partial data in buffer for next event
+
+                    var data = _receiveBuffer[..indexSlice];
                     if (data.Length != 0)
                     {
-                        OnDataReceived?.Invoke(this, data.ToString() ?? string.Empty);
+                        OnDataReceived?.Invoke(this, data);
                     }
-                   
-                    inputStream = inputStream.Slice(indexSlice).Trim(Split);
+
+                    // Skip past the line ending character(s)
+                    int next = indexSlice + 1;
+                    while (next < _receiveBuffer.Length &&
+                           (_receiveBuffer[next] == '\r' || _receiveBuffer[next] == '\n'))
+                    {
+                        next++;
+                    }
+                    _receiveBuffer = _receiveBuffer[next..];
                 }
             }
         }
