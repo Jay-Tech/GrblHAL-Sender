@@ -8,6 +8,7 @@
              xmlns:convertors="clr-namespace:GrbLHAL_Sender.Convertors"
              xmlns:controls="clr-namespace:GrbLHAL_Sender.Controls"
              xmlns:behaviors="clr-namespace:GrbLHAL_Sender.Behaviors"
+             xmlns:render="clr-namespace:GrbLHAL_Sender.Views.GcodeRenderControl"
              d:DesignHeight="1080" d:DesignWidth="1920"
              x:Class="GrbLHAL_Sender.Views.MainView"
              x:DataType="vm:MainViewModel">
@@ -539,8 +540,8 @@
       <Grid>
         <TabControl TabStripPlacement="Top"  >
           <TabItem x:Name="HomeTab" Header="Home" DataContext="{Binding Path= JobViewModel}" ZIndex="3">
-            <!--<render:OpenGLRender  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>-->
-          
+            <render:GcodeRenderControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                       Toolpath="{Binding #MainDock.((vm:MainViewModel)DataContext).JobViewModel.ToolpathData}"/>
           </TabItem>
           <TabItem x:Name="SettingTab" Header="GrblHAL Settings">
             <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"

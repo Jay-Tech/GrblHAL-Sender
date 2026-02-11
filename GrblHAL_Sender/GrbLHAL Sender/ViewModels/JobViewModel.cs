@@ -39,6 +39,7 @@ namespace GrbLHAL_Sender.ViewModels
         private int _index = 0;
         private bool _fileLoaded;
         private string _fileName;
+        private ToolpathData? _toolpathData;
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
@@ -145,6 +146,12 @@ namespace GrbLHAL_Sender.ViewModels
         {
             get => _fileName;
             set => this.RaiseAndSetIfChanged(ref _fileName, value);
+        }
+
+        public ToolpathData? ToolpathData
+        {
+            get => _toolpathData;
+            set => this.RaiseAndSetIfChanged(ref _toolpathData, value);
         }
 
         public JobViewModel(CommunicationManager manager, ConfigManager configManger)
@@ -311,14 +318,17 @@ namespace GrbLHAL_Sender.ViewModels
 
         public void FileComplete(List<GCodeLine> gCodeJob)
         {
+            var builder = new ToolpathBuilder();
+            var toolpath = builder.BuildToolpath(gCodeJob);
+
             Dispatcher.UIThread.Invoke((() =>
             {
                 GCodeOutPut.Clear();
                 GCodeOutPut.AddRange(gCodeJob);
                 GcodeFileIndex = 0;
                 FileLoaded = true;
+                ToolpathData = toolpath;
             }));
-
         }
 
         public JobState JobState { get; set; }
@@ -341,6 +351,7 @@ namespace GrbLHAL_Sender.ViewModels
             GCodeOutPut.Clear();
             FileLoaded = false;
             FileName = string.Empty;
+            ToolpathData = null;
         }
 
         public void StartJob()
