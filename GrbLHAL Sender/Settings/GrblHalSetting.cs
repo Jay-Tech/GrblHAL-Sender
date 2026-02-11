@@ -1,18 +1,12 @@
-﻿using System;
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
-using Avalonia.Interactivity;
-using Avalonia.Media;
-using Avalonia.Metadata;
 using Avalonia.Threading;
 using DynamicData;
-using GrbLHAL_Sender.Controls;
 using GrbLHAL_Sender.Convertors;
 using ReactiveUI;
+using System;
 
 namespace GrbLHAL_Sender.Settings;
 

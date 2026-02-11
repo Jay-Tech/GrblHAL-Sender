@@ -1,20 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Threading;
-using System.Threading.Tasks;
-using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
+﻿using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-using Avalonia.ReactiveUI;
-using Avalonia.Threading;
-using DynamicData;
-using Eremex.AvaloniaUI.Controls3D;
 using GrbLHAL_Sender.ViewModels;
-using ReactiveUI;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 
 namespace GrbLHAL_Sender.Views;
@@ -37,7 +26,6 @@ public partial class MainView : UserControl
    
     IDisposable? _selectFilesInteractionDisposable;
 
-    private GeometryModel3D model;
   
     //Transform the model
    

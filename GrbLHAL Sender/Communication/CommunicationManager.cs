@@ -92,7 +92,7 @@ namespace GrbLHAL_Sender.Communication
                 Adapter.WriteCommand(GrblHalConstants.Alarmcodes);
                 await Task.Delay(300);
                 Adapter.WriteCommand(GrblHalConstants.Errorcodes);
-                SetupPoll(300);
+                SetupPoll(200);
             });
         }
         public void SetupPoll(int rate)
@@ -453,6 +453,3 @@ namespace GrbLHAL_Sender.Communication
 
 
 }
-
-// settings being constructed in ref grblHAL  Report extensions
-//https://github.com/grblHAL/core/wiki/Report-extensions#controller-information-extensions
