@@ -27,21 +27,13 @@ namespace GrbLHAL_Sender.Communication
         private CancellationTokenSource _tokenSource;
         private string _receiveBuffer = string.Empty;
         public bool IsConnected { get; set; }
-        public Serial(string connection, SerialSettings serialSettings = null!)
+        public Serial(SerialSettings serialSettings)
         {
-            TryConnect(connection, serialSettings);
+            _serialSettings = serialSettings;
+            TryConnect(serialSettings);
         }
 
-        private bool TryConnect(string portName, SerialSettings serialSettings = null)
-        {
-            if (serialSettings == null)
-            {
-                _serialSettings = new SerialSettings(portName);
-            }
-
-            return TryConnect(_serialSettings);
-        }
-        public bool TryConnect(SerialSettings settings)
+        public bool TryConnect(SerialSettings serialSettings)
         {
             _serialPort = new SerialPort
             {

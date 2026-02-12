@@ -563,7 +563,7 @@
                     VerticalAlignment="Top" Height="50">
               <ItemsRepeater
                               HorizontalAlignment="Left"  VerticalAlignment="Stretch"
-                              ItemsSource="{Binding  MacroList}" Margin="225,0">
+                              ItemsSource="{Binding #MainDock.((vm:MainViewModel)DataContext).MacroViewModel.MacroList}" Margin="225,0">
                 <ItemsRepeater.Layout>
                   <StackLayout
                       Orientation="Horizontal" Spacing="5"/>
@@ -573,7 +573,7 @@
                     <Button Content="{Binding   Path=Id}" Width="110" Height="35"
                             CornerRadius="0,0,6,6" Margin="10,0,0,0"
                             CommandParameter="{ReflectionBinding  Id}" FontSize="26"
-                            Command="{Binding  $parent[Grid].((vm:JobViewModel)DataContext).RunMacroCommand}">
+                            Command="{Binding #MainDock.((vm:MainViewModel)DataContext).MacroViewModel.RunMacroCommand}">
                     </Button>
                   </DataTemplate>
                 </ItemsRepeater.ItemTemplate>
@@ -626,7 +626,7 @@
                           CornerRadius="6,6,6,6" Content="Probe" FontSize="24" HorizontalAlignment="Center" />
                 </StackPanel>
                 <StackPanel HorizontalAlignment="Center" Grid.Column="2" Orientation="Horizontal" >
-                  <Button Height="45" Width="120" Command="{Binding  Path = OpenMacroPanel}"  Margin="0,0,15,5"
+                  <Button Height="45" Width="120" Command="{Binding #MainDock.((vm:MainViewModel)DataContext).MacroViewModel.OpenMacroPanel}"  Margin="0,0,15,5"
                           CornerRadius="6,6,6,6" Content="Macro" FontSize="24" HorizontalAlignment="Center" />
                 </StackPanel>
                 <StackPanel HorizontalAlignment="Right" Grid.Column="3" Orientation="Horizontal" >
@@ -745,10 +745,10 @@
             <!--End GCodeConsole-->
 
             <!--Macro Section-->
-            <Border DockPanel.Dock="Bottom" CornerRadius="6,6,0,0" Width="410"
+            <Border DataContext="{Binding #MainDock.((vm:MainViewModel)DataContext).MacroViewModel}" DockPanel.Dock="Bottom" CornerRadius="6,6,0,0" Width="410"
                     HorizontalAlignment="Stretch" Margin="0,0,0,0" MinWidth="200" MinHeight="65"
                     Background="Transparent"
-                    behaviors:DoubleTappedBehav.Command="{Binding DoubleMacroTapCommand}"
+                    behaviors:DoubleTappedBehav.Command="{Binding #MainDock.((vm:MainViewModel)DataContext).MacroViewModel.DoubleMacroTapCommand}"
                     behaviors:DoubleTappedBehav.CommandParameter="{Binding #LbMacro.IsVisible}">
               <Border.VerticalAlignment>
                 <MultiBinding  Converter="{StaticResource AlignmentConvertor}"

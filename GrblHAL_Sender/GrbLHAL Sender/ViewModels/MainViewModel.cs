@@ -62,6 +62,7 @@ public class MainViewModel : ViewModelBase
     public bool ShowRTCommands { get; set; }
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
+    public MacroViewModel MacroViewModel { get; set; }
     public SettingsViewModel SettingsViewModel { get; set; }
     public ProbeViewModel ProbeViewModel
     {
@@ -248,7 +249,7 @@ public class MainViewModel : ViewModelBase
     }
 
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
-        ConfigManager configManager, JobViewModel jobViewModel, ProbeViewModel probeViewModel)
+        ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel, ProbeViewModel probeViewModel)
     {
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
@@ -256,6 +257,7 @@ public class MainViewModel : ViewModelBase
         _commManager = commManager;
         _configManager = configManager;
         JobViewModel = jobViewModel;
+        MacroViewModel = macroViewModel;
         _config = _configManager.LoadConfig();
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
@@ -351,7 +353,6 @@ public class MainViewModel : ViewModelBase
 
     private void OpenConsole()
     {
-
         ShowConsole = !ShowConsole;
     }
 
@@ -708,19 +709,20 @@ public class MainViewModel : ViewModelBase
     }
     public void Connect()
     {
+       // if (_commManager.Adapter.IsConnected) return;
         var connectionType = _configManager.GHalSenderConfig;
-
+       
         if (connectionType?.Connection == GHalSenderConfig.ConnectionType.Tcp)
         {
             _commManager.NewTcpConnection(connectionType.TcpSettings);
         }
         else if (connectionType?.Connection == GHalSenderConfig.ConnectionType.Serial)
         {
-            _commManager.NewSerialConnection(_config.SerialSettings.PortName);
+            _commManager.NewSerialConnection(_config.SerialSettings);
         }
         else
         {
-
+            _commManager.WebSocketConnection();
         }
 
         _commManager.GetSettings();

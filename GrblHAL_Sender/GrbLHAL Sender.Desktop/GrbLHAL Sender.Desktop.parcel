@@ -1,0 +1,33 @@
+{
+    "GeneralSettings": {
+        "NetProjectPath": "GrbLHAL Sender.Desktop.csproj",
+        "ApplicationName": "GrbLHAL Sender",
+        "Version": "1.0.0",
+        "PackageName": {
+            "$type": "msbuild",
+            "property": "AssemblyName"
+        },
+        "AssemblyName": {
+            "$type": "msbuild",
+            "property": "AssemblyName"
+        }
+    },
+    "LinuxSettings": {
+        "CreateBinSymlink": "True"
+    },
+    "Win32Settings": {
+        "InstallerIcon": "../GrbLHAL Sender/Assets/GHalSender.ico",
+        "Company": "Jay_tech",
+        "InstallerRequiresAdmin": "False",
+        "IncludeUninstaller": "True"
+    },
+    "MacOsSettings": {
+        "CreateBundle": true,
+        "BundleIdentifier": "com.CompanyName.GrbLHAL-Sender-Desktop",
+        "SigningCredentialsType": "AdHoc"
+    },
+    "PublishSettings": {
+        "PublishReadyToRun": "True",
+        "ExtraBuildProperties": {}
+    }
+}
