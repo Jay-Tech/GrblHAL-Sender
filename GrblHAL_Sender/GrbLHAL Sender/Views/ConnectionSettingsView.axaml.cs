@@ -8,7 +8,7 @@ namespace GrbLHAL_Sender.Views;
 public partial class ConnectionSettingsView : UserControl
 {
 
-    public event Action? OnCloseRequested;
+   
     public ConnectionSettingsView()
     {
         InitializeComponent();
@@ -39,8 +39,4 @@ public partial class ConnectionSettingsView : UserControl
         }
     }
 
-    private void OnCloseClick(object? sender, RoutedEventArgs e)
-    {
-        OnCloseRequested?.Invoke();
-    }
 }

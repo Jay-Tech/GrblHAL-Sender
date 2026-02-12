@@ -9,6 +9,7 @@ namespace GrbLHAL_Sender.ViewModels
 {
     public class ConnectionViewModel : ViewModelBase
     {
+        public event Action? OnCloseRequested;
 
         private readonly ConfigManager _configManager;
         private int _selectedConnectionType;
@@ -85,12 +86,14 @@ namespace GrbLHAL_Sender.ViewModels
         }
         public ICommand SaveConfigCommand { get; }
         public ICommand RefreshPortsCommand { get; }
+        public ICommand CloseCommand { get; }
 
         public ConnectionViewModel(ConfigManager configManager)
         {
             _configManager = configManager;
             RefreshPortsCommand = ReactiveCommand.Create(RefreshPorts);
             SaveConfigCommand = ReactiveCommand.Create(SaveConfig);
+            CloseCommand = ReactiveCommand.Create(() => OnCloseRequested?.Invoke());
             RefreshPorts();
 
         }

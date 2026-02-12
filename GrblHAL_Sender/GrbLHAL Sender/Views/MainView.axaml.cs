@@ -16,7 +16,7 @@ public partial class MainView : UserControl
     private DispatcherTimer? _longPressTimer;
     private bool _longPressTriggered;
     private Flyout? _connectionFlyout;
-    private ConnectionSettingsView? _connectionSettingsView;
+
 
     public MainView()
     {
@@ -24,15 +24,14 @@ public partial class MainView : UserControl
 
         // Get the Flyout and its content from the Connect button
         _connectionFlyout = ConnectButton.Flyout as Flyout;
-        _connectionSettingsView = _connectionFlyout?.Content as ConnectionSettingsView;
 
         // Set up long-press on Connect button
         ConnectButton.AddHandler(PointerPressedEvent, ConnectButton_PointerPressed, handledEventsToo: true);
         ConnectButton.AddHandler(PointerReleasedEvent, ConnectButton_PointerReleased, handledEventsToo: true);
 
         // Wire up the ConnectRequested event from the ConnectionSettingsView
-        if (_connectionSettingsView != null)
-            _connectionSettingsView.OnCloseRequested += OnCloseRequested;
+       
+
     }
 
     IDisposable? _selectFilesInteractionDisposable;
@@ -46,6 +45,7 @@ public partial class MainView : UserControl
             _viewModel = vm;
             _selectFilesInteractionDisposable =
                 vm.JobViewModel.SelectFilesInteraction.RegisterHandler(InteractionHandler);
+            _viewModel?.ConnectionViewModel?.OnCloseRequested += OnCloseRequested;
         }
         base.OnDataContextChanged(e);
     }
