@@ -15,6 +15,9 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+#if DEBUG
+        this.AttachDeveloperTools();
+#endif
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -56,6 +59,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<MainViewModel>();
         collection.AddTransient<ProbeViewModel>();
         collection.AddTransient<MacroViewModel>();
+        collection.AddTransient<ConnectionViewModel>();
     }
 
 }

@@ -64,6 +64,7 @@ public class MainViewModel : ViewModelBase
     public JobViewModel JobViewModel { get; set; }
     public MacroViewModel MacroViewModel { get; set; }
     public SettingsViewModel SettingsViewModel { get; set; }
+    public ConnectionViewModel ConnectionViewModel { get; set; }
     public ProbeViewModel ProbeViewModel
     {
         get => _probeViewModel;
@@ -249,7 +250,8 @@ public class MainViewModel : ViewModelBase
     }
 
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
-        ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel, ProbeViewModel probeViewModel)
+        ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
+        ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel)
     {
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
@@ -259,6 +261,8 @@ public class MainViewModel : ViewModelBase
         JobViewModel = jobViewModel;
         MacroViewModel = macroViewModel;
         _config = _configManager.LoadConfig();
+        ConnectionViewModel = connectionViewModel;
+        ConnectionViewModel.LoadFromConfig(_config);
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
         _commManager.OnStateReceived += _commManager_OnStateReceived;
@@ -326,6 +330,8 @@ public class MainViewModel : ViewModelBase
             }
 
         ];
+
+       
 
         SetUpUiSettings();
 
@@ -709,20 +715,18 @@ public class MainViewModel : ViewModelBase
     }
     public void Connect()
     {
-       // if (_commManager.Adapter.IsConnected) return;
-        var connectionType = _configManager.GHalSenderConfig;
-       
-        if (connectionType?.Connection == GHalSenderConfig.ConnectionType.Tcp)
+        
+        if (_config.Connection == GHalSenderConfig.ConnectionType.Tcp)
         {
-            _commManager.NewTcpConnection(connectionType.TcpSettings);
+            _commManager.NewTcpConnection(_config.TcpSettings);
         }
-        else if (connectionType?.Connection == GHalSenderConfig.ConnectionType.Serial)
+        else if (_config.Connection == GHalSenderConfig.ConnectionType.Serial)
         {
             _commManager.NewSerialConnection(_config.SerialSettings);
         }
         else
         {
-            _commManager.WebSocketConnection(connectionType.WebSocketSettings);
+            _commManager.WebSocketConnection(_config.WebSocketSettings);
         }
 
         _commManager.GetSettings();
