@@ -1,8 +1,5 @@
-﻿using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Media;
-using Avalonia.Rendering;
-using GrbLHAL_Sender.ViewModels;
 using System;
 
 namespace GrbLHAL_Sender.Views;

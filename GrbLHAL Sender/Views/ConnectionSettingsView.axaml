@@ -61,7 +61,7 @@
               Command="{Binding SaveConfigCommand}"/>
       <Button Grid.Column="1" Content="Close" HorizontalAlignment="Stretch" Height="35"
               HorizontalContentAlignment="Center" FontSize="15" Margin="5,0"
-              Click="OnCloseClick"/>
+              Command="{Binding CloseCommand}"/>
       </Grid>
 
     </StackPanel>
