@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using GrbLHAL_Sender.Gcode;
+using GrbLHAL_Sender.Settings;
 
 namespace GrbLHAL_Sender.Views.GcodeRenderControl
 {
@@ -17,26 +18,58 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
         public float CenterZ { get; private set; }
         public float ModelScale { get; private set; } = 1f;
 
-        public void FitToView(ToolpathData toolpath, float viewportWidth, float viewportHeight)
+        public void FitToView(ToolpathData toolpath, float viewportWidth, float viewportHeight,
+            MachineSettings? machineSettings = null, Point3D? wco = null)
         {
-            CenterX = toolpath.Center.X;
-            CenterY = toolpath.Center.Y;
-            // CNC convention: Z=0 is the work surface (top of material), cuts go negative.
-            // Center the camera at Z=0 so the grid/work surface is the visual reference plane
-            // and the toolpath appears to cut down into it, rather than centering on the
-            // Z midpoint of the bounding box which pushes the grid above the toolpath.
-            CenterZ = 0f;
+            bool hasMachine = machineSettings != null &&
+                              machineSettings.XSize > 0 &&
+                              machineSettings.YSize > 0;
 
-            float dim = toolpath.MaxDimension;
-            if (dim < 0.001f) dim = 1f;
+            if (hasMachine)
+            {
+                FitToMachine(machineSettings!, viewportWidth, viewportHeight, wco);
+            }
+            else
+            {
+                CenterX = toolpath.Center.X;
+                CenterY = toolpath.Center.Y;
+                CenterZ = 0f;
+                float dim = toolpath.MaxDimension;
+                if (dim < 0.001f) dim = 1f;
+                Distance = dim * 1.5f;
+                ResetOrientation();
+            }
+        }
 
-            // Set distance so the model fills ~60% of the viewport
-            float viewSize = MathF.Min(viewportWidth, viewportHeight);
-            Distance = dim * 1.5f;
+        public void FitToMachine(MachineSettings machineSettings, float viewportWidth, float viewportHeight,
+            Point3D? wco = null)
+        {
+            // Center camera on the machine work area, converted to work coordinates
+            // Machine grid in machine coords: X=[0,XSize], Y=[-YSize,0], Z=-ZSize (work surface)
+            // Work coords = Machine coords - WCO
+            float wcoX = wco?.X ?? 0f;
+            float wcoY = wco?.Y ?? 0f;
+            float wcoZ = wco?.Z ?? 0f;
+
+            CenterX = (float)machineSettings.XSize / 2f - wcoX;
+            CenterY = -(float)machineSettings.YSize / 2f - wcoY;
+            float gridZ = machineSettings.ZSize > 0 ? -(float)machineSettings.ZSize - wcoZ : -wcoZ;
+            CenterZ = gridZ;
+            float dim = MathF.Max((float)machineSettings.XSize, (float)machineSettings.YSize);
+            // Account for viewport aspect ratio so the grid fits nicely
+            float aspect = viewportWidth / viewportHeight;
+            float fitDim = aspect > 1f ? dim : dim / aspect;
+            Distance = fitDim * 1.8f;
+            ResetOrientation();
+        }
+
+        private void ResetOrientation()
+        {
             ModelScale = 1f;
             PanX = 0f;
             PanY = 0f;
-            RotationX = 45f;
+            // Slight overhead angle — more top-down to see the full work surface
+            RotationX = 60f;
             RotationY = 0f;
         }
 

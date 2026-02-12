@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using GrbLHAL_Sender.Gcode;
+using GrbLHAL_Sender.Settings;
 
 namespace GrbLHAL_Sender.Views.GcodeRenderControl
 {
@@ -15,6 +16,12 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
         public static readonly StyledProperty<Point3D?> SpindlePositionProperty =
             AvaloniaProperty.Register<GcodeRenderControl, Point3D?>(nameof(SpindlePosition));
 
+        public static readonly StyledProperty<MachineSettings?> MachineSettingsProperty =
+            AvaloniaProperty.Register<GcodeRenderControl, MachineSettings?>(nameof(MachineSettings));
+
+        public static readonly StyledProperty<Point3D?> WorkCoordinateOffsetProperty =
+            AvaloniaProperty.Register<GcodeRenderControl, Point3D?>(nameof(WorkCoordinateOffset));
+
         public ToolpathData? Toolpath
         {
             get => GetValue(ToolpathProperty);
@@ -25,6 +32,18 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
         {
             get => GetValue(SpindlePositionProperty);
             set => SetValue(SpindlePositionProperty, value);
+        }
+
+        public MachineSettings? MachineSettings
+        {
+            get => GetValue(MachineSettingsProperty);
+            set => SetValue(MachineSettingsProperty, value);
+        }
+
+        public Point3D? WorkCoordinateOffset
+        {
+            get => GetValue(WorkCoordinateOffsetProperty);
+            set => SetValue(WorkCoordinateOffsetProperty, value);
         }
 
         private readonly Camera3D _camera = new();
@@ -43,14 +62,15 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
 
         static GcodeRenderControl()
         {
-            AffectsRender<GcodeRenderControl>(ToolpathProperty, SpindlePositionProperty);
+            AffectsRender<GcodeRenderControl>(ToolpathProperty, SpindlePositionProperty, MachineSettingsProperty, WorkCoordinateOffsetProperty);
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
         {
             base.OnPropertyChanged(change);
 
-            if (change.Property == ToolpathProperty)
+            if (change.Property == ToolpathProperty || change.Property == MachineSettingsProperty ||
+                change.Property == WorkCoordinateOffsetProperty)
             {
                 _fitted = false;
                 InvalidateVisual();
@@ -64,18 +84,33 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
             if (Bounds.Width <= 0 || Bounds.Height <= 0) return;
 
             var toolpath = Toolpath;
+            var machine = MachineSettings;
 
-            if (toolpath != null && toolpath.Segments.Count > 0 && !_fitted)
+            var wco = WorkCoordinateOffset;
+
+            if (!_fitted)
             {
-                _camera.FitToView(toolpath, (float)Bounds.Width, (float)Bounds.Height);
-                _fitted = true;
+                if (toolpath != null && toolpath.Segments.Count > 0)
+                {
+                    // Toolpath loaded — fit to toolpath (uses machine bounds if available)
+                    _camera.FitToView(toolpath, (float)Bounds.Width, (float)Bounds.Height, machine, wco);
+                    _fitted = true;
+                }
+                else if (machine != null && machine.XSize > 0 && machine.YSize > 0)
+                {
+                    // No toolpath yet — fit to machine grid at startup
+                    _camera.FitToMachine(machine, (float)Bounds.Width, (float)Bounds.Height, wco);
+                    _fitted = true;
+                }
             }
 
             var op = new GcodeRenderOperation(
                 new Rect(0, 0, Bounds.Width, Bounds.Height),
                 toolpath,
                 _camera,
-                SpindlePosition);
+                SpindlePosition,
+                machine,
+                WorkCoordinateOffset);
 
             context.Custom(op);
         }

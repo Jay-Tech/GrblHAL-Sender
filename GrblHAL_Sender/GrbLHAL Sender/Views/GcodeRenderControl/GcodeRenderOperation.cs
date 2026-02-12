@@ -6,6 +6,7 @@ using Avalonia.Platform;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
 using GrbLHAL_Sender.Gcode;
+using GrbLHAL_Sender.Settings;
 using SkiaSharp;
 
 namespace GrbLHAL_Sender.Views.GcodeRenderControl
@@ -15,6 +16,8 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
         private readonly ToolpathData? _toolpath;
         private readonly Camera3D _camera;
         private readonly Point3D? _spindlePosition;
+        private readonly MachineSettings? _machineSettings;
+        private readonly Point3D? _wco;
 
         private static readonly SKPaint RapidPaint = new()
         {
@@ -75,12 +78,16 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
             Style = SKPaintStyle.Stroke
         };
 
-        public GcodeRenderOperation(Rect bounds, ToolpathData? toolpath, Camera3D camera, Point3D? spindlePosition = null)
+        public GcodeRenderOperation(Rect bounds, ToolpathData? toolpath, Camera3D camera,
+            Point3D? spindlePosition = null, MachineSettings? machineSettings = null,
+            Point3D? workCoordinateOffset = null)
         {
             Bounds = bounds;
             _toolpath = toolpath;
             _camera = camera;
             _spindlePosition = spindlePosition;
+            _machineSettings = machineSettings;
+            _wco = workCoordinateOffset;
         }
 
         public Rect Bounds { get; }
@@ -152,9 +159,35 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
         private void DrawGrid(SKCanvas canvas, Matrix4x4 viewProj, float width, float height)
         {
             float gridMinX, gridMaxX, gridMinY, gridMaxY, spacing;
-            float gridZ;
+            float gridZ = 0f;
 
-            if (_toolpath != null && _toolpath.Segments.Count > 0)
+            // Use machine dimensions ($130/$131/$132) if available
+            // CNC Z convention: Z=0 is home (top of travel), work surface is at Z=-ZSize
+            bool hasMachineBounds = _machineSettings != null &&
+                                    _machineSettings.XSize > 0 &&
+                                    _machineSettings.YSize > 0;
+
+            // WCO converts machine coords to work coords: WPos = MPos - WCO
+            // The toolpath is in work coordinates, so the grid (machine coords) must
+            // be shifted by -WCO to align with the toolpath.
+            float wcoX = _wco?.X ?? 0f;
+            float wcoY = _wco?.Y ?? 0f;
+            float wcoZ = _wco?.Z ?? 0f;
+
+            if (hasMachineBounds)
+            {
+                // Machine grid in machine coords: X=[0, XSize], Y=[-YSize, 0]
+                // Convert to work coords by subtracting WCO
+                gridMinX = 0f - wcoX;
+                gridMaxX = (float)_machineSettings!.XSize - wcoX;
+                gridMinY = -(float)_machineSettings.YSize - wcoY;
+                gridMaxY = 0f - wcoY;
+                // Grid Z: work surface is at machine Z=-ZSize, in work coords: -ZSize - wcoZ
+                gridZ = _machineSettings.ZSize > 0 ? -(float)_machineSettings.ZSize - wcoZ : -wcoZ;
+                float maxDim = MathF.Max((float)_machineSettings.XSize, (float)_machineSettings.YSize);
+                spacing = CalculateGridSpacing(maxDim * 0.7f);
+            }
+            else if (_toolpath != null && _toolpath.Segments.Count > 0)
             {
                 float gridExtent = _toolpath.MaxDimension * 0.7f;
                 spacing = CalculateGridSpacing(gridExtent);
@@ -162,19 +195,15 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
                 gridMaxX = MathF.Ceiling((_toolpath.MaxBounds.X + spacing) / spacing) * spacing;
                 gridMinY = MathF.Floor((_toolpath.MinBounds.Y - spacing) / spacing) * spacing;
                 gridMaxY = MathF.Ceiling((_toolpath.MaxBounds.Y + spacing) / spacing) * spacing;
-                // Place the grid at the bottom of the toolpath (deepest cut) so the
-                // workpiece appears to sit on top of the grid, not underneath it.
-                gridZ = _toolpath.MinBounds.Z;
             }
             else
             {
-                // Default grid when no toolpath loaded
+                // Default grid when no toolpath or machine settings
                 spacing = 100f;
                 gridMinX = -600f;
                 gridMaxX = 600f;
                 gridMinY = -600f;
                 gridMaxY = 600f;
-                gridZ = 0f;
             }
 
             for (float x = gridMinX; x <= gridMaxX; x += spacing)
@@ -196,45 +225,63 @@ namespace GrbLHAL_Sender.Views.GcodeRenderControl
 
         private void DrawAxes(SKCanvas canvas, Matrix4x4 viewProj, float width, float height)
         {
-            float axisLen = _toolpath != null && _toolpath.Segments.Count > 0
-                ? _toolpath.MaxDimension * 0.15f
-                : 50f;
+            float axisLen;
+            if (_machineSettings != null && _machineSettings.XSize > 0)
+                axisLen = (float)Math.Max(_machineSettings.XSize, _machineSettings.YSize) * 0.1f;
+            else if (_toolpath != null && _toolpath.Segments.Count > 0)
+                axisLen = _toolpath.MaxDimension * 0.15f;
+            else
+                axisLen = 50f;
 
-            // Place axes at the grid level (bottom of toolpath) so they sit with the grid
-            float originZ = _toolpath != null && _toolpath.Segments.Count > 0
-                ? _toolpath.MinBounds.Z
-                : 0f;
+            // WCO offset: axes are at machine origin (0,0,0), converted to work coords
+            float wcoX = _wco?.X ?? 0f;
+            float wcoY = _wco?.Y ?? 0f;
+            float wcoZ = _wco?.Z ?? 0f;
 
-            var origin = ProjectToScreen(new Point3D(0, 0, originZ), viewProj, width, height);
-            if (!origin.HasValue) return;
+            // Machine origin in work coordinates
+            float originX = -wcoX;
+            float originY = -wcoY;
+            float originZ = -wcoZ;
 
-            // X axis - Red
-            var xEnd = ProjectToScreen(new Point3D(axisLen, 0, originZ), viewProj, width, height);
+            // CNC Z convention: Z=0 is home (top), work surface is at Z=-ZSize
+            // Work surface in work coords: -ZSize - wcoZ
+            float gridZ = (_machineSettings != null && _machineSettings.ZSize > 0)
+                ? -(float)_machineSettings.ZSize - wcoZ
+                : originZ;
+
+            // X/Y axes originate at back-left corner on the work surface
+            var xyOrigin = ProjectToScreen(new Point3D(originX, originY, gridZ), viewProj, width, height);
+            if (!xyOrigin.HasValue) return;
+
+            // X axis - Red (on work surface)
+            var xEnd = ProjectToScreen(new Point3D(originX + axisLen, originY, gridZ), viewProj, width, height);
             if (xEnd.HasValue)
             {
                 using var xPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 2.5f, IsAntialias = true };
-                canvas.DrawLine(origin.Value, xEnd.Value, xPaint);
+                canvas.DrawLine(xyOrigin.Value, xEnd.Value, xPaint);
                 canvas.DrawText("X", xEnd.Value.X + 4, xEnd.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), xPaint);
             }
 
-            // Y axis - Green
-            var yEnd = ProjectToScreen(new Point3D(0, axisLen, originZ), viewProj, width, height);
+            // Y axis - Green (on work surface, extends in -Y direction: back-to-front)
+            var yEnd = ProjectToScreen(new Point3D(originX, originY - axisLen, gridZ), viewProj, width, height);
             if (yEnd.HasValue)
             {
                 using var yPaint = new SKPaint { Color = SKColors.Lime, StrokeWidth = 2.5f, IsAntialias = true };
-                canvas.DrawLine(origin.Value, yEnd.Value, yPaint);
+                canvas.DrawLine(xyOrigin.Value, yEnd.Value, yPaint);
                 canvas.DrawText("Y", yEnd.Value.X + 4, yEnd.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), yPaint);
             }
 
-            // Z axis - Blue (extends upward from grid level)
-            var zEnd = ProjectToScreen(new Point3D(0, 0, originZ + axisLen), viewProj, width, height);
-            if (zEnd.HasValue)
+            // Z axis - Blue (extends from work surface up to machine home Z=0)
+            // Machine home Z=0 in work coords = -wcoZ
+            var zBottom = xyOrigin; // starts at grid/work surface
+            var zTop = ProjectToScreen(new Point3D(originX, originY, originZ), viewProj, width, height);
+            if (zTop.HasValue)
             {
                 using var zPaint = new SKPaint { Color = new SKColor(80, 150, 255), StrokeWidth = 2.5f, IsAntialias = true };
-                canvas.DrawLine(origin.Value, zEnd.Value, zPaint);
-                canvas.DrawText("Z", zEnd.Value.X + 4, zEnd.Value.Y - 4,
+                canvas.DrawLine(zBottom.Value, zTop.Value, zPaint);
+                canvas.DrawText("Z", zTop.Value.X + 4, zTop.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), zPaint);
             }
         }
