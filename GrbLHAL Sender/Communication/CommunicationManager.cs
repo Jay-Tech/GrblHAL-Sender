@@ -26,6 +26,7 @@ namespace GrbLHAL_Sender.Communication
         public event EventHandler<List<GrblHalSetting>> onSettingUpdated;
         public event EventHandler<GrblHALOptions> onOptionsUpdated;
         public event EventHandler<ProbeState> OnProbeResults;
+        public event EventHandler OnCommandAck;
 
 
         private Dictionary<int, string> _errorCodes = new Dictionary<int, string>();
@@ -50,15 +51,6 @@ namespace GrbLHAL_Sender.Communication
             _probe = new ProbeState();
         }
 
-        //  set a call back directly 
-        public void StartJob(Action<string>? callBack)
-        {
-            //_callBack = callBack;
-        }
-        public void EndJob()
-        {
-            //_callBack = null;
-        }
         public void ShutDown()
         {
             _pollTimer?.Stop();
@@ -154,108 +146,129 @@ namespace GrbLHAL_Sender.Communication
             Adapter.OnDataReceived += Adapter_OnDataReceived;
         }
 
-        public void NewSerialConnection(string connection)
+        public void NewSerialConnection(SerialSettings connection)
         {
             Adapter = new Serial(connection);
             Adapter.OnDataReceived += Adapter_OnDataReceived;
         }
-
+        public void WebSocketConnection()
+        {
+            //todo: implement websocket connection
+        }
         private void Adapter_OnDataReceived(object? sender, string e)
         {
             var data = e.Trim();
-            if (!data.StartsWith("<") && !data.EndsWith(">"))
-            {
-                OnConsoleLogReceived?.Invoke(this, new string(data));
-            }
-            if (string.Equals(data.Trim(), "ok", StringComparison.OrdinalIgnoreCase))
-            {
-                Debug.WriteLine($"OK was hit value : {e}");
-                return;
-            }
-            if (data.StartsWith("<") || data.EndsWith(">"))
+            if (data.Length == 0) return;
+
+            // Real-time status messages: <...>
+            if (data[0] == '<' && data[^1] == '>')
             {
                 ParseRealTimeData(data);
                 return;
             }
-            if (data.StartsWith("[SETTING"))
+
+            // Log non-realtime data to console
+            OnConsoleLogReceived?.Invoke(this, data);
+
+            // "ok" acknowledgement
+            if (data.Equals("ok", StringComparison.OrdinalIgnoreCase))
             {
-                data = data.Trim('[', ']');
-                var substring = data.Split('|');
-                ParseSettingsData(substring.AsSpan());
-                return;
-            }
-            if (data.StartsWith("[ALARMCODE:"))
-            {
-                data = data.Trim('[', ']');
-                var substring = data.Split('|');
-                ParseAlarm(substring.AsSpan());
-                return;
-            }
-            if (data.StartsWith("[ERRORCODE:"))
-            {
-                data = data.Trim('[', ']');
-                var substring = data.Split('|');
-                ParseError(substring.AsSpan());
+                OnCommandAck?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
-            if (data.StartsWith("[MSG:Pgm End"))
+            // Bracketed messages: [...]
+            if (data[0] == '[')
             {
+                var inner = data.AsSpan(1, data.Length - 2); // strip [ and ]
 
-            }
-
-            if (data.StartsWith("[PRB"))
-            {
-                data = data.Trim('[', ']');
-                var substring = data.Split(':');
-                ParseProbe(substring.AsSpan());
-            }
-            if (data.StartsWith("["))
-            {
-                data = data.Trim('[', ']');
-                var substring = data.Split(':');
-                ParseOptionsData(substring.AsSpan());
-                return;
-            }
-            if (data.StartsWith("$"))
-            {
-                data = data.Trim('$');
-                if (data.Contains('\t'))
+                if (inner.StartsWith("SETTING"))
                 {
-                    var valuePair = data.Split('\t');
+                    var trimmed = data.Trim('[', ']');
+                    var substring = trimmed.Split('|');
+                    ParseSettingsData(substring.AsSpan());
+                }
+                else if (inner.StartsWith("ALARMCODE:"))
+                {
+                    var trimmed = data.Trim('[', ']');
+                    var substring = trimmed.Split('|');
+                    ParseAlarm(substring.AsSpan());
+                }
+                else if (inner.StartsWith("ERRORCODE:"))
+                {
+                    var trimmed = data.Trim('[', ']');
+                    var substring = trimmed.Split('|');
+                    ParseError(substring.AsSpan());
+                }
+                else if (inner.StartsWith("MSG:Pgm End"))
+                {
+                    // Program end notification — can be handled in the future
+                }
+                else if (inner.StartsWith("PRB"))
+                {
+                    var trimmed = data.Trim('[', ']');
+                    var substring = trimmed.Split(':');
+                    ParseProbe(substring.AsSpan());
+                }
+                else
+                {
+                    // Generic bracketed data (OPT, NEWOPT, AXS, SIGNALS, etc.)
+                    var trimmed = data.Trim('[', ']');
+                    var substring = trimmed.Split(':');
+                    ParseOptionsData(substring.AsSpan());
+                }
+                return;
+            }
+
+            // Dollar-sign settings: $...
+            if (data[0] == '$')
+            {
+                var inner = data.AsSpan(1); // strip leading $
+                if (inner.Contains('\t'))
+                {
+                    // Tab-separated settings format
+                    //var valuePair = data[1..].Split('\t');
                     //ParseTabSettings(valuePair.AsSpan());
                 }
                 else
                 {
-                    var valuePair = data.Split('=');
+                    var valuePair = data[1..].Split('=');
                     ParseSettingsValueData(valuePair.AsSpan());
                 }
                 return;
             }
 
-            if (data.StartsWith("error"))
+            // Error responses: error:N
+            if (data.StartsWith("error:", StringComparison.OrdinalIgnoreCase))
             {
-
                 var valuePair = data.Split(':');
-                var error = _errorCodes[valuePair[1].StringToInt()];
-                Debug.Write("***Warning Error Code " + error + valuePair[1] + error + "***" + Environment.NewLine);
-            }
-            if (data.StartsWith("ALARM"))
-            {
-
-                var valuePair = data.Split(':');
-                var alarm = _alarmCodes[valuePair[1].StringToInt()];
-                Debug.Write("***Alarm Code " + alarm + valuePair[1] + alarm + "***" + Environment.NewLine);
-            }
-            else
-            {
-                if (data == "ok")
+                if (valuePair.Length >= 2)
                 {
-                    Debug.Write("***" + data + "***" + Environment.NewLine);
+                    var code = valuePair[1].StringToInt();
+                    if (_errorCodes.TryGetValue(code, out var error))
+                        Debug.WriteLine($"***Error Code {code}: {error}***");
+                    else
+                        Debug.WriteLine($"***Unknown Error Code {code}***");
                 }
-                else
-                    Debug.Write("***Warning Data Not Parsed " + data + "***");
+                return;
             }
+
+            // Alarm responses: ALARM:N
+            if (data.StartsWith("ALARM:", StringComparison.OrdinalIgnoreCase))
+            {
+                var valuePair = data.Split(':');
+                if (valuePair.Length >= 2)
+                {
+                    var code = valuePair[1].StringToInt();
+                    if (_alarmCodes.TryGetValue(code, out var alarm))
+                        Debug.WriteLine($"***Alarm Code {code}: {alarm}***");
+                    else
+                        Debug.WriteLine($"***Unknown Alarm Code {code}***");
+                }
+                return;
+            }
+
+            Debug.WriteLine($"***Warning Data Not Parsed: {data}***");
         }
 
         private void ParseProbe(Span<string> span)
@@ -273,7 +286,6 @@ namespace GrbLHAL_Sender.Communication
             OnProbeResults?.Invoke(this, probe);
         }
 
-
         private void ParseError(Span<string> asSpan)
         {
             var code = asSpan[0].Split(':')[1].StringToInt();
@@ -281,14 +293,12 @@ namespace GrbLHAL_Sender.Communication
             _errorCodes.TryAdd(code, errorData);
 
         }
-
         private void ParseAlarm(Span<string> asSpan)
         {
             var code = asSpan[0].Split(':')[1].StringToInt();
             var alarmData = asSpan[2];
             _alarmCodes.TryAdd(code, alarmData);
         }
-
 
         private void ParseOptionsData(Span<string> asSpan)
         {
@@ -325,8 +335,8 @@ namespace GrbLHAL_Sender.Communication
                     grblHalOptions.SignalLabels.AddOrInsertRange(grblHalOptions.AxisLabels, 0);
                 }
             }
-
         }
+
         private void ParseTabSettings(Span<string> asSpan)
         {
             _grblHalSettings.SettingCollection.Add(new GrblHalSetting(asSpan));
@@ -383,6 +393,7 @@ namespace GrbLHAL_Sender.Communication
                             break;
                         case "F":
                             var feed = value.Split(",");
+                            rtState.FeedRate = feed[0];
                             break;
                         case "FS":
                             var speed = value.Split(",");
@@ -436,7 +447,6 @@ namespace GrbLHAL_Sender.Communication
                         case "In":
                             var signals = int.Parse(value);
                             break;
-
                     }
                 }
             }
@@ -452,7 +462,6 @@ namespace GrbLHAL_Sender.Communication
             }
             catch (TimeoutException)
             {
-                Debug.WriteLine($"Time out hit on command {command}");
                 return false;
             }
         }

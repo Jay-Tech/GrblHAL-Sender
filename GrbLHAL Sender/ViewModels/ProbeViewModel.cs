@@ -124,14 +124,14 @@ namespace GrbLHAL_Sender.ViewModels
             
             ProbeJob = _probeJob.ProbeZ(ProbeDiameter.ToString(), RapidRate.ToString(),
                 ProbeDistance.ToString(), SearchRate.ToString(), LatchRate.ToString(), LatchDistance.ToString());
-            _communicationManager.StartJob(StartProbeJob);
+            //_communicationManager.StartJob(StartProbeJob);
             StartProbeJob("start");
         }
 
         private void StartProbeJob(string obj)
         {
             ListenToState(true);
-            _communicationManager.StartJob(SendJobLoop);
+            //_communicationManager.StartJob(SendJobLoop);
             SendJobLoop("start");
         }
         public void SendJobLoop(string lineProcessed)
@@ -149,7 +149,7 @@ namespace GrbLHAL_Sender.ViewModels
         
         private void JobCompete()
         {
-            _communicationManager.EndJob();
+            //_communicationManager.EndJob();
             _index = 0;
             ListenToState(false);
             ProProbeOffsets();

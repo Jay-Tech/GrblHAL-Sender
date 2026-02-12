@@ -21,20 +21,10 @@ namespace GrbLHAL_Sender.ViewModels
 {
     public partial class JobViewModel : ViewModelBase
     {
-        private ObservableCollection<Macro> _macroList;
-        private ObservableCollection<GCodeLine> _gCodeOutPut;
 
         private readonly CommunicationManager _commsManager;
-        private readonly ConfigManager _configManger;
-        private ReactiveCommand<object, Unit> _doubleTapConsoleCommand;
-        private ReactiveCommand<object, Unit> _doubleMacroTapCommand;
+
         private bool _showGCodeConsole;
-        private Macro _selectedItem;
-        private int _macroSelectedIndex;
-        private bool _macroNameEnabled;
-        private string _macroName;
-        private bool _displayMacroControl;
-        private string _macroCommandText;
         private int _gCodeFileIndex;
         private int _index = 0;
         private bool _fileLoaded;
@@ -43,18 +33,16 @@ namespace GrbLHAL_Sender.ViewModels
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
-        public ICommand RunMacroCommand { get; }
+        public JobState JobState { get; set; }
         public ICommand StartJobCommand { get; }
         public ICommand CloseGCodeConsole { get; }
-        public ICommand DeleteMacroCommand { get; }
-        public ICommand SaveMacroCommand { get; }
-        public ICommand NewMacroCommand { get; }
-        public ICommand CloseMacroCommand { get; }
         public ICommand OpenGCodePanel { get; }
-        public ICommand OpenMacroPanel { get; }
         public ICommand CloseFilesCommand { get; }
         public ICommand PauseJobCommand { get; }
         public ICommand StopJobCommand { get; }
+
+        private ReactiveCommand<object, Unit> _doubleTapConsoleCommand;
+        public ObservableCollection<GCodeLine> GCodeOutPut { get; set; }
 
         public bool FileLoaded
         {
@@ -62,78 +50,10 @@ namespace GrbLHAL_Sender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _fileLoaded, value);
         }
 
-        public ReactiveCommand<object, Unit> DoubleTapConsoleCommand
-        {
-            get => _doubleTapConsoleCommand;
-            set => _doubleTapConsoleCommand = value;
-        }
-
-        public ReactiveCommand<object, Unit> DoubleMacroTapCommand
-        {
-            get => _doubleMacroTapCommand;
-            set => _doubleMacroTapCommand = value;
-        }
-
         public bool ShowGCodeConsole
         {
             get => _showGCodeConsole;
             set => this.RaiseAndSetIfChanged(ref _showGCodeConsole, value);
-        }
-
-        public ObservableCollection<Macro> MacroList
-        {
-            get => _macroList;
-            set => this.RaiseAndSetIfChanged(ref _macroList, value);
-        }
-
-        public ObservableCollection<GCodeLine> GCodeOutPut
-        {
-            get => _gCodeOutPut;
-            set => this.RaiseAndSetIfChanged(ref _gCodeOutPut, value);
-        }
-
-        public Macro SelectedItem
-        {
-            get => _selectedItem;
-            set
-            {
-                MacroCommandText = value?.Command ?? " ";
-                this.RaiseAndSetIfChanged(ref _selectedItem, value);
-            }
-        }
-
-        public int MacroSelectedIndex
-        {
-            get => _macroSelectedIndex;
-            set
-            {
-                MacroNameEnabled = value == -1;
-                this.RaiseAndSetIfChanged(ref _macroSelectedIndex, value);
-            }
-        }
-
-        public bool MacroNameEnabled
-        {
-            get => _macroNameEnabled;
-            set => this.RaiseAndSetIfChanged(ref _macroNameEnabled, value);
-        }
-
-        public string MacroName
-        {
-            get => _macroName;
-            set => this.RaiseAndSetIfChanged(ref _macroName, value);
-        }
-
-        public bool DisplayMacroControl
-        {
-            get => _displayMacroControl;
-            set => this.RaiseAndSetIfChanged(ref _displayMacroControl, value);
-        }
-
-        public string MacroCommandText
-        {
-            get => _macroCommandText;
-            set => this.RaiseAndSetIfChanged(ref _macroCommandText, value);
         }
 
         public int GcodeFileIndex
@@ -154,139 +74,23 @@ namespace GrbLHAL_Sender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _toolpathData, value);
         }
 
-        public JobViewModel(CommunicationManager manager, ConfigManager configManger)
+        public ReactiveCommand<object, Unit> DoubleTapConsoleCommand
+        {
+            get => _doubleTapConsoleCommand;
+            set => _doubleTapConsoleCommand = value;
+        }
+
+        public JobViewModel(CommunicationManager manager)
         {
             _commsManager = manager;
-            _configManger = configManger;
-            _configManger.OnConfigLoaded += _configManger_OnConfigLoaded;
             GCodeOutPut = new ObservableCollection<GCodeLine>();
-            RunMacroCommand = ReactiveCommand.Create<string>(RunMacro);
-            StartJobCommand = ReactiveCommand.Create(StartJob);
             DoubleTapConsoleCommand = ReactiveCommand.Create<object>(DoubleTap);
-            DoubleMacroTapCommand = ReactiveCommand.Create<object>(DoubleTapMacroControl);
             CloseGCodeConsole = ReactiveCommand.Create(CloseGcodeConsole);
-            DeleteMacroCommand = ReactiveCommand.Create<Macro>(DeleteMacro);
-            SaveMacroCommand = ReactiveCommand.Create<string>(SaveMacro);
-            NewMacroCommand = ReactiveCommand.Create(NewMacro);
-            CloseMacroCommand = ReactiveCommand.Create(CloseMacroControl);
             OpenGCodePanel = ReactiveCommand.Create(GCodeControl);
-            OpenMacroPanel = ReactiveCommand.Create(MacroControl);
+            StartJobCommand = ReactiveCommand.Create(StartJob);
             CloseFilesCommand = ReactiveCommand.Create(CloseFile);
             PauseJobCommand = ReactiveCommand.Create(PauseJob);
             StopJobCommand = ReactiveCommand.Create(StopJob);
-
-        }
-
-        private void _commsManager_OnStateReceived(object? sender, RealTImeState e)
-        {
-            var state = e.GrblHalState;
-            JobState = state switch
-            {
-                "Hold" => JobState.Pause,
-                "Tool" => JobState.Tool,
-                "Running" => JobState.Running,
-                "Alarm" => JobState.Alarm,
-                "Stop" => JobState.Stop,
-                _ => JobState
-            };
-        }
-
-        private void ListenToState(bool b)
-        {
-            if (b)
-                _commsManager.OnStateReceived += _commsManager_OnStateReceived;
-            else
-            {
-                _commsManager.OnStateReceived -= _commsManager_OnStateReceived;
-            }
-        }
-
-        private void MacroControl()
-        {
-            DisplayMacroControl = !DisplayMacroControl;
-        }
-
-        private void GCodeControl()
-        {
-            ShowGCodeConsole = !ShowGCodeConsole;
-        }
-
-        private void _configManger_OnConfigLoaded(object? sender, GHalSenderConfig e)
-        {
-            MacroList = e.MacroList;
-        }
-
-        private void DoubleTapMacroControl(object p)
-        {
-            DisplayMacroControl = !Convert.ToBoolean(p);
-        }
-
-        private void CloseMacroControl()
-        {
-            DisplayMacroControl = !DisplayMacroControl;
-        }
-
-        private void SaveMacro(string macroId)
-        {
-            if (string.IsNullOrEmpty(macroId))
-            {
-                if (SelectedItem?.Id == " ") return;
-                macroId = SelectedItem.Id;
-            }
-
-            if (MacroList.Count == 0)
-            {
-                MacroList.Add(BuildMacro());
-            }
-
-            if (MacroList.All(x => x.Id != macroId))
-            {
-                MacroList.Add(BuildMacro());
-            }
-            else
-            {
-                foreach (var m in MacroList)
-                {
-                    if (m.Id == macroId)
-                    {
-                        m.Command = MacroCommandText;
-                    }
-                }
-            }
-
-            Macro BuildMacro()
-            {
-                var m = new Macro
-                {
-                    Id = macroId,
-                    Command = MacroCommandText
-                };
-                return m;
-            }
-
-            MacroName = string.Empty;
-            MacroCommandText = string.Empty;
-            MacroSelectedIndex = -1;
-            _configManger.GHalSenderConfig.MacroList = MacroList;
-            _configManger.SaveConfig();
-        }
-
-        private void DeleteMacro(Macro macro)
-        {
-            if (macro?.Id != null)
-            {
-                MacroList.Remove(macro);
-            }
-        }
-
-        private void NewMacro()
-        {
-            MacroSelectedIndex = -1;
-        }
-
-        private void CloseGcodeConsole()
-        {
-            ShowGCodeConsole = !ShowGCodeConsole;
         }
 
         [RelayCommand]
@@ -298,22 +102,6 @@ namespace GrbLHAL_Sender.ViewModels
             FileName = SelectedFiles[0]?.Name;
             var file = new GCodeParser();
             file.ParseGCodeFile(SelectedFiles[0].Path.AbsolutePath, FileComplete);
-        }
-
-        private void DoubleTap(object p)
-        {
-            ShowGCodeConsole = !Convert.ToBoolean(p);
-        }
-
-        private void RunMacro(string macroId)
-        {
-            var command = MacroList.First(x => x.Id == macroId);
-            SendCommand(command.Command);
-        }
-
-        private void SendCommand(string command)
-        {
-            _commsManager.SendCommand(command);
         }
 
         public void FileComplete(List<GCodeLine> gCodeJob)
@@ -331,7 +119,11 @@ namespace GrbLHAL_Sender.ViewModels
             }));
         }
 
-        public JobState JobState { get; set; }
+        public void StartJob()
+        {
+            ListenToState(true);
+            SendJobLoop(JobState.Start);
+        }
 
         private void StopJob()
         {
@@ -354,64 +146,113 @@ namespace GrbLHAL_Sender.ViewModels
             ToolpathData = null;
         }
 
-        public void StartJob()
+        private void _commsManager_OnStateReceived(object? sender, RealTImeState e)
         {
-            ListenToState(true);
-            _commsManager.StartJob(SendJobLoop);
-            SendJobLoop("start");
+            var state = e.GrblHalState;
+            JobState = state switch
+            {
+                "Hold" => JobState.Hold,
+                "Tool" => JobState.Tool,
+                "Running" => JobState.Running,
+                "Alarm" => JobState.Alarm,
+                "Stop" => JobState.Stop,
+                _ => JobState
+            };
+            // SendJobLoop(JobState);
         }
 
-        public void SendJobLoop(string lineProcessed)
+        private void _commsManager_OnCommandAck(object? sender, EventArgs e)
         {
+            if (JobState is JobState.Running or JobState.Start)
+            {
+                JobState = JobState.Running;
+            }
+            SendJobLoop(JobState);
+            //if (JobState is JobState.Hold or JobState.Tool)
+            //{
+            //     _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
+            //}
+        }
 
+        private void ListenToState(bool b)
+        {
+            if (b)
+            {
+                _commsManager.OnStateReceived += _commsManager_OnStateReceived;
+                _commsManager.OnCommandAck += _commsManager_OnCommandAck;
+            }
+            else
+            {
+                _commsManager.OnStateReceived -= _commsManager_OnStateReceived;
+                _commsManager.OnCommandAck -= _commsManager_OnCommandAck;
+            }
+        }
+        public void SendJobLoop(JobState lineProcessed)
+        {
             switch (JobState)
             {
                 case JobState.Tool:
                     _commsManager.Adapter.WriteByte(GrblHalConstants.ToolAck);
                     break;
-                case JobState.Pause:
+                case JobState.Hold:
                     _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
                     JobState = JobState.Running;
                     break;
+                case JobState.Start:
+                    JobState = JobState.Start;
+
+                    break;
             }
 
-            if (_index <= GCodeOutPut.Count - 1)
+            if (JobState is JobState.Running or JobState.SendNextLine or JobState.Start)
             {
-                _commsManager.SendCommand(GCodeOutPut[_index].Text);
-                GcodeFileIndex = _index;
-                _index++;
+                if (_index <= GCodeOutPut.Count - 1)
+                {
+                    _commsManager.SendCommand(GCodeOutPut[_index].Text);
+                    GcodeFileIndex = _index;
+                    _index++;
+                }
+                else
+                {
+                    JobCompete();
+                }
             }
-            else
-            {
-                JobCompete();
-            }
+
         }
 
         private void JobCompete()
         {
-            _commsManager.EndJob();
+            JobState = JobState.ProgramComplete;
             _index = 0;
             ListenToState(false);
-
         }
+
+        private void GCodeControl()
+        {
+            ShowGCodeConsole = !ShowGCodeConsole;
+        }
+
+        private void CloseGcodeConsole()
+        {
+            ShowGCodeConsole = !ShowGCodeConsole;
+        }
+        private void DoubleTap(object p)
+        {
+            ShowGCodeConsole = !Convert.ToBoolean(p);
+        }
+
     }
 
     public enum JobState
     {
+        Start,
+        Hold,
         Running,
-        Pause,
         Tool,
         Stop,
-        Alarm
+        Alarm,
+        ProgramComplete,
+        SendNextLine
     }
 
-}
-
-public partial class Macro : ObservableObject
-{
-    [ObservableProperty]
-    private string _id;
-
-    [ObservableProperty]
-    private string _command;
 }

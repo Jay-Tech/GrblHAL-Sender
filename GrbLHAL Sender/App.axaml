@@ -51,7 +51,7 @@
 		</FluentTheme.Palettes>
 		</FluentTheme>-->
 
-		<FluentTheme DensityStyle="Compact">
+		<FluentTheme DensityStyle="Normal">
 
 		</FluentTheme>
 		<SimpleTheme />

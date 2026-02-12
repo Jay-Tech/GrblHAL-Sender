@@ -23,16 +23,7 @@ namespace GrbLHAL_Sender.Communication
 
         public bool IsConnected { get; set; }
 
-        public Tcp(string ipAddress, int port)
-        {
-            var settings = new TcpSettings
-            {
-                IpAddress = ipAddress,
-                PortNumber = port
-            };
-            TryConnect(settings);
-        }
-
+        
         public Tcp(TcpSettings settings)
         {
             TryConnect(settings);

@@ -20,16 +20,13 @@ public partial class MainView : UserControl
         //    d(ViewModel.SelectFilesInteraction.RegisterHandler(this.InteractionHandler));
         //});
 
-     
-
     }
    
     IDisposable? _selectFilesInteractionDisposable;
 
   
     //Transform the model
-   
-
+    
     protected override void OnDataContextChanged(EventArgs e)
     {
         _selectFilesInteractionDisposable?.Dispose();
@@ -42,7 +39,6 @@ public partial class MainView : UserControl
         }
         base.OnDataContextChanged(e);
     }
-
     private void ToolLb_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         e.Handled = true;
@@ -66,6 +62,4 @@ public partial class MainView : UserControl
     //    SplitB.Flyout?.Hide();
     //    Debug.WriteLine("flyout");
     //}
-
-   
 }
