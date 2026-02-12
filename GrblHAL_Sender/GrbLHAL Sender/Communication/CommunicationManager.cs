@@ -151,9 +151,16 @@ namespace GrbLHAL_Sender.Communication
             Adapter = new Serial(connection);
             Adapter.OnDataReceived += Adapter_OnDataReceived;
         }
-        public void WebSocketConnection()
+        public void WebSocketConnection(WebSocketSettings settings)
         {
-            //todo: implement websocket connection
+            if (Adapter != null)
+            {
+                Adapter.OnDataReceived -= Adapter_OnDataReceived;
+                Adapter.Close();
+            }
+
+            Adapter = new WebSocket(settings);
+            Adapter.OnDataReceived += Adapter_OnDataReceived;
         }
         private void Adapter_OnDataReceived(object? sender, string e)
         {
@@ -245,10 +252,9 @@ namespace GrbLHAL_Sender.Communication
                 if (valuePair.Length >= 2)
                 {
                     var code = valuePair[1].StringToInt();
-                    if (_errorCodes.TryGetValue(code, out var error))
-                        Debug.WriteLine($"***Error Code {code}: {error}***");
-                    else
-                        Debug.WriteLine($"***Unknown Error Code {code}***");
+                    Debug.WriteLine(_errorCodes.TryGetValue(code, out var error)
+                        ? $"***Error Code {code}: {error}***"
+                        : $"***Unknown Error Code {code}***");
                 }
                 return;
             }
@@ -260,10 +266,9 @@ namespace GrbLHAL_Sender.Communication
                 if (valuePair.Length >= 2)
                 {
                     var code = valuePair[1].StringToInt();
-                    if (_alarmCodes.TryGetValue(code, out var alarm))
-                        Debug.WriteLine($"***Alarm Code {code}: {alarm}***");
-                    else
-                        Debug.WriteLine($"***Unknown Alarm Code {code}***");
+                    Debug.WriteLine(_alarmCodes.TryGetValue(code, out var alarm)
+                        ? $"***Alarm Code {code}: {alarm}***"
+                        : $"***Unknown Alarm Code {code}***");
                 }
                 return;
             }
@@ -447,6 +452,7 @@ namespace GrbLHAL_Sender.Communication
                         case "In":
                             var signals = int.Parse(value);
                             break;
+                       
                     }
                 }
             }
