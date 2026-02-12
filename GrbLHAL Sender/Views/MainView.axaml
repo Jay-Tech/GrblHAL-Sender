@@ -542,7 +542,9 @@
           <TabItem x:Name="HomeTab" Header="Home" DataContext="{Binding Path= JobViewModel}" ZIndex="3">
             <render:GcodeRenderControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                                        Toolpath="{Binding #MainDock.((vm:MainViewModel)DataContext).JobViewModel.ToolpathData}"
-                                       SpindlePosition="{Binding #MainDock.((vm:MainViewModel)DataContext).SpindlePosition}"/>
+                                       SpindlePosition="{Binding #MainDock.((vm:MainViewModel)DataContext).SpindlePosition}"
+                                       MachineSettings="{Binding #MainDock.((vm:MainViewModel)DataContext).MachineSettings}"
+                                       WorkCoordinateOffset="{Binding #MainDock.((vm:MainViewModel)DataContext).WorkCoordinateOffset}"/>
           </TabItem>
           <TabItem x:Name="SettingTab" Header="GrblHAL Settings">
             <ctl:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"

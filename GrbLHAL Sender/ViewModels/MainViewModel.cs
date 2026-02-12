@@ -34,6 +34,8 @@ public class MainViewModel : ViewModelBase
     private readonly GHalSenderConfig _config;
     private RealTImeState _state;
     private Point3D? _spindlePosition;
+    private Point3D? _workCoordinateOffset;
+    private MachineSettings? _machineSettings;
     private bool _showConsole;
     private bool _isJobRunning;
     private int _spindleRpm;
@@ -132,6 +134,16 @@ public class MainViewModel : ViewModelBase
     {
         get => _spindlePosition;
         set => this.RaiseAndSetIfChanged(ref _spindlePosition, value);
+    }
+    public Point3D? WorkCoordinateOffset
+    {
+        get => _workCoordinateOffset;
+        set => this.RaiseAndSetIfChanged(ref _workCoordinateOffset, value);
+    }
+    public MachineSettings? MachineSettings
+    {
+        get => _machineSettings;
+        set => this.RaiseAndSetIfChanged(ref _machineSettings, value);
     }
     public int FeedRate
     {
@@ -249,6 +261,7 @@ public class MainViewModel : ViewModelBase
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
         _commManager.OnStateReceived += _commManager_OnStateReceived;
         _commManager.onOptionsUpdated += _commManager_onOptionsUpdated;
+        _commManager.onSettingUpdated += _commManager_onSettingUpdated;
         _commManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
 
         ConnectCommand = ReactiveCommand.Create(Connect);
@@ -581,6 +594,7 @@ public class MainViewModel : ViewModelBase
                 wx = mx - wcoX;
                 wy = my - wcoY;
                 wz = mz - wcoZ;
+                WorkCoordinateOffset = new Point3D(wcoX, wcoY, wcoZ);
             }
             SpindlePosition = new Point3D(wx, wy, wz);
         }
@@ -654,6 +668,10 @@ public class MainViewModel : ViewModelBase
         {
             signal.Triggered = true;
         }
+    }
+    private void _commManager_onSettingUpdated(object? sender, List<GrblHalSetting> e)
+    {
+        MachineSettings = _commManager.MachineData;
     }
     private void _commManager_onOptionsUpdated(object? sender, GrblHALOptions e)
     {

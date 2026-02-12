@@ -37,22 +37,22 @@ namespace GrbLHAL_Sender.Settings
         {
             if (double.TryParse(value, out var size))
             {
-                _xSize = size;
+                XSize = size;
             }
-            
+
         }
         public void SetYBoundaries(string value)
         {
             if (double.TryParse(value, out var size))
             {
-                _ySize = size;
+                YSize = size;
             }
         }
         public void SetZBoundaries(string value)
         {
             if (double.TryParse(value, out var size))
             {
-                _zSize = size;
+                ZSize = size;
             }
         }
     }

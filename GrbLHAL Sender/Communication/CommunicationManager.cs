@@ -40,6 +40,7 @@ namespace GrbLHAL_Sender.Communication
 
 
         public ICommsAdapter Adapter { get; set; }
+        public MachineSettings MachineData => _machineData;
         public CommunicationManager()
         {
             _dispatcher = Dispatcher.UIThread;
