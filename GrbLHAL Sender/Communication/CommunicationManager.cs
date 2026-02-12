@@ -142,9 +142,16 @@ namespace GrbLHAL_Sender.Communication
             _dispatcher.InvokeAsync(() => OnStateReceived(this, rtState), DispatcherPriority.Background);
         }
 
-        public void NewTcpConnection()
+        public void NewTcpConnection(TcpSettings tcpSettings)
         {
+            if (Adapter != null)
+            {
+                Adapter.OnDataReceived -= Adapter_OnDataReceived;
+                Adapter.Close();
+            }
 
+            Adapter = new Tcp(tcpSettings);
+            Adapter.OnDataReceived += Adapter_OnDataReceived;
         }
 
         public void NewSerialConnection(string connection)

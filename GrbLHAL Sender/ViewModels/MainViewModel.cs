@@ -345,7 +345,7 @@ public class MainViewModel : ViewModelBase
 
     private void SetSpindleSpeed(string speed)
     {
-        if(string.IsNullOrEmpty(speed)) return;
+        if (string.IsNullOrEmpty(speed)) return;
         SendCommand($"S{speed}");
     }
 
@@ -447,7 +447,7 @@ public class MainViewModel : ViewModelBase
 
     private void FocusTextInput(object obj)
     {
-        
+
     }
 
     private void ChangeStepRate(double step)
@@ -521,7 +521,7 @@ public class MainViewModel : ViewModelBase
         {
             ConsoleOutput.Clear();
         });
-        
+
     }
     private void ZeroAll()
     {
@@ -598,7 +598,7 @@ public class MainViewModel : ViewModelBase
             }
             SpindlePosition = new Point3D(wx, wy, wz);
         }
-       
+
         AlarmActive = e.GrblHalState == "Alarm";
         if (ConsoleOutput.Count > 200)
         {
@@ -623,10 +623,10 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-   
+
     private void SetTool(string tool)
     {
-        if(tool == SelectedTool.ToString())return;
+        if (tool == SelectedTool.ToString()) return;
         if (int.TryParse(tool, out var t))
         {
             SelectedTool = t;
@@ -708,7 +708,21 @@ public class MainViewModel : ViewModelBase
     }
     public void Connect()
     {
-        _commManager.NewSerialConnection(_config.SerialSettings.PortName);
+        var connectionType = _configManager.GHalSenderConfig;
+
+        if (connectionType?.Connection == GHalSenderConfig.ConnectionType.Tcp)
+        {
+            _commManager.NewTcpConnection(connectionType.TcpSettings);
+        }
+        else if (connectionType?.Connection == GHalSenderConfig.ConnectionType.Serial)
+        {
+            _commManager.NewSerialConnection(_config.SerialSettings.PortName);
+        }
+        else
+        {
+
+        }
+
         _commManager.GetSettings();
     }
 }
