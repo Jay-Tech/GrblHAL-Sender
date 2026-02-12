@@ -722,7 +722,7 @@ public class MainViewModel : ViewModelBase
         }
         else
         {
-            _commManager.WebSocketConnection();
+            _commManager.WebSocketConnection(connectionType.WebSocketSettings);
         }
 
         _commManager.GetSettings();
