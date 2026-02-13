@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using GrbLHALSender.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace GrbLHALSender.Views;
 
@@ -21,15 +21,18 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        // Get the Flyout and its content from the Connect button
-        _connectionFlyout = ConnectButton.Flyout as Flyout;
+        // Create the flyout programmatically — NOT on the Button.Flyout property
+        // so it does NOT auto-show on every click
+        var connectionSettingsView = new ConnectionSettingsView();
+        _connectionFlyout = new Flyout
+        {
+            Placement = PlacementMode.BottomEdgeAlignedLeft,
+            Content = connectionSettingsView
+        };
 
         // Set up long-press on Connect button
         ConnectButton.AddHandler(PointerPressedEvent, ConnectButton_PointerPressed, handledEventsToo: true);
         ConnectButton.AddHandler(PointerReleasedEvent, ConnectButton_PointerReleased, handledEventsToo: true);
-
-        // Wire up the ConnectRequested event from the ConnectionSettingsView
-       
 
     }
 
@@ -44,7 +47,11 @@ public partial class MainView : UserControl
             _viewModel = vm;
             _selectFilesInteractionDisposable =
                 vm.JobViewModel.SelectFilesInteraction.RegisterHandler(InteractionHandler);
-            _viewModel?.ConnectionViewModel?.OnCloseRequested+=OnCloseRequested;
+            _viewModel?.ConnectionViewModel?.OnCloseRequested += OnCloseRequested;
+
+            // Bind the flyout's ConnectionSettingsView to the ConnectionViewModel
+            if (_connectionFlyout?.Content is ConnectionSettingsView csv)
+                csv.DataContext = vm.ConnectionViewModel;
         }
         base.OnDataContextChanged(e);
     }
