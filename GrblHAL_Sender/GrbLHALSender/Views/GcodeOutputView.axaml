@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+			 xmlns:behaviors="clr-namespace:GrbLHALSender.Behaviors"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:DataType="viewModels:JobViewModel"
+			 x:Class="GrbLHALSender.Views.GcodeOutputView">
+    <Design.DataContext>
+        <viewModels:JobViewModel/>
+    </Design.DataContext>
+    
+    <Border ZIndex="5" HorizontalAlignment="Stretch" Width="410" DockPanel.Dock="Left" VerticalAlignment="Stretch">
+		<Grid RowDefinitions="*,Auto" >
+			
+			<ListBox Grid.Row="0" x:Name="LB" Width="400"  ItemsSource="{Binding  GCodeOutPut}"
+					 Background="{StaticResource DarkReduceBrushAlpha }"
+					 Foreground="White"
+					 FontSize="18"   >
+				<Interaction.Behaviors>
+					<behaviors:ScrollToEndBehavior />
+				</Interaction.Behaviors>
+				<ListBox.ItemTemplate>
+					<DataTemplate>
+						<TextBlock Foreground="GhostWhite" Margin="0,1"
+								   FontWeight="Bold" Opacity="1.0"  Text="{Binding}" FontSize="18"
+								   HorizontalAlignment="Stretch"  />
+					</DataTemplate>
+				</ListBox.ItemTemplate>
+			</ListBox>
+			<Grid Grid.Row="1"
+				  HorizontalAlignment="Stretch"
+				  VerticalAlignment="Stretch"
+				  ColumnDefinitions="*,*">
+				<Button Grid.Column="0"  Height="40" Command="{Binding  CloseGCodeConsole}"
+						Content="Clear" DockPanel.Dock="Top"
+						VerticalAlignment="Stretch"
+						HorizontalAlignment="Stretch"
+						FontSize="20"></Button>
+			</Grid>
+		</Grid>
+	</Border>
+</UserControl>
