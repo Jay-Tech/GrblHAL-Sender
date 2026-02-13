@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:GrbLHAL_Sender.ViewModels"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="225"
+             x:Class="GrbLHALSender.Views.DialogButtonView"
+             x:DataType="viewModels:DialogViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Button">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="CornerRadius" Value="6,6,6,6"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="Width" Value="175"/>
+            <Setter Property="Margin" Value="15,10"/>
+            <Setter Property="BorderThickness" Value="3"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid ColumnDefinitions="*,*,*,*">
+        <Button Content="Console" Command="{Binding OpenConsoleCommand}" />
+        <Button Grid.Column="1" Content="Probe" Command="{Binding OpenProbeCommand}" />
+        <Button Grid.Column="2" Content="Macro" Command="{Binding OpenMacroCommand}" />
+    </Grid>
+
+</UserControl>

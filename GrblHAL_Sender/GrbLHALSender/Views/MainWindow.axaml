@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GrbLHAL_Sender.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:GrbLHAL_Sender.Views"
+        xmlns:views1="clr-namespace:GrbLHALSender.Views"
+        mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+        Height="1080" Width="1920"
+        x:Class="GrbLHALSender.Views.MainWindow"
+        Icon="/Assets/GHalSender.ico"
+        Title="GrblHAL Sender">
+  <LayoutTransformControl HorizontalAlignment="Stretch" 
+                          VerticalAlignment="Stretch"  
+                          UseLayoutRounding="True" 
+                          ClipToBounds="True"
+                          SizeChanged="Control_OnSizeChanged" x:Name="TransformControl" >
+      <views1:MainView />
+  </LayoutTransformControl>
+</Window>
+
