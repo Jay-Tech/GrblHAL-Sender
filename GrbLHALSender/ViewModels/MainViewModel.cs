@@ -553,7 +553,7 @@ public class MainViewModel : ViewModelBase
     }
     private void Unlock()
     {
-        _commManager.Adapter.WriteByte(GrblHalConstants.GrblReset);
+        _commManager?.Adapter?.WriteByte(GrblHalConstants.GrblReset);
     }
     private void UIThread_ShutdownStarted(object? sender, EventArgs e)
     {
