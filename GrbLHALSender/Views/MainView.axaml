@@ -2,11 +2,7 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:vm="clr-namespace:GrbLHAL_Sender.ViewModels"
 			 xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
-			 xmlns:ctl="clr-namespace:GrbLHAL_Sender.Views"
-             xmlns:controls="clr-namespace:GrbLHAL_Sender.Controls"
-             xmlns:render="clr-namespace:GrbLHAL_Sender.Views.GcodeRenderControl"
              xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
              xmlns:convertors="clr-namespace:GrbLHALSender.Convertors"
              xmlns:views="clr-namespace:GrbLHALSender.Views"
@@ -32,7 +28,7 @@
 						 Content="Connect" x:Name="ConnectButton"
 						 Command="{Binding ConnectCommand}">
 					<Button.Flyout>
-						<Flyout Placement="BottomEdgeAlignedLeft" ShowMode="Standard">
+						<Flyout  Placement="BottomEdgeAlignedLeft" ShowMode="Standard">
 							<views:ConnectionSettingsView DataContext="{Binding ConnectionViewModel}"/>
 						</Flyout>
 					</Button.Flyout>

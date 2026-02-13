@@ -1,6 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:GrbLHAL_Sender.ViewModels"
              xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
              x:Class="GrbLHALSender.Views.ConnectionSettingsView"
              x:DataType="viewModels:ConnectionViewModel"

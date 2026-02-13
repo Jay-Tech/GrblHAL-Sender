@@ -1,7 +1,7 @@
 {
     "GeneralSettings": {
-        "NetProjectPath": "GrbLHAL Sender.Desktop.csproj",
-        "ApplicationName": "GrbLHAL Sender",
+        "NetProjectPath": "GrbLHALSender.Desktop.csproj",
+        "ApplicationName": "GrbLHALSender",
         "Version": "1.0.0",
         "PackageName": {
             "$type": "msbuild",
@@ -16,7 +16,7 @@
         "CreateBinSymlink": "True"
     },
     "Win32Settings": {
-        "InstallerIcon": "../GrbLHAL Sender/Assets/GHalSender.ico",
+        "InstallerIcon": "../GrbLHALSender/Assets/GHalSender.ico",
         "Company": "Jay_tech",
         "InstallerRequiresAdmin": "False",
         "IncludeUninstaller": "True"
