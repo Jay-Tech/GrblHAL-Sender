@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:viewModels="clr-namespace:GrbLHAL_Sender.ViewModels"
+			 xmlns:converters="clr-namespace:Avalonia.Controls.Converters;assembly=Avalonia.Controls"
+			 xmlns:viewModels1="clr-namespace:GrbLHALSender.ViewModels"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="GrbLHALSender.Views.JobButtonView"
+			 x:DataType="viewModels1:JobViewModel">
+	<Design.DataContext>
+		<viewModels1:JobViewModel/>
+	</Design.DataContext>
+	<UserControl.Resources>
+        <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
+    </UserControl.Resources>
+	<UserControl.Styles>
+		<Style Selector="Button">
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+			<Setter Property="CornerRadius" Value="6,6,6,6"/>
+			<Setter Property="FontSize" Value="26"/>
+			<Setter Property="Height" Value="45"/>
+			<Setter Property="Width" Value="110"/>
+			<Setter Property="Margin" Value="15,5,15,0"/>
+            <Setter Property="BorderThickness" Value="3"/>
+		</Style>
+	</UserControl.Styles>
+	<Grid  Background="Transparent" ColumnDefinitions="*,*,*,*,*"
+		   Opacity=".6"
+		   VerticalAlignment="Stretch"
+		   HorizontalAlignment="Center">
+		<Button Grid.Column="0" BorderBrush="{Binding }"
+				Command="{Binding  SelectFilesCommand}"
+				Content="File"/>
+		<Button Grid.Column="1"
+				Command="{Binding  CloseFilesCommand}"
+				IsEnabled="{Binding FileLoaded}"
+				Content="Close"/>
+		<Button Grid.Column="2"
+				Content="Stop"
+				Command="{Binding StopJobCommand}"/>
+		<Button Grid.Column="3"
+				Content="Pause"
+				Command="{Binding PauseJobCommand}"/>
+		<Button Grid.Column="4"
+				Content="Start"
+				Command="{Binding StartJobCommand}"/>
+	</Grid>
+</UserControl>

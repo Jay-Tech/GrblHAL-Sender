@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:GrbLHAL_Sender.ViewModels"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             x:Class="GrbLHALSender.Views.ConnectionSettingsView"
+             x:DataType="viewModels:ConnectionViewModel"
+             Width="300">
+
+  <Border Background="#2D2D30" CornerRadius="6" Padding="12" BorderBrush="#3F3F46" BorderThickness="1">
+    <StackPanel Spacing="10">
+
+      <TextBlock Text="Connection Settings" FontSize="16" FontWeight="Bold"
+                 Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+      
+      <CheckBox Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                HorizontalContentAlignment="Center" Content="Auto Connect"
+                IsChecked="{Binding IsAutoStart}"></CheckBox>
+      
+      <!-- Connection Type -->
+      <TextBlock Text="Connection Type" Foreground="#CCCCCC" FontSize="13"/>
+      <ComboBox ItemsSource="{Binding ConnectionTypes}"
+                SelectedIndex="{Binding SelectedConnectionType}"
+                HorizontalAlignment="Stretch" FontSize="14"/>
+
+      <!-- Serial Panel (index 0) -->
+      <StackPanel Spacing="8" x:Name="SerialPanel">
+        <TextBlock Text="Port" Foreground="#CCCCCC" FontSize="13"/>
+        <Grid ColumnDefinitions="*,Auto">
+          <ComboBox Grid.Column="0" ItemsSource="{Binding AvailablePorts}"
+                    SelectedItem="{Binding SerialPort}"
+                    HorizontalAlignment="Stretch" FontSize="14"/>
+          <Button Grid.Column="1" Content="&#x21BB;" Margin="5,0,0,0" FontSize="16"
+                  Width="35" Height="32" HorizontalContentAlignment="Center"
+                  Command="{Binding RefreshPortsCommand}"/>
+        </Grid>
+        <TextBlock Text="Baud Rate" Foreground="#CCCCCC" FontSize="13"/>
+        <ComboBox ItemsSource="{Binding BaudRates}"
+                  SelectedItem="{Binding BaudRate}"
+                  HorizontalAlignment="Stretch" FontSize="14"/>
+      </StackPanel>
+       
+      <!-- TCP Panel (index 1) -->
+      <StackPanel Spacing="8" x:Name="TcpPanel">
+        <TextBlock Text="IP Address" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBox Text="{Binding TcpIpAddress}" FontSize="14"/>
+        <TextBlock Text="Port" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBox Text="{Binding TcpPort}" FontSize="14"/>
+      </StackPanel>
+
+      <!-- WebSocket Panel (index 2) -->
+      <StackPanel Spacing="8" x:Name="WsPanel">
+        <TextBlock Text="IP Address" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBox Text="{Binding WsIpAddress}" FontSize="14"/>
+        <TextBlock Text="Port" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBox Text="{Binding WsPort}" FontSize="14"/>
+      </StackPanel>
+
+      <!-- Connect Button -->
+      <Grid  Grid.ColumnDefinitions="*,*">
+      <Button Grid.Column="0"  Content="Save" HorizontalAlignment="Stretch" Height="35"
+              HorizontalContentAlignment="Center" FontSize="15" Margin="5,0"
+              Command="{Binding SaveConfigCommand}"/>
+      <Button Grid.Column="1" Content="Close" HorizontalAlignment="Stretch" Height="35"
+              HorizontalContentAlignment="Center" FontSize="15" Margin="5,0"
+              Command="{Binding CloseCommand}"/>
+      </Grid>
+
+    </StackPanel>
+  </Border>
+
+</UserControl>
