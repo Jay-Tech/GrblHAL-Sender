@@ -27,11 +27,6 @@
 						 HorizontalContentAlignment="Center" Height="30"  FontSize="18"
 						 Content="Connect" x:Name="ConnectButton"
 						 Command="{Binding ConnectCommand}">
-					<Button.Flyout>
-						<Flyout  Placement="BottomEdgeAlignedLeft" ShowMode="Standard">
-							<views:ConnectionSettingsView DataContext="{Binding ConnectionViewModel}"/>
-						</Flyout>
-					</Button.Flyout>
 				</Button>
 				<Label Grid.Column="1" FontSize="24" Margin="10,0,0,0" HorizontalAlignment="Left"
 					   VerticalAlignment="Center"
