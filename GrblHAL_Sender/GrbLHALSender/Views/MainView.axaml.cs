@@ -44,7 +44,7 @@ public partial class MainView : UserControl
             _viewModel = vm;
             _selectFilesInteractionDisposable =
                 vm.JobViewModel.SelectFilesInteraction.RegisterHandler(InteractionHandler);
-            _viewModel?.ConnectionViewModel?.OnCloseRequested += OnCloseRequested;
+            _viewModel?.ConnectionViewModel?.OnCloseRequested+=OnCloseRequested;
         }
         base.OnDataContextChanged(e);
     }
