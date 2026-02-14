@@ -40,7 +40,6 @@ public class MainViewModel : ViewModelBase
     private bool _isJobRunning;
     private int _spindleRpm;
     private bool _connected;
-    private Color _homeStateColor;
     private bool _alarmActive;
     private bool _needsSetup;
     private int _selectedTool;
@@ -59,6 +58,7 @@ public class MainViewModel : ViewModelBase
     private bool _tlr = false;
     private string _callBackText;
     private string _tool;
+    private bool _homeState;
     public bool ShowRTCommands { get; set; }
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
@@ -75,11 +75,7 @@ public class MainViewModel : ViewModelBase
     }
 
     public string UnitSystem { get; set; } = "G21";
-    public Color HomeStateColor
-    {
-        get => _homeStateColor;
-        set => _homeStateColor = value;
-    }
+  
     public double JogStep
     {
         get => _jogStep;
@@ -553,7 +549,7 @@ public class MainViewModel : ViewModelBase
 
             AxisCollection[i].Position = pos;
         }
-
+        HomeState = e.Home;
         State = e;
         TLR = e.TLR;
         SetFeedAndSpeeds(State);
@@ -606,6 +602,12 @@ public class MainViewModel : ViewModelBase
     }
 
     public double SpindleSetSpeed { get; set; }
+
+    public bool HomeState
+    {
+        get => _homeState;
+        set => this.RaiseAndSetIfChanged(ref _homeState, value);
+    }
 
     private void SetTool(string tool)
     {
