@@ -130,16 +130,10 @@ public class MainViewModel : ViewModelBase
         get => _hideToolChangeList;
         set => this.RaiseAndSetIfChanged(ref _hideToolChangeList, value);
     }
-
     public bool AlarmActive
     {
         get => _alarmActive;
         set => this.RaiseAndSetIfChanged(ref _alarmActive, value);
-    }
-    public string MdiText
-    {
-        get => _mdiText;
-        set => this.RaiseAndSetIfChanged(ref _mdiText, value);
     }
     public int SelectedTool
     {
