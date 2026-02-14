@@ -26,8 +26,7 @@
 				<Button  Grid.Column="0" Margin="3,0,0,0" HorizontalAlignment="Left"
 						 HorizontalContentAlignment="Center" Height="30"  FontSize="18"
 						 Content="Connect" x:Name="ConnectButton"
-						 Command="{Binding ConnectCommand}">
-				</Button>
+						 Command="{Binding ConnectCommand}"/>
 				<Label Grid.Column="1" FontSize="24" Margin="10,0,0,0" HorizontalAlignment="Left"
 					   VerticalAlignment="Center"
 					   Content="{Binding State.GrblHalState}"  ></Label>
@@ -87,51 +86,103 @@
 					 VerticalAlignment="Stretch"
 					 BorderThickness="1" >
 				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
-					<Button FontSize="20" CornerRadius="6" Grid.Row="0" Height="40" Content="Home All" HorizontalAlignment="Stretch"
+					<Button FontSize="26" CornerRadius="6" Grid.Row="0" Height="40" Content="Home All"
+                            HorizontalAlignment="Stretch"
 							Command="{Binding HomeCommand}"></Button>
 					<ItemsControl Grid.Row="1" ItemsSource="{Binding AxisCollection}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
-								<StackPanel HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Orientation="Horizontal">
-									<TextBlock Text="{Binding Name}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="35" Margin="2,0,0,0"></TextBlock>
+								<StackPanel HorizontalAlignment="Stretch"  
+                                            VerticalAlignment="Stretch" 
+                                            Orientation="Horizontal">
+									<TextBlock Text="{Binding Name}" 
+                                               HorizontalAlignment="Stretch" 
+                                               VerticalAlignment="Stretch" 
+                                               FontSize="35" 
+                                               Margin="2,0,0,0"></TextBlock>
 									<Border BorderThickness="1" >
 										<StackPanel>
-											<Label  Focusable="False" Content="{Binding Path=Position.Wco,StringFormat=N3}"   FontSize="32" MinWidth="175" Height="45"
-													VerticalContentAlignment="Center"    HorizontalContentAlignment="Left" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Label>
-											<Label  Focusable="False" Content="{Binding Path=Position.MPos,StringFormat=N3}"   FontSize="16" MinWidth="175" Height="25"
-													VerticalContentAlignment="Center" HorizontalContentAlignment="Left" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Label>
+											<Label  Focusable="False" Content="{Binding Path=Position.Wco,StringFormat=N3}"   
+                                                    FontSize="32" MinWidth="175" Height="45"
+													VerticalContentAlignment="Center"    
+                                                    HorizontalContentAlignment="Left" 
+                                                    HorizontalAlignment ="Stretch" 
+                                                    VerticalAlignment="Stretch"></Label>
+											<Label  Focusable="False" 
+                                                    Content="{Binding Path=Position.MPos,StringFormat=N3}"  
+                                                    FontSize="16" MinWidth="175" Height="25"
+													VerticalContentAlignment="Center" 
+                                                    HorizontalContentAlignment="Left" 
+                                                    HorizontalAlignment ="Stretch" 
+                                                    VerticalAlignment="Stretch"></Label>
 										</StackPanel>
 									</Border>
-									<Button  Name ="{Binding Name}" CornerRadius="6" Content="{Binding Name, StringFormat={}{0}0}"  FontSize="20"  Height="60" HorizontalAlignment="Stretch"
-											 HorizontalContentAlignment="Center" VerticalAlignment="Stretch"
-											 VerticalContentAlignment="Center" Margin="2" Width="55" Focusable="False"
-											 Command="{Binding ZeroWcsCommand}" CommandParameter="{Binding Name}"></Button>
+									<Button  Name ="{Binding Name}" 
+                                             CornerRadius="6" 
+                                             Content="{Binding Name, 
+											 StringFormat={}{0}0}"  
+                                             FontSize="26"  Height="60" 
+                                             HorizontalAlignment="Stretch"
+											 HorizontalContentAlignment="Center" 
+                                             VerticalAlignment="Stretch"
+											 VerticalContentAlignment="Center" 
+                                             Margin="2" 
+                                             Width="55" Focusable="False"
+											 Command="{Binding ZeroWcsCommand}" 
+                                             CommandParameter="{Binding Name}"></Button>
 								</StackPanel>
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
-					<Button Grid.Row="2" FontSize="20"  Content="Zero All" Height="40" HorizontalAlignment="Stretch" Command="{Binding ZeroAllCommand}" ></Button>
+					<Button Grid.Row="2" FontSize="26"  
+                            Content="Zero All" 
+                            Height="40" 
+                            HorizontalAlignment="Stretch" 
+                            Command="{Binding ZeroAllCommand}" ></Button>
 					<!-- End  Axis Control-->
 
 					<!--WCS-->
 					<Grid Grid.Row="3" Margin="0,2" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-						<Label  Content="WCS" HorizontalContentAlignment="Center" FontSize="18" VerticalContentAlignment="Center"
-								HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
-						<Button Grid.Row="1" CornerRadius="6" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-								FontSize="20" Margin="0,2" Content="G54" Height="50"
-								HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"
-								Command="{Binding WcsCommand}" CommandParameter="G54"></Button>
-						<Button Grid.Row="2" CornerRadius="6" FontSize="20" Margin="0,2" Content="G55"
-								HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-								HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="50"
-								Command="{Binding WcsCommand}" CommandParameter="G55"></Button>
-						<Button Grid.Row="3"  CornerRadius="6" FontSize="20" Margin="0,2" Content="G56"
-								HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-								HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="50"
-								Command="{Binding WcsCommand}" CommandParameter="G56"></Button>
-						<Button Grid.Row="4" CornerRadius="6" FontSize="20" Margin="0,2" Content="G57"
-								HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-								HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"  Height="50"
+						<Label  Content="WCS" HorizontalContentAlignment="Center" FontSize="20" VerticalContentAlignment="Center"
+								HorizontalAlignment ="Stretch" 
+                                VerticalAlignment="Stretch" 
+                                Height="30"></Label>
+						<Button Grid.Row="1" CornerRadius="6" 
+                                HorizontalContentAlignment="Center" 
+                                VerticalContentAlignment="Center"
+								FontSize="26" Margin="0,2" 
+                                Content="G54" Height="50"
+								HorizontalAlignment ="Stretch" 
+                                VerticalAlignment="Stretch"
+								Command="{Binding WcsCommand}" 
+                                CommandParameter="G54"></Button>
+						<Button Grid.Row="2" CornerRadius="6" 
+                                FontSize="26" Margin="0,2" Content="G55"
+								HorizontalContentAlignment="Center" 
+                                VerticalContentAlignment="Center"
+								HorizontalAlignment ="Stretch" 
+                                VerticalAlignment="Stretch"  
+                                Height="50"
+								Command="{Binding WcsCommand}" 
+                                CommandParameter="G55"></Button>
+						<Button Grid.Row="3"  CornerRadius="6" 
+                                FontSize="26" 
+                                Margin="0,2" 
+                                Content="G56"
+								HorizontalContentAlignment="Center" 
+                                VerticalContentAlignment="Center"
+								HorizontalAlignment ="Stretch" 
+                                VerticalAlignment="Stretch"  Height="50"
+								Command="{Binding WcsCommand}"
+                                CommandParameter="G56"></Button>
+						<Button Grid.Row="4" CornerRadius="6" 
+                                FontSize="26" Margin="0,2" 
+                                Content="G57"
+								HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+								HorizontalAlignment ="Stretch" 
+                                VerticalAlignment="Stretch"  
+                                Height="50"
 								Command="{Binding WcsCommand}" CommandParameter="G57"></Button>
 					</Grid>
 

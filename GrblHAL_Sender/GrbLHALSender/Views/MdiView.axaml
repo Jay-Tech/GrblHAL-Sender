@@ -13,7 +13,7 @@
 		<Label Grid.Row="0"  Content="MDI"  Height="30"
                HorizontalContentAlignment="Center" 
                VerticalContentAlignment="Center"
-				FontSize="18" HorizontalAlignment ="Stretch" 
+				FontSize="20" HorizontalAlignment ="Stretch" 
                VerticalAlignment="Stretch" />
 		<TextBox    Name="MdiTextBox" Grid.Row="1"  FontSize="26"  Height="50"
                     CaretIndex="{Binding CaretIndex}"
