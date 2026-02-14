@@ -129,6 +129,7 @@ namespace GrbLHALSender.Communication
             _machineData.SetXBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XAxisLength)?.SettingValue??"");
             _machineData.SetYBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.YAxisLength)?.SettingValue ?? "");
             _machineData.SetZBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ZAxisLength)?.SettingValue ?? "");
+            _machineData.SetIsMetric(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ReportUnits)?.SettingValue ?? "");
             onSettingUpdated?.Invoke(this, _grblHalSettings.SettingCollection);
         }
 

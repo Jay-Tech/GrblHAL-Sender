@@ -47,7 +47,7 @@ public class MainViewModel : ViewModelBase
     private double _jogStep;
     private double _jogRate;
     private string _mdiText;
-    private int _rpm;
+    private int _actulRpm;
     private int _feedRate;
     private int _feedOverRide;
     private int _spindleSetRpm;
@@ -57,6 +57,11 @@ public class MainViewModel : ViewModelBase
     private bool _homeState;
     private ReactiveCommand<object, Unit> _doubleTapCommand;
     private ReactiveCommand<object, Unit> _hideBoxCommand;
+    private bool _tlrCommandEnabled;
+    private bool _unloadToolCommandEnabled;
+    private bool _atcEnabled;
+    private string _unloadToolMacro;
+    private string _tlrMacro;
 
     public ObservableCollection<Signal> SignalList
     {
@@ -98,14 +103,13 @@ public class MainViewModel : ViewModelBase
     public ConnectionViewModel ConnectionViewModel { get; set; }
     public DialogViewModel DialogViewModel { get; set; }
     public MdiViewModel MdiViewModel { get; set; }
+    public string UnitSystem { get; set; } = "G21";
+    public bool UseMetric { get; set; }
     public ProbeViewModel ProbeViewModel
     {
         get => _probeViewModel;
         set => _probeViewModel = value;
     }
-
-    public string UnitSystem { get; set; } = "G21";
-  
     public double JogStep
     {
         get => _jogStep;
@@ -126,11 +130,7 @@ public class MainViewModel : ViewModelBase
         get => _hideToolChangeList;
         set => this.RaiseAndSetIfChanged(ref _hideToolChangeList, value);
     }
-    public bool ShowConsole
-    {
-        get => _showConsole;
-        set => this.RaiseAndSetIfChanged(ref _showConsole, value);
-    }
+
     public bool AlarmActive
     {
         get => _alarmActive;
@@ -151,10 +151,10 @@ public class MainViewModel : ViewModelBase
         get => _spindleRpm;
         set => this.RaiseAndSetIfChanged(ref _spindleRpm, value);
     }
-    public int RPM
+    public int ActulRPM
     {
-        get => _rpm;
-        set => this.RaiseAndSetIfChanged(ref _rpm, value);
+        get => _actulRpm;
+        set => this.RaiseAndSetIfChanged(ref _actulRpm, value);
     }
     public RealTImeState State
     {
@@ -201,6 +201,29 @@ public class MainViewModel : ViewModelBase
         get => _homeState;
         set => this.RaiseAndSetIfChanged(ref _homeState, value);
     }
+    public bool TLR
+    {
+        get => _tlr;
+        set => this.RaiseAndSetIfChanged(ref _tlr, value);
+    }
+    public bool AtcEnabled
+    {
+        get => _atcEnabled;
+        set => this.RaiseAndSetIfChanged(ref _atcEnabled, value);
+    }
+
+    public bool TlrCommandEnabled
+    {
+        get => _tlrCommandEnabled;
+        set => this.RaiseAndSetIfChanged(ref _tlrCommandEnabled, value);
+    }
+
+    public bool UnloadToolCommandEnabled
+    {
+        get => _unloadToolCommandEnabled;
+        set => this.RaiseAndSetIfChanged(ref _unloadToolCommandEnabled, value);
+    }
+
     public ICommand ConnectCommand { get; set; }
     public ICommand ZeroAxis { get; set; }
     public ICommand ZeroAllCommand { get; set; }
@@ -215,7 +238,6 @@ public class MainViewModel : ViewModelBase
     public ICommand ToolSelectedCommand { get; }
     public ICommand FeedRateChangeCommand { get; }
     public ICommand StepRateChangeCommand { get; }
-    public ICommand KeyPressCommand { get; }
     public ICommand SpindleCWCommand { get; }
     public ICommand SpindleCCWCommand { get; }
     public ICommand SpindleOffCommand { get; }
@@ -228,11 +250,11 @@ public class MainViewModel : ViewModelBase
     public ICommand RapidOrMediumCommand { get; }
     public ICommand RapidOrFineCommand { get; }
     public ICommand ResetRapidCommand { get; }
-    public ICommand OpenConsolePanel { get; }
     public ICommand SpindleSetSpeedCommand { get; }
     public ICommand SetToolSelectCommand { get; }
+    public ICommand SetTlrCommand { get; }
+    public ICommand UnloadToolCommand { get; }
 
- 
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
         get => _doubleTapCommand;
@@ -244,10 +266,10 @@ public class MainViewModel : ViewModelBase
         get => _hideBoxCommand;
         set => _hideBoxCommand = value;
     }
-    
+
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
-        ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel,DialogViewModel dialogViewModel,
+        ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
         MdiViewModel mdiViewModel)
     {
         ProbeViewModel = probeViewModel;
@@ -281,8 +303,6 @@ public class MainViewModel : ViewModelBase
         ClearConsoleCommand = ReactiveCommand.Create(ClearConsole);
         ToggleRtCommand = ReactiveCommand.Create(ToggleConsoleRt);
         WcsCommand = ReactiveCommand.Create<string>(Wcs);
-        ToolSelectedCommand = ReactiveCommand.Create<int>(ToolSelected);
-        DoubleTapCommand = ReactiveCommand.Create<object>(DoubleTap);
         HideBoxCommand = ReactiveCommand.Create<object>(HideToolList);
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
@@ -299,8 +319,10 @@ public class MainViewModel : ViewModelBase
         RapidOrMediumCommand = ReactiveCommand.Create(RapidMedium);
         RapidOrFineCommand = ReactiveCommand.Create(RapidFine);
         ResetRapidCommand = ReactiveCommand.Create(RapidReset);
-        OpenConsolePanel = ReactiveCommand.Create(OpenConsole);
         SpindleSetSpeedCommand = ReactiveCommand.Create<string>(SetSpindleSpeed);
+        ToolSelectedCommand = ReactiveCommand.Create<int>(ToolSelected);
+        SetTlrCommand = ReactiveCommand.Create(SetTlr);
+        UnloadToolCommand = ReactiveCommand.Create(UnloadTool);
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
         _axis =
@@ -338,7 +360,7 @@ public class MainViewModel : ViewModelBase
         catch (Exception e)
         {
             // Handle connection exceptions (e.g., show a message to the user)
-             ConsoleOutput.Add($"Connection failed: {e.Message}");
+            ConsoleOutput.Add($"Connection failed: {e.Message}");
         }
     }
 
@@ -351,16 +373,41 @@ public class MainViewModel : ViewModelBase
     {
         SelectedTool = tool;
     }
-
-    private void SetSpindleSpeed(string speed)
+    public string Tool
     {
-        if (string.IsNullOrEmpty(speed)) return;
-        SendCommand($"S{speed}");
+        get => _tool;
+
+        set
+        {
+            if (_tool == value) return;
+            _tool = value;
+            SetTool(value);
+        }
     }
 
-    private void OpenConsole()
+    private void SetTool(string tool)
     {
-        ShowConsole = !ShowConsole;
+        if (tool == SelectedTool.ToString()) return;
+        if (int.TryParse(tool, out var t))
+        {
+            SelectedTool = t;
+        }
+    }
+    private void ToolSelected(int tool)
+    {
+        var command = _isJobRunning ? $"T{tool}M6" : $"M61Q{tool}";
+        SendCommand(command);
+    }
+    private void UnloadTool()
+    {
+        if (!AtcEnabled || !UnloadToolCommandEnabled) return;
+        _commManager.SendCommand($"G65{_tlrMacro}");
+    }
+
+    private void SetTlr()
+    {
+        if (!AtcEnabled || !TlrCommandEnabled) return;
+        _commManager.SendCommand($"G65{_unloadToolMacro}");
     }
 
     private void RapidReset()
@@ -421,6 +468,11 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand($"{GrblHalConstants.SpindleCw}{rpm}");
     }
+    private void SetSpindleSpeed(string speed)
+    {
+        if (string.IsNullOrEmpty(speed)) return;
+        SendCommand($"S{speed}");
+    }
     private void ChangeStepRate(double step)
     {
         JogStep = step;
@@ -434,35 +486,28 @@ public class MainViewModel : ViewModelBase
     {
         HideToolChangeList = !Convert.ToBoolean(obj);
     }
-    private void ToolSelected(int tool)
-    {
-        var command = _isJobRunning ? $"T{tool}M6" : $"M61Q{tool}";
-        SendCommand(command);
-    }
+
     private void SetUpUiSettings()
     {
+        UseMetric = _config.UseMetric;
         UnitSystem = _config.UseMetric ? "G21" : "G20";
         AutoConnect = _config.AutoConnect;
-        JogRateList = new ObservableCollection<double>(_config.JogSpeed);
-        JogStepList = new ObservableCollection<double>(_config.JogDistance);
+        JogRateList = new ObservableCollection<double>(UseMetric ? _config.JogSpeedMetric : _config.JogSpeedImperial);
+        JogStepList = new ObservableCollection<double>(UseMetric ? _config.JogDistanceMetric : _config.JogDistanceImperial);
         JogStep = JogStepList[^1];
         JogRate = JogRateList[^1];
         ToolList.AddRange(_config.ToolList.Tools);
-    }
-    public bool TLR
-    {
-        get => _tlr;
-        set
+        TlrCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.TlrMacroName);
+        if (TlrCommandEnabled)
         {
-            if (_tlr != value)
-            {
-                _tlr = value;
-                _probeViewModel.TLR = value;
-            }
+            _tlrMacro = _config.AtcConfig.TlrMacroName;
         }
-
+        UnloadToolCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.UnloadToolMacroName);
+        if (UnloadToolCommandEnabled)
+        {
+            _unloadToolMacro = _config.AtcConfig.UnloadToolMacroName;
+        }
     }
-
     private void Wcs(string command)
     {
         SendCommand(command);
@@ -473,10 +518,7 @@ public class MainViewModel : ViewModelBase
         ConsoleOutput.Add(command);
         _commManager.SendCommand(command);
     }
-    private void DoubleTap(object p)
-    {
-        ShowConsole = !Convert.ToBoolean(p);
-    }
+
     private void ToggleConsoleRt()
     {
         ShowRTCommands = !ShowRTCommands;
@@ -487,7 +529,6 @@ public class MainViewModel : ViewModelBase
         {
             ConsoleOutput.Clear();
         });
-
     }
     private void ZeroAll()
     {
@@ -577,26 +618,7 @@ public class MainViewModel : ViewModelBase
         ProcessSignals(e.SignalStatus);
     }
 
-    public string Tool
-    {
-        get => _tool;
-
-        set
-        {
-            if (_tool == value) return;
-            _tool = value;
-            SetTool(value);
-        }
-    }
-
-    private void SetTool(string tool)
-    {
-        if (tool == SelectedTool.ToString()) return;
-        if (int.TryParse(tool, out var t))
-        {
-            SelectedTool = t;
-        }
-    }
+    public bool ShowConsole { get; set; }
 
     private void SetFeedAndSpeeds(RealTImeState rt)
     {
@@ -614,7 +636,7 @@ public class MainViewModel : ViewModelBase
         }
         if (int.TryParse(rt.ActualRpm, out var rpm))
         {
-            RPM = rpm;
+            this.ActulRPM = rpm;
         }
     }
     private void ProcessSignals(List<char> signals)
@@ -673,7 +695,7 @@ public class MainViewModel : ViewModelBase
     }
     public void Connect()
     {
-        
+
         if (_config.Connection == GHalSenderConfig.ConnectionType.Tcp)
         {
             _commManager.NewTcpConnection(_config.TcpSettings);
