@@ -12,32 +12,34 @@
 		</Application.DataTemplates>-->
 		<SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#59111111"> </SolidColorBrush>
 		<SolidColorBrush x:Key="SmokeWhiteText" Color="#FF111111"> </SolidColorBrush>
-		<sys:Double x:Key="BaseFontSize">22</sys:Double>
-		<sys:Double x:Key="LargeFontSize">32</sys:Double>
-		<sys:Double x:Key="TinyFontSize">12</sys:Double>
-		<sys:Double x:Key="SmallFontSize">18</sys:Double>
-
-		<!--<SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{DynamicResource SystemAccentColor}" />-->
-		<!--<Color x:Key="DarkReduceColorAlpha">#70111111</Color>-->
-		<!--<Color x:Key="BlackPrimaryBackGround">#EF111111</Color>
+        <!--<SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{DynamicResource SystemAccentColor}" />-->
+        <!--<Color x:Key="DarkReduceColorAlpha">#70111111</Color>-->
+        <!--<Color x:Key="BlackPrimaryBackGround">#EF111111</Color>
 		<Color x:Key="DarkBoarder">#99000000</Color>
 		<Color x:Key="SystemBaseLowColor">#33000000</Color>
 		<Color x:Key="SystemBaseLColor">#33FFFFFF</Color>
 		<Color x:Key="DarkBoarder">#676767</Color>
 		<Color x:Key="DarkBoarder">#FF505050</Color>-->
-
+        
+        
+        <sys:Double x:Key="TinyFontSize">12</sys:Double>
+        <sys:Double x:Key="SmallFontSize">18</sys:Double>
+        <sys:Double x:Key="DetailFontSize">20</sys:Double>
+        <sys:Double x:Key="DetailFontSizeLarge">22</sys:Double>
+		<sys:Double x:Key="BaseFontSize">26</sys:Double>
+		<sys:Double x:Key="LargeFontSize">32</sys:Double>
+		
 	</Application.Resources>
-	<Application.Styles>
-
+	
+    <Application.Styles>
 		<materialIcons:MaterialIconStyles />
-
 		<Style Selector="TextBox.h1">
 			<Setter Property="FontSize" Value="20"/>
 			<Setter Property="Background" Value="White"/>
 		</Style>
 
 		<Style Selector="Button.h1">
-			<Setter Property="FontSize" Value="18"/>
+			<Setter Property="FontSize" Value="20"/>
 			<Setter Property="Height" Value="58"/>
 			<Setter Property="Width" Value="51"/>
 			<Setter Property="Focusable" Value="False"></Setter>
@@ -60,7 +62,6 @@
 		</FluentTheme>-->
 
 		<FluentTheme DensityStyle="Normal">
-
 		</FluentTheme>
 		<SimpleTheme />
 	</Application.Styles>

@@ -9,6 +9,7 @@
   <RadioButton.Theme>
       <ControlTheme  TargetType="RadioButton">
         <Setter Property="Background" Value="{DynamicResource ToggleButtonBackground}" />
+        <Setter Property="FontSize" Value="{DynamicResource BaseFontSize}" />
         <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForeground}" />
         <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrush}" />
         <Setter Property="BorderThickness" Value="{DynamicResource ToggleButtonBorderThemeThickness}" />
