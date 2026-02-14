@@ -118,6 +118,7 @@ namespace GrbLHALSender.ViewModels
                 GcodeFileIndex = 0;
                 FileLoaded = true;
                 ToolpathData = toolpath;
+                EstimatedTime = FormatTimeEstimate(toolpath.TimeEstimateSeconds);
             }));
         }
 
@@ -146,6 +147,7 @@ namespace GrbLHALSender.ViewModels
             FileLoaded = false;
             FileName = string.Empty;
             ToolpathData = null;
+            EstimatedTime = string.Empty;
         }
 
         private void _commsManager_OnStateReceived(object? sender, RealTImeState e)
@@ -236,6 +238,16 @@ namespace GrbLHALSender.ViewModels
         private void CloseGcodeConsole()
         {
             ShowGCodeConsole = !ShowGCodeConsole;
+        }
+
+        private static string FormatTimeEstimate(double totalSeconds)
+        {
+            var ts = TimeSpan.FromSeconds(totalSeconds);
+            if (ts.TotalHours >= 1)
+                return $"Est: {(int)ts.TotalHours}h {ts.Minutes:D2}m {ts.Seconds:D2}s";
+            if (ts.TotalMinutes >= 1)
+                return $"Est: {ts.Minutes}m {ts.Seconds:D2}s";
+            return $"Est: {ts.Seconds}s";
         }
 
     }

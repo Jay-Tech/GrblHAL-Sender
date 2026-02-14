@@ -8,6 +8,17 @@ namespace GrbLHALSender.Gcode
         private int _motionMode; // 0=G0, 1=G1, 2=G2, 3=G3
         private float _x, _y, _z;
         private bool _absoluteMode = true; // G90
+        private float _feedRate;        // current F feed rate (mm/min)
+        private double _totalTimeSeconds; // accumulated job time
+
+        // Default rapid rate when machine settings are not available (mm/min)
+        private const float DefaultRapidRate = 5000f;
+
+        /// <summary>
+        /// Optional: set machine rapid rates from $110/$111/$112 settings before building.
+        /// If set, rapids use this instead of the default.
+        /// </summary>
+        public float RapidRate { get; set; } = DefaultRapidRate;
 
         public ToolpathData BuildToolpath(List<GCodeLine> gCodeLines)
         {
@@ -15,12 +26,15 @@ namespace GrbLHALSender.Gcode
             _motionMode = 0;
             _x = 0f; _y = 0f; _z = 0f;
             _absoluteMode = true;
+            _feedRate = 0f;
+            _totalTimeSeconds = 0;
 
             foreach (var line in gCodeLines)
             {
                 ProcessLine(line.Text, toolpath);
             }
 
+            toolpath.TimeEstimateSeconds = _totalTimeSeconds;
             CalculateBounds(toolpath);
             return toolpath;
         }
@@ -84,6 +98,10 @@ namespace GrbLHALSender.Gcode
                 targetZ = _z + (cmd.HasParam('Z') ? cmd.GetParam('Z') : 0f);
             }
 
+            // Update feed rate if F parameter is present
+            if (cmd.HasParam('F'))
+                _feedRate = cmd.GetParam('F');
+
             var end = new Point3D(targetX, targetY, targetZ);
             var moveType = DetermineMoveType(_motionMode, targetZ);
 
@@ -96,13 +114,23 @@ namespace GrbLHALSender.Gcode
                     End = end,
                     Type = moveType
                 });
+
+                // Accumulate time: distance / rate
+                float distance = Distance3D(start, end);
+                float rate = _motionMode == 0 ? RapidRate : _feedRate;
+                if (rate > 0)
+                    _totalTimeSeconds += (distance / rate) * 60.0; // rate is mm/min → seconds
             }
             else if (_motionMode == 2 || _motionMode == 3)
             {
                 // Arc move (G2=CW, G3=CCW)
                 float i = cmd.GetParam('I', 0f);
                 float j = cmd.GetParam('J', 0f);
-                InterpolateArc(start, end, i, j, _motionMode == 2, moveType, toolpath);
+                float arcLength = InterpolateArc(start, end, i, j, _motionMode == 2, moveType, toolpath);
+
+                // Accumulate time for arc
+                if (_feedRate > 0)
+                    _totalTimeSeconds += (arcLength / _feedRate) * 60.0;
             }
 
             // Update modal position
@@ -117,7 +145,10 @@ namespace GrbLHALSender.Gcode
             return z < 0 ? MoveType.Cut : MoveType.Traverse;
         }
 
-        private void InterpolateArc(Point3D start, Point3D end, float i, float j,
+        /// <summary>
+        /// Interpolates an arc into line segments and returns the total arc length.
+        /// </summary>
+        private float InterpolateArc(Point3D start, Point3D end, float i, float j,
             bool isClockwise, MoveType type, ToolpathData toolpath)
         {
             // Arc center is relative to start point
@@ -183,6 +214,19 @@ namespace GrbLHALSender.Gcode
 
                 prev = next;
             }
+
+            // Arc length: 2D arc + helical Z component
+            float arcLen2D = radius * MathF.Abs(sweep);
+            float dz = end.Z - start.Z;
+            return MathF.Sqrt(arcLen2D * arcLen2D + dz * dz);
+        }
+
+        private static float Distance3D(Point3D a, Point3D b)
+        {
+            float dx = b.X - a.X;
+            float dy = b.Y - a.Y;
+            float dz = b.Z - a.Z;
+            return MathF.Sqrt(dx * dx + dy * dy + dz * dz);
         }
 
         private void CalculateBounds(ToolpathData toolpath)

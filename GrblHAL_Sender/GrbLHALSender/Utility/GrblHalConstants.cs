@@ -59,8 +59,11 @@
         public const string SdcardDump = "$F<=";
         //  Settings
         public const int ReportUnits = 13;
+        public const int XRapid = 110;
         public const int XAxisLength = 130;
+        public const int YRapid = 111;
         public const int YAxisLength = 131;
+        public const int ZRapid = 112;
         public const int ZAxisLength = 132;
     }
 }
