@@ -18,7 +18,7 @@ public class GHalSenderConfig
     public TcpSettings TcpSettings { get; set; } = new(23, "192.168.5.1" );
     public WebSocketSettings WebSocketSettings { get; set; } = new(81, "192.168.5.1");
     public ToolList ToolList { get; set; } = new();
-    public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new ObservableCollection<ViewModels.Macro>();
+    public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new();
     public double[] JogDistance { get; set; } =
     [
         .01,
