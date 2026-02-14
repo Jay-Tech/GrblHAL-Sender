@@ -37,8 +37,8 @@ namespace GrbLHALSender.ViewModels
         public ICommand CloseFilesCommand { get; }
         public ICommand PauseJobCommand { get; }
         public ICommand StopJobCommand { get; }
-
-        private ReactiveCommand<object, Unit> _doubleTapConsoleCommand;
+        private string _estimatedTime;
+        private string _runTime;
         public ObservableCollection<GCodeLine> GCodeOutPut { get; set; }
 
         public bool FileLoaded
@@ -71,17 +71,22 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _toolpathData, value);
         }
 
-        public ReactiveCommand<object, Unit> DoubleTapConsoleCommand
+        public string EstimatedTime
         {
-            get => _doubleTapConsoleCommand;
-            set => _doubleTapConsoleCommand = value;
+            get => _estimatedTime;
+            set => this.RaiseAndSetIfChanged(ref _estimatedTime, value);
+        }
+
+        public string RunTime   
+        {
+            get => _runTime;
+            set => this.RaiseAndSetIfChanged(ref _runTime, value);
         }
 
         public JobViewModel(CommunicationManager manager)
         {
             _commsManager = manager;
             GCodeOutPut = new ObservableCollection<GCodeLine>();
-            DoubleTapConsoleCommand = ReactiveCommand.Create<object>(DoubleTap);
             CloseGCodeConsole = ReactiveCommand.Create(CloseGcodeConsole);
             OpenGCodePanel = ReactiveCommand.Create(GCodeControl);
             StartJobCommand = ReactiveCommand.Create(StartJob);
@@ -216,7 +221,6 @@ namespace GrbLHALSender.ViewModels
             }
 
         }
-
         private void JobCompete()
         {
             JobState = JobState.ProgramComplete;
@@ -232,10 +236,6 @@ namespace GrbLHALSender.ViewModels
         private void CloseGcodeConsole()
         {
             ShowGCodeConsole = !ShowGCodeConsole;
-        }
-        private void DoubleTap(object p)
-        {
-            ShowGCodeConsole = !Convert.ToBoolean(p);
         }
 
     }

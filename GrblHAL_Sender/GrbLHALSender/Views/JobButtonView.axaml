@@ -11,8 +11,8 @@
 		<viewModels1:JobViewModel/>
 	</Design.DataContext>
 	<UserControl.Resources>
-        <converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
-    </UserControl.Resources>
+		<converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
+	</UserControl.Resources>
 	<UserControl.Styles>
 		<Style Selector="Button">
 			<Setter Property="HorizontalAlignment" Value="Center"/>
@@ -24,28 +24,49 @@
 			<Setter Property="Height" Value="45"/>
 			<Setter Property="Width" Value="110"/>
 			<Setter Property="Margin" Value="15,5,15,0"/>
-            <Setter Property="BorderThickness" Value="3"/>
+			<Setter Property="BorderThickness" Value="3"/>
 		</Style>
 	</UserControl.Styles>
-	<Grid  Background="Transparent" ColumnDefinitions="*,*,*,*,*"
+	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*"  RowDefinitions="Auto,Auto"
 		   Opacity=".6"
 		   VerticalAlignment="Stretch"
 		   HorizontalAlignment="Center">
-		<Button Grid.Column="0" BorderBrush="{Binding }"
+		<Button Grid.Row="0" Grid.Column="0" BorderBrush="{Binding }"
 				Command="{Binding  SelectFilesCommand}"
 				Content="File"/>
-		<Button Grid.Column="1"
-				Command="{Binding  CloseFilesCommand}"
-				IsEnabled="{Binding FileLoaded}"
-				Content="Close"/>
-		<Button Grid.Column="2"
-				Content="Stop"
-				Command="{Binding StopJobCommand}"/>
-		<Button Grid.Column="3"
-				Content="Pause"
-				Command="{Binding PauseJobCommand}"/>
-		<Button Grid.Column="4"
-				Content="Start"
-				Command="{Binding StartJobCommand}"/>
+		<Button Grid.Row="0"  Grid.Column="1"
+                Command="{Binding  CloseFilesCommand}"
+                IsEnabled="{Binding FileLoaded}"
+                Content="Close"/>
+		<Button Grid.Row="0"  Grid.Column="2"
+                Content="Stop"
+                Command="{Binding StopJobCommand}"/>
+		<Button Grid.Row="0" Grid.Column="3"
+                Content="Pause"
+                Command="{Binding PauseJobCommand}"/>
+		<Button Grid.Row="0" Grid.Column="4"
+                Content="Start"
+                Command="{Binding StartJobCommand}"/>
+		<TextBlock x:Name="FileTextBlock" 
+                   Margin="10"
+				   FontSize="{DynamicResource BaseFontSize}"
+				   Grid.Row="1"
+				   Grid.Column="0"
+				   Grid.ColumnSpan="2"
+				   Text="{Binding FileName}"/>
+		<TextBlock x:Name="EstimatedTextBlock"
+                   Margin="10"
+                   FontSize="{DynamicResource BaseFontSize}"
+				   Grid.Row="1"
+				   Grid.Column="0"
+				   Grid.ColumnSpan="2"
+				   Text ="{Binding EstimatedTime}"/>
+		<TextBlock x:Name="TimeTextBlock"
+                   Margin="10"
+                   FontSize="{DynamicResource BaseFontSize}"
+				   Grid.Row="1"
+				   Grid.Column="0"
+				   Grid.ColumnSpan="2"
+                   Text ="{Binding RunTime}"/>
 	</Grid>
 </UserControl>
