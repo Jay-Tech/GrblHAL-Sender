@@ -122,11 +122,16 @@ public partial class GrblHalSetting
         Id = int.Parse(data[0]);
         GroupId = int.Parse(data[1]);
         Name = data[2];
-        Unit = data[3];
-        DataType = data[4] == string.Empty ? DataTypes.TEXT : (DataTypes)Enum.Parse(typeof(DataTypes), data[4], true);
-        Format = data[5];
-        Min = data[6] == string.Empty ? double.NaN : double.Parse(data[6]);
-        Max = data[7] == string.Empty ? double.NaN : double.Parse(data[7]);
+        if (data.Length > 3)
+            Unit = data[3];
+        if (data.Length > 4)
+            DataType = data[4] == string.Empty ? DataTypes.TEXT : (DataTypes)Enum.Parse(typeof(DataTypes), data[4], true);
+        if (data.Length > 5)
+            Format = data[5];
+        if (data.Length > 6)
+            Min = data[6] == string.Empty ? double.NaN : double.Parse(data[6]);
+        if (data.Length > 7)
+            Max = data[7] == string.Empty ? double.NaN : double.Parse(data[7]);
         if (data.Length > 8)
             RebootRequired = data[8] == "1";
         if (data.Length > 9)

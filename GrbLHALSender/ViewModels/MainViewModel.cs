@@ -267,7 +267,7 @@ public class MainViewModel : ViewModelBase
         ConnectionViewModel = connectionViewModel;
         DialogViewModel = dialogViewModel;
         MdiViewModel = mdiViewModel;
-        MdiViewModel?.MidiTextCommitted += MainViewModel_MidiTextCommitted;
+        MdiViewModel.MidiTextCommitted += MainViewModel_MidiTextCommitted;
         ConnectionViewModel.LoadFromConfig(_config);
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;

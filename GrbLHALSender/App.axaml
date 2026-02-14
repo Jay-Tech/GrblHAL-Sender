@@ -2,15 +2,21 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 x:Class="GrbLHALSender.App"
 			 RequestedThemeVariant="Dark"
-			 xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
-			
+			 xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+			 xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
 	<!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 	<Application.Resources>
-       <!-- <Application.DataTemplates>
-            <grbLhalSender:ViewLocator/>
-        </Application.DataTemplates>-->
+		<!-- <Application.DataTemplates>
+		<grbLhalSender:ViewLocator/>
+		</Application.DataTemplates>-->
 		<SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#59111111"> </SolidColorBrush>
 		<SolidColorBrush x:Key="SmokeWhiteText" Color="#FF111111"> </SolidColorBrush>
+		<sys:Double x:Key="BaseFontSize">22</sys:Double>
+		<sys:Double x:Key="LargeFontSize">32</sys:Double>
+		<sys:Double x:Key="TinyFontSize">12</sys:Double>
+		<sys:Double x:Key="SmallFontSize">18</sys:Double>
+
 		<!--<SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{DynamicResource SystemAccentColor}" />-->
 		<!--<Color x:Key="DarkReduceColorAlpha">#70111111</Color>-->
 		<!--<Color x:Key="BlackPrimaryBackGround">#EF111111</Color>
@@ -22,7 +28,7 @@
 
 	</Application.Resources>
 	<Application.Styles>
-        
+
 		<materialIcons:MaterialIconStyles />
 
 		<Style Selector="TextBox.h1">
