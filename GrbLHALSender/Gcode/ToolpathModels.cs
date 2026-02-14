@@ -37,5 +37,10 @@ namespace GrbLHALSender.Gcode
         public Point3D MaxBounds { get; set; }
         public Point3D Center { get; set; }
         public float MaxDimension { get; set; }
+
+        /// <summary>
+        /// Estimated job time in seconds, calculated from move distances and feed rates.
+        /// </summary>
+        public double TimeEstimateSeconds { get; set; }
     }
 }
