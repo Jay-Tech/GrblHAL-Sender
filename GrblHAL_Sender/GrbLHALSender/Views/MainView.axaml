@@ -18,45 +18,77 @@
 		<convertors:AlignmentConvertor x:Key="AlignmentConvertor" />
 	</UserControl.Resources>
 	<UserControl.Styles>
-        <Style Selector="Label.inactive">
-            <Setter Property="Background" Value="Red" />
-        </Style>
-        <Style Selector="Label.active">
-            <Setter Property="Background" Value="PaleGreen" />
-        </Style>
-    </UserControl.Styles>
+		<Style Selector="Label.inactive">
+			<Setter Property="Background" Value="Red" />
+		</Style>
+		<Style Selector="Label.active">
+			<Setter Property="Background" Value="PaleGreen" />
+		</Style>
+	</UserControl.Styles>
 	<!--Header-->
 	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="Transparent" >
 		<Border x:Name="HeaderBorder" Grid.Row="0"  Grid.ColumnSpan="3" Height="45" BorderThickness="1"  >
-			<Grid ColumnDefinitions="Auto,75,150,110,125,150,*,200,110">
+			<!--Connect, WCS, Tool-->
+			<Grid ColumnDefinitions="125,155,150,150,125,150,*,200,110">
+				<StackPanel  Grid.Column="0" Orientation="Horizontal" >
+					<Button  Margin="3,0,0,0"
+							 HorizontalAlignment="Left"
+							 VerticalAlignment="Center"
+							 VerticalContentAlignment="Center"
+							 HorizontalContentAlignment="Center"
+							 Height="40"  FontSize="24"
+							 Content="Connect" x:Name="ConnectButton"
+							 Command="{Binding ConnectCommand}"/>
 
-				<Button  Grid.Column="0" Margin="3,0,0,0" HorizontalAlignment="Left"
-						 HorizontalContentAlignment="Center" Height="30"  FontSize="18"
-						 Content="Connect" x:Name="ConnectButton"
-						 Command="{Binding ConnectCommand}"/>
-				<Label Grid.Column="1" FontSize="24" Margin="10,0,0,0" HorizontalAlignment="Left"
+					<Label Classes.active="{Binding Connected}"
+						   Classes.inactive="{Binding !Connected}"
+						   HorizontalContentAlignment="Center"
+						   VerticalContentAlignment="Center"
+						   HorizontalAlignment="Center"
+						   CornerRadius="0,3,3,0"
+						   VerticalAlignment="Center"
+						   Width="10"
+						   Height="40"/>
+				</StackPanel>
+
+				<Label Grid.Column="1" FontSize="{DynamicResource BaseFontSize}"
+					   Margin="10,0,0,0"
+					   HorizontalAlignment="Left"
 					   VerticalAlignment="Center"
 					   Content="{Binding State.GrblHalState}"  ></Label>
-				<Label Grid.Column="2" FontSize="24" Margin="5,0,0,0" VerticalAlignment="Center"
+				<Label Grid.Column="2" FontSize="{DynamicResource BaseFontSize}"
+					   Margin="5,0,0,0"
+					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
-					   Content="{Binding State.WCS, StringFormat={}WCO:{0}}"
+					   Content="{Binding State.WCS,
+					   StringFormat={}WCS:{0}}"
 					   IsVisible="{Binding Connected}"></Label>
-				<Label Grid.Column="3" FontSize="24" Margin="5,0,0,0" VerticalAlignment="Center"
+				<Label Grid.Column="3" FontSize="{DynamicResource BaseFontSize}"
+					   Margin="5,0,0,0"
+					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding State.Tool, StringFormat={} Tool:{0}}"
 					   IsVisible="{Binding Connected}"></Label>
-				<Label Grid.Column="4" x:Name="JogStepLabel" FontSize="24" Margin="5,0,0,0" VerticalAlignment="Center"
+				<Label Grid.Column="4" x:Name="JogStepLabel"
+					   FontSize="{DynamicResource BaseFontSize}"
+					   Margin="5,0,0,0"
+					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding JogStep, StringFormat={} Step:{0}}"
 					   IsVisible="{Binding Connected}"></Label>
-				<Label Grid.Column="5" FontSize="24" Margin="5,0,0,0" VerticalAlignment="Center"
+				<Label Grid.Column="5" FontSize="{DynamicResource BaseFontSize}"
+					   Margin="5,0,0,0"
+					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left" x:Name="JogFeedLabel"
 					   Content="{Binding JogRate, StringFormat={} Feed:{0}}"
 					   IsVisible="{Binding Connected}"></Label>
 
 
-				<ItemsRepeater Grid.Column="6" ClipToBounds="True"  HorizontalAlignment="Stretch"  Margin="50,0,50,0"
-							   VerticalAlignment="Stretch" ItemsSource="{Binding SignalList}">
+				<ItemsRepeater Grid.Column="6" ClipToBounds="True"
+							   HorizontalAlignment="Stretch"
+							   Margin="50,0,50,0"
+							   VerticalAlignment="Stretch"
+							   ItemsSource="{Binding SignalList}">
 					<ItemsRepeater.Layout>
 						<StackLayout Orientation="Horizontal" Spacing="3"/>
 					</ItemsRepeater.Layout >
@@ -65,57 +97,72 @@
 							<Label x:Name="" VerticalAlignment="Center" ClipToBounds="True"
 								   Foreground="White" VerticalContentAlignment="Center"
 								   HorizontalAlignment="Center" CornerRadius="45"
-								   HorizontalContentAlignment="Center" Margin="3 0" Height="30" Width="30" FontWeight="Bold" FontSize="20"
-								   Content="{Binding Path=Id }" Background="{Binding Path=Triggered,
-								   Converter={StaticResource LedBackGround}, ConverterParameter={Binding Path=Triggered}}"/>
+								   HorizontalContentAlignment="Center" Margin="3 0"
+								   Height="30" Width="30" FontWeight="Bold"
+								   FontSize="{DynamicResource DetailFontSize}"
+								   Content="{Binding Path=Id }"
+								   Background="{Binding Path=Triggered,
+								   Converter={StaticResource LedBackGround},
+								   ConverterParameter={Binding Path=Triggered}}"/>
 						</DataTemplate>
 					</ItemsRepeater.ItemTemplate>
 				</ItemsRepeater>
 
-				<Button Grid.Column="7" x:Name="AlButton" IsVisible="{Binding AlarmActive}"
-						Height="30" Content="{Binding State.SubState,StringFormat={} Alarm{0}}" FontSize="18"
-						VerticalAlignment="Center" HorizontalAlignment="Right"
-						Command="{Binding ClearAlarmCommand}" Margin="2,0"
+				<Button Grid.Column="7" x:Name="AlButton"
+						IsVisible="{Binding AlarmActive}"
+						Height="40"
+						Content="{Binding State.SubState,StringFormat={} Alarm{0}}"
+						FontSize="18"
+						VerticalAlignment="Center"
+						HorizontalAlignment="Right"
+						Command="{Binding ClearAlarmCommand}"
+						Margin="2,0"
 						Background ="Red" Width="100">
 				</Button>
-				<Button Grid.Column="8" Height="30" Content="UnLock" FontSize="18"
-						Margin="2,0" VerticalAlignment="Center"
+				<Button Grid.Column="8" Height="40" Content="Unlock"
+						FontSize="{DynamicResource BaseFontSize}"
+						Margin="2,0"
+						VerticalAlignment="Center"
 						HorizontalAlignment="Right"
-						Command="{Binding UnLockCommand}" Width="100" />
+						Command="{Binding UnLockCommand}"
+						Width="100" />
 			</Grid>
 		</Border>
 		<!-- End Header-->
 
-		<Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto">
-			<!-- DataTemplate Axis Control-->
+		<!-- START Content Grid-->
+		<Grid Grid.Row="1" x:Name="ContentGrid" ColumnDefinitions="Auto,*,Auto">
+			<!-- START Left Controls-->
 			<Border  Grid.Column="0"  Name="DroBorder" Margin="0,50,0,0"
 					 MaxWidth="265"
 					 VerticalAlignment="Stretch"
 					 BorderThickness="1" >
+				<!--START Home Control -->
 				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
 					<Grid Grid.ColumnDefinitions="*,Auto" >
-                        <Button Grid.Column="0" FontSize="26"
-                                CornerRadius="6,0,0,6"  
-                                Height="40"  
-                                Content="Home All"
+						<Button Grid.Column="0" FontSize="{DynamicResource BaseFontSize}"
+								CornerRadius="6,0,0,6"
+								Height="40"
+								Content="Home All"
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
 								VerticalAlignment="Center"
-                                HorizontalAlignment="Stretch"
-                                Command="{Binding HomeCommand}"/>
-                        <Label Grid.Column="1" Classes.active="{Binding HomeState}"
-                               Classes.inactive="{Binding !HomeState}" 
-                               HorizontalContentAlignment="Center" 
-                               VerticalContentAlignment="Center"
-                               Grid.Row="0" HorizontalAlignment="Center" 
-                               CornerRadius="0,3,3,0"
-                               VerticalAlignment="Center" 
-                               Width="10" 
-                               Height="40">
-                        </Label>
-                    </Grid>
-						
-					
+								HorizontalAlignment="Stretch"
+								Command="{Binding HomeCommand}"/>
+						<Label Grid.Column="1" Classes.active="{Binding HomeState}"
+							   Classes.inactive="{Binding !HomeState}"
+							   HorizontalContentAlignment="Center"
+							   VerticalContentAlignment="Center"
+							   Grid.Row="0" HorizontalAlignment="Center"
+							   CornerRadius="0,3,3,0"
+							   VerticalAlignment="Center"
+							   Width="10"
+							   Height="40">
+						</Label>
+					</Grid>
+					<!--END Home Control -->
+
+					<!--START DRO Control -->
 					<ItemsControl Grid.Row="1" ItemsSource="{Binding AxisCollection}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
@@ -148,7 +195,8 @@
 											 CornerRadius="6"
 											 Content="{Binding Name,
 											 StringFormat={}{0}0}"
-											 FontSize="26"  Height="60"
+											 FontSize="{DynamicResource BaseFontSize}"
+											 Height="60"
 											 HorizontalAlignment="Stretch"
 											 HorizontalContentAlignment="Center"
 											 VerticalAlignment="Stretch"
@@ -161,30 +209,35 @@
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
-					<Button Grid.Row="2" FontSize="26"
+					<Button Grid.Row="2"
+							FontSize="{DynamicResource BaseFontSize}"
 							Content="Zero All"
 							Height="40"
 							HorizontalAlignment="Stretch"
 							Command="{Binding ZeroAllCommand}" ></Button>
-					<!-- End  Axis Control-->
+					<!-- END  DRO Control-->
 
-					<!--WCS-->
+					<!-- START WCS Control-->
 					<Grid Grid.Row="3" Margin="0,2" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-						<Label  Content="WCS" HorizontalContentAlignment="Center" FontSize="20" VerticalContentAlignment="Center"
+						<Label  Content="WCS"
+								HorizontalContentAlignment="Center" FontSize="{DynamicResource DetailFontSize}"
+								VerticalContentAlignment="Center"
 								HorizontalAlignment ="Stretch"
 								VerticalAlignment="Stretch"
 								Height="30"></Label>
 						<Button Grid.Row="1" CornerRadius="6"
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
-								FontSize="26" Margin="0,2"
+								FontSize="{DynamicResource BaseFontSize}"
+								Margin="0,2"
 								Content="G54" Height="50"
 								HorizontalAlignment ="Stretch"
 								VerticalAlignment="Stretch"
 								Command="{Binding WcsCommand}"
 								CommandParameter="G54"></Button>
 						<Button Grid.Row="2" CornerRadius="6"
-								FontSize="26" Margin="0,2" Content="G55"
+								FontSize="{DynamicResource BaseFontSize}"
+								Margin="0,2" Content="G55"
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
 								HorizontalAlignment ="Stretch"
@@ -193,7 +246,7 @@
 								Command="{Binding WcsCommand}"
 								CommandParameter="G55"></Button>
 						<Button Grid.Row="3"  CornerRadius="6"
-								FontSize="26"
+								FontSize="{DynamicResource BaseFontSize}"
 								Margin="0,2"
 								Content="G56"
 								HorizontalContentAlignment="Center"
@@ -203,7 +256,7 @@
 								Command="{Binding WcsCommand}"
 								CommandParameter="G56"></Button>
 						<Button Grid.Row="4" CornerRadius="6"
-								FontSize="26" Margin="0,2"
+								FontSize="{DynamicResource BaseFontSize}" Margin="0,2"
 								Content="G57"
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
@@ -212,16 +265,106 @@
 								Height="50"
 								Command="{Binding WcsCommand}" CommandParameter="G57"></Button>
 					</Grid>
+					<!--END WCS Control -->
 
-					<!--MDI-->
-
+					<!--START MDI Control-->
 					<views:MdiView Grid.Row="4" DataContext="{Binding MdiViewModel}"></views:MdiView>
+					<!--END MDI Control-->
 				</Grid>
 			</Border>
+			<!--END Left Control-->
 
-			<!-- Bottom ContentControl Host Probe section -->
+			<!--START Center Content Control -->
+			<Border  Grid.Column="1" >
+				<!-- START Tab Control Render, Settings -->
+				<Grid>
+					<TabControl  TabStripPlacement="Top"  >
+						<TabItem
+						Padding="8,0"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						FontSize="{DynamicResource BaseFontSize}"
+						x:Name="HomeTab" Header="Home">
+							<Grid RowDefinitions="Auto,*,Auto"
+								  ColumnDefinitions="Auto,*,Auto" >
+								<gcodeRenderControl:GcodeRenderControl
+								Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
+								HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+								Toolpath="{Binding JobViewModel.ToolpathData}"
+								SpindlePosition="{Binding SpindlePosition}"
+								MachineSettings="{Binding MachineSettings}"
+								WorkCoordinateOffset="{Binding WorkCoordinateOffset}"/>
+								<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
+										HorizontalAlignment="Stretch" IsVisible="{Binding #HomeTab.IsSelected}"
+										Background="Transparent" VerticalAlignment="Stretch">
+									<views:JobButtonView DataContext="{Binding JobViewModel}"/>
+								</Border>
 
-			<!-- Jog Control Right Section-->
+								<Border Grid.Row="2" Grid.ColumnSpan="3" Grid.Column="0"
+										VerticalAlignment="Bottom" HorizontalAlignment="Center">
+									<views:DialogButtonView DataContext="{Binding DialogViewModel}" />
+								</Border>
+							</Grid>
+						</TabItem>
+						<TabItem
+						Padding="8,0" FontWeight="DemiBold"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						FontSize="{DynamicResource BaseFontSize}" x:Name="SettingTab"
+						Header="GrblHAL Settings">
+							<views:SettingView HorizontalAlignment="Stretch"
+											   DataContext="{Binding SettingsViewModel}"
+											   VerticalAlignment="Stretch"></views:SettingView>
+						</TabItem>
+					</TabControl>
+					<!-- END Tab Control -->
+
+					<!-- START Header Macro Button Control -->
+					<Grid RowDefinitions="Auto"
+						  Height="{Binding #HomeTab.Bounds}"
+						  ColumnDefinitions="Auto,*"
+						  HorizontalAlignment="Stretch"
+						  VerticalAlignment="Top">
+						<Label Grid.Column="0"
+							   Margin="350,0,0,0"
+							   Content="MACROS:"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Bottom"
+							   HorizontalContentAlignment="Right"
+							   VerticalContentAlignment="Center"
+							   FontSize="{DynamicResource BaseFontSize}"
+							   IsVisible="{Binding MacroViewModel.MacroList.Count }"/>
+						<ItemsRepeater Grid.Column="1" x:Name="MacroRepeater"
+									   HorizontalAlignment="Left"
+									   VerticalAlignment="Bottom"
+									   ItemsSource="{Binding MacroViewModel.MacroList}"
+									   Margin="0,0">
+							<ItemsRepeater.Layout>
+								<UniformGridLayout MinColumnSpacing="10"></UniformGridLayout>
+							</ItemsRepeater.Layout>
+							<ItemsRepeater.ItemTemplate>
+								<DataTemplate>
+									<Button Content="{Binding   Path=Id}"
+											Width="110" Height="40"
+											HorizontalAlignment="Left"
+											VerticalAlignment="Bottom"
+											CornerRadius="6,6,0,0"
+											Margin="0,0,0,0"
+											CommandParameter="{Binding  Id}"
+											FontSize="{DynamicResource BaseFontSize}"
+											Command="{Binding #MacroRepeater.((viewModels:MainViewModel)DataContext).MacroViewModel.RunMacroCommand}">
+									</Button>
+								</DataTemplate>
+							</ItemsRepeater.ItemTemplate>
+						</ItemsRepeater>
+					</Grid>
+					<!--END Header Macro Button Control-->
+				</Grid>
+			</Border>
+			<!-- END Center Content Control -->
+
+			<!--START Right Control-->
+			<!-- START Jog Control-->
 			<Border x:Name="JogBorder"  Grid.Column="2" >
 				<Grid x:Name="Grid" Margin="0,45,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
 					  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -281,7 +424,6 @@
 							</Interaction.Behaviors>
 						</controls1:RadioToggleButton>
 					</Grid>
-
 					<Grid Grid.Row="1"  ColumnDefinitions="*,*,*,*"  Grid.RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,20,0,0">
 						<Button Grid.Row="1" CornerRadius="10" Name="XDown" Height="65" Width="65"
 								Grid.Column="0"
@@ -369,8 +511,9 @@
 							</Interaction.Behaviors>
 						</controls1:RadioToggleButton>
 					</Grid>
+					<!-- END Jog Control-->
 
-					<!--ToolControl-->
+					<!-- START Tool Control-->
 					<Grid Grid.Row="3"
 						  Name="ToolGrid"
 						  Margin="0,10,0,0"
@@ -379,7 +522,7 @@
 						<Label Grid.Row="0" Grid.ColumnSpan="2"
 							   Content="Tool"
 							   HorizontalContentAlignment="Center"
-							   FontSize="20"
+							   FontSize="{DynamicResource DetailFontSize}"
 							   VerticalContentAlignment="Center"
 							   HorizontalAlignment ="Stretch"
 							   VerticalAlignment="Stretch" ></Label>
@@ -393,14 +536,15 @@
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
 								VerticalAlignment="Stretch" Margin="5,0"
-								FontSize="26">
+								FontSize="{DynamicResource BaseFontSize}">
 							<Button.Flyout >
 								<Flyout  Placement="LeftEdgeAlignedBottom" ShowMode="Standard">
 									<ListBox x:Name="ToolLb" SelectionMode="Single"
 											 ItemsSource="{Binding ToolList}"
 											 SelectedItem="{Binding SelectedTool, Mode=TwoWay}"
 											 SelectionChanged="ToolLb_OnSelectionChanged"
-											 FontSize="26"  VerticalAlignment="Stretch"
+											 FontSize="{DynamicResource BaseFontSize}"
+											 VerticalAlignment="Stretch"
 											 behaviors:CloseMenuOnItemSelection.Command ="{Binding HideBoxCommand}"
 											 behaviors:CloseMenuOnItemSelection.CommandParameter="{Binding SelectedTool}">
 										<ListBox.ItemTemplate>
@@ -421,38 +565,42 @@
 								CornerRadius="6"
 								Content="Change"
 								Margin="5,0"
-								FontSize="26"
+								FontSize="{DynamicResource BaseFontSize}"
 								HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
 								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
 						<Button Grid.Column="0" Grid.Row="2"
 								Height="45" CornerRadius="6"
-								Content="TLF"
+								Content="TLR"
 								Margin="5,10,5,0"
-								FontSize="26"
+								FontSize="{DynamicResource BaseFontSize}"
 								HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
 								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
 						<Button Grid.Column="1" Grid.Row="2" Height="45"
 								CornerRadius="6" Content="Unload"
 								Margin="5,10,5,0"
-								FontSize="26"
+								FontSize="{DynamicResource BaseFontSize}"
 								HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
 								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
 
 					</Grid>
-					<!--Tool Control End-->
+					<!--END Tool Control-->
 
-					<!--Spindle Control-->
+					<!--START Spindle Control-->
 					<Grid Grid.Row="4" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" Grid.ColumnDefinitions="*,*">
-						<Label Content="Spindle" Margin="0,10,0,0"
-							   Grid.ColumnSpan="2"  Grid.Row="0" Grid.Column="0"
+						<Label Grid.Row="0" Grid.Column="0"
+							   Content="Spindle"
+							   Margin="0,10,0,0"
+							   Grid.ColumnSpan="2"
 							   HorizontalContentAlignment="Center"
 							   VerticalContentAlignment="Center"
-							   FontSize="20" />
-						<controls1:RadioToggleButton Grid.Column="0" Grid.Row="1" FontSize="26"
-													 HorizontalAlignment="Stretch" Content="CW"
+							   FontSize="{DynamicResource DetailFontSize}" />
+						<controls1:RadioToggleButton Grid.Column="0" Grid.Row="1"
+													 FontSize="{DynamicResource BaseFontSize}"
+													 HorizontalAlignment="Stretch"
+													 Content="CW"
 													 CornerRadius="6,6,6,6"
 													 Height="45"
 													 Margin="5,0,5,0"
@@ -463,15 +611,18 @@
 													 CornerRadius="6,6,6,6"
 													 Height="45"
 													 Margin="5,0,5,0"
-													 FontSize="26"
+													 FontSize="{DynamicResource BaseFontSize}"
 													 Content="CCW"
 													 Command="{Binding SpindleCCWCommand}"
 													 CommandParameter="{Binding #SpindleRpm.Text}"/>
-						<controls1:RadioToggleButton Grid.Column="0" Grid.Row="2"  Grid.ColumnSpan="2"
-													 CornerRadius="6,6,6,6" Height="45"
+						<controls1:RadioToggleButton Grid.Column="0"
+													 Grid.Row="2"
+													 Grid.ColumnSpan="2"
+													 CornerRadius="6,6,6,6"
+													 Height="45"
 													 Margin="5,10,5,0"
 													 HorizontalAlignment="Stretch"
-													 FontSize="26" Content ="Spindle Off"
+													 FontSize="{DynamicResource BaseFontSize}" Content ="Spindle Off"
 													 Command="{Binding SpindleOffCommand}" />
 
 						<NumericUpDown Grid.Row="3" Grid.Column="0" x:Name="SpindleRpm" FontSize="24"
@@ -479,32 +630,34 @@
 									   MaxWidth="175" Increment="100"
 									   Text="{Binding CallBackText}"
 									   FormatString="0"
-									   Value="{Binding SpindleSetSpeed, FallbackValue=0}"
+									   Value="{Binding SpindleSetRpm, FallbackValue=0}"
 									   ButtonSpinnerLocation="Right"
-									   Minimum="0" Maximum="30000"
-									   ParsingNumberStyle="AllowDecimalPoint" ClipValueToMinMax="True"
-									   behaviors:FocusToCommand.Command="{Binding FocusedCommand}"
-									   behaviors:FocusToCommand.CommandParameter="{Binding #SpindleRpm}">
+									   Minimum="900" Maximum="30000"
+									   ParsingNumberStyle="AllowDecimalPoint" ClipValueToMinMax="True">
 						</NumericUpDown>
 
 
 						<TextBlock  Grid.Column="1"
-									Text="{Binding RPM, StringFormat={}RPM:{0}}"
+									Text="{Binding RPM, StringFormat={}RPM:{0}, FallbackValue=0}"
 									Margin="3,10,3,0"
 									TextAlignment="Left"
-									FontSize="22" Grid.Row="3"
+									FontSize="{DynamicResource DetailFontSizeLarge}" Grid.Row="3"
 									HorizontalAlignment="Left"
 									VerticalAlignment="Center"  />
 						<Button Grid.Column="0" Grid.ColumnSpan="2"
 								Grid.Row="5"
 								CornerRadius="6,6,6,6"
 								Height="45"
-								Content="Set Spindle Speed" FontSize="26"
+								Content="Set Spindle Speed"
+								FontSize="{DynamicResource BaseFontSize}"
 								Margin="5,10,5,0"
 								Command="{Binding SpindleSetSpeedCommand }"
 								CommandParameter="{Binding #SpindleRpm.Text}" />
-						<Grid  HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="0"
-							   Grid.Row="6" ColumnDefinitions="*,*"  >
+						<Grid  HorizontalAlignment="Stretch"
+							   VerticalAlignment="Center"
+							   Grid.Column="0"
+							   Grid.Row="6"
+							   ColumnDefinitions="*,*"  >
 							<Button Grid.Column="0"
 									CornerRadius="6,6,6,6"
 									Height="45"
@@ -528,141 +681,97 @@
 									Content="{icons:MaterialIconExt Kind=Cached,  Size=40}"
 									Margin="5,10,0,0"
 									Command="{Binding SpindleResetCommand }" />
-							<TextBlock Grid.Column="1"  Text="{Binding RPM, StringFormat={}%{0}}"
+							<TextBlock Grid.Column="1"
+									   Text="{Binding RPM, StringFormat={}%{0}}"
 									   Margin="5,10,5,0"
-									   TextAlignment="Left" FontSize="22"
-
+									   TextAlignment="Left"
+									   FontSize="{DynamicResource DetailFontSizeLarge}"
 									   HorizontalAlignment="Left"
 									   VerticalAlignment="Center"/>
 						</Grid>
 
 					</Grid>
-					<!--Spindle Control End-->
+					<!--END Spindle Control-->
 
-					<!--OverRide Control-->
+					<!--START OverRide Control-->
 					<Grid Grid.Row="5" RowDefinitions="Auto,Auto,Auto,Auto">
-						<TextBlock Grid.Row="0" Text=" Feed OverRide" TextAlignment="Center" FontSize="22"
-								   Margin="0,10,0,0"/>
+						<Label Grid.Row="0" Content="Feed OverRide"
+							   HorizontalContentAlignment="Center"
+							   VerticalContentAlignment="Center"
+							   FontSize="{DynamicResource DetailFontSize}"
+							   Margin="0,10,0,0"/>
 						<Grid Grid.Row="1" ColumnDefinitions="*,*"  >
 							<TextBlock Grid.Column="0"
 									   Text="{Binding FeedRate,StringFormat={}Feed: {0}, FallbackValue=0}"
 									   TextAlignment="Left"
 									   Margin="5,0,0,5"
-									   FontSize="22"/>
+									   FontSize="{DynamicResource DetailFontSizeLarge}"/>
 							<TextBlock  Grid.Column="1" TextAlignment="Left"
 										Text="{Binding FeedOverRide, StringFormat={}%: {0},FallbackValue=0}"
 										Margin="5,0,0,0"
-										FontSize="22" />
+										FontSize="{DynamicResource DetailFontSizeLarge}" />
 						</Grid>
 						<Grid Grid.Row="2" Margin="0,10,0,0" ColumnDefinitions="*,*,*">
-							<Button Grid.Column="0" Margin="5,0,5,0" VerticalAlignment="Stretch"
-									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=PlusThick,  Size=50}"
-									Height="45" Command="{Binding FeedOrPlus }"></Button>
-							<Button Grid.Column="1" Margin="5,0,5,0" VerticalAlignment="Stretch"
-									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=MinusThick, Size=45}"
-									Height="45" Command="{Binding FeedOrMinus}" ></Button>
-							<Button Grid.Column="2" Margin="5,0,5,0" VerticalAlignment="Stretch"
-									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=Cached,  Size=45}"
-									Height="45" Command="{Binding FeedOrReset}" ></Button>
+							<Button Grid.Column="0" Margin="5,0,5,0"
+									VerticalAlignment="Stretch"
+									HorizontalAlignment="Stretch"
+									HorizontalContentAlignment="Center"
+									VerticalContentAlignment="Center"
+									Content="{icons:MaterialIconExt Kind=PlusThick, Size=50}"
+									Height="45"
+									Command="{Binding FeedOrPlus }"/>
+							<Button Grid.Column="1" Margin="5,0,5,0"
+									VerticalAlignment="Stretch"
+									HorizontalAlignment="Stretch"
+									HorizontalContentAlignment="Center"
+									VerticalContentAlignment="Center"
+									Content="{icons:MaterialIconExt Kind=MinusThick, Size=45}"
+									Height="45"
+									Command="{Binding FeedOrMinus}" />
+							<Button Grid.Column="2"
+									Margin="5,0,5,0"
+									VerticalAlignment="Stretch"
+									HorizontalAlignment="Stretch"
+									HorizontalContentAlignment="Center"
+									VerticalContentAlignment="Center"
+									Content="{icons:MaterialIconExt Kind=Cached, Size=45}"
+									Height="45"
+									Command="{Binding FeedOrReset}" />
 						</Grid>
 						<Grid Grid.Row="3" Margin="0,10,0,0" ColumnDefinitions="*,*,*">
-							<Button Grid.Column="0" Margin="5,0,5,0" VerticalAlignment="Stretch"
-									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=MinusThick,  Size=50}"
-									Height="45" Command="{Binding RapidOrMediumCommand}" ></Button>
-							<Button Grid.Column="1" Margin="5,0,5,0" VerticalAlignment="Stretch"
-									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=MinusThick,  Size=45}"
-									Height="45" Command="{Binding RapidOrFineCommand}" ></Button>
-							<Button Grid.Column="2" Margin="5,0,5,0" VerticalAlignment="Stretch"
-									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=Cached,  Size=45}"
-									Height="45" Command="{Binding ResetRapidCommand}" ></Button>
+							<Button Grid.Column="0"
+									Margin="5,0,5,0"
+									VerticalAlignment="Stretch"
+									HorizontalAlignment="Stretch"
+									HorizontalContentAlignment="Center"
+									VerticalContentAlignment="Center"
+									Content="{icons:MaterialIconExt Kind=MinusThick, Size=50}"
+									Height="45"
+									Command="{Binding RapidOrMediumCommand}" />
+							<Button Grid.Column="1" Margin="5,0,5,0"
+									VerticalAlignment="Stretch"
+									HorizontalAlignment="Stretch"
+									HorizontalContentAlignment="Center"
+									VerticalContentAlignment="Center"
+									Content="{icons:MaterialIconExt Kind=MinusThick, Size=45}"
+									Height="45"
+									Command="{Binding RapidOrFineCommand}"/>
+							<Button Grid.Column="2" Margin="5,0,5,0"
+									VerticalAlignment="Stretch"
+									HorizontalAlignment="Stretch"
+									HorizontalContentAlignment="Center"
+									VerticalContentAlignment="Center"
+									Content="{icons:MaterialIconExt Kind=Cached, Size=45}"
+									Height="45"
+									Command="{Binding ResetRapidCommand}" />
 						</Grid>
 					</Grid>
-					<!--OverRide Control End-->
+					<!--END OverRide Control End-->
 				</Grid>
 			</Border>
-			<!--Right Section End-->
-
-			<!-- Center Content Control JobViewModel -->
-			<Border  Grid.Column="1" >
-				<Grid>
-					<TabControl TabStripPlacement="Top"  >
-						<TabItem x:Name="HomeTab" Header="Home"  ZIndex="3">
-
-							<Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*,Auto" >
-								<gcodeRenderControl:GcodeRenderControl Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
-																	   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-																	   Toolpath="{Binding JobViewModel.ToolpathData}"
-																	   SpindlePosition="{Binding SpindlePosition}"
-																	   MachineSettings="{Binding MachineSettings}"
-																	   WorkCoordinateOffset="{Binding WorkCoordinateOffset}"/>
-
-								<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
-										HorizontalAlignment="Stretch" IsVisible="{Binding #HomeTab.IsSelected}"
-										Background="Transparent" VerticalAlignment="Stretch">
-									<views:JobButtonView DataContext="{Binding JobViewModel}"/>
-								</Border>
-
-								<Border Grid.Row="2" Grid.ColumnSpan="3" Grid.Column="0"
-										VerticalAlignment="Bottom" HorizontalAlignment="Center">
-									<views:DialogButtonView DataContext="{Binding DialogViewModel}" />
-								</Border>
-							</Grid>
-
-						</TabItem>
-						<TabItem x:Name="SettingTab" Header="GrblHAL Settings">
-							<views:SettingView HorizontalAlignment="Stretch" DataContext="{Binding SettingsViewModel}"
-											   VerticalAlignment="Stretch"></views:SettingView>
-						</TabItem>
-					</TabControl>
-					<!-- Center Content Control JobViewModel END -->
-
-					<!--Header Macro Button Template -->
-					<Grid RowDefinitions="Auto"
-						  ColumnDefinitions="Auto,*"
-						  HorizontalAlignment="Stretch"
-						  VerticalAlignment="Top">
-						<Label Grid.Column="0"
-							   Margin="225,0,0,0"
-							   Content="MACROS:"
-							   HorizontalAlignment="Right"
-							   VerticalAlignment="Bottom"
-							   HorizontalContentAlignment="Center"
-							   VerticalContentAlignment="Bottom"
-							   FontSize="{DynamicResource BaseFontSize}"
-							   IsVisible="{Binding MacroViewModel.MacroList.Count }"/>
-						<ItemsRepeater Grid.Column="1" x:Name="MacroRepeater"
-									   HorizontalAlignment="Left"
-									   VerticalAlignment="Stretch"
-									   ItemsSource="{Binding MacroViewModel.MacroList}"
-									   Margin="0,0">
-							<ItemsRepeater.Layout>
-								<StackLayout
-								Orientation="Horizontal" Spacing="10"/>
-							</ItemsRepeater.Layout>
-							<ItemsRepeater.ItemTemplate>
-								<DataTemplate>
-									<Button Content="{Binding   Path=Id}"
-											Width="110" Height="40"
-											HorizontalAlignment="Left"
-											VerticalAlignment="Bottom"
-											CornerRadius="6,6,0,0"
-											Margin="0,0,0,0"
-											CommandParameter="{Binding  Id}"
-											FontSize="{DynamicResource BaseFontSize}"
-											Command="{Binding #MacroRepeater.((viewModels:MainViewModel)DataContext).MacroViewModel.RunMacroCommand}">
-									</Button>
-								</DataTemplate>
-							</ItemsRepeater.ItemTemplate>
-						</ItemsRepeater>
-					</Grid>
-				</Grid>
-			</Border>
+			<!--END Right Section End-->
 		</Grid>
+		<!--END Content Grid -->
 	</Grid>
+	<!--END Main Grid -->
 </UserControl>

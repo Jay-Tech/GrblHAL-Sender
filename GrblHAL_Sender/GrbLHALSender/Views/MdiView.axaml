@@ -13,21 +13,29 @@
 		<Label Grid.Row="0"  Content="MDI"  Height="30"
                HorizontalContentAlignment="Center" 
                VerticalContentAlignment="Center"
-				FontSize="20" HorizontalAlignment ="Stretch" 
+				FontSize="{DynamicResource DetailFontSize}" HorizontalAlignment ="Stretch" 
                VerticalAlignment="Stretch" />
-		<TextBox    Name="MdiTextBox" Grid.Row="1"  FontSize="26"  Height="50"
+		<TextBox    Name="MdiTextBox" Grid.Row="1" 
+                    FontSize="{DynamicResource BaseFontSize}"  
+                    Height="50"
                     CaretIndex="{Binding CaretIndex}"
 					TextWrapping="Wrap"
 					VerticalContentAlignment="Bottom"
 					HorizontalContentAlignment="Left"
 					HorizontalAlignment ="Stretch"
-					VerticalAlignment="Stretch" Text="{Binding MdiText}">
+					VerticalAlignment="Stretch" 
+                    Text="{Binding MdiText}">
 		</TextBox>
 
-		<Button Grid.Row="2"  CornerRadius="3" FontSize="22" Content="Send"  Height="45"
-				Command="{Binding MdiTextCommand}" Margin="0,5"
+		<Button Grid.Row="2"  CornerRadius="3" 
+                FontSize="{DynamicResource BaseFontSize}" 
+                Content="Send"  
+                Height="45"
+				Command="{Binding MdiTextCommand}" 
+                Margin="0,5"
 				CommandParameter="{Binding MdiText}"
-				HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Button>
+				HorizontalAlignment ="Stretch" 
+                VerticalAlignment="Stretch"></Button>
 
 		<UniformGrid Grid.Row="3" x:Name="MdiGrid" Columns="5" Rows="5" Margin="0,0,0,0"
 					 HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
