@@ -1,10 +1,14 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using GrbLHALSender.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace GrbLHALSender.Views;
@@ -15,6 +19,10 @@ public partial class MainView : UserControl
     private DispatcherTimer? _longPressTimer;
     private bool _longPressTriggered;
     private Flyout? _connectionFlyout;
+
+    // Virtual keyboard — single instance
+    private DialogWindow? _keyboardWindow;
+    private VirtualKeyboardViewModel? _keyboardViewModel;
 
 
     public MainView()
@@ -33,6 +41,10 @@ public partial class MainView : UserControl
         // Set up long-press on Connect button
         ConnectButton.AddHandler(PointerPressedEvent, ConnectButton_PointerPressed, handledEventsToo: true);
         ConnectButton.AddHandler(PointerReleasedEvent, ConnectButton_PointerReleased, handledEventsToo: true);
+
+        // Global handler: double-tap on any TextBox opens the virtual keyboard
+        // Must use handledEventsToo: true because TextBox handles DoubleTapped internally (word select)
+        AddHandler(InputElement.DoubleTappedEvent, OnGlobalDoubleTapped, RoutingStrategies.Bubble, handledEventsToo: true);
 
     }
 
@@ -91,6 +103,54 @@ public partial class MainView : UserControl
     {
         // Hide the flyout
         _connectionFlyout?.Hide();
+    }
+
+    private void OnGlobalDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        // e.Source is often the inner TextPresenter, not the TextBox itself.
+        // Walk up the visual tree to find the parent TextBox.
+        var targetTextBox = e.Source as TextBox
+            ?? (e.Source as Visual)?.FindAncestorOfType<TextBox>();
+        if (targetTextBox == null) return;
+
+        var parentWindow = TopLevel.GetTopLevel(this) as Window;
+        if (parentWindow == null) return;
+
+        // If keyboard window already open, just retarget
+        if (_keyboardWindow != null && _keyboardViewModel != null)
+        {
+            _keyboardViewModel.SetTarget(targetTextBox);
+            _keyboardWindow.Activate();
+            return;
+        }
+
+        // Create new keyboard instance
+        _keyboardViewModel = new VirtualKeyboardViewModel();
+        _keyboardViewModel.SetTarget(targetTextBox);
+
+        var keyboardView = new VirtualKeyboardView
+        {
+            DataContext = _keyboardViewModel
+        };
+
+        _keyboardWindow = new DialogWindow(
+            title: "VirtualKeyBoard",
+            content: keyboardView,
+            width: 750,
+            height: 265
+        );
+        _keyboardWindow.CanResize = false;
+        _keyboardWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+        _keyboardWindow.Position = new PixelPoint(
+            (int)(parentWindow.Position.X + (parentWindow.Bounds.Width - _keyboardWindow.Width) / 2),
+            (int)(parentWindow.Bounds.Height - _keyboardWindow.Height -100));
+        _keyboardWindow.Closed += (_, _) =>
+        {
+            _keyboardWindow = null;
+            _keyboardViewModel = null;
+        };
+
+        _keyboardWindow.Show(parentWindow);
     }
 
     private void ToolLb_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
