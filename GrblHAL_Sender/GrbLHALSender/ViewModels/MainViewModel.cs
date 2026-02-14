@@ -51,14 +51,45 @@ public class MainViewModel : ViewModelBase
     private int _feedRate;
     private int _feedOverRide;
     private int _spindleSetRpm;
-
-    private ReactiveCommand<object, Unit> _doubleTapCommand;
-    private ReactiveCommand<object, Unit> _hideBoxCommand;
-    private ReactiveCommand<object, Unit> _focusedCommand;
     private bool _tlr = false;
     private string _callBackText;
     private string _tool;
     private bool _homeState;
+    private ReactiveCommand<object, Unit> _doubleTapCommand;
+    private ReactiveCommand<object, Unit> _hideBoxCommand;
+
+    public ObservableCollection<Signal> SignalList
+    {
+        get => _signalList;
+        set => this.RaiseAndSetIfChanged(ref _signalList, value);
+    }
+    public ObservableCollection<Axis> AxisCollection
+    {
+        get => _axis;
+        set => this.RaiseAndSetIfChanged(ref _axis, value);
+    }
+    public ObservableCollection<int> ToolList
+    {
+        get => _toolList;
+        set => this.RaiseAndSetIfChanged(ref _toolList, value);
+    }
+    public ObservableCollection<string> ConsoleOutput
+    {
+        get => _consoleOutput;
+        set => this.RaiseAndSetIfChanged(ref _consoleOutput, value);
+    }
+
+    public ObservableCollection<double> JogRateList
+    {
+        get => _jogRateList;
+        set => this.RaiseAndSetIfChanged(ref _jogRateList, value);
+    }
+    public ObservableCollection<double> JogStepList
+    {
+        get => _jogStepList;
+        set => this.RaiseAndSetIfChanged(ref _jogStepList, value);
+    }
+
     public bool ShowRTCommands { get; set; }
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
@@ -67,7 +98,6 @@ public class MainViewModel : ViewModelBase
     public ConnectionViewModel ConnectionViewModel { get; set; }
     public DialogViewModel DialogViewModel { get; set; }
     public MdiViewModel MdiViewModel { get; set; }
-
     public ProbeViewModel ProbeViewModel
     {
         get => _probeViewModel;
@@ -161,7 +191,16 @@ public class MainViewModel : ViewModelBase
         get => _spindleSetRpm;
         set => this.RaiseAndSetIfChanged(ref _spindleSetRpm, value);
     }
-
+    public string CallBackText
+    {
+        get => _callBackText;
+        set => this.RaiseAndSetIfChanged(ref _callBackText, value);
+    }
+    public bool HomeState
+    {
+        get => _homeState;
+        set => this.RaiseAndSetIfChanged(ref _homeState, value);
+    }
     public ICommand ConnectCommand { get; set; }
     public ICommand ZeroAxis { get; set; }
     public ICommand ZeroAllCommand { get; set; }
@@ -193,6 +232,7 @@ public class MainViewModel : ViewModelBase
     public ICommand SpindleSetSpeedCommand { get; }
     public ICommand SetToolSelectCommand { get; }
 
+ 
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
         get => _doubleTapCommand;
@@ -204,49 +244,7 @@ public class MainViewModel : ViewModelBase
         get => _hideBoxCommand;
         set => _hideBoxCommand = value;
     }
-    public ObservableCollection<Signal> SignalList
-    {
-        get => _signalList;
-        set => this.RaiseAndSetIfChanged(ref _signalList, value);
-    }
-    public ObservableCollection<Axis> AxisCollection
-    {
-        get => _axis;
-        set => this.RaiseAndSetIfChanged(ref _axis, value);
-    }
-    public ObservableCollection<int> ToolList
-    {
-        get => _toolList;
-        set => this.RaiseAndSetIfChanged(ref _toolList, value);
-    }
-    public ObservableCollection<string> ConsoleOutput
-    {
-        get => _consoleOutput;
-        set => this.RaiseAndSetIfChanged(ref _consoleOutput, value);
-    }
-
-    public ObservableCollection<double> JogRateList
-    {
-        get => _jogRateList;
-        set => this.RaiseAndSetIfChanged(ref _jogRateList, value);
-    }
-    public ObservableCollection<double> JogStepList
-    {
-        get => _jogStepList;
-        set => this.RaiseAndSetIfChanged(ref _jogStepList, value);
-    }
-    public ReactiveCommand<object, Unit> FocusedCommand
-    {
-        get => _focusedCommand;
-        set => _focusedCommand = value;
-    }
-
-    public string CallBackText
-    {
-        get => _callBackText;
-        set => this.RaiseAndSetIfChanged(ref _callBackText, value);
-    } 
-
+    
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel,DialogViewModel dialogViewModel,
@@ -288,7 +286,6 @@ public class MainViewModel : ViewModelBase
         HideBoxCommand = ReactiveCommand.Create<object>(HideToolList);
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
-        FocusedCommand = ReactiveCommand.Create<object>(FocusTextInput);
         SpindleCWCommand = ReactiveCommand.Create<string>(SpindleCw);
         SpindleCCWCommand = ReactiveCommand.Create<string>(SpindleCcw);
         SetToolSelectCommand = ReactiveCommand.Create<int>(SetSelectedTool);
@@ -331,8 +328,6 @@ public class MainViewModel : ViewModelBase
 
         ];
 
-       
-
         SetUpUiSettings();
 
         if (!_config.AutoConnect) return;
@@ -342,7 +337,8 @@ public class MainViewModel : ViewModelBase
         }
         catch (Exception e)
         {
-
+            // Handle connection exceptions (e.g., show a message to the user)
+             ConsoleOutput.Add($"Connection failed: {e.Message}");
         }
     }
 
@@ -425,13 +421,6 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand($"{GrblHalConstants.SpindleCw}{rpm}");
     }
-    
-
-    private void FocusTextInput(object obj)
-    {
-
-    }
-
     private void ChangeStepRate(double step)
     {
         JogStep = step;
@@ -460,7 +449,6 @@ public class MainViewModel : ViewModelBase
         JogRate = JogRateList[^1];
         ToolList.AddRange(_config.ToolList.Tools);
     }
-
     public bool TLR
     {
         get => _tlr;
@@ -599,14 +587,6 @@ public class MainViewModel : ViewModelBase
             _tool = value;
             SetTool(value);
         }
-    }
-
-    public double SpindleSetSpeed { get; set; }
-
-    public bool HomeState
-    {
-        get => _homeState;
-        set => this.RaiseAndSetIfChanged(ref _homeState, value);
     }
 
     private void SetTool(string tool)
