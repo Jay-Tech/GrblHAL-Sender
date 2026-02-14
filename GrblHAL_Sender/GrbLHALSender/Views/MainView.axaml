@@ -144,8 +144,8 @@
 			<!-- Bottom ContentControl Host Probe section -->
 
 			<!-- Jog Control Right Section-->
-			<Border x:Name="JogBorder"  Grid.Column="2"  >
-				<Grid x:Name="Grid" Margin="0,50,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+			<Border x:Name="JogBorder"  Grid.Column="2" >
+				<Grid x:Name="Grid" Margin="0,45,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
 					  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
 					<Grid x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
@@ -293,26 +293,45 @@
 					</Grid>
 
 					<!--ToolControl-->
-					<Grid Grid.Row="3" Name="ToolGrid"  Margin="3,20,3,0" ColumnDefinitions="*,*">
+					<Grid Grid.Row="3" 
+                          Name="ToolGrid"  
+                          Margin="0,10,0,0" 
+                          ColumnDefinitions="*,*" 
+                          RowDefinitions="Auto,*,*" >
+						<Label Grid.Row="0" Grid.ColumnSpan="2"  
+                               Content="Tool" 
+                               HorizontalContentAlignment="Center" 
+                               FontSize="20"
+							   VerticalContentAlignment="Center"
+							   HorizontalAlignment ="Stretch"
+							   VerticalAlignment="Stretch" ></Label>
 
-						<Button Height="45" x:Name="SplitB" Content="{Binding SelectedTool, StringFormat={}Tool# {0}}"
-								HorizontalAlignment="Stretch" CornerRadius="6"
-								HorizontalContentAlignment="Center"  VerticalContentAlignment="Center"
-								VerticalAlignment="Stretch" Margin="2,0" FontSize="20">
+						<Button Grid.Row="1" Grid.Column="0"  
+                                Height="45" x:Name="SplitB"
+								Content="{Binding SelectedTool, 
+								StringFormat={}Tool# {0}}"
+								HorizontalAlignment="Stretch"
+                                CornerRadius="6"
+								HorizontalContentAlignment="Center" 
+                                VerticalContentAlignment="Center"
+								VerticalAlignment="Stretch" Margin="5,0" 
+                                FontSize="26">
 							<Button.Flyout >
 								<Flyout  Placement="LeftEdgeAlignedBottom" ShowMode="Standard">
-									<ListBox x:Name="ToolLb" SelectionMode="Single"  ItemsSource="{Binding ToolList}"
+									<ListBox x:Name="ToolLb" SelectionMode="Single"  
+                                             ItemsSource="{Binding ToolList}"
 											 SelectedItem="{Binding SelectedTool, Mode=TwoWay}"
 											 SelectionChanged="ToolLb_OnSelectionChanged"
-											 Height="275" FontSize="25"  VerticalAlignment="Stretch"  Width="125"
+											 FontSize="26"  VerticalAlignment="Stretch" 
 											 behaviors:CloseMenuOnItemSelection.Command ="{Binding HideBoxCommand}"
 											 behaviors:CloseMenuOnItemSelection.CommandParameter="{Binding SelectedTool}">
 										<ListBox.ItemTemplate>
 											<DataTemplate>
-												<Button Margin="0,2,0,2" BorderBrush="Gray"  Background="{Binding }"
-														Name="ToolButton"  CornerRadius="3" Content="{Binding}" Height="50" Width="90"
+												<Button Margin="0,5,0,5"
+														Name="ToolButton"  CornerRadius="3" Content="{Binding }" Height="45" Width="120"
 														Command="{Binding  $parent[Grid].((viewModels:MainViewModel)DataContext).SetToolSelectCommand}"
-														CommandParameter="{Binding #ToolButton.Content}"  HorizontalAlignment="Stretch"
+														CommandParameter="{Binding #ToolButton.Content}"  
+                                                        HorizontalAlignment="Stretch"
 														VerticalAlignment="Stretch" />
 											</DataTemplate>
 										</ListBox.ItemTemplate>
@@ -320,65 +339,125 @@
 								</Flyout>
 							</Button.Flyout>
 						</Button>
-						<Button Grid.Column="1" Height="45" CornerRadius="6" Content="Change Tool" Margin="3,0" FontSize="20"
+						<Button Grid.Row="1"   Grid.Column="1" Height="45"
+                                CornerRadius="6" 
+                                Content="Change" 
+                                Margin="5,0"
+                                FontSize="26"
 								HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
 								CommandParameter="{Binding SelectedTool}"
-								VerticalAlignment="Stretch"></Button>
+								VerticalAlignment="Stretch"/>
+						<Button Grid.Column="0" Grid.Row="2"
+                                Height="45" CornerRadius="6"
+                                Content="TLF" 
+                                Margin="5,10,5,0" 
+                                FontSize="26"
+								HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
+								CommandParameter="{Binding SelectedTool}"
+								VerticalAlignment="Stretch"/>
+						<Button Grid.Column="1" Grid.Row="2" Height="45" 
+                                CornerRadius="6" Content="Unload" 
+                                Margin="5,10,5,0" 
+                                FontSize="26"
+								HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
+								CommandParameter="{Binding SelectedTool}"
+								VerticalAlignment="Stretch"/>
+
 					</Grid>
 					<!--Tool Control End-->
 
 					<!--Spindle Control-->
 					<Grid Grid.Row="4" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" Grid.ColumnDefinitions="*,*">
-						<TextBlock Text="Spindle" Margin="0,15,0,0" TextAlignment="Center"
-								   Grid.ColumnSpan="2" FontSize="22" Grid.Row="0" Grid.Column="0" />
-						<controls1:RadioToggleButton Grid.Column="0" FontSize="26" HorizontalAlignment="Stretch" Content="CW" CornerRadius="6,6,6,6" Height="45"
-													 Margin="5,0,3,0" Grid.Row="1" CommandParameter="{Binding #SpindleRpm.Text}"
+						<Label Content="Spindle" Margin="0,10,0,0"
+							   Grid.ColumnSpan="2"  Grid.Row="0" Grid.Column="0"
+							   HorizontalContentAlignment="Center"
+							   VerticalContentAlignment="Center"
+							   FontSize="20" />
+						<controls1:RadioToggleButton Grid.Column="0" Grid.Row="1" FontSize="26"
+													 HorizontalAlignment="Stretch" Content="CW"
+													 CornerRadius="6,6,6,6"
+													 Height="45"
+													 Margin="5,0,5,0"
+													 CommandParameter="{Binding #SpindleRpm.Text}"
 													 Command="{Binding SpindleCWCommand}"></controls1:RadioToggleButton>
-						<controls1:RadioToggleButton Grid.Column="1" HorizontalAlignment="Stretch"  CornerRadius="6,6,6,6" Height="45"
-													 Margin="3,0,5,0" FontSize="26" Content="CCW" Grid.Row="1"
-													 Command="{Binding SpindleCCWCommand}"  CommandParameter="{Binding #SpindleRpm.Text}"/>
-						<controls1:RadioToggleButton Grid.Column="0" CornerRadius="6,6,6,6" Height="45"
-													 Margin="5,15,5,0" Grid.Row="2" HorizontalAlignment="Stretch"
-													 FontSize="26" Content ="Spindle Off"  Command="{Binding SpindleOffCommand}" Grid.ColumnSpan="2"/>
-						<StackPanel Grid.Row="3" Grid.Column="0" Margin="5,0,0,5">
-							<TextBlock Margin="0 0"></TextBlock>
-							<NumericUpDown x:Name="SpindleRpm" FontSize="24"  MaxWidth="175" Increment="100"  Text="{Binding CallBackText}"
-										   FormatString="0"
-										   Minimum="0" Maximum="30000" ButtonSpinnerLocation="Right" ParsingNumberStyle="AllowDecimalPoint" ClipValueToMinMax="True"
-										   behaviors:FocusToCommand.Command="{Binding FocusedCommand}"
-										   behaviors:FocusToCommand.CommandParameter="{Binding #SpindleRpm}">
-								<NumericUpDown.Styles>
-									<Style Selector="NumericUpDown/template/ TextBox">
-									</Style>
-								</NumericUpDown.Styles>
-							</NumericUpDown>
-						</StackPanel>
-						<Slider Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,15,5,0" FontSize="24"
-								Height="30" Minimum="1" Maximum="30000"  Value="{Binding SpindleSetRpm }" />
-						<TextBlock Text="{Binding RPM, StringFormat={}RPM:{0}}"  Margin="3,15,5,0" TextAlignment="Left"
-								   FontSize="22" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"  />
+						<controls1:RadioToggleButton Grid.Column="1" Grid.Row="1"
+													 HorizontalAlignment="Stretch"
+													 CornerRadius="6,6,6,6"
+													 Height="45"
+													 Margin="5,0,5,0"
+													 FontSize="26"
+													 Content="CCW"
+													 Command="{Binding SpindleCCWCommand}"
+													 CommandParameter="{Binding #SpindleRpm.Text}"/>
+						<controls1:RadioToggleButton Grid.Column="0" Grid.Row="2"  Grid.ColumnSpan="2"
+													 CornerRadius="6,6,6,6" Height="45"
+													 Margin="5,10,5,0"
+													 HorizontalAlignment="Stretch"
+													 FontSize="26" Content ="Spindle Off"
+													 Command="{Binding SpindleOffCommand}" />
+
+						<NumericUpDown Grid.Row="3" Grid.Column="0" x:Name="SpindleRpm" FontSize="24"
+									   Margin="5,10,0,0"
+									   MaxWidth="175" Increment="100"
+									   Text="{Binding CallBackText}"
+									   FormatString="0"
+									   Value="{Binding SpindleSetSpeed, FallbackValue=0}"
+									   ButtonSpinnerLocation="Right"
+									   Minimum="0" Maximum="30000"
+									   ParsingNumberStyle="AllowDecimalPoint" ClipValueToMinMax="True"
+									   behaviors:FocusToCommand.Command="{Binding FocusedCommand}"
+									   behaviors:FocusToCommand.CommandParameter="{Binding #SpindleRpm}">
+						</NumericUpDown>
+
+
+						<TextBlock  Grid.Column="1"
+									Text="{Binding RPM, StringFormat={}RPM:{0}}"
+									Margin="3,10,3,0"
+									TextAlignment="Left"
+									FontSize="22" Grid.Row="3"
+									HorizontalAlignment="Left"
+									VerticalAlignment="Center"  />
+						<Button Grid.Column="0" Grid.ColumnSpan="2"
+								Grid.Row="5"
+								CornerRadius="6,6,6,6"
+								Height="45"
+								Content="Set Spindle Speed" FontSize="26"
+								Margin="5,10,5,0"
+								Command="{Binding SpindleSetSpeedCommand }"
+								CommandParameter="{Binding #SpindleRpm.Text}" />
 						<Grid  HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="0"
-							   Grid.Row="5" ColumnDefinitions="*,*"  >
-							<Button Grid.Column="0"  CornerRadius="6,6,6,6" Height="45"
+							   Grid.Row="6" ColumnDefinitions="*,*"  >
+							<Button Grid.Column="0"
+									CornerRadius="6,6,6,6"
+									Height="45"
 									Content="{icons:MaterialIconExt Kind=PlusThick,  Size=50}"
-									Margin="5,10,3,0" Command="{Binding SpindleIncreaseCommand}" />
-							<Button Grid.Column="1"  CornerRadius="6,6,6,6" Height="42"
-									Content="{icons:MaterialIconExt Kind=MinusThick,  Size=45}" HorizontalContentAlignment="Center"
+									Margin="5,10,5,0"
+									Command="{Binding SpindleIncreaseCommand}" />
+							<Button Grid.Column="1"
+									CornerRadius="6,6,6,6"
+									Height="45"
+									Content="{icons:MaterialIconExt Kind=MinusThick,  Size=45}"
+									HorizontalContentAlignment="Center"
 									VerticalAlignment="Center"
-									Margin="3,10,3,0" Command="{Binding SpindleDecreaseCommand}" />
+									Margin="5,10,5,0"
+									Command="{Binding SpindleDecreaseCommand}" />
 						</Grid>
-						<Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-							  Grid.Column="1" Grid.Row="5">
+						<Grid ColumnDefinitions="*,*"
+							  HorizontalAlignment="Stretch"
+							  VerticalAlignment="Center"
+							  Grid.Column="1" Grid.Row="6">
 							<Button Grid.Column="0"  CornerRadius="6,6,6,6" Height="40"
 									Content="{icons:MaterialIconExt Kind=Cached,  Size=40}"
-									Margin="3,10,0,0" Command="{Binding SpindleResetCommand }" />
-							<TextBlock Text="{Binding RPM, StringFormat={}%{0}}"  Margin="3,15,5,0"
-									   TextAlignment="Left" FontSize="22"  Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+									Margin="5,10,0,0"
+									Command="{Binding SpindleResetCommand }" />
+							<TextBlock Grid.Column="1"  Text="{Binding RPM, StringFormat={}%{0}}"
+									   Margin="5,10,5,0"
+									   TextAlignment="Left" FontSize="22"
+
+									   HorizontalAlignment="Left"
+									   VerticalAlignment="Center"/>
 						</Grid>
-						<Button Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6"  CornerRadius="6,6,6,6" Height="40"
-								Content="Set Spindle Speed" FontSize="24"
-								Margin="5,15,5,0" Command="{Binding SpindleSetSpeedCommand }"
-								CommandParameter="{Binding #SpindleRpm.Text}" />
+
 					</Grid>
 					<!--Spindle Control End-->
 
@@ -387,35 +466,40 @@
 						<TextBlock Grid.Row="0" Text=" Feed OverRide" TextAlignment="Center" FontSize="22"
 								   Margin="0,10,0,0"/>
 						<Grid Grid.Row="1" ColumnDefinitions="*,*"  >
-							<TextBlock Grid.Column="0"   Text="{Binding FeedRate,
-							StringFormat={}Feed: {0}}" TextAlignment="Left" Margin="5,5,0,5" FontSize="22"/>
-							<TextBlock  Grid.Column="1" TextAlignment="Left" Text="{Binding FeedOverRide, StringFormat={}%: {0}}"
-										Margin="5,5,0,5" FontSize="22" />
+							<TextBlock Grid.Column="0"
+									   Text="{Binding FeedRate,StringFormat={}Feed: {0}, FallbackValue=0}"
+									   TextAlignment="Left"
+									   Margin="5,0,0,5"
+									   FontSize="22"/>
+							<TextBlock  Grid.Column="1" TextAlignment="Left"
+										Text="{Binding FeedOverRide, StringFormat={}%: {0},FallbackValue=0}"
+										Margin="5,0,0,0"
+										FontSize="22" />
 						</Grid>
-						<Grid Grid.Row="2" Margin="0,8,0,0" ColumnDefinitions="*,*,*">
-							<Button Grid.Column="0" Margin="5,0,3,0" VerticalAlignment="Stretch"
+						<Grid Grid.Row="2" Margin="0,10,0,0" ColumnDefinitions="*,*,*">
+							<Button Grid.Column="0" Margin="5,0,5,0" VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=PlusThick,  Size=50}"
 									Height="45" Command="{Binding FeedOrPlus }"></Button>
-							<Button Grid.Column="1" Margin="5,0,3,0" VerticalAlignment="Stretch"
+							<Button Grid.Column="1" Margin="5,0,5,0" VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=MinusThick, Size=45}"
 									Height="45" Command="{Binding FeedOrMinus}" ></Button>
-							<Button Grid.Column="2" Margin="5,0,3,0" VerticalAlignment="Stretch"
+							<Button Grid.Column="2" Margin="5,0,5,0" VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=Cached,  Size=45}"
 									Height="45" Command="{Binding FeedOrReset}" ></Button>
 						</Grid>
-						<Grid Grid.Row="3" Margin="0,15,0,0" ColumnDefinitions="*,*,*">
-							<Button Grid.Column="0" Margin="5,0,3,0" VerticalAlignment="Stretch"
+						<Grid Grid.Row="3" Margin="0,10,0,0" ColumnDefinitions="*,*,*">
+							<Button Grid.Column="0" Margin="5,0,5,0" VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center" Content="{icons:MaterialIconExt Kind=MinusThick,  Size=50}"
 									Height="45" Command="{Binding RapidOrMediumCommand}" ></Button>
-							<Button Grid.Column="1" Margin="5,0,3,0" VerticalAlignment="Stretch"
+							<Button Grid.Column="1" Margin="5,0,5,0" VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=MinusThick,  Size=45}"
 									Height="45" Command="{Binding RapidOrFineCommand}" ></Button>
-							<Button Grid.Column="2" Margin="5,0,3,0" VerticalAlignment="Stretch"
+							<Button Grid.Column="2" Margin="5,0,5,0" VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"  Content="{icons:MaterialIconExt Kind=Cached,  Size=45}"
 									Height="45" Command="{Binding ResetRapidCommand}" ></Button>
@@ -440,7 +524,7 @@
 																	   MachineSettings="{Binding MachineSettings}"
 																	   WorkCoordinateOffset="{Binding WorkCoordinateOffset}"/>
 
-								<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0" 
+								<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
 										HorizontalAlignment="Stretch" IsVisible="{Binding #HomeTab.IsSelected}"
 										Background="Transparent" VerticalAlignment="Stretch">
 									<views:JobButtonView DataContext="{Binding JobViewModel}"/>
@@ -461,43 +545,43 @@
 					<!-- Center Content Control JobViewModel END -->
 
 					<!--Header Macro Button Template -->
-					<Grid RowDefinitions="Auto"  
-                          ColumnDefinitions="Auto,*" 
-                          HorizontalAlignment="Stretch"  
-                          VerticalAlignment="Top">
-						 <Label Grid.Column="0" 
-                                Margin="225,0,0,0" 
-                                Content="MACROS:" 
-								HorizontalAlignment="Right"
-								VerticalAlignment="Bottom"
-                                HorizontalContentAlignment="Center" 
-                                VerticalContentAlignment="Bottom"
-                                FontSize="{DynamicResource BaseFontSize}"
-                                IsVisible="{Binding MacroViewModel.MacroList.Count }"/>
-                            <ItemsRepeater Grid.Column="1" x:Name="MacroRepeater" 
-                                           HorizontalAlignment="Left"  
-                                           VerticalAlignment="Stretch"
-                                           ItemsSource="{Binding MacroViewModel.MacroList}"
-                                           Margin="0,0">
-								<ItemsRepeater.Layout>
-									<StackLayout
-									Orientation="Horizontal" Spacing="10"/>
-								</ItemsRepeater.Layout>
-								<ItemsRepeater.ItemTemplate>
-									<DataTemplate>
-										<Button Content="{Binding   Path=Id}" 
-                                                Width="110" Height="40" 
-                                                HorizontalAlignment="Left"
-												VerticalAlignment="Bottom"
-												CornerRadius="6,6,0,0"
-                                                Margin="0,0,0,0"
-												CommandParameter="{Binding  Id}" 
-                                                FontSize="{DynamicResource BaseFontSize}"
-												Command="{Binding #MacroRepeater.((viewModels:MainViewModel)DataContext).MacroViewModel.RunMacroCommand}">
-										</Button>
-									</DataTemplate>
-								</ItemsRepeater.ItemTemplate>
-							</ItemsRepeater>
+					<Grid RowDefinitions="Auto"
+						  ColumnDefinitions="Auto,*"
+						  HorizontalAlignment="Stretch"
+						  VerticalAlignment="Top">
+						<Label Grid.Column="0"
+							   Margin="225,0,0,0"
+							   Content="MACROS:"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Bottom"
+							   HorizontalContentAlignment="Center"
+							   VerticalContentAlignment="Bottom"
+							   FontSize="{DynamicResource BaseFontSize}"
+							   IsVisible="{Binding MacroViewModel.MacroList.Count }"/>
+						<ItemsRepeater Grid.Column="1" x:Name="MacroRepeater"
+									   HorizontalAlignment="Left"
+									   VerticalAlignment="Stretch"
+									   ItemsSource="{Binding MacroViewModel.MacroList}"
+									   Margin="0,0">
+							<ItemsRepeater.Layout>
+								<StackLayout
+								Orientation="Horizontal" Spacing="10"/>
+							</ItemsRepeater.Layout>
+							<ItemsRepeater.ItemTemplate>
+								<DataTemplate>
+									<Button Content="{Binding   Path=Id}"
+											Width="110" Height="40"
+											HorizontalAlignment="Left"
+											VerticalAlignment="Bottom"
+											CornerRadius="6,6,0,0"
+											Margin="0,0,0,0"
+											CommandParameter="{Binding  Id}"
+											FontSize="{DynamicResource BaseFontSize}"
+											Command="{Binding #MacroRepeater.((viewModels:MainViewModel)DataContext).MacroViewModel.RunMacroCommand}">
+									</Button>
+								</DataTemplate>
+							</ItemsRepeater.ItemTemplate>
+						</ItemsRepeater>
 					</Grid>
 				</Grid>
 			</Border>

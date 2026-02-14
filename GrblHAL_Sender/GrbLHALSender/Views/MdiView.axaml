@@ -16,7 +16,7 @@
 				FontSize="18" HorizontalAlignment ="Stretch" 
                VerticalAlignment="Stretch" />
 		<TextBox    Name="MdiTextBox" Grid.Row="1"  FontSize="26"  Height="50"
-					AcceptsReturn="True"
+                    CaretIndex="{Binding CaretIndex}"
 					TextWrapping="Wrap"
 					VerticalContentAlignment="Bottom"
 					HorizontalContentAlignment="Left"

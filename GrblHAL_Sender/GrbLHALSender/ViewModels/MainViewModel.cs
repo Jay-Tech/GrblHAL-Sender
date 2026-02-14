@@ -249,7 +249,7 @@ public class MainViewModel : ViewModelBase
     {
         get => _callBackText;
         set => this.RaiseAndSetIfChanged(ref _callBackText, value);
-    }
+    } 
 
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
@@ -604,6 +604,8 @@ public class MainViewModel : ViewModelBase
             SetTool(value);
         }
     }
+
+    public double SpindleSetSpeed { get; set; }
 
     private void SetTool(string tool)
     {
