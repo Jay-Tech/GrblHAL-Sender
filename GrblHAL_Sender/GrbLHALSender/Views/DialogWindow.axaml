@@ -3,6 +3,6 @@
         x:Class="GrbLHALSender.Views.DialogWindow"
         WindowStartupLocation="CenterOwner"
         CanResize="True"
-        MinWidth="400" MinHeight="300">
+        MinWidth="400" MinHeight="260">
     <ContentPresenter x:Name="DialogContent" />
 </Window>
