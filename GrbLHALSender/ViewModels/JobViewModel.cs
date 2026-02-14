@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -109,6 +110,17 @@ namespace GrbLHALSender.ViewModels
         public void FileComplete(List<GCodeLine> gCodeJob)
         {
             var builder = new ToolpathBuilder();
+
+            // Use machine rapid rates from $110/$111/$112 if available, fallback to 5000 mm/min
+            var machine = _commsManager.MachineData;
+            if (machine != null)
+            {
+                var rapids = new[] { machine.XRapid, machine.YRapid, machine.ZRapid };
+                var validRapids = rapids.Where(r => r > 0).ToArray();
+                if (validRapids.Length > 0)
+                    builder.RapidRate = (float)validRapids.Min();
+            }
+
             var toolpath = builder.BuildToolpath(gCodeJob);
 
             Dispatcher.UIThread.Invoke((() =>
