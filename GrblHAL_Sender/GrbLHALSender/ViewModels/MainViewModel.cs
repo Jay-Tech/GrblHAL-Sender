@@ -497,15 +497,16 @@ public class MainViewModel : ViewModelBase
         JogStep = JogStepList[^1];
         JogRate = JogRateList[^1];
         ToolList.AddRange(_config.ToolList.Tools);
+        AtcEnabled = _config.AtcConfig.EnableAtc;
         TlrCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.TlrMacroName);
         if (TlrCommandEnabled)
         {
-            _tlrMacro = _config.AtcConfig.TlrMacroName;
+            _tlrMacro = _config.AtcConfig.TlrMacroName ??" ";
         }
         UnloadToolCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.UnloadToolMacroName);
         if (UnloadToolCommandEnabled)
         {
-            _unloadToolMacro = _config.AtcConfig.UnloadToolMacroName;
+            _unloadToolMacro = _config.AtcConfig.UnloadToolMacroName ?? "";
         }
     }
     private void Wcs(string command)

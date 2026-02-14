@@ -576,7 +576,6 @@
 								Margin="5,10,5,0"
 								FontSize="{DynamicResource BaseFontSize}"
 								HorizontalAlignment="Stretch" Command="{Binding SetTlrCommand }"
-								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
 						<Button Grid.Column="1" Grid.Row="2" Height="45"
 								IsEnabled="{Binding UnloadToolCommandEnabled}"
@@ -584,7 +583,6 @@
 								Margin="5,10,5,0"
 								FontSize="{DynamicResource BaseFontSize}"
 								HorizontalAlignment="Stretch" Command="{Binding UnloadToolCommand }"
-								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
 
 					</Grid>
