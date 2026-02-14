@@ -4,6 +4,7 @@ using ReactiveUI;
 using System.Windows.Input;
 using Avalonia.Xaml.Interactivity;
 using GrbLHALSender.Communication;
+using Silk.NET.Vulkan;
 
 namespace GrbLHALSender.ViewModels
 {
@@ -12,10 +13,17 @@ namespace GrbLHALSender.ViewModels
     {
         public event Action<string> MidiTextCommitted;
         private string _mdiText;
+        private int _caretIndex;
+
         public string MdiText
         {
             get => _mdiText;
             set => this.RaiseAndSetIfChanged(ref _mdiText, value);
+        }
+        public int CaretIndex
+        {
+            get => _caretIndex;
+            set => this.RaiseAndSetIfChanged(ref _caretIndex, value);
         }
         public ICommand KeyPressCommand { get; }
         public ICommand MdiTextCommand { get; }
@@ -55,7 +63,11 @@ namespace GrbLHALSender.ViewModels
             }
 
             MdiText += text;
+            CaretIndex = MdiText.Length;
         }
+
+       
+
         private void CommitMdiText(string command)
         {
             MidiTextCommitted?.Invoke(command);
