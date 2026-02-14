@@ -60,6 +60,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<MacroViewModel>();
         collection.AddTransient<ConnectionViewModel>();
         collection.AddTransient<DialogViewModel>();
+        collection.AddTransient<MdiViewModel>();
     }
 
 }

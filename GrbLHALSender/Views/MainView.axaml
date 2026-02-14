@@ -9,7 +9,7 @@
 			 xmlns:controls1="clr-namespace:GrbLHALSender.Controls"
 			 xmlns:behaviors="clr-namespace:GrbLHALSender.Behaviors"
 			 xmlns:gcodeRenderControl="clr-namespace:GrbLHALSender.Views.GcodeRenderControl"
-			 d:DesignHeight="1080" d:DesignWidth="1920"
+			  d:DesignWidth="1920" d:DesignHeight="1080"
 			 x:Class="GrbLHALSender.Views.MainView"
 			 x:DataType="viewModels:MainViewModel">
 
@@ -49,7 +49,8 @@
 					   IsVisible="{Binding Connected}"></Label>
 
 
-				<ItemsRepeater Grid.Column="6" ClipToBounds="True"  HorizontalAlignment="Stretch"  Margin="50,0,50,0" VerticalAlignment="Stretch" ItemsSource="{Binding SignalList}">
+				<ItemsRepeater Grid.Column="6" ClipToBounds="True"  HorizontalAlignment="Stretch"  Margin="50,0,50,0" 
+                               VerticalAlignment="Stretch" ItemsSource="{Binding SignalList}">
 					<ItemsRepeater.Layout>
 						<StackLayout Orientation="Horizontal" Spacing="3"/>
 					</ItemsRepeater.Layout >
@@ -78,7 +79,9 @@
 		<!-- End Header-->
 
 		<!-- DataTemplate Axis Control-->
-		<Border  Name="MainControlBorder" Margin="1,38,0,5" VerticalAlignment="Stretch"
+		<Border  Name="MainControlBorder" Margin="2,40,0,0" 
+				 MaxWidth="265"
+                 VerticalAlignment="Stretch"
 				 BorderThickness="1" DockPanel.Dock="Left">
 			<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
 				<Button FontSize="20" CornerRadius="6" Grid.Row="0" Height="40" Content="Home All" HorizontalAlignment="Stretch"
@@ -130,101 +133,8 @@
 				</Grid>
 
 				<!--MDI-->
-				<Grid Grid.Row="4" RowDefinitions="*,*,*" >
-					<Label  Content="MDI" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-							FontSize="18" HorizontalAlignment ="Stretch" VerticalAlignment="Stretch" Height="30"></Label>
-					<AutoCompleteBox  Name="MdiTextBox" Grid.Row="1"  FontSize="20"  Height="50" MaxDropDownHeight="300"
-									  HorizontalAlignment ="Stretch"  VerticalAlignment="Stretch" Text="{Binding MdiText}">
-						<AutoCompleteBox.ItemTemplate>
-							<DataTemplate>
-								<TextBox Name="TB" IsReadOnly="False" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-										 Text="{Binding #MdiTextBox.Text}"/>
-							</DataTemplate>
-						</AutoCompleteBox.ItemTemplate>
-					</AutoCompleteBox>
-
-					<Button Grid.Row="2"  CornerRadius="6" FontSize="20" Content="Send"  Height="45"
-							Command="{Binding MdiTextCommand}"
-							CommandParameter="{Binding #MdiTextBox.Text}"
-							HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Button>
-				</Grid>
-				<UniformGrid x:Name="keyP" Grid.Row="5" Columns="5" Rows="5" Margin="0,3,0,5"
-							 HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
-					<Button Classes="h1"  Content="7"
-							CommandParameter="7"
-							Command="{Binding KeyPressCommand}"> </Button>
-					<Button Classes="h1" Content="8"
-							CommandParameter="8"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="9" CommandParameter="9"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="G"
-							CommandParameter="G"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="M"
-							CommandParameter="M"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="4"
-							CommandParameter="4"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="5"
-							CommandParameter="5"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="6"
-							CommandParameter="6"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="-"
-							CommandParameter="-"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="X"
-							CommandParameter="X"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="1"
-							CommandParameter="1"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="2"
-							CommandParameter="2"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="3"
-							CommandParameter="3"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="."
-							CommandParameter="."
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="Y"
-							CommandParameter="Y"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="$"
-							CommandParameter="$"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="0"
-							CommandParameter="0"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="="
-							CommandParameter="="
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="T"
-							CommandParameter="T"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="Z"
-							CommandParameter="Z"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="Spc"
-							CommandParameter="Spc"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="Del"
-							CommandParameter="Del"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="Ent"
-							CommandParameter="Ent"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="H"
-							CommandParameter="H"
-							Command="{Binding KeyPressCommand}"/>
-					<Button Classes="h1" Content="F"
-							CommandParameter="F"
-							Command="{Binding KeyPressCommand}"/>
-				</UniformGrid>
+				
+				<views:MdiView Grid.Row="4" DataContext="{Binding MdiViewModel}"></views:MdiView>
 			</Grid>
 		</Border>
 
@@ -232,16 +142,19 @@
 
 		<!-- Jog Control Right Section-->
 		<Border DockPanel.Dock="Right" >
-			<Grid x:Name="Grid" Margin="0,40,5,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+			<Grid x:Name="Grid" Margin="0,40,2,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
 				  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
 				<Grid x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
 					  VerticalAlignment="Stretch" ColumnDefinitions="80,80,80,80">
 					<Label Grid.Column="0"  FontSize="24" Content="Feed" HorizontalContentAlignment="Center"
 						   HorizontalAlignment="Stretch" VerticalContentAlignment="Center" VerticalAlignment="Stretch"/>
-					<controls1:RadioToggleButton Grid.Column="1"  x:Name="ToggleButton1"  Height="45" Width="75" Content="{Binding JogRateList[0] }" Tag="{Binding }"
+					<controls1:RadioToggleButton Grid.Column="1"  x:Name="ToggleButton1"  Height="45" Width="75" 
+                                                 Content="{Binding JogRateList[0] }" 
+                                                 Tag="{Binding }"
 												 VerticalAlignment="Stretch" FontSize="20"
-												 CommandParameter="{Binding #ToggleButton1.Content}" HorizontalAlignment="Stretch"
+												 CommandParameter="{Binding #ToggleButton1.Content}" 
+                                                 HorizontalAlignment="Stretch"
 												 Command="{Binding FeedRateChangeCommand}">
 						<Interaction.Behaviors>
 							<DataTriggerBehavior Binding="{Binding  #JogFeedLabel.Content}"
@@ -253,9 +166,12 @@
 							</DataTriggerBehavior>
 						</Interaction.Behaviors>
 					</controls1:RadioToggleButton>
-					<controls1:RadioToggleButton Grid.Column="2"  x:Name="ToggleButton2"  Height="45" Width="75" Content="{Binding JogRateList[1]}" Tag="{Binding }"
+					<controls1:RadioToggleButton Grid.Column="2"  x:Name="ToggleButton2"  Height="45" Width="75" 
+                                                 Content="{Binding JogRateList[1]}" 
+                                                 Tag="{Binding }"
 												 VerticalAlignment="Stretch" FontSize="20"
-												 CommandParameter="{Binding #ToggleButton2.Content }" HorizontalAlignment="Stretch"
+												 CommandParameter="{Binding #ToggleButton2.Content }" 
+                                                 HorizontalAlignment="Stretch"
 												 Command="{Binding FeedRateChangeCommand}">
 						<Interaction.Behaviors>
 							<DataTriggerBehavior Binding="{Binding  #JogFeedLabel.Content}"
@@ -267,9 +183,11 @@
 							</DataTriggerBehavior>
 						</Interaction.Behaviors>
 					</controls1:RadioToggleButton>
-					<controls1:RadioToggleButton Grid.Column="3"  x:Name="ToggleButton3"  Height="45" Width="75" Content="{Binding JogRateList[2]}" Tag="{Binding }"
+					<controls1:RadioToggleButton Grid.Column="3"  x:Name="ToggleButton3"  Height="45" Width="75" 
+                                                 Content="{Binding JogRateList[2]}" Tag="{Binding }"
 												 VerticalAlignment="Stretch" FontSize="20"
-												 CommandParameter="{Binding  #ToggleButton3.Content}" HorizontalAlignment="Stretch"
+												 CommandParameter="{Binding  #ToggleButton3.Content}" 
+                                                 HorizontalAlignment="Stretch"
 												 Command="{Binding FeedRateChangeCommand}">
 						<Interaction.Behaviors>
 							<DataTriggerBehavior Binding="{Binding  #JogFeedLabel.Content}"

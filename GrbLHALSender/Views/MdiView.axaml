@@ -1,0 +1,111 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:DataType="vm:MdiViewModel"
+			 x:Class="GrbLHALSender.Views.MdiView">
+	<Design.DataContext>
+		<vm:MdiViewModel/>
+	</Design.DataContext>
+	<Grid  RowDefinitions="Auto,Auto,Auto,*">
+		<Label Grid.Row="0"  Content="MDI"  Height="30"
+               HorizontalContentAlignment="Center" 
+               VerticalContentAlignment="Center"
+				FontSize="18" HorizontalAlignment ="Stretch" 
+               VerticalAlignment="Stretch" />
+		<TextBox    Name="MdiTextBox" Grid.Row="1"  FontSize="26"  Height="50"
+					AcceptsReturn="True"
+					TextWrapping="Wrap"
+					VerticalContentAlignment="Bottom"
+					HorizontalContentAlignment="Left"
+					HorizontalAlignment ="Stretch"
+					VerticalAlignment="Stretch" Text="{Binding MdiText}">
+		</TextBox>
+
+		<Button Grid.Row="2"  CornerRadius="3" FontSize="22" Content="Send"  Height="45"
+				Command="{Binding MdiTextCommand}" Margin="0,5"
+				CommandParameter="{Binding MdiText}"
+				HorizontalAlignment ="Stretch" VerticalAlignment="Stretch"></Button>
+
+		<UniformGrid Grid.Row="3" x:Name="MdiGrid" Columns="5" Rows="5" Margin="0,0,0,0"
+					 HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
+			<Button Classes="h1"  Content="7"
+					CommandParameter="7"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="8"
+					CommandParameter="8"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="9"
+					CommandParameter="9"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="G"
+					CommandParameter="G"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="M"
+					CommandParameter="M"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="4"
+					CommandParameter="4"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="5"
+					CommandParameter="5"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="6"
+					CommandParameter="6"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="-"
+					CommandParameter="-"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="X"
+					CommandParameter="X"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="1"
+					CommandParameter="1"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="2"
+					CommandParameter="2"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="3"
+					CommandParameter="3"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="."
+					CommandParameter="."
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="Y"
+					CommandParameter="Y"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="$"
+					CommandParameter="$"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="0"
+					CommandParameter="0"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="="
+					CommandParameter="="
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="T"
+					CommandParameter="T"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="Z"
+					CommandParameter="Z"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="Spc"
+					CommandParameter="Spc"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="Del"
+					CommandParameter="Del"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="Ent"
+					CommandParameter="Ent"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="H"
+					CommandParameter="H"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="F"
+					CommandParameter="F"
+					Command="{Binding KeyPressCommand}"/>
+		</UniformGrid>
+	</Grid>
+</UserControl>

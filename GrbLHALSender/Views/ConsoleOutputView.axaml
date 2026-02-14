@@ -14,8 +14,7 @@
     
     <Border  HorizontalAlignment="Stretch"  VerticalAlignment="Stretch">
         <Grid RowDefinitions="*,Auto" >
-           
-            <ListBox Grid.Row="0" x:Name="LB" Width="400"  ItemsSource="{Binding ConsoleOutput}"
+            <ListBox Grid.Row="0" x:Name="ConsoleListBox"  ItemsSource="{Binding ConsoleOutput}"
                      Background="{StaticResource DarkReduceBrushAlpha }"
                      Foreground="White"
                      IsVisible="{Binding ShowConsole}"

@@ -66,6 +66,8 @@ public class MainViewModel : ViewModelBase
     public SettingsViewModel SettingsViewModel { get; set; }
     public ConnectionViewModel ConnectionViewModel { get; set; }
     public DialogViewModel DialogViewModel { get; set; }
+    public MdiViewModel MdiViewModel { get; set; }
+
     public ProbeViewModel ProbeViewModel
     {
         get => _probeViewModel;
@@ -174,7 +176,6 @@ public class MainViewModel : ViewModelBase
     public ICommand JogPosCommand { get; }
     public ICommand ClearConsoleCommand { get; }
     public ICommand ToggleRtCommand { get; }
-    public ICommand MdiTextCommand { get; }
     public ICommand WcsCommand { get; }
     public ICommand ToolSelectedCommand { get; }
     public ICommand FeedRateChangeCommand { get; }
@@ -252,7 +253,8 @@ public class MainViewModel : ViewModelBase
 
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
-        ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel,DialogViewModel dialogViewModel)
+        ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel,DialogViewModel dialogViewModel,
+        MdiViewModel mdiViewModel)
     {
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
@@ -264,6 +266,8 @@ public class MainViewModel : ViewModelBase
         _config = _configManager.LoadConfig();
         ConnectionViewModel = connectionViewModel;
         DialogViewModel = dialogViewModel;
+        MdiViewModel = mdiViewModel;
+        MdiViewModel?.MidiTextCommitted += MainViewModel_MidiTextCommitted;
         ConnectionViewModel.LoadFromConfig(_config);
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
@@ -282,12 +286,10 @@ public class MainViewModel : ViewModelBase
         ClearAlarmCommand = ReactiveCommand.Create(ClearAlarm);
         ClearConsoleCommand = ReactiveCommand.Create(ClearConsole);
         ToggleRtCommand = ReactiveCommand.Create(ToggleConsoleRt);
-        MdiTextCommand = ReactiveCommand.Create<string>(MDIText);
         WcsCommand = ReactiveCommand.Create<string>(Wcs);
         ToolSelectedCommand = ReactiveCommand.Create<int>(ToolSelected);
         DoubleTapCommand = ReactiveCommand.Create<object>(DoubleTap);
         HideBoxCommand = ReactiveCommand.Create<object>(HideToolList);
-        KeyPressCommand = ReactiveCommand.Create<string>(KeyPressed);
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
         FocusedCommand = ReactiveCommand.Create<object>(FocusTextInput);
@@ -346,6 +348,11 @@ public class MainViewModel : ViewModelBase
         {
 
         }
+    }
+
+    private void MainViewModel_MidiTextCommitted(string command)
+    {
+        SendCommand(command);
     }
 
     private void SetSelectedTool(int tool)
@@ -422,37 +429,7 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand($"{GrblHalConstants.SpindleCw}{rpm}");
     }
-    private void KeyPressed(string key)
-    {
-        string text;
-        switch (key)
-        {
-            case "Ent":
-                text = "\r\n";
-                break;
-            case "Spc":
-                text = " ";
-                break;
-            case "Del":
-                {
-                    if (MdiText.EndsWith("\r\n"))
-                    {
-                        MdiText = MdiText.TrimEnd();
-                        return;
-                    }
-
-                    if (MdiText.Length >= 1)
-                        MdiText = MdiText.Remove(MdiText.Length - 1);
-                    return;
-
-                }
-            default:
-                text = key;
-                break;
-        }
-
-        MdiText += text;
-    }
+    
 
     private void FocusTextInput(object obj)
     {
@@ -506,15 +483,11 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand(command);
     }
-    private void SendCommand(string command)
+    public void SendCommand(string command)
     {
         if (string.IsNullOrEmpty(command)) return;
         ConsoleOutput.Add(command);
         _commManager.SendCommand(command);
-    }
-    private void MDIText(string command)
-    {
-        SendCommand(command);
     }
     private void DoubleTap(object p)
     {
