@@ -571,17 +571,19 @@
 								VerticalAlignment="Stretch"/>
 						<Button Grid.Column="0" Grid.Row="2"
 								Height="45" CornerRadius="6"
+                                IsEnabled="{Binding TlrCommandEnabled}"
 								Content="TLR"
 								Margin="5,10,5,0"
 								FontSize="{DynamicResource BaseFontSize}"
-								HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
+								HorizontalAlignment="Stretch" Command="{Binding SetTlrCommand }"
 								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
 						<Button Grid.Column="1" Grid.Row="2" Height="45"
+								IsEnabled="{Binding UnloadToolCommandEnabled}"
 								CornerRadius="6" Content="Unload"
 								Margin="5,10,5,0"
 								FontSize="{DynamicResource BaseFontSize}"
-								HorizontalAlignment="Stretch" Command="{Binding ToolSelectedCommand }"
+								HorizontalAlignment="Stretch" Command="{Binding UnloadToolCommand }"
 								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
 
@@ -638,7 +640,7 @@
 
 
 						<TextBlock  Grid.Column="1"
-									Text="{Binding RPM, StringFormat={}RPM:{0}, FallbackValue=0}"
+									Text="{Binding ActulRPM, StringFormat={}RPM:{0}, FallbackValue=0}"
 									Margin="3,10,3,0"
 									TextAlignment="Left"
 									FontSize="{DynamicResource DetailFontSizeLarge}" Grid.Row="3"
@@ -682,7 +684,7 @@
 									Margin="5,10,0,0"
 									Command="{Binding SpindleResetCommand }" />
 							<TextBlock Grid.Column="1"
-									   Text="{Binding RPM, StringFormat={}%{0}}"
+									   Text="{Binding ActulRPM, StringFormat={}%{0}}"
 									   Margin="5,10,5,0"
 									   TextAlignment="Left"
 									   FontSize="{DynamicResource DetailFontSizeLarge}"

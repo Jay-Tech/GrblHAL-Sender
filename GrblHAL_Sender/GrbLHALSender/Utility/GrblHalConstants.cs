@@ -58,6 +58,7 @@
         public const string SdcardUnlink = "$FD=";
         public const string SdcardDump = "$F<=";
         //  Settings
+        public const int ReportUnits = 13;
         public const int XAxisLength = 130;
         public const int YAxisLength = 131;
         public const int ZAxisLength = 132;

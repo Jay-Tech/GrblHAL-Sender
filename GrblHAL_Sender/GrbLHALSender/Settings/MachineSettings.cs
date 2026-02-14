@@ -1,4 +1,6 @@
-﻿using ReactiveUI;
+﻿using System;
+using Avalonia.Xaml.Interactions.Custom;
+using ReactiveUI;
 
 namespace GrbLHALSender.Settings
 {
@@ -7,6 +9,8 @@ namespace GrbLHALSender.Settings
         private double _zSize;
         private double _ySize;
         private double _xSize;
+        private bool _reportInMetric;
+
         // grbl setting $130, 
         public double XSize
         {
@@ -26,7 +30,17 @@ namespace GrbLHALSender.Settings
             set => this.RaiseAndSetIfChanged(ref _zSize, value);
         }
 
+        //grbl settings $13  report metric or inches
+        public bool ReportInMetric
+        {
+            get => _reportInMetric;
+            set => this.RaiseAndSetIfChanged(ref _reportInMetric, value);
+        }
 
+        public void SetIsMetric(string value)
+        {
+            ReportInMetric = value.Equals("0", StringComparison.InvariantCultureIgnoreCase);
+        }
         public void SetXBoundaries(string value)
         {
             if (double.TryParse(value, out var size))

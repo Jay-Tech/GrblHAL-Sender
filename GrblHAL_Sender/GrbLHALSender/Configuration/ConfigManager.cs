@@ -42,32 +42,6 @@ public class ConfigManager
     }
 }
 
-public class JogSpeedInformation
-{
-    public double Slow { get; set; } = 100;
-    public double Fast { get; set; } = 800;
-    public double Rapid { get; set; } = 1500;
-    public JogSpeedInformation()
-    {
-        Slow = 100;
-        Fast = 800;
-        Rapid = 1500;
-    }
-}
-public class JogDistanceInformation
-{
-    public double Fine { get; set; } = .001;
-    public double Short { get; set; } = 1;
-    public double Large { get; set; } = 10;
-
-    public JogDistanceInformation()
-    {
-        Fine = .001;
-        Short = 1;
-        Large = 10;
-    }
-}
-
 public class ToolList
 {
     public List<int> Tools { get; set; } = new()
@@ -79,7 +53,6 @@ public class ToolList
         5,
         6,
         7,
-        8,
-        9,
+        8
     };
 }
