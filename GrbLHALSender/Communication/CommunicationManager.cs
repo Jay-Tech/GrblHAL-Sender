@@ -120,7 +120,10 @@ namespace GrbLHALSender.Communication
 
         private void SendSettings()
         {
-            _grblHalSettings.SettingCollection.Sort(SortExpressionComparer<GrblHalSetting>.Ascending(s => s.GroupId));
+            _grblHalSettings.SettingCollection.Sort(
+                SortExpressionComparer<GrblHalSetting>
+                    .Ascending(s => s.GroupId)
+                    .ThenByAscending(s => s.Id));
             _machineData = new MachineSettings();
             
             _machineData.SetXBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XAxisLength)?.SettingValue??"");
