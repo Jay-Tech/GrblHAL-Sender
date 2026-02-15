@@ -136,6 +136,11 @@ namespace GrbLHALSender.ViewModels
 
         public void StartJob()
         {
+            if (JobState is JobState.Hold or JobState.Tool)
+            {
+                _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
+                return;
+            }
             ListenToState(true);
             SendJobLoop(JobState.Start);
         }
@@ -184,10 +189,7 @@ namespace GrbLHALSender.ViewModels
                 JobState = JobState.Running;
             }
             SendJobLoop(JobState);
-            //if (JobState is JobState.Hold or JobState.Tool)
-            //{
-            //     _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
-            //}
+            
         }
 
         private void ListenToState(bool b)
@@ -216,9 +218,9 @@ namespace GrbLHALSender.ViewModels
                     break;
                 case JobState.Start:
                     JobState = JobState.Start;
-
                     break;
             }
+
 
             if (JobState is JobState.Running or JobState.SendNextLine or JobState.Start)
             {

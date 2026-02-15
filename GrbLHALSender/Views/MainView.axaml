@@ -30,7 +30,7 @@
 	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="Transparent" >
 		<Border x:Name="HeaderBorder" Grid.Row="0"  Grid.ColumnSpan="3" Height="45" BorderThickness="1"  >
 			<!--Connect, WCS, Tool-->
-			<Grid ColumnDefinitions="125,155,150,150,125,150,*,200,110">
+			<Grid ColumnDefinitions="125,125,150,150,155,150,*,200,110">
 				<StackPanel  Grid.Column="0" Orientation="Horizontal" >
 					<Button  Margin="3,0,0,0"
 							 HorizontalAlignment="Left"
@@ -56,33 +56,33 @@
 					   Margin="10,0,0,0"
 					   HorizontalAlignment="Left"
 					   VerticalAlignment="Center"
-					   Content="{Binding State.GrblHalState}"  ></Label>
+					   Content="{Binding State.GrblHalState}" />
 				<Label Grid.Column="2" FontSize="{DynamicResource BaseFontSize}"
 					   Margin="5,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding State.WCS,
 					   StringFormat={}WCS:{0}}"
-					   IsVisible="{Binding Connected}"></Label>
+					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="3" FontSize="{DynamicResource BaseFontSize}"
 					   Margin="5,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding State.Tool, StringFormat={} Tool:{0}}"
-					   IsVisible="{Binding Connected}"></Label>
+					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="4" x:Name="JogStepLabel"
 					   FontSize="{DynamicResource BaseFontSize}"
 					   Margin="5,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding JogStep, StringFormat={} Step:{0}}"
-					   IsVisible="{Binding Connected}"></Label>
+					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="5" FontSize="{DynamicResource BaseFontSize}"
 					   Margin="5,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left" x:Name="JogFeedLabel"
 					   Content="{Binding JogRate, StringFormat={} Feed:{0}}"
-					   IsVisible="{Binding Connected}"></Label>
+					   IsVisible="{Binding Connected}"/>
 
 
 				<ItemsRepeater Grid.Column="6" ClipToBounds="True"
@@ -159,13 +159,14 @@
 								VerticalAlignment="Center"
 								HorizontalAlignment="Stretch"
 								Command="{Binding HomeCommand}"/>
-						<Label Grid.Column="1" Classes.active="{Binding HomeState}"
+						<Label Grid.Column="1" Grid.Row="0" 
+                               Classes.active="{Binding HomeState}"
 							   Classes.inactive="{Binding !HomeState, FallbackValue=true}"
 							   HorizontalContentAlignment="Center"
 							   VerticalContentAlignment="Center"
-							   Grid.Row="0" HorizontalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
 							   CornerRadius="0,3,3,0"
-							   VerticalAlignment="Center"
 							   Width="10"
 							   Height="40">
 						</Label>
@@ -308,6 +309,12 @@
 										HorizontalAlignment="Stretch" IsVisible="{Binding #HomeTab.IsSelected}"
 										Background="Transparent" VerticalAlignment="Stretch">
 									<views:JobButtonView DataContext="{Binding JobViewModel}"/>
+								</Border>
+
+								<Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
+										HorizontalAlignment="Right" VerticalAlignment="Stretch"
+										IsVisible="{Binding JobViewModel.ShowGCodeConsole}">
+									<views:GcodeOutputView DataContext="{Binding JobViewModel}" />
 								</Border>
 
 								<Border Grid.Row="2" Grid.ColumnSpan="3" Grid.Column="0"
@@ -600,7 +607,7 @@
 								   CornerRadius="0,3,3,0"
 								   VerticalAlignment="Stretch"
 								   Width="10"
-								   Height="44"/>
+								   Height="45"/>
 						</Grid>
 						<Button Grid.Column="1" Grid.Row="2"
 								Height="45"
