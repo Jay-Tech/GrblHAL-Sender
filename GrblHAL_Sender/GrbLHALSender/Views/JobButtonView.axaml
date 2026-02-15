@@ -42,7 +42,7 @@
                 Content="Stop"
                 Command="{Binding StopJobCommand}"/>
 		<Button Grid.Row="0" Grid.Column="3"
-                Content="Pause"
+                Content="Hold"
                 Command="{Binding PauseJobCommand}"/>
 		<Button Grid.Row="0" Grid.Column="4"
                 Content="Start"

@@ -30,6 +30,25 @@ namespace GrbLHALSender.ViewModels
         private bool _fileLoaded;
         private string _fileName;
         private ToolpathData? _toolpathData;
+        private string _estimatedTime;
+        private string _runTime;
+        private bool _jobRunning;
+        private CancellationTokenSource? _cancelToken;
+
+        // Character-counting streaming protocol:
+        // grblHAL reports its serial RX buffer size via $I+ (OPT line).
+        // We track how many bytes are "in-flight" (sent but not yet acked).
+        // Each line costs: text.Length + 1 (\r terminator added by WriteCommand).
+        // Each "ok" response frees the bytes for the oldest in-flight line.
+        // Streaming is EVENT-DRIVEN: OnCommandAck directly calls FillBuffer().
+        private const int DefaultRxBufferSize = 128;
+        private int _rxBufferSize = DefaultRxBufferSize;
+        private int _rxBufferUsed;
+        private int _pendingLine;  // Next line awaiting "ok" acknowledgment
+        private int _ackPending;   // Number of unacknowledged commands
+        private readonly Queue<int> _lineLengths = new(); // byte length of each in-flight line
+        private readonly object _bufferLock = new();
+        private string _holdButtonText;
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
@@ -40,8 +59,7 @@ namespace GrbLHALSender.ViewModels
         public ICommand CloseFilesCommand { get; }
         public ICommand PauseJobCommand { get; }
         public ICommand StopJobCommand { get; }
-        private string _estimatedTime;
-        private string _runTime;
+
         public ObservableCollection<GCodeLine> GCodeOutPut { get; set; }
 
         public bool FileLoaded
@@ -85,23 +103,6 @@ namespace GrbLHALSender.ViewModels
             get => _runTime;
             set => this.RaiseAndSetIfChanged(ref _runTime, value);
         }
-
-        private bool _jobRunning;
-        private CancellationTokenSource? _cancelToken;
-
-        // Character-counting streaming protocol:
-        // grblHAL reports its serial RX buffer size via $I+ (OPT line).
-        // We track how many bytes are "in-flight" (sent but not yet acked).
-        // Each line costs: text.Length + 1 (\r terminator added by WriteCommand).
-        // Each "ok" response frees the bytes for the oldest in-flight line.
-        // Streaming is EVENT-DRIVEN: OnCommandAck directly calls FillBuffer().
-        private const int DefaultRxBufferSize = 128;
-        private int _rxBufferSize = DefaultRxBufferSize;
-        private  int _rxBufferUsed;
-        private int _pendingLine;  // Next line awaiting "ok" acknowledgment
-        private int _ackPending;   // Number of unacknowledged commands
-        private readonly Queue<int> _lineLengths = new(); // byte length of each in-flight line
-        private readonly object _bufferLock = new();
 
         public bool JobRunning
         {
@@ -161,6 +162,11 @@ namespace GrbLHALSender.ViewModels
 
         public void StartJob()
         {
+            if (JobRunning && JobState == JobState.Hold || JobState == JobState.Tool)
+            {
+                ResumeJob();
+                return;
+            }
             if (JobRunning) return;
             if (GCodeOutPut.Count == 0) return;
 
@@ -209,19 +215,19 @@ namespace GrbLHALSender.ViewModels
 
         private void ResumeJob()
         {
-            if (!JobRunning || JobState != JobState.Hold) return;
+            if (!JobRunning && JobState != JobState.Hold && JobState != JobState.Tool) return;
             _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
+            FillBuffer();
+
             // Let _commsManager_OnStateReceived update to Running,
             // then refill the buffer in case acks arrived while paused
-            FillBuffer();
+
         }
 
         private void TogglePause()
         {
-            if (JobState == JobState.Hold)
-                ResumeJob();
-            else
-                PauseJob();
+            if (JobState == JobState.Hold) return;
+            PauseJob();
         }
 
         private void CloseFile()
@@ -321,8 +327,6 @@ namespace GrbLHALSender.ViewModels
             // Event-driven: immediately refill the buffer
             FillBuffer();
 
-            // Call again to ensure maximum throughput (matches reference sender)
-            //FillBuffer();
         }
 
         /// <summary>
