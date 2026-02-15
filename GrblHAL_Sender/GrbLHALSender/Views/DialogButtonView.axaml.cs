@@ -1,6 +1,8 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
 using GrbLHALSender.ViewModels;
@@ -40,6 +42,11 @@ public partial class DialogButtonView : UserControl
         return mainView?.DataContext as MainViewModel;
     }
 
+    /// <summary>
+    /// Gets the parent MainView instance.
+    /// </summary>
+    private MainView? GetMainView() => this.FindAncestorOfType<MainView>();
+
     private (Control content, double width, double height) CreateDialogContent(DialogType dialogType)
     {
         switch (dialogType)
@@ -54,8 +61,18 @@ public partial class DialogButtonView : UserControl
                 }
                 return (consoleView, 500, 600);
 
+            case DialogType.Macro:
+                var macroView = new MacroView();
+                var macroMainVm = GetMainViewModel();
+                if (macroMainVm != null)
+                {
+                    macroView.DataContext = macroMainVm.MacroViewModel;
+                    macroMainVm.MacroViewModel.DisplayMacroControl = true;
+                }
+                return (macroView, 450, 500);
+
             default:
-                // Placeholder for Probe, Macro, GCode dialogs
+                // Placeholder for Probe, GCode dialogs
                 var placeholder = new TextBlock
                 {
                     Text = $"This is the {dialogType} dialog.",
@@ -88,24 +105,58 @@ public partial class DialogButtonView : UserControl
         {
             _viewModel?.MarkDialogClosed(dialogType);
 
-            // Turn off console data flow when dialog closes
+            // Clean up state when dialogs close
             if (dialogType == DialogType.Console)
             {
                 var mainVm = GetMainViewModel();
                 if (mainVm != null)
                     mainVm.ShowConsole = false;
             }
+            else if (dialogType == DialogType.Macro)
+            {
+                var mainVm = GetMainViewModel();
+                if (mainVm != null)
+                    mainVm.MacroViewModel.DisplayMacroControl = false;
+            }
         };
 
-        // Position Console dialog in the lower-left area
-        if (dialogType == DialogType.Console && parentWindow != null)
+        // Enable virtual keyboard on double-tap for dialog TextBoxes
+        var mainView = GetMainView();
+        if (mainView != null)
         {
-            dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-            var parentPos = parentWindow.Position;
-            dialogWindow.Position = new PixelPoint(
-                parentPos.X + 270,
-                parentPos.Y + 375
-            );
+            dialogWindow.AddHandler(
+                InputElement.DoubleTappedEvent,
+                mainView.OnGlobalDoubleTapped,
+                RoutingStrategies.Bubble,
+                handledEventsToo: true);
+        }
+
+        switch (dialogType)
+        {
+            // Position Console dialog in the lower-left area
+            case DialogType.Console when parentWindow != null:
+            {
+                dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                var parentPos = parentWindow.Position;
+                dialogWindow.Position = new PixelPoint(
+                    parentPos.X + 270,
+                    parentPos.Y + 375
+                );
+                break;
+            }
+            case DialogType.Macro when parentWindow != null:
+            {
+                dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                var parentPos = parentWindow.Position;
+                dialogWindow.Position = new PixelPoint(
+                    parentPos.X + 270,
+                    parentPos.Y + 375
+                );
+                break;
+            }
+            default:
+                break;
+                //throw new ArgumentOutOfRangeException(nameof(dialogType), dialogType, null);
         }
 
         // Show non-modal, owned by parent window

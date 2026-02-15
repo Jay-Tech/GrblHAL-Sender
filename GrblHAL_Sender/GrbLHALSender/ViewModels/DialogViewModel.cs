@@ -10,7 +10,7 @@ public enum DialogType
     Console,
     Probe,
     Macro,
-    GCode
+    Utility
 }
 
 public class DialogViewModel : ViewModelBase
@@ -27,12 +27,14 @@ public class DialogViewModel : ViewModelBase
     public ICommand OpenConsoleCommand { get; }
     public ICommand OpenProbeCommand { get; }
     public ICommand OpenMacroCommand { get; }
+    public ICommand OpenUtilityCommand { get; }
 
     public DialogViewModel()
     {
         OpenConsoleCommand = ReactiveCommand.Create(() => RequestOpenDialog(DialogType.Console));
         OpenProbeCommand = ReactiveCommand.Create(() => RequestOpenDialog(DialogType.Probe));
         OpenMacroCommand = ReactiveCommand.Create(() => RequestOpenDialog(DialogType.Macro));
+        OpenUtilityCommand = ReactiveCommand.Create(() => RequestOpenDialog(DialogType.Utility));
     }
 
     private void RequestOpenDialog(DialogType dialogType)

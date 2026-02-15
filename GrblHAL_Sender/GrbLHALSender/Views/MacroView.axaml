@@ -3,7 +3,6 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
-             xmlns:behaviors="clr-namespace:GrbLHALSender.Behaviors"
              x:DataType="viewModels:MacroViewModel"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="GrbLHALSender.Views.MacroView">
@@ -12,53 +11,44 @@
         <viewModels:MacroViewModel/>
     </Design.DataContext>
     <!--Macro control Section-->
-	<Border  DockPanel.Dock="Bottom" CornerRadius="6,6,0,0" Width="410"
-			 HorizontalAlignment="Stretch" Margin="0,0,0,0" MinWidth="200" MinHeight="65"
-			 Background="Transparent"
-			 behaviors:DoubleTappedBehav.Command="{Binding DoubleMacroTapCommand}"
-			 behaviors:DoubleTappedBehav.CommandParameter="{Binding #LbMacro.IsVisible}">
-	
-		<Grid Margin="0,0,0,0" HorizontalAlignment="Stretch"
-			  Background="{Binding #TextBox.Background}" Width="400" Height="375"
-			  RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto"
-			  IsVisible="{Binding #LbMacro.IsVisible}">
-			<TextBlock Grid.Row="0" Height="30" FontSize="24" TextAlignment="Center" Text="Select Macro Name"></TextBlock>
-			<ComboBox Grid.Row="1" x:Name="LbMacro"  ItemsSource="{Binding MacroList}"
-					  VerticalAlignment="Stretch" SelectedItem="{Binding  SelectedItem}"
-					  HorizontalAlignment="Stretch" Height="45" SelectedIndex="{Binding  MacroSelectedIndex}"
-					  ScrollViewer.VerticalScrollBarVisibility="Auto" IsVisible="{Binding DisplayMacroControl}"
-					  FontSize="22"  >
+	<Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+			Background="Transparent" Padding="10">
+		<Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+			  RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto">
+			<TextBlock Grid.Row="0" Height="30" FontSize="24" TextAlignment="Center" Text="Select Macro Name" />
+			<ComboBox Grid.Row="1" x:Name="LbMacro" ItemsSource="{Binding MacroList}"
+					  VerticalAlignment="Stretch" SelectedItem="{Binding SelectedItem}"
+					  HorizontalAlignment="Stretch" Height="45" SelectedIndex="{Binding MacroSelectedIndex}"
+					  ScrollViewer.VerticalScrollBarVisibility="Auto"
+					  FontSize="22">
 				<ComboBox.ItemTemplate>
 					<DataTemplate>
-						<TextBlock  Margin="0,1"
-									Text="{Binding Id}" Height="40" FontSize="22"
-									HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  />
+						<TextBlock Margin="0,1"
+								   Text="{Binding Id}" Height="40" FontSize="22"
+								   HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 					</DataTemplate>
 				</ComboBox.ItemTemplate>
 			</ComboBox>
-			<TextBlock Grid.Row="2" Height="30" TextAlignment="Center" FontSize="24" Text="New Macro Name"></TextBlock>
-			<TextBox    Background="{Binding #Button.Background}" x:Name="TbName"
-						IsEnabled="{Binding MacroNameEnabled}"
-						Grid.Row="3"  FontSize="22" Text="{Binding   MacroName}"></TextBox>
-			<TextBlock Grid.Row="4" Height="30" TextAlignment="Center" FontSize="24" Text="Macro Code"></TextBlock>
-			<TextBox  Grid.Row="5" x:Name="TextBox" AcceptsReturn="True" FontSize="22"
-					  Text="{Binding   MacroCommandText}"/>
-			<Border Grid.Row="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-				<Grid ColumnDefinitions="*,*,*,*"  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+			<TextBlock Grid.Row="2" Height="30" TextAlignment="Center" FontSize="24" Text="New Macro Name" />
+			<TextBox x:Name="TbName"
+					 IsEnabled="{Binding MacroNameEnabled}"
+					 Grid.Row="3" FontSize="22" Text="{Binding MacroName}" />
+			<TextBlock Grid.Row="4" Height="30" TextAlignment="Center" FontSize="24" Text="Macro Code" />
+			<TextBox Grid.Row="5" x:Name="TextBox" AcceptsReturn="True" FontSize="22"
+					 Text="{Binding MacroCommandText}" />
+			<Border Grid.Row="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,5,0,0">
+				<Grid ColumnDefinitions="*,*,*" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 					<Button Grid.Column="0" Margin="1,0" Content="New"
-							Command="{Binding NewMacroCommand }"
-							FontSize="24" HorizontalAlignment="Stretch"/>
+							Command="{Binding NewMacroCommand}"
+							FontSize="24" HorizontalAlignment="Stretch" />
 					<Button Grid.Column="1" Margin="1,0" Content="Save"
 							CommandParameter="{Binding #TbName.Text}"
-							Command="{Binding SaveMacroCommand }"
-							FontSize="24" HorizontalAlignment="Stretch"/>
+							Command="{Binding SaveMacroCommand}"
+							FontSize="24" HorizontalAlignment="Stretch" />
 					<Button Grid.Column="2" x:Name="Button" Margin="1,0" Content="Delete"
 							Command="{Binding DeleteMacroCommand}"
 							CommandParameter="{Binding #LbMacro.SelectedItem}"
-							FontSize="24" HorizontalAlignment="Stretch"/>
-					<Button Grid.Column="3" x:Name="ButtonClose" Margin="1,0" Content="Close"
-							Command="{Binding CloseMacroCommand}"
-							FontSize="24" HorizontalAlignment="Stretch"/>
+							FontSize="24" HorizontalAlignment="Stretch" />
 				</Grid>
 			</Border>
 		</Grid>

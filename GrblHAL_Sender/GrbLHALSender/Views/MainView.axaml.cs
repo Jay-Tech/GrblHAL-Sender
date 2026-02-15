@@ -105,7 +105,7 @@ public partial class MainView : UserControl
         _connectionFlyout?.Hide();
     }
 
-    private void OnGlobalDoubleTapped(object? sender, TappedEventArgs e)
+    public void OnGlobalDoubleTapped(object? sender, TappedEventArgs e)
     {
         // e.Source is often the inner TextPresenter, not the TextBox itself.
         // Walk up the visual tree to find the parent TextBox.
