@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using GrbLHALSender.Communication;
+using GrbLHALSender.Gamepad;
 
 namespace GrbLHALSender.Configuration;
 
@@ -18,6 +19,7 @@ public class GHalSenderConfig
     public TcpSettings TcpSettings { get; set; } = new(23, "192.168.5.1" );
     public WebSocketSettings WebSocketSettings { get; set; } = new(81, "192.168.5.1");
     public AtcConfig AtcConfig { get; set; } = new();
+    public GamepadConfig GamepadConfig { get; set; } = new();
     public ToolList ToolList { get; set; } = new();
     public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new();
     public double[] JogDistanceMetric { get; set; } =
@@ -29,9 +31,9 @@ public class GHalSenderConfig
 
     public double[] JogSpeedMetric { get; set; } =
     [
-        100,
-        800,
-        1500,
+        200,
+        2000,
+        4000,
     ];
 
     public double[] JogDistanceImperial { get; set; } =
@@ -43,7 +45,7 @@ public class GHalSenderConfig
 
     public double[] JogSpeedImperial { get; set; } =
     [
-        100,
+        50,
         200,
         400,
     ];

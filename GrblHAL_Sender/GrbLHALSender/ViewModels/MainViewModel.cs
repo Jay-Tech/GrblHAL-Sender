@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using DynamicData;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
+using GrbLHALSender.Gamepad;
 using GrbLHALSender.Gcode;
 using GrbLHALSender.Settings;
 using GrbLHALSender.States;
@@ -64,6 +65,7 @@ public class MainViewModel : ViewModelBase
     private bool _atcEnabled;
     private string _unloadToolMacro;
     private string _tlrMacro;
+    private readonly GamepadService _gamepadService;
 
     public ObservableCollection<Signal> SignalList
     {
@@ -266,7 +268,7 @@ public class MainViewModel : ViewModelBase
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
-        MdiViewModel mdiViewModel)
+        MdiViewModel mdiViewModel, GamepadService gamepadService)
     {
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
@@ -347,6 +349,11 @@ public class MainViewModel : ViewModelBase
         ];
 
         SetUpUiSettings();
+
+        _gamepadService = gamepadService;
+        _gamepadService.SetViewModel(this);
+        _gamepadService.GamepadStatusMessage += (_, msg) => ConsoleOutput.Add($"[Gamepad] {msg}");
+        _gamepadService.Initialize(_config.GamepadConfig);
 
         if (!_config.AutoConnect) return;
         try
@@ -552,6 +559,7 @@ public class MainViewModel : ViewModelBase
     }
     private void UIThread_ShutdownStarted(object? sender, EventArgs e)
     {
+        _gamepadService?.Stop();
         _commManager.ShutDown();
     }
     private void _commManager_OnConsoleLogReceived(object? sender, string e)
@@ -619,9 +627,9 @@ public class MainViewModel : ViewModelBase
 
     private void SetFeedAndSpeeds(RealTImeState rt)
     {
-        if (int.TryParse(rt.FeedRate, out var aSpeed))
+        if (int.TryParse(rt.FeedRate, out var feedRate))
         {
-            FeedRate = aSpeed;
+            FeedRate = feedRate;
         }
         if (int.TryParse(rt.FeedOverRide, out var fo))
         {
