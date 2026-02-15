@@ -1,17 +1,20 @@
-﻿using System.Collections.ObjectModel;
-using GrbLHALSender.Communication;
+﻿using GrbLHALSender.Communication;
 using GrbLHALSender.Gamepad;
+using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
 
 namespace GrbLHALSender.Configuration;
 
 public class GHalSenderConfig
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ConnectionType
     {
         Serial,
         Tcp, 
         WebSocket
     }
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public ConnectionType Connection { get; set; } = ConnectionType.Tcp;
     public bool UseMetric { get; set; } = true;
     public bool AutoConnect { get; set; } = false;
@@ -31,9 +34,9 @@ public class GHalSenderConfig
 
     public double[] JogSpeedMetric { get; set; } =
     [
-        200,
-        2000,
-        4000,
+        250,
+        2500,
+        5000,
     ];
 
     public double[] JogDistanceImperial { get; set; } =
@@ -45,8 +48,8 @@ public class GHalSenderConfig
 
     public double[] JogSpeedImperial { get; set; } =
     [
-        50,
-        200,
-        400,
+        10,
+        150,
+        300,
     ];
 }
