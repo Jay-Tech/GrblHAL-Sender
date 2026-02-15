@@ -24,7 +24,7 @@
 		<Style Selector="Label.active">
 			<Setter Property="Background" Value="PaleGreen" />
 		</Style>
-        
+
 	</UserControl.Styles>
 	<!--Header-->
 	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="Transparent" >
@@ -95,15 +95,15 @@
 					</ItemsRepeater.Layout >
 					<ItemsRepeater.ItemTemplate>
 						<DataTemplate>
-							<Label x:Name="" 
-                                   VerticalAlignment="Center" 
-                                   ClipToBounds="True"
-								   Foreground="White" 
-                                   VerticalContentAlignment="Center"
-								   HorizontalAlignment="Center" 
-                                   CornerRadius="45"
+							<Label x:Name=""
+								   VerticalAlignment="Center"
+								   ClipToBounds="True"
+								   Foreground="White"
+								   VerticalContentAlignment="Center"
+								   HorizontalAlignment="Center"
+								   CornerRadius="45"
 								   HorizontalContentAlignment="Center"
-                                   Margin="3 0"
+								   Margin="3 0"
 								   Height="30" Width="30" FontWeight="Bold"
 								   FontSize="{DynamicResource DetailFontSize}"
 								   Content="{Binding Path=Id }"
@@ -125,8 +125,8 @@
 						Margin="2,0"
 						Background ="Red" Width="100">
 				</Button>
-				<Button Grid.Column="8" Height="40" 
-                        Content="Unlock"
+				<Button Grid.Column="8" Height="40"
+						Content="Unlock"
 						FontSize="{DynamicResource BaseFontSize}"
 						Margin="2,0"
 						VerticalAlignment="Center"
@@ -140,17 +140,17 @@
 		<!-- START Content Grid-->
 		<Grid Grid.Row="1" x:Name="ContentGrid" ColumnDefinitions="Auto,*,Auto">
 			<!-- START Left Controls-->
-			<Border  Grid.Column="0"  
-                     Name="DroBorder" 
-                     Margin="0,50,0,0"
+			<Border  Grid.Column="0"
+					 Name="DroBorder"
+					 Margin="0,50,0,0"
 					 MaxWidth="265"
 					 VerticalAlignment="Stretch"
 					 BorderThickness="1" >
 				<!--START Home Control -->
 				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
 					<Grid Grid.ColumnDefinitions="*,Auto" >
-						<Button Grid.Column="0" 
-                                FontSize="{DynamicResource BaseFontSize}"
+						<Button Grid.Column="0"
+								FontSize="{DynamicResource BaseFontSize}"
 								CornerRadius="6,0,0,6"
 								Height="40"
 								Content="Home All"
@@ -159,13 +159,13 @@
 								VerticalAlignment="Center"
 								HorizontalAlignment="Stretch"
 								Command="{Binding HomeCommand}"/>
-						<Label Grid.Column="1" Grid.Row="0" 
-                               Classes.active="{Binding HomeState}"
+						<Label Grid.Column="1" Grid.Row="0"
+							   Classes.active="{Binding HomeState}"
 							   Classes.inactive="{Binding !HomeState, FallbackValue=true}"
 							   HorizontalContentAlignment="Center"
 							   VerticalContentAlignment="Center"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"
 							   CornerRadius="0,3,3,0"
 							   Width="10"
 							   Height="40">
@@ -442,52 +442,92 @@
 						</controls1:RadioToggleButton>
 					</Grid>
 					<Grid Grid.Row="1"  ColumnDefinitions="*,*,*,*"  Grid.RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,20,0,0">
-						<Button Grid.Row="1" CornerRadius="10" Name="XDown" Height="65" Width="65"
-								Grid.Column="0"
+						<Button Grid.Row="1" Grid.Column="0"
+								CornerRadius="10"
+								Name="XDown"
+								Height="65"
+								Width="65"
 								Margin="4"
 								Command="{Binding JogNegCommand}"
-								CommandParameter="X" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
+								CommandParameter="X"
+								Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
 								Content="{icons:MaterialIconExt Kind=ArrowLeftBoldBoxOutline, Size=90}"/>
-						<Button Grid.Row="0" Name="YUp"   Height="65" Width="65"
-								Grid.Column="1"
+						<Button Grid.Row="0"  Grid.Column="1"
+								Name="YUp"
+								Height="65"
+								Width="65"
 								Margin="4"
 								Command="{Binding JogPosCommand }"
-								CommandParameter="Y" CornerRadius="10" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
+								CommandParameter="Y"
+								CornerRadius="10"
+								Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
 								Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, Size=90}"/>
-						<Button Grid.Row="1" Name="Xup" Height="65" Width="65"
-								Grid.Column="2" Margin="4"
+						<Button Grid.Row="1" Grid.Column="2"
+								Name="Xup"
+								Height="65"
+								Width="65"
+								Margin="4"
 								Command="{Binding JogPosCommand}"
-								CommandParameter= "X" CornerRadius="10" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
+								CommandParameter= "X"
+								CornerRadius="10"
+								Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
 								Content="{icons:MaterialIconExt Kind=ArrowRightBoldBoxOutline, Size=90}" />
-						<Button Grid.Row="2" Name="YDown" CornerRadius="10" Height="65" Width="65"
-								Grid.Column="1" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
+						<Button Grid.Row="2" Grid.Column="1"
+								Name="YDown"
+								CornerRadius="10"
+								Height="65"
+								Width="65"
+								Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
 								Margin="4"
 								Command="{Binding JogNegCommand}"
 								CommandParameter="Y"
 								Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline, Size=90}" />
-						<Button CornerRadius="20,20,20,20" Grid.Row="1" Name="StopAll"
-								Height="65" Width="65" Grid.Column="1"
-								Margin="4" Content="{icons:MaterialIconExt Kind=ArrowAll, Size=30}"/>
-						<Button Grid.Row="0" Name="ZUp" CornerRadius="10" Height="65" Width="65"
-								Grid.Column="3"
+						<Button Grid.Row="1" Grid.Column="1"
+								CornerRadius="20,20,20,20"
+								Name="StopAll"
+								Height="65"
+								Width="65"
+								Margin="4"
+								Content="{icons:MaterialIconExt Kind=ArrowAll, Size=30}"/>
+						<Button Grid.Row="0" Grid.Column="3"
+								Name="ZUp"
+								CornerRadius="10"
+								Height="65"
+								Width="65"
 								Margin="4"
 								Command="{Binding JogPosCommand}"
-								CommandParameter="Z" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
+								CommandParameter="Z"
+								Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
 								Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, Size=90}"/>
-						<Button Grid.Row="2" CornerRadius="10" Name="ZDown"  Height="65" Width="65"
-								Grid.Column="3"
+						<Button Grid.Row="2" 	Grid.Column="3"
+								CornerRadius="10"
+								Name="ZDown"
+								Height="65"
+								Width="65"
 								Margin="5,4,4,4"
 								Command="{Binding JogNegCommand}"
 								CommandParameter="Z" Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
 								Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline,  Size=90}"/>
 					</Grid>
-					<Grid x:Name="StepRatePanel" Grid.Row="2" Margin="0,20,0,0"   HorizontalAlignment="Stretch"
-						  VerticalAlignment="Stretch" ColumnDefinitions="80,80,80,80">
-						<Label Grid.Column="0"  FontSize="24" Content="Step" HorizontalContentAlignment="Center"
-							   HorizontalAlignment="Stretch" VerticalContentAlignment="Center" VerticalAlignment="Stretch"/>
-						<controls1:RadioToggleButton Grid.Column="1"  x:Name="StepToggleButton1"  Height="45" Width="75" Content="{Binding JogStepList[0] }"
-													 VerticalAlignment="Stretch" FontSize="20"
-													 CommandParameter="{Binding #StepToggleButton1.Content}" HorizontalAlignment="Stretch"
+					<Grid x:Name="StepRatePanel" Grid.Row="2"
+						  Margin="0,20,0,0"
+						  HorizontalAlignment="Stretch"
+						  VerticalAlignment="Stretch"
+						  ColumnDefinitions="80,80,80,80">
+						<Label Grid.Column="0"
+							   FontSize="24"
+							   Content="Step"
+							   HorizontalContentAlignment="Center"
+							   HorizontalAlignment="Stretch"
+							   VerticalContentAlignment="Center"
+							   VerticalAlignment="Stretch"/>
+						<controls1:RadioToggleButton Grid.Column="1"  x:Name="StepToggleButton1"
+													 Height="45"
+													 Width="75" Content="{Binding JogStepList[0] }"
+													 VerticalAlignment="Stretch"
+													 FontSize="20"
+													 CommandParameter="{Binding #StepToggleButton1.Content}"
+													 HorizontalAlignment="Stretch"
 													 Command="{Binding StepRateChangeCommand}">
 							<Interaction.Behaviors>
 								<DataTriggerBehavior Binding="{Binding  #JogStepLabel.Content}"
@@ -499,9 +539,15 @@
 								</DataTriggerBehavior>
 							</Interaction.Behaviors>
 						</controls1:RadioToggleButton>
-						<controls1:RadioToggleButton Grid.Column="2"  x:Name="StepToggleButton2"  Height="45" Width="75" Content="{Binding JogStepList[1]}"
-													 VerticalAlignment="Stretch" FontSize="20"
-													 CommandParameter="{Binding #StepToggleButton2.Content }" HorizontalAlignment="Stretch"
+						<controls1:RadioToggleButton Grid.Column="2"
+													 x:Name="StepToggleButton2"
+													 Height="45"
+													 Width="75"
+													 Content="{Binding JogStepList[1]}"
+													 VerticalAlignment="Stretch"
+													 FontSize="20"
+													 CommandParameter="{Binding #StepToggleButton2.Content }"
+													 HorizontalAlignment="Stretch"
 													 Command="{Binding StepRateChangeCommand}">
 							<Interaction.Behaviors>
 								<DataTriggerBehavior Binding="{Binding  #JogStepLabel.Content}"
@@ -513,9 +559,15 @@
 								</DataTriggerBehavior>
 							</Interaction.Behaviors>
 						</controls1:RadioToggleButton>
-						<controls1:RadioToggleButton Grid.Column="3"  x:Name="StepToggleButton3"  Height="45" Width="75" Content="{Binding JogStepList[2]}"
-													 VerticalAlignment="Stretch" FontSize="20"
-													 CommandParameter="{Binding  #StepToggleButton3.Content}" HorizontalAlignment="Stretch"
+						<controls1:RadioToggleButton Grid.Column="3"
+													 x:Name="StepToggleButton3"
+													 Height="45"
+													 Width="75"
+													 Content="{Binding JogStepList[2]}"
+													 VerticalAlignment="Stretch"
+													 FontSize="20"
+													 CommandParameter="{Binding  #StepToggleButton3.Content}"
+													 HorizontalAlignment="Stretch"
 													 Command="{Binding StepRateChangeCommand}">
 							<Interaction.Behaviors>
 								<DataTriggerBehavior Binding="{Binding  #JogStepLabel.Content}"
@@ -543,7 +595,6 @@
 							   VerticalContentAlignment="Center"
 							   HorizontalAlignment ="Stretch"
 							   VerticalAlignment="Stretch" ></Label>
-
 						<Button Grid.Row="1" Grid.Column="0"
 								Height="45" x:Name="SplitB"
 								Content="{Binding SelectedTool,
@@ -567,7 +618,11 @@
 										<ListBox.ItemTemplate>
 											<DataTemplate>
 												<Button Margin="0,5,0,5"
-														Name="ToolButton"  CornerRadius="3" Content="{Binding }" Height="45" Width="120"
+														Name="ToolButton"
+														CornerRadius="3"
+														Content="{Binding }"
+														Height="45"
+														Width="120"
 														Command="{Binding  $parent[Grid].((viewModels:MainViewModel)DataContext).SetToolSelectCommand}"
 														CommandParameter="{Binding #ToolButton.Content}"
 														HorizontalAlignment="Stretch"
@@ -578,7 +633,7 @@
 								</Flyout>
 							</Button.Flyout>
 						</Button>
-						<Button Grid.Row="1"   Grid.Column="1"
+						<Button Grid.Row="1" Grid.Column="1"
 								Height="45"
 								CornerRadius="6"
 								Content="Change"
@@ -590,17 +645,18 @@
 								VerticalAlignment="Stretch"/>
 						<Grid Grid.Column="0" Grid.Row="2" ColumnDefinitions="*,Auto">
 							<Button Grid.Column="0"
-							Height="45" CornerRadius="6,0,0,6"
-							IsEnabled="{Binding TlrCommandEnabled}"
-							Content="TLR"
-							Margin="5,10,0,0"
-							FontSize="{DynamicResource BaseFontSize}"
-							HorizontalAlignment="Stretch"
-							Command="{Binding SetTlrCommand }"
-							VerticalAlignment="Stretch"/>
+									Height="45"
+									CornerRadius="6,0,0,6"
+									IsEnabled="{Binding TlrCommandEnabled}"
+									Content="TLR"
+									Margin="5,10,0,0"
+									FontSize="{DynamicResource BaseFontSize}"
+									HorizontalAlignment="Stretch"
+									Command="{Binding SetTlrCommand }"
+									VerticalAlignment="Stretch"/>
 							<Label Grid.Column="1" Classes.active="{Binding TLR}"
 								   Classes.inactive="{Binding !TLR, FallbackValue=true}"
-                                   Margin="0,10,5,0"
+								   Margin="0,10,5,0"
 								   HorizontalContentAlignment="Stretch"
 								   VerticalContentAlignment="Stretch"
 								   HorizontalAlignment="Stretch"
@@ -660,7 +716,8 @@
 													 FontSize="{DynamicResource BaseFontSize}" Content ="Spindle Off"
 													 Command="{Binding SpindleOffCommand}" />
 
-						<NumericUpDown Grid.Row="3" Grid.Column="0" x:Name="SpindleRpm" FontSize="24"
+						<NumericUpDown Grid.Row="3" Grid.Column="0" x:Name="SpindleRpm" 
+                                       FontSize="24"
 									   Margin="5,10,0,0"
 									   MaxWidth="175" Increment="100"
 									   Text="{Binding CallBackText}"
@@ -668,7 +725,8 @@
 									   Value="{Binding SpindleSetRpm, FallbackValue=0}"
 									   ButtonSpinnerLocation="Right"
 									   Minimum="900" Maximum="30000"
-									   ParsingNumberStyle="AllowDecimalPoint" ClipValueToMinMax="True">
+									   ParsingNumberStyle="AllowDecimalPoint" 
+                                       ClipValueToMinMax="True">
 						</NumericUpDown>
 
 
@@ -712,7 +770,9 @@
 							  HorizontalAlignment="Stretch"
 							  VerticalAlignment="Center"
 							  Grid.Column="1" Grid.Row="6">
-							<Button Grid.Column="0"  CornerRadius="6,6,6,6" Height="40"
+							<Button Grid.Column="0"  
+                                    CornerRadius="6,6,6,6" 
+                                    Height="40"
 									Content="{icons:MaterialIconExt Kind=Cached,  Size=40}"
 									Margin="5,10,0,0"
 									Command="{Binding SpindleResetCommand }" />
@@ -730,7 +790,8 @@
 
 					<!--START OverRide Control-->
 					<Grid Grid.Row="5" RowDefinitions="Auto,Auto,Auto,Auto">
-						<Label Grid.Row="0" Content="Feed OverRide"
+						<Label Grid.Row="0" 
+                               Content="Feed OverRide"
 							   HorizontalContentAlignment="Center"
 							   VerticalContentAlignment="Center"
 							   FontSize="{DynamicResource DetailFontSize}"
@@ -747,7 +808,8 @@
 										FontSize="{DynamicResource DetailFontSizeLarge}" />
 						</Grid>
 						<Grid Grid.Row="2" Margin="0,10,0,0" ColumnDefinitions="*,*,*">
-							<Button Grid.Column="0" Margin="5,0,5,0"
+							<Button Grid.Column="0" 
+                                    Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch"
 									HorizontalContentAlignment="Center"
@@ -755,7 +817,8 @@
 									Content="{icons:MaterialIconExt Kind=PlusThick, Size=50}"
 									Height="45"
 									Command="{Binding FeedOrPlus }"/>
-							<Button Grid.Column="1" Margin="5,0,5,0"
+							<Button Grid.Column="1" 
+                                    Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch"
 									HorizontalContentAlignment="Center"
