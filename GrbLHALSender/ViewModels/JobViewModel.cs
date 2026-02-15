@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
+using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Platform.Storage;
@@ -78,10 +80,33 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _estimatedTime, value);
         }
 
-        public string RunTime   
+        public string RunTime
         {
             get => _runTime;
             set => this.RaiseAndSetIfChanged(ref _runTime, value);
+        }
+
+        private bool _jobRunning;
+        private CancellationTokenSource? _cancelToken;
+
+        // Character-counting streaming protocol:
+        // grblHAL reports its serial RX buffer size via $I+ (OPT line).
+        // We track how many bytes are "in-flight" (sent but not yet acked).
+        // Each line costs: text.Length + 1 (\r terminator added by WriteCommand).
+        // Each "ok" response frees the bytes for the oldest in-flight line.
+        // Streaming is EVENT-DRIVEN: OnCommandAck directly calls FillBuffer().
+        private const int DefaultRxBufferSize = 128;
+        private int _rxBufferSize = DefaultRxBufferSize;
+        private  int _rxBufferUsed;
+        private int _pendingLine;  // Next line awaiting "ok" acknowledgment
+        private int _ackPending;   // Number of unacknowledged commands
+        private readonly Queue<int> _lineLengths = new(); // byte length of each in-flight line
+        private readonly object _bufferLock = new();
+
+        public bool JobRunning
+        {
+            get => _jobRunning;
+            set => this.RaiseAndSetIfChanged(ref _jobRunning, value);
         }
 
         public JobViewModel(CommunicationManager manager)
@@ -92,7 +117,7 @@ namespace GrbLHALSender.ViewModels
             OpenGCodePanel = ReactiveCommand.Create(GCodeControl);
             StartJobCommand = ReactiveCommand.Create(StartJob);
             CloseFilesCommand = ReactiveCommand.Create(CloseFile);
-            PauseJobCommand = ReactiveCommand.Create(PauseJob);
+            PauseJobCommand = ReactiveCommand.Create(TogglePause);
             StopJobCommand = ReactiveCommand.Create(StopJob);
         }
 
@@ -136,30 +161,72 @@ namespace GrbLHALSender.ViewModels
 
         public void StartJob()
         {
-            if (JobState is JobState.Hold or JobState.Tool)
-            {
-                _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
-                return;
-            }
+            if (JobRunning) return;
+            if (GCodeOutPut.Count == 0) return;
+
+            _index = 0;
+            _pendingLine = 0;
+            _ackPending = 0;
+            _rxBufferUsed = 0;
+            lock (_bufferLock) { _lineLengths.Clear(); }
+
+            // Use the real RX buffer size from the controller if available
+            var reportedRxSize = _commsManager.Options?.RxBufferSize ?? 0;
+            _rxBufferSize = reportedRxSize > 0 ? reportedRxSize : DefaultRxBufferSize;
+
+            JobState = JobState.Start;
+
+            // Dispose previous token if any
+            _cancelToken?.Dispose();
+            _cancelToken = new CancellationTokenSource();
+
             ListenToState(true);
-            SendJobLoop(JobState.Start);
+            JobRunning = true;
+
+            // Pre-fill the buffer — event-driven from here on
+            // (each "ok" ack calls FillBuffer to keep the buffer topped off)
+            FillBuffer();
         }
 
         private void StopJob()
         {
-            JobState = JobState.Stop;
-            _commsManager.Adapter.WriteByte(GrblHalConstants.Stop);
-            JobCompete();
-            GcodeFileIndex = 0;
+            if (!JobRunning) return;
+
+            // Send feed hold first to decelerate, then reset
+            _commsManager.Adapter?.WriteByte(GrblHalConstants.FeedHold);
+            _commsManager.Adapter?.WriteByte(GrblHalConstants.GrblReset);
+
+            CancelAndCleanup(JobState.Stop);
         }
 
         private void PauseJob()
         {
-            _commsManager.Adapter.WriteByte(GrblHalConstants.FeedHold);
+            if (!JobRunning) return;
+            _commsManager.Adapter?.WriteByte(GrblHalConstants.FeedHold);
+            // Don't set JobState here — let _commsManager_OnStateReceived
+            // update it to Hold when grblHAL actually confirms the hold
+        }
+
+        private void ResumeJob()
+        {
+            if (!JobRunning || JobState != JobState.Hold) return;
+            _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
+            // Let _commsManager_OnStateReceived update to Running,
+            // then refill the buffer in case acks arrived while paused
+            FillBuffer();
+        }
+
+        private void TogglePause()
+        {
+            if (JobState == JobState.Hold)
+                ResumeJob();
+            else
+                PauseJob();
         }
 
         private void CloseFile()
         {
+            if (JobRunning) StopJob();
             GCodeOutPut.Clear();
             FileLoaded = false;
             FileName = string.Empty;
@@ -167,34 +234,9 @@ namespace GrbLHALSender.ViewModels
             EstimatedTime = string.Empty;
         }
 
-        private void _commsManager_OnStateReceived(object? sender, RealTImeState e)
+        private void ListenToState(bool subscribe)
         {
-            var state = e.GrblHalState;
-            JobState = state switch
-            {
-                "Hold" => JobState.Hold,
-                "Tool" => JobState.Tool,
-                "Running" => JobState.Running,
-                "Alarm" => JobState.Alarm,
-                "Stop" => JobState.Stop,
-                _ => JobState
-            };
-            // SendJobLoop(JobState);
-        }
-
-        private void _commsManager_OnCommandAck(object? sender, EventArgs e)
-        {
-            if (JobState is JobState.Running or JobState.Start)
-            {
-                JobState = JobState.Running;
-            }
-            SendJobLoop(JobState);
-            
-        }
-
-        private void ListenToState(bool b)
-        {
-            if (b)
+            if (subscribe)
             {
                 _commsManager.OnStateReceived += _commsManager_OnStateReceived;
                 _commsManager.OnCommandAck += _commsManager_OnCommandAck;
@@ -205,43 +247,144 @@ namespace GrbLHALSender.ViewModels
                 _commsManager.OnCommandAck -= _commsManager_OnCommandAck;
             }
         }
-        public void SendJobLoop(JobState lineProcessed)
+
+        private void _commsManager_OnStateReceived(object? sender, RealTImeState e)
         {
-            switch (JobState)
+            var state = e.GrblHalState;
+            var previousState = JobState;
+
+            JobState = state switch
             {
-                case JobState.Tool:
-                    _commsManager.Adapter.WriteByte(GrblHalConstants.ToolAck);
-                    break;
-                case JobState.Hold:
-                    _commsManager.Adapter.WriteByte(GrblHalConstants.CycleStart);
-                    JobState = JobState.Running;
-                    break;
-                case JobState.Start:
-                    JobState = JobState.Start;
-                    break;
+                "Hold" => JobState.Hold,
+                "Tool" => JobState.Tool,
+                "Run" => JobState.Running,
+                "Alarm" => JobState.Alarm,
+                "Home" => JobState.Running,
+                "Idle" => JobState.Idle,
+                "Door" => JobState.Hold,
+                _ => JobState
+            };
+
+            // Alarm during job — abort
+            if (JobState == JobState.Alarm && JobRunning)
+            {
+                CancelAndCleanup(JobState.Alarm);
             }
 
-
-            if (JobState is JobState.Running or JobState.SendNextLine or JobState.Start)
+            // Tool change — acknowledge when grblHAL reports Tool state
+            if (JobState == JobState.Tool)
             {
-                if (_index <= GCodeOutPut.Count - 1)
-                {
-                    _commsManager.SendCommand(GCodeOutPut[_index].Text);
-                    GcodeFileIndex = _index;
-                    _index++;
-                }
-                else
-                {
-                    JobCompete();
-                }
+                _commsManager.Adapter?.WriteByte(GrblHalConstants.ToolAck);
             }
 
+            // Resumed from Hold or Tool — refill the buffer to restart sending
+            if (JobState == JobState.Running && JobRunning &&
+                previousState is JobState.Hold or JobState.Tool)
+            {
+                FillBuffer();
+            }
         }
-        private void JobCompete()
+
+        private void _commsManager_OnCommandAck(object? sender, EventArgs e)
         {
-            JobState = JobState.ProgramComplete;
-            _index = 0;
+            if (!JobRunning) return;
+
+            if (JobState is JobState.Start)
+                JobState = JobState.Running;
+
+            // Free the oldest in-flight line's bytes from the RX buffer
+            if (_ackPending > 0)
+                _ackPending--;
+
+            lock (_bufferLock)
+            {
+                if (_lineLengths.Count > 0)
+                {
+                    var freed = _lineLengths.Dequeue();
+                    _rxBufferUsed = Math.Max(0, _rxBufferUsed - freed);
+                }
+            }
+
+            _pendingLine++;
+
+            // Check for job completion: all lines sent AND all acks received
+            if (_pendingLine >= GCodeOutPut.Count && _ackPending == 0)
+            {
+                Dispatcher.UIThread.Post(() => JobComplete());
+                return;
+            }
+
+            // Don't send more while paused or in tool change
+            if (JobState is JobState.Hold or JobState.Tool)
+                return;
+
+            // Event-driven: immediately refill the buffer
+            FillBuffer();
+
+            // Call again to ensure maximum throughput (matches reference sender)
+            //FillBuffer();
+        }
+
+        /// <summary>
+        /// Sends as many queued lines as will fit in grblHAL's serial RX buffer.
+        /// Each line costs text.Length + 1 byte (\r terminator).
+        /// Called from StartJob (pre-fill) and from OnCommandAck (event-driven refill).
+        /// </summary>
+        private void FillBuffer()
+        {
+            while (_index < GCodeOutPut.Count)
+            {
+                var line = GCodeOutPut[_index].Text;
+
+                // Skip empty/comment lines — still send "()" so grblHAL acks them
+                if (string.IsNullOrEmpty(line))
+                {
+                    _index++;
+                    continue;
+                }
+
+                int lineBytes = line.Length + 1; // +1 for \r appended by WriteCommand
+
+                // Will this line fit in the remaining RX buffer space?
+                if (_rxBufferUsed + lineBytes > _rxBufferSize)
+                    break; // No room — wait for an ack to free space
+
+                // Send the line
+                _commsManager.SendCommand(line);
+                _rxBufferUsed += lineBytes;
+                _ackPending++;
+                lock (_bufferLock) { _lineLengths.Enqueue(lineBytes); }
+
+                var idx = _index;
+                Dispatcher.UIThread.Post(() => GcodeFileIndex = idx);
+                _index++;
+            }
+        }
+
+        private void JobComplete()
+        {
+            // Don't send Stop/Reset — let the motion buffer finish executing
+            CancelAndCleanup(JobState.ProgramComplete);
+        }
+
+        /// <summary>
+        /// Central cleanup for all job end scenarios (complete, stop, alarm).
+        /// </summary>
+        private void CancelAndCleanup(JobState finalState)
+        {
+            // Unsubscribe FIRST to prevent any more ack events from firing FillBuffer
             ListenToState(false);
+            _cancelToken?.Cancel();
+            JobState = finalState;
+            _index = 0;
+            _pendingLine = 0;
+            _ackPending = 0;
+            _rxBufferUsed = 0;
+            lock (_bufferLock) { _lineLengths.Clear(); }
+            GcodeFileIndex = _index;
+            JobRunning = false;
+            _cancelToken?.Dispose();
+            _cancelToken = null;
         }
 
         private void GCodeControl()
@@ -269,6 +412,7 @@ namespace GrbLHALSender.ViewModels
     public enum JobState
     {
         Start,
+        Idle,
         Hold,
         Running,
         Tool,

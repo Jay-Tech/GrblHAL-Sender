@@ -14,7 +14,7 @@ namespace GrbLHALSender.Communication
         private SerialSettings _serialSettings;
         private SerialPort _serialPort;
         private ConcurrentQueue<byte[]> _sendQue = new();
-        private CancellationToken _token;
+        private readonly AutoResetEvent _sendEvent = new(false);
         private char[] Split = new[]
         {
             '\r',
@@ -100,22 +100,22 @@ namespace GrbLHALSender.Communication
         private void SendQue(byte[] command)
         {
             _sendQue.Enqueue(command);
+            _sendEvent.Set(); // Wake the send loop immediately
         }
 
         private void SendLoop(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                if (_sendQue.TryDequeue(out var command))
+                // Drain all queued commands as fast as possible
+                while (_sendQue.TryDequeue(out var command))
                 {
                     if (_serialPort.IsOpen)
                         _serialPort.BaseStream.Write(command, 0, command.Length);
-                    Thread.Sleep(10);
                 }
-                else
-                {
-                    Thread.Sleep(1);
-                }
+
+                // Block until new data is queued (or check periodically)
+                _sendEvent.WaitOne(50);
             }
         }
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)

@@ -42,6 +42,7 @@ namespace GrbLHALSender.Communication
 
         public ICommsAdapter Adapter { get; set; }
         public MachineSettings MachineData => _machineData;
+        public GrblHALOptions Options => grblHalOptions;
         public CommunicationManager()
         {
             _dispatcher = Dispatcher.UIThread;
@@ -316,10 +317,19 @@ namespace GrbLHALSender.Communication
         {
             if (asSpan[0].StartsWith("OPT"))
             {
+                // OPT:<flags>,<block_buf>,<rx_buf>{,<axes>{,<tools>}}
                 var op = asSpan[1].Split(',');
-                if (op.Length >= 4)
+                if (op.Length >= 3)
                 {
-                    grblHalOptions.ToolTableCount = int.Parse(op[4]);
+                    if (int.TryParse(op[1], out var blockBuf))
+                        grblHalOptions.BlockBufferSize = blockBuf;
+                    if (int.TryParse(op[2], out var rxBuf))
+                        grblHalOptions.RxBufferSize = rxBuf;
+                }
+                if (op.Length >= 5)
+                {
+                    if (int.TryParse(op[4], out var toolCount))
+                        grblHalOptions.ToolTableCount = toolCount;
                 }
             }
 
