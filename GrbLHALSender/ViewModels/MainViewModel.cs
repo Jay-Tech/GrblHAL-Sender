@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Reactive;
-using System.Windows.Input;
-using Avalonia.Media;
+﻿using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DynamicData;
@@ -15,6 +9,14 @@ using GrbLHALSender.Settings;
 using GrbLHALSender.States;
 using GrbLHALSender.Utility;
 using ReactiveUI;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Linq;
+using System.Reactive;
+using System.Reflection.Metadata.Ecma335;
+using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels;
 
@@ -687,6 +689,36 @@ public class MainViewModel : ViewModelBase
     {
         var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{JogStep}F{JogRate}";
         SendCommand(command);
+    }
+    public void JogContinuousNeg(string axis)
+    {
+        var distance = GetMachineDistance(axis);
+        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{distance}F{JogRate}";
+        SendCommand(command);
+    }
+    public void JogContinuousPos(string axis)
+    {
+        var distance = GetMachineDistance(axis);
+        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{distance}F{JogRate}";
+        SendCommand(command);
+    }
+
+    private string  GetMachineDistance(string axis)
+    {
+        var distance = axis switch
+        {
+            "X" => $"{_machineSettings?.XSize.ToInvariantString()}",
+            "Y" => $"Y{_machineSettings?.YSize.ToInvariantString()}",
+            "Z" => $"Z{_machineSettings?.ZSize.ToInvariantString()}",
+            _ => "1000"
+        };
+        return distance;
+    }
+
+
+    public void JogCancel()
+    {
+        SendByteCommand(GrblHalConstants.JogCancel);
     }
     public void Connect()
     {
