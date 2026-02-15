@@ -12,14 +12,14 @@
 		</Application.DataTemplates>-->
 		<SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#59111111"> </SolidColorBrush>
 		<SolidColorBrush x:Key="SmokeWhiteText" Color="#FF111111"> </SolidColorBrush>
-        <!--<SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{DynamicResource SystemAccentColor}" />-->
+        <SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{DynamicResource SystemAccentColor}" />
         <!--<Color x:Key="DarkReduceColorAlpha">#70111111</Color>-->
-        <!--<Color x:Key="BlackPrimaryBackGround">#EF111111</Color>
-		<Color x:Key="DarkBoarder">#99000000</Color>
-		<Color x:Key="SystemBaseLowColor">#33000000</Color>
-		<Color x:Key="SystemBaseLColor">#33FFFFFF</Color>
-		<Color x:Key="DarkBoarder">#676767</Color>
-		<Color x:Key="DarkBoarder">#FF505050</Color>-->
+        <!--<Color x:Key="BlackPrimaryBackGround">#EF111111</Color>-->
+		<!--<Color x:Key="DarkBoarder">#99000000</Color>-->
+		<!--<Color x:Key="SystemBaseLowColor">#33000000</Color>-->
+		<!--<Color x:Key="SystemBaseLColor">#33FFFFFF</Color>-->
+		<!--<Color x:Key="DarkBoarder">#676767</Color>-->
+		<!--<Color x:Key="DarkBoarder">#FF505050</Color>-->
         
         
         <sys:Double x:Key="TinyFontSize">12</sys:Double>
