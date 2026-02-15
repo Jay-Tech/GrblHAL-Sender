@@ -1,4 +1,6 @@
-﻿namespace GrbLHALSender.Utility
+﻿using System.Globalization;
+
+namespace GrbLHALSender.Utility
 {
     public static class Extensions
     {
@@ -12,8 +14,19 @@
             };
             return result;
         }
+        public static string ToInvariantString(this string value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
+        public static string ToInvariantString(this double value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
+        public static string ToInvariantString(this double value, string format)
+        {
+            return value.ToString(format, CultureInfo.InvariantCulture);
+        }
 
-        
         public static int StringToInt(this string str)
         {
             int.TryParse(str, out int result);

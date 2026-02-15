@@ -20,6 +20,12 @@ public partial class MainView : UserControl
     private bool _longPressTriggered;
     private Flyout? _connectionFlyout;
 
+    // Jog press-and-hold state
+    private DispatcherTimer? _jogHoldTimer;
+    private bool _jogHoldActive;
+    private string? _jogHoldAxis;
+    private bool _jogHoldPositive;
+
     // Virtual keyboard — single instance
     private DialogWindow? _keyboardWindow;
     private VirtualKeyboardViewModel? _keyboardViewModel;
@@ -46,6 +52,13 @@ public partial class MainView : UserControl
         // Must use handledEventsToo: true because TextBox handles DoubleTapped internally (word select)
         AddHandler(InputElement.DoubleTappedEvent, OnGlobalDoubleTapped, RoutingStrategies.Bubble, handledEventsToo: true);
 
+        // Set up press-and-hold for continuous jog on all jog buttons
+        SetupJogButton(XDown, "X", false);
+        SetupJogButton(Xup, "X", true);
+        SetupJogButton(YUp, "Y", true);
+        SetupJogButton(YDown, "Y", false);
+        SetupJogButton(ZUp, "Z", true);
+        SetupJogButton(ZDown, "Z", false);
     }
 
     IDisposable? _selectFilesInteractionDisposable;
@@ -151,6 +164,57 @@ public partial class MainView : UserControl
         };
 
         _keyboardWindow.Show(parentWindow);
+    }
+
+    private void SetupJogButton(Button button, string axis, bool positive)
+    {
+        button.AddHandler(PointerPressedEvent, (_, e) => JogButton_PointerPressed(axis, positive), RoutingStrategies.Tunnel);
+        button.AddHandler(PointerReleasedEvent, (_, e) => JogButton_PointerReleased(e), RoutingStrategies.Tunnel);
+        button.AddHandler(PointerCaptureLostEvent, (_, _) => JogButton_CaptureLost(), RoutingStrategies.Tunnel);
+    }
+
+    private void JogButton_PointerPressed(string axis, bool positive)
+    {
+        _jogHoldActive = false;
+        _jogHoldAxis = axis;
+        _jogHoldPositive = positive;
+
+        _jogHoldTimer?.Stop();
+        _jogHoldTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        _jogHoldTimer.Tick += (_, _) =>
+        {
+            _jogHoldTimer!.Stop();
+            _jogHoldActive = true;
+
+            if (_jogHoldPositive)
+                _viewModel?.JogContinuousPos(_jogHoldAxis!);
+            else
+                _viewModel?.JogContinuousNeg(_jogHoldAxis!);
+        };
+        _jogHoldTimer.Start();
+    }
+
+    private void JogButton_PointerReleased(PointerReleasedEventArgs e)
+    {
+        _jogHoldTimer?.Stop();
+
+        if (_jogHoldActive)
+        {
+            _viewModel?.JogCancel();
+            _jogHoldActive = false;
+            e.Handled = true;
+        }
+    }
+
+    private void JogButton_CaptureLost()
+    {
+        _jogHoldTimer?.Stop();
+
+        if (_jogHoldActive)
+        {
+            _viewModel?.JogCancel();
+            _jogHoldActive = false;
+        }
     }
 
     private void ToolLb_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
