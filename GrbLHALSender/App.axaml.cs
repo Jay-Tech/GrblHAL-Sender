@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
+using GrbLHALSender.Gamepad;
 using GrbLHALSender.ViewModels;
 using GrbLHALSender.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,6 +54,7 @@ public static class ServiceCollectionExtensions
     {
         collection.AddSingleton<ConfigManager>();
         collection.AddSingleton<CommunicationManager>();
+        collection.AddSingleton<GamepadService>();
         collection.AddTransient<SettingsViewModel>();
         collection.AddTransient<JobViewModel>();
         collection.AddTransient<MainViewModel>();
