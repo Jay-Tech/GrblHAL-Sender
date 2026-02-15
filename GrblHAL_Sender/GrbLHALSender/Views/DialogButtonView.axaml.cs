@@ -97,6 +97,17 @@ public partial class DialogButtonView : UserControl
             }
         };
 
+        // Position Console dialog in the lower-left area
+        if (dialogType == DialogType.Console && parentWindow != null)
+        {
+            dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+            var parentPos = parentWindow.Position;
+            dialogWindow.Position = new PixelPoint(
+                parentPos.X + 270,
+                parentPos.Y + 375
+            );
+        }
+
         // Show non-modal, owned by parent window
         dialogWindow.Show(parentWindow);
     }
