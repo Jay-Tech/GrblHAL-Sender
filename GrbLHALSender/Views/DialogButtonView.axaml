@@ -25,7 +25,7 @@
         <Button Grid.Column="0" Content="Console" Command="{Binding OpenConsoleCommand}" />
         <Button Grid.Column="1" Content="Probe" Command="{Binding OpenProbeCommand}" />
         <Button Grid.Column="2" Content="Macro" Command="{Binding OpenMacroCommand}" />
-        <Button Grid.Column="3" Content="GCode" Command="{Binding OpenMacroCommand}" />
+        <Button Grid.Column="3" Content="Utility" Command="{Binding OpenUtilityCommand}" />
     </Grid>
 
 </UserControl>
