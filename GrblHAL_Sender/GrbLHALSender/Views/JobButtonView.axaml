@@ -27,7 +27,7 @@
 			<Setter Property="BorderThickness" Value="3"/>
 		</Style>
 	</UserControl.Styles>
-	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*"  RowDefinitions="Auto,Auto"
+	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*,*"  RowDefinitions="Auto,Auto"
 		   Opacity=".6"
 		   VerticalAlignment="Stretch"
 		   HorizontalAlignment="Center">
@@ -47,13 +47,17 @@
 		<Button Grid.Row="0" Grid.Column="4"
                 Content="Start"
                 Command="{Binding StartJobCommand}"/>
-		<TextBlock x:Name="FileTextBlock" 
+		<Button Grid.Row="0" Grid.Column="5"
+                Content="G-code"
+                Command="{Binding OpenGCodePanel}"
+                IsEnabled="{Binding FileLoaded}"/>
+		<TextBlock x:Name="FileTextBlock"
                    Margin="15"
 				   FontSize="{DynamicResource BaseFontSize}"
 				   Grid.Row="1"
 				   Grid.Column="0"
 				   Grid.ColumnSpan="2"
-				   HorizontalAlignment="Center" 
+				   HorizontalAlignment="Center"
 				   VerticalAlignment="Center"
 				   Text="{Binding FileName}"/>
 		<TextBlock x:Name="EstimatedTextBlock"
@@ -62,16 +66,16 @@
 				   Grid.Row="1"
 				   Grid.Column="2"
 				   Grid.ColumnSpan="2"
-                   HorizontalAlignment="Center" 
+                   HorizontalAlignment="Center"
                    VerticalAlignment="Center"
 				   Text ="{Binding EstimatedTime}"/>
 		<TextBlock x:Name="TimeTextBlock"
                    Margin="15"
                    FontSize="{DynamicResource BaseFontSize}"
 				   Grid.Row="1"
-				   Grid.Column="3"
+				   Grid.Column="4"
 				   Grid.ColumnSpan="2"
-                   HorizontalAlignment="Center" 
+                   HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    Text ="{Binding RunTime}"/>
 	</Grid>
