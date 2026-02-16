@@ -230,6 +230,7 @@ public class MainViewModel : ViewModelBase
     public ICommand ClearAlarmCommand { get; set; }
     public ICommand JogNegCommand { get; }
     public ICommand JogPosCommand { get; }
+    public ICommand JogCancelCommand { get; }
     public ICommand ClearConsoleCommand { get; }
     public ICommand ToggleRtCommand { get; }
     public ICommand WcsCommand { get; }
@@ -252,6 +253,7 @@ public class MainViewModel : ViewModelBase
     public ICommand SetToolSelectCommand { get; }
     public ICommand SetTlrCommand { get; }
     public ICommand UnloadToolCommand { get; }
+    public ICommand OpenProbeCommand { get; }
 
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
@@ -283,6 +285,7 @@ public class MainViewModel : ViewModelBase
         MdiViewModel = mdiViewModel;
         MdiViewModel.MidiTextCommitted += MainViewModel_MidiTextCommitted;
         ConnectionViewModel.LoadFromConfig(_config);
+        ProbeViewModel.LoadFromConfig(_config);
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
         _commManager.OnStateReceived += _commManager_OnStateReceived;
@@ -296,6 +299,7 @@ public class MainViewModel : ViewModelBase
         UnLockCommand = ReactiveCommand.Create(Unlock);
         JogNegCommand = ReactiveCommand.Create<string>(JogNeg);
         JogPosCommand = ReactiveCommand.Create<string>(JogPos);
+        JogCancelCommand = ReactiveCommand.Create(JogCancel);
         ZeroAllCommand = ReactiveCommand.Create(ZeroAll);
         ClearAlarmCommand = ReactiveCommand.Create(ClearAlarm);
         ClearConsoleCommand = ReactiveCommand.Create(ClearConsole);
@@ -321,8 +325,9 @@ public class MainViewModel : ViewModelBase
         ToolSelectedCommand = ReactiveCommand.Create<int>(ToolSelected);
         SetTlrCommand = ReactiveCommand.Create(SetTlr);
         UnloadToolCommand = ReactiveCommand.Create(UnloadTool);
+        OpenProbeCommand = ReactiveCommand.Create(OpenProbe);
 
-        //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values 
+        //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values
         _axis =
         [
             new()
@@ -557,8 +562,16 @@ public class MainViewModel : ViewModelBase
     {
         _commManager?.Adapter?.WriteByte(GrblHalConstants.GrblReset);
     }
+    private void OpenProbe()
+    {
+        ProbeViewModel.SaveToConfig(_config);
+        _configManager.SaveConfig();
+    }
+
     private void UIThread_ShutdownStarted(object? sender, EventArgs e)
     {
+        ProbeViewModel.SaveToConfig(_config);
+        _configManager.SaveConfig();
         _gamepadService?.Stop();
         _commManager.ShutDown();
     }
@@ -716,8 +729,8 @@ public class MainViewModel : ViewModelBase
         var distance = axis switch
         {
             "X" => $"{_machineSettings?.XSize.ToInvariantString()}",
-            "Y" => $"Y{_machineSettings?.YSize.ToInvariantString()}",
-            "Z" => $"Z{_machineSettings?.ZSize.ToInvariantString()}",
+            "Y" => $"{_machineSettings?.YSize.ToInvariantString()}",
+            "Z" => $"{_machineSettings?.ZSize.ToInvariantString()}",
             _ => "1000"
         };
         return distance;

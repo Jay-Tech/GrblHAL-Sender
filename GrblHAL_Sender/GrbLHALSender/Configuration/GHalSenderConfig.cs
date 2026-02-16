@@ -1,5 +1,6 @@
 ﻿using GrbLHALSender.Communication;
 using GrbLHALSender.Gamepad;
+using GrbLHALSender.Probe;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
@@ -23,6 +24,7 @@ public class GHalSenderConfig
     public WebSocketSettings WebSocketSettings { get; set; } = new(81, "192.168.5.1");
     public AtcConfig AtcConfig { get; set; } = new();
     public GamepadConfig GamepadConfig { get; set; } = new();
+    public ProbeConfig ProbeConfig { get; set; } = new();
     public ToolList ToolList { get; set; } = new();
     public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new();
     public double[] JogDistanceMetric { get; set; } =

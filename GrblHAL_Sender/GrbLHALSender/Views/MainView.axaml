@@ -234,7 +234,7 @@
 							Content="Zero All"
 							Height="40"
 							HorizontalAlignment="Stretch"
-							Command="{Binding ZeroAllCommand}" ></Button>
+							Command="{Binding ZeroAllCommand}" />
 					<!-- END  DRO Control-->
 
 					<!-- START WCS Control-->
@@ -519,7 +519,9 @@
 								Height="65"
 								Width="65"
 								Margin="4"
-								Content="{icons:MaterialIconExt Kind=ArrowAll, Size=30}"/>
+                                Foreground="{DynamicResource ToggleButtonBackgroundCheckedPointerOver}"
+								Command="{Binding JogCancelCommand}"
+								Content="{icons:MaterialIconExt Kind=StopCircleOutline, Size=88}"/>
 						<Button Grid.Row="0" Grid.Column="3"
 								Name="ZUp"
 								CornerRadius="10"

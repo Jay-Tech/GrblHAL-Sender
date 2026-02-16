@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:\\\\Repo\\\\GrblHAL_Sender\" log --oneline --all -20)",
+      "Bash(git -C \"C:\\\\Repo\\\\GrblHAL_Sender\" show --stat e6eccbb)",
+      "Bash(git -C \"C:\\\\Repo\\\\GrblHAL_Sender\" show --stat 41da521)",
+      "Bash(dir:*)",
+      "Bash(dotnet build:*)",
+      "Bash(findstr:*)",
+      "Bash(Select-String -Pattern \"Build succeeded|Build FAILED|error CS\")",
+      "Bash(curl:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:examples.libsdl.org)",
+      "WebFetch(domain:wiki.libsdl.org)",
+      "WebFetch(domain:www.nuget.org)",
+      "Bash(dotnet tool list:*)",
+      "Bash(dotnet tool install:*)",
+      "Bash(ilspycmd:*)"
+    ]
+  }
+}
