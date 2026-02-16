@@ -31,6 +31,8 @@
                 FontSize="{DynamicResource BaseFontSize}" 
                 Content="Send"  
                 Height="45"
+				HorizontalContentAlignment="Center"
+				VerticalContentAlignment="Center"
 				Command="{Binding MdiTextCommand}" 
                 Margin="0,5"
 				CommandParameter="{Binding MdiText}"

@@ -233,6 +233,8 @@
 							FontSize="{DynamicResource BaseFontSize}"
 							Content="Zero All"
 							Height="40"
+							HorizontalContentAlignment="Center" 
+							VerticalContentAlignment="Center"
 							HorizontalAlignment="Stretch"
 							Command="{Binding ZeroAllCommand}" />
 					<!-- END  DRO Control-->
@@ -421,6 +423,8 @@
 													 VerticalAlignment="Stretch" FontSize="20"
 													 CommandParameter="{Binding #ToggleButton1.Content}"
 													 HorizontalAlignment="Stretch"
+													 HorizontalContentAlignment="Center"
+													 VerticalContentAlignment="Center"
 													 Command="{Binding FeedRateChangeCommand}">
 							<Interaction.Behaviors>
 								<DataTriggerBehavior Binding="{Binding  #JogFeedLabel.Content}"
@@ -683,6 +687,8 @@
 									IsEnabled="{Binding TlrCommandEnabled}"
 									Content="TLR"
 									Margin="5,10,0,0"
+									HorizontalContentAlignment="Center"
+									VerticalContentAlignment="Center"
 									FontSize="{DynamicResource BaseFontSize}"
 									HorizontalAlignment="Stretch"
 									Command="{Binding SetTlrCommand }"
@@ -703,6 +709,8 @@
 								IsEnabled="{Binding UnloadToolCommandEnabled}"
 								CornerRadius="6"
 								Content="Unload"
+								HorizontalContentAlignment="Center"
+								VerticalContentAlignment="Center"
 								Margin="5,10,5,0"
 								FontSize="{DynamicResource BaseFontSize}"
 								HorizontalAlignment="Stretch"
@@ -774,6 +782,10 @@
 								Grid.Row="5"
 								CornerRadius="6,6,6,6"
 								Height="45"
+								HorizontalContentAlignment="Center"
+								VerticalContentAlignment="Center"
+								HorizontalAlignment="Stretch"
+								VerticalAlignment="Stretch"
 								Content="Set Spindle Speed"
 								FontSize="{DynamicResource BaseFontSize}"
 								Margin="5,10,5,0"
