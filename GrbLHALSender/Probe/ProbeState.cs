@@ -1,4 +1,4 @@
-﻿namespace GrbLHALSender.Probe
+namespace GrbLHALSender.Probe
 {
     public class ProbeState
     {
@@ -7,9 +7,9 @@
         public string XOffset { get; set; }
         public string YOffset { get; set; }
         public string ZOffset { get; set; }
+
         public ProbeState()
         {
-
         }
     }
 }

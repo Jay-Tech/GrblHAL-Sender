@@ -71,8 +71,14 @@ public partial class DialogButtonView : UserControl
                 }
                 return (macroView, 450, 500);
 
+            case DialogType.Probe:
+                var probeView = new ProbeView();
+                var probeMainVm = GetMainViewModel();
+                if (probeMainVm != null)
+                    probeView.DataContext = probeMainVm.ProbeViewModel;
+                return (probeView, 700, 550);
+
             default:
-                // Placeholder for Probe, GCode dialogs
                 var placeholder = new TextBlock
                 {
                     Text = $"This is the {dialogType} dialog.",
@@ -117,6 +123,12 @@ public partial class DialogButtonView : UserControl
                 var mainVm = GetMainViewModel();
                 if (mainVm != null)
                     mainVm.MacroViewModel.DisplayMacroControl = false;
+            }
+            else if (dialogType == DialogType.Probe)
+            {
+                // Save probe settings when dialog closes
+                var mainVm = GetMainViewModel();
+                mainVm?.OpenProbeCommand.Execute(null);
             }
         };
 
