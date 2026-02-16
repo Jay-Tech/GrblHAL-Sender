@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=GrblHAL Sender
+Comment=G-code sender for grblHAL CNC controllers
+Exec=/usr/bin/grblhal-sender
+Icon=grblhal-sender
+Terminal=false
+Categories=Science;Engineering;Electronics;
+Keywords=CNC;grbl;gcode;sender;milling;
+StartupWMClass=GrbLHALSender.Desktop

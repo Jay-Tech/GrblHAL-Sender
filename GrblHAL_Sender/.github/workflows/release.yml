@@ -1,0 +1,189 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  PROJECT_PATH: GrbLHALSender.Desktop/GrbLHALSender.Desktop.csproj
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            arch: x64
+          - rid: win-arm64
+            arch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish
+        run: >
+          dotnet publish ${{ env.PROJECT_PATH }}
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=false
+          -p:PublishTrimmed=false
+          -p:Version=${{ needs.prepare.outputs.version }}
+          -o publish/${{ matrix.rid }}
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            /DAppVersion=${{ needs.prepare.outputs.version }} `
+            /DArch=${{ matrix.arch }} `
+            /DPublishDir=..\..\publish\${{ matrix.rid }} `
+            installer\windows\GrblHALSender.iss
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.rid }}
+          path: artifacts/*.exe
+
+  build-linux:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - rid: linux-x64
+            deb_arch: amd64
+          - rid: linux-arm64
+            deb_arch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish
+        run: >
+          dotnet publish ${{ env.PROJECT_PATH }}
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=false
+          -p:PublishTrimmed=false
+          -p:Version=${{ needs.prepare.outputs.version }}
+          -o publish/${{ matrix.rid }}
+
+      - name: Build .deb package
+        run: |
+          chmod +x installer/linux/build-deb.sh
+          ./installer/linux/build-deb.sh \
+            "${{ needs.prepare.outputs.version }}" \
+            "${{ matrix.deb_arch }}" \
+            "publish/${{ matrix.rid }}"
+
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.rid }}
+          path: artifacts/*.deb
+
+  build-macos:
+    needs: prepare
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - rid: osx-x64
+            arch: x64
+          - rid: osx-arm64
+            arch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish
+        run: >
+          dotnet publish ${{ env.PROJECT_PATH }}
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=false
+          -p:PublishTrimmed=false
+          -p:Version=${{ needs.prepare.outputs.version }}
+          -o publish/${{ matrix.rid }}
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Build .dmg
+        run: |
+          chmod +x installer/macos/build-dmg.sh
+          ./installer/macos/build-dmg.sh \
+            "${{ needs.prepare.outputs.version }}" \
+            "${{ matrix.arch }}" \
+            "publish/${{ matrix.rid }}"
+
+      - name: Upload .dmg
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.rid }}
+          path: artifacts/*.dmg
+
+  release:
+    needs: [prepare, build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "GrblHAL Sender ${{ needs.prepare.outputs.version }}"
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
+          generate_release_notes: true
+          files: |
+            release-assets/**/*
