@@ -8,6 +8,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\icons\GHalSender.ico</ApplicationIcon>
     <BaseOutputPath>..\stage</BaseOutputPath>
   </PropertyGroup>
 
