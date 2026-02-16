@@ -37,16 +37,26 @@
 						HorizontalAlignment="Stretch">
 				<Button  Height="40" Width="125"
 						 FontSize="20" 
+						 HorizontalContentAlignment="Center"
+						 VerticalContentAlignment="Center"
 						 HorizontalAlignment="Right"
+                         VerticalAlignment="Center"
 						 Margin="0,0,25,5"
 						 Content="Save"  Command="{Binding CommandSave}"></Button>
-				<Button  Height="40" Width="125" HorizontalAlignment="Right"
+				<Button  Height="40" Width="125" 
+                         HorizontalContentAlignment="Center"
+                         VerticalContentAlignment="Center"
+                         HorizontalAlignment="Right"
+                         VerticalAlignment="Center"
 						 Margin="0,0,10,5"
 						 Command="{Binding ImportSettingsCommand}"
 						 Content="Import" FontSize="20"/>
 				<Button  Height="40" Width="125"
 						 FontSize="20" Margin="0,0,50,5"
-						 HorizontalAlignment="Right"
+                         HorizontalContentAlignment="Center"
+                         VerticalContentAlignment="Center"
+                         HorizontalAlignment="Right"
+						 VerticalAlignment="Center"
 						 Command ="{Binding ExportSettingsCommand}"
 						 Content="Export"/>
 			</StackPanel>
