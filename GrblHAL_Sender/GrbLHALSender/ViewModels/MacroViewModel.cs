@@ -74,11 +74,7 @@ public class MacroViewModel: ViewModelBase
     public ICommand OpenMacroPanel { get; }
     public ICommand CloseMacroCommand { get; }
 
-    public ReactiveCommand<object, Unit> DoubleMacroTapCommand
-    {
-        get => _doubleMacroTapCommand;
-        set => _doubleMacroTapCommand = value;
-    }
+   
 
     private ReactiveCommand<object, Unit> _doubleMacroTapCommand;
     public MacroViewModel(ConfigManager configManger, CommunicationManager commsManager)
@@ -87,7 +83,6 @@ public class MacroViewModel: ViewModelBase
         _commsManager = commsManager;
         _configManger.OnConfigLoaded += _configManger_OnConfigLoaded;
         RunMacroCommand = ReactiveCommand.Create<string>(RunMacro);
-        DoubleMacroTapCommand = ReactiveCommand.Create<object>(DoubleTapMacroControl);
         DeleteMacroCommand = ReactiveCommand.Create<Macro>(DeleteMacro);
         SaveMacroCommand = ReactiveCommand.Create<string>(SaveMacro);
         NewMacroCommand = ReactiveCommand.Create(NewMacro);
@@ -103,11 +98,7 @@ public class MacroViewModel: ViewModelBase
     {
         DisplayMacroControl = !DisplayMacroControl;
     }
-    private void DoubleTapMacroControl(object p)
-    {
-        DisplayMacroControl = !Convert.ToBoolean(p);
-    }
-
+    
     private void CloseMacroControl()
     {
         DisplayMacroControl = !DisplayMacroControl;
