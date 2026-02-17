@@ -26,10 +26,13 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private ToolpathData? _cachedToolpath;
         private MachineSettings? _cachedMachineSettings;
         private Point3D? _cachedWco;
+        private int _cachedCompletedIndex;
+        private int _cachedSelectedIndex;
 
         public SKPicture? GetOrCreate(
             ToolpathData? toolpath, Camera3D camera, MachineSettings? machineSettings,
-            Point3D? wco, float width, float height)
+            Point3D? wco, float width, float height, int completedSegmentIndex = -1,
+            int selectedSegmentIndex = -1)
         {
             var view = camera.GetViewMatrix();
             var proj = camera.GetProjectionMatrix(width, height);
@@ -42,7 +45,9 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 Math.Abs(_cachedHeight - height) < 0.5f &&
                 ReferenceEquals(_cachedToolpath, toolpath) &&
                 ReferenceEquals(_cachedMachineSettings, machineSettings) &&
-                Equals(_cachedWco, wco))
+                Equals(_cachedWco, wco) &&
+                _cachedCompletedIndex == completedSegmentIndex &&
+                _cachedSelectedIndex == selectedSegmentIndex)
             {
                 return _cachedScene;
             }
@@ -53,7 +58,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             using var recorder = new SKPictureRecorder();
             var canvas = recorder.BeginRecording(new SKRect(0, 0, width, height));
 
-            GcodeRenderOperation.DrawStaticScene(canvas, viewProj, width, height, toolpath, machineSettings, wco);
+            GcodeRenderOperation.DrawStaticScene(canvas, viewProj, width, height, toolpath, machineSettings, wco, completedSegmentIndex, selectedSegmentIndex);
 
             _cachedScene = recorder.EndRecording();
             _cachedViewProj = viewProj;
@@ -62,6 +67,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             _cachedToolpath = toolpath;
             _cachedMachineSettings = machineSettings;
             _cachedWco = wco;
+            _cachedCompletedIndex = completedSegmentIndex;
+            _cachedSelectedIndex = selectedSegmentIndex;
 
             return _cachedScene;
         }
@@ -83,6 +90,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private readonly MachineSettings? _machineSettings;
         private readonly Point3D? _wco;
         private readonly ToolpathSceneCache _sceneCache;
+        private readonly int _completedSegmentIndex;
+        private readonly int _selectedSegmentIndex;
 
         private static readonly SKPaint RapidPaint = new()
         {
@@ -104,6 +113,22 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         {
             Color = new SKColor(60, 120, 255),
             StrokeWidth = 1f,
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke
+        };
+
+        private static readonly SKPaint CompletedPaint = new()
+        {
+            Color = new SKColor(203, 203, 212),
+            StrokeWidth = 3f,
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke
+        };
+
+        private static readonly SKPaint SelectedPaint = new()
+        {
+            Color = new SKColor(255, 255, 0),
+            StrokeWidth = 3f,
             IsAntialias = true,
             Style = SKPaintStyle.Stroke
         };
@@ -146,7 +171,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         public GcodeRenderOperation(Rect bounds, ToolpathData? toolpath, Camera3D camera,
             ToolpathSceneCache sceneCache,
             Point3D? spindlePosition = null, MachineSettings? machineSettings = null,
-            Point3D? workCoordinateOffset = null)
+            Point3D? workCoordinateOffset = null, int completedSegmentIndex = -1,
+            int selectedSegmentIndex = -1)
         {
             Bounds = bounds;
             _toolpath = toolpath;
@@ -155,6 +181,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             _spindlePosition = spindlePosition;
             _machineSettings = machineSettings;
             _wco = workCoordinateOffset;
+            _completedSegmentIndex = completedSegmentIndex;
+            _selectedSegmentIndex = selectedSegmentIndex;
         }
 
         public Rect Bounds { get; }
@@ -183,7 +211,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
             // Get or create the cached static scene (grid + axes + toolpath)
             var cachedScene = _sceneCache.GetOrCreate(
-                _toolpath, _camera, _machineSettings, _wco, width, height);
+                _toolpath, _camera, _machineSettings, _wco, width, height, _completedSegmentIndex, _selectedSegmentIndex);
 
             if (cachedScene != null)
             {
@@ -207,7 +235,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         /// </summary>
         internal static void DrawStaticScene(SKCanvas canvas, Matrix4x4 viewProj,
             float width, float height, ToolpathData? toolpath,
-            MachineSettings? machineSettings, Point3D? wco)
+            MachineSettings? machineSettings, Point3D? wco, int completedSegmentIndex = -1,
+            int selectedSegmentIndex = -1)
         {
             DrawGrid(canvas, viewProj, width, height, machineSettings, toolpath, wco);
             DrawAxes(canvas, viewProj, width, height, machineSettings, toolpath, wco);
@@ -215,20 +244,33 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // Draw toolpath segments
             if (toolpath != null)
             {
-                foreach (var segment in toolpath.Segments)
+                for (int i = 0; i < toolpath.Segments.Count; i++)
                 {
+                    var segment = toolpath.Segments[i];
                     var p1 = ProjectToScreen(segment.Start, viewProj, width, height);
                     var p2 = ProjectToScreen(segment.End, viewProj, width, height);
 
                     if (!p1.HasValue || !p2.HasValue) continue;
 
-                    var paint = segment.Type switch
+                    SKPaint paint;
+                    if (selectedSegmentIndex >= 0 && i == selectedSegmentIndex)
                     {
-                        MoveType.Rapid => RapidPaint,
-                        MoveType.Cut => CutPaint,
-                        MoveType.Traverse => TraversePaint,
-                        _ => RapidPaint
-                    };
+                        paint = SelectedPaint;
+                    }
+                    else if (completedSegmentIndex >= 0 && i < completedSegmentIndex)
+                    {
+                        paint = CompletedPaint;
+                    }
+                    else
+                    {
+                        paint = segment.Type switch
+                        {
+                            MoveType.Rapid => RapidPaint,
+                            MoveType.Cut => CutPaint,
+                            MoveType.Traverse => TraversePaint,
+                            _ => RapidPaint
+                        };
+                    }
 
                     canvas.DrawLine(p1.Value, p2.Value, paint);
                 }

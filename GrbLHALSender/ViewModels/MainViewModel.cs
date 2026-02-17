@@ -295,6 +295,7 @@ public class MainViewModel : ViewModelBase
         MdiViewModel.MidiTextCommitted += MainViewModel_MidiTextCommitted;
         ConnectionViewModel.LoadFromConfig(_config);
         ProbeViewModel.LoadFromConfig(_config);
+        JobViewModel.Config = _config;
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
         _commManager.OnStateReceived += _commManager_OnStateReceived;
@@ -659,6 +660,9 @@ public class MainViewModel : ViewModelBase
             var newSpindlePos = new Point3D(wx, wy, wz);
             if (_spindlePosition == null || !_spindlePosition.Value.Equals(newSpindlePos))
                 SpindlePosition = newSpindlePos;
+
+            // Push spindle position to JobViewModel for progress tracking
+            JobViewModel.CurrentSpindlePosition = newSpindlePos;
         }
 
         AlarmActive = state.GrblHalState == "Alarm";

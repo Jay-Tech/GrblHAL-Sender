@@ -19,6 +19,7 @@ namespace GrbLHALSender.ViewModels
         private string _wsIpAddress;
         private int _wsPort;
         private bool _isAutoStart;
+        private bool _showToolpathProgress;
 
         public ObservableCollection<string> ConnectionTypes { get; } = new()
         {
@@ -45,6 +46,13 @@ namespace GrbLHALSender.ViewModels
             get => _isAutoStart;
             set => this.RaiseAndSetIfChanged(ref _isAutoStart, value);
         }
+
+        public bool ShowToolpathProgress
+        {
+            get => _showToolpathProgress;
+            set => this.RaiseAndSetIfChanged(ref _showToolpathProgress, value);
+        }
+
         // Serial settings
         public string SerialPort
         {
@@ -108,6 +116,7 @@ namespace GrbLHALSender.ViewModels
         public void LoadFromConfig(GHalSenderConfig config)
         {
             IsAutoStart = config.AutoConnect;
+            ShowToolpathProgress = config.ShowToolpathProgress;
             // Set connection type index
             SelectedConnectionType = config.Connection switch
             {
@@ -133,6 +142,7 @@ namespace GrbLHALSender.ViewModels
         public void SaveToConfig(GHalSenderConfig config)
         {
             config.AutoConnect = IsAutoStart;
+            config.ShowToolpathProgress = ShowToolpathProgress;
             config.Connection = SelectedConnectionType switch
             {
                 0 => GHalSenderConfig.ConnectionType.Serial,
