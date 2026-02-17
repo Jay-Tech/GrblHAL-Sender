@@ -145,11 +145,11 @@ namespace GrbLHALSender.Communication
                         return;
                     }
 
-                    Thread.Sleep(10);
+                    //Thread.Sleep(10);
                 }
                 else
                 {
-                    Thread.Sleep(1);
+                    Thread.Sleep(10);
                 }
             }
         }
