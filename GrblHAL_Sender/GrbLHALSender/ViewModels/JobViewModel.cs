@@ -12,6 +12,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
 using GrbLHALSender.Communication;
+using GrbLHALSender.Configuration;
 using GrbLHALSender.Gcode;
 using GrbLHALSender.States;
 using GrbLHALSender.Utility;
@@ -52,7 +53,16 @@ namespace GrbLHALSender.ViewModels
 
         // Throttled GcodeFileIndex: store latest value, push to UI on a timer
         private volatile int _latestFileIndex;
+        private volatile int _latestPendingLine;
         private DispatcherTimer? _fileIndexTimer;
+        private int _completedSegmentIndex = -1;
+        private string _selectedLineInfo = "";
+
+        // Set by MainViewModel from real-time status reports (work coordinates)
+        internal Point3D? CurrentSpindlePosition;
+
+        // Set by MainViewModel — references config object so changes take effect immediately
+        internal GHalSenderConfig? Config;
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
@@ -114,6 +124,18 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _jobRunning, value);
         }
 
+        public int CompletedSegmentIndex
+        {
+            get => _completedSegmentIndex;
+            set => this.RaiseAndSetIfChanged(ref _completedSegmentIndex, value);
+        }
+
+        public string SelectedLineInfo
+        {
+            get => _selectedLineInfo;
+            set => this.RaiseAndSetIfChanged(ref _selectedLineInfo, value);
+        }
+
         public JobViewModel(CommunicationManager manager)
         {
             _commsManager = manager;
@@ -158,6 +180,7 @@ namespace GrbLHALSender.ViewModels
                 GCodeOutPut.Clear();
                 GCodeOutPut.AddRange(gCodeJob);
                 GcodeFileIndex = 0;
+                CompletedSegmentIndex = -1;
                 FileLoaded = true;
                 ToolpathData = toolpath;
                 EstimatedTime = FormatTimeEstimate(toolpath.TimeEstimateSeconds);
@@ -176,8 +199,10 @@ namespace GrbLHALSender.ViewModels
 
             _index = 0;
             _pendingLine = 0;
+            _latestPendingLine = 0;
             _ackPending = 0;
             _rxBufferUsed = 0;
+            CompletedSegmentIndex = -1;
             lock (_bufferLock) { _lineLengths.Clear(); }
 
             // Use the real RX buffer size from the controller if available
@@ -246,6 +271,8 @@ namespace GrbLHALSender.ViewModels
             FileLoaded = false;
             FileName = string.Empty;
             ToolpathData = null;
+            CompletedSegmentIndex = -1;
+            SelectedLineInfo = "";
             EstimatedTime = string.Empty;
         }
 
@@ -321,6 +348,7 @@ namespace GrbLHALSender.ViewModels
             }
 
             _pendingLine++;
+            _latestPendingLine = _pendingLine;
 
             // Check for job completion: all lines sent AND all acks received
             if (_pendingLine >= GCodeOutPut.Count && _ackPending == 0)
@@ -392,10 +420,18 @@ namespace GrbLHALSender.ViewModels
             JobState = finalState;
             _index = 0;
             _pendingLine = 0;
+            _latestPendingLine = 0;
             _ackPending = 0;
             _rxBufferUsed = 0;
             lock (_bufferLock) { _lineLengths.Clear(); }
             GcodeFileIndex = _index;
+
+            // On program complete, mark all segments as completed (grey);
+            // on stop/alarm, reset to no progress shown
+            CompletedSegmentIndex = finalState == JobState.ProgramComplete && (Config?.ShowToolpathProgress ?? true)
+                ? _toolpathData?.Segments.Count ?? -1
+                : -1;
+
             JobRunning = false;
             _cancelToken?.Dispose();
             _cancelToken = null;
@@ -406,6 +442,77 @@ namespace GrbLHALSender.ViewModels
             var idx = _latestFileIndex;
             if (idx != _gCodeFileIndex)
                 GcodeFileIndex = idx;
+
+            UpdateCompletedSegmentIndex();
+        }
+
+        private void UpdateCompletedSegmentIndex()
+        {
+            if (Config?.ShowToolpathProgress != true)
+            {
+                if (_completedSegmentIndex != -1)
+                    CompletedSegmentIndex = -1;
+                return;
+            }
+
+            var toolpath = _toolpathData;
+            if (toolpath?.LineToFirstSegment == null || toolpath.LineToFirstSegment.Length == 0)
+                return;
+
+            var mapping = toolpath.LineToFirstSegment;
+            int pendingLine = _latestPendingLine;
+            int sentLine = _latestFileIndex + 1; // +1 because _latestFileIndex is 0-based last-sent
+
+            // Clamp to valid range
+            pendingLine = Math.Clamp(pendingLine, 0, mapping.Length - 1);
+            sentLine = Math.Clamp(sentLine, pendingLine, mapping.Length - 1);
+
+            int floorSegIdx = mapping[pendingLine];
+            int ceilingSegIdx = mapping[sentLine];
+
+            // Try to find the segment closest to the actual spindle position
+            // within the buffer window. The ack'd line (floor) is ahead of the
+            // spindle because grblHAL acks when parsed into the motion planner,
+            // not when physically executed. So we search the full window to find
+            // where the spindle really is.
+            var spindlePos = CurrentSpindlePosition;
+
+            if (spindlePos.HasValue && ceilingSegIdx > 0)
+            {
+                var pos = spindlePos.Value;
+                float bestDistSq = float.MaxValue;
+                int bestIdx = floorSegIdx;
+
+                // Search a wider range: from a bit before the floor back to
+                // the start of the window, to account for motion planner lag
+                int searchStart = Math.Max(0, floorSegIdx - 30);
+                int searchEnd = Math.Min(ceilingSegIdx, toolpath.Segments.Count);
+
+                for (int i = searchStart; i < searchEnd; i++)
+                {
+                    var seg = toolpath.Segments[i];
+                    float dx = seg.End.X - pos.X;
+                    float dy = seg.End.Y - pos.Y;
+                    float dz = seg.End.Z - pos.Z;
+                    float distSq = dx * dx + dy * dy + dz * dz;
+
+                    if (distSq < bestDistSq)
+                    {
+                        bestDistSq = distSq;
+                        bestIdx = i + 1; // +1 because this segment is completed
+                    }
+                }
+
+                // Only use position match if reasonably close (within 5mm)
+                if (bestDistSq <= 25f) // 5mm squared
+                    CompletedSegmentIndex = bestIdx;
+                else
+                    CompletedSegmentIndex = floorSegIdx;
+            }
+            else
+            {
+                CompletedSegmentIndex = floorSegIdx;
+            }
         }
 
         private void GCodeControl()

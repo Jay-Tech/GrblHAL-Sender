@@ -1,9 +1,12 @@
+using System;
+using System.Numerics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using GrbLHALSender.Gcode;
 using GrbLHALSender.Settings;
+using SkiaSharp;
 
 namespace GrbLHALSender.Views.GcodeRenderControl
 {
@@ -20,6 +23,15 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
         public static readonly StyledProperty<Point3D?> WorkCoordinateOffsetProperty =
             AvaloniaProperty.Register<GcodeRenderControl, Point3D?>(nameof(WorkCoordinateOffset));
+
+        public static readonly StyledProperty<int> CompletedSegmentIndexProperty =
+            AvaloniaProperty.Register<GcodeRenderControl, int>(nameof(CompletedSegmentIndex), defaultValue: -1);
+
+        public static readonly StyledProperty<int> SelectedSegmentIndexProperty =
+            AvaloniaProperty.Register<GcodeRenderControl, int>(nameof(SelectedSegmentIndex), defaultValue: -1);
+
+        public static readonly StyledProperty<string> SelectedLineInfoProperty =
+            AvaloniaProperty.Register<GcodeRenderControl, string>(nameof(SelectedLineInfo), defaultValue: "");
 
         public ToolpathData? Toolpath
         {
@@ -45,9 +57,28 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             set => SetValue(WorkCoordinateOffsetProperty, value);
         }
 
+        public int CompletedSegmentIndex
+        {
+            get => GetValue(CompletedSegmentIndexProperty);
+            set => SetValue(CompletedSegmentIndexProperty, value);
+        }
+
+        public int SelectedSegmentIndex
+        {
+            get => GetValue(SelectedSegmentIndexProperty);
+            set => SetValue(SelectedSegmentIndexProperty, value);
+        }
+
+        public string SelectedLineInfo
+        {
+            get => GetValue(SelectedLineInfoProperty);
+            set => SetValue(SelectedLineInfoProperty, value);
+        }
+
         private readonly Camera3D _camera = new();
         private readonly ToolpathSceneCache _sceneCache = new();
         private Point? _lastPointerPos;
+        private Point? _pressStartPos;
         private bool _isLeftDragging;
         private bool _isRightDragging;
         private bool _isMiddleDragging;
@@ -62,7 +93,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
         static GcodeRenderControl()
         {
-            AffectsRender<GcodeRenderControl>(ToolpathProperty, SpindlePositionProperty, MachineSettingsProperty, WorkCoordinateOffsetProperty);
+            AffectsRender<GcodeRenderControl>(ToolpathProperty, SpindlePositionProperty, MachineSettingsProperty, WorkCoordinateOffsetProperty, CompletedSegmentIndexProperty, SelectedSegmentIndexProperty);
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -73,6 +104,12 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 change.Property == WorkCoordinateOffsetProperty)
             {
                 _fitted = false;
+                // Clear selection when toolpath changes
+                if (change.Property == ToolpathProperty)
+                {
+                    SelectedSegmentIndex = -1;
+                    SelectedLineInfo = "";
+                }
                 InvalidateVisual();
             }
         }
@@ -111,7 +148,9 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 _sceneCache,
                 SpindlePosition,
                 machine,
-                WorkCoordinateOffset);
+                WorkCoordinateOffset,
+                CompletedSegmentIndex,
+                SelectedSegmentIndex);
 
             context.Custom(op);
         }
@@ -121,6 +160,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             base.OnPointerPressed(e);
             var point = e.GetCurrentPoint(this);
             _lastPointerPos = point.Position;
+            _pressStartPos = point.Position;
 
             if (point.Properties.IsLeftButtonPressed)
                 _isLeftDragging = true;
@@ -159,10 +199,24 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         protected override void OnPointerReleased(PointerReleasedEventArgs e)
         {
             base.OnPointerReleased(e);
+
+            // Detect click vs drag: if pointer moved less than 5px, treat as a click
+            if (_pressStartPos.HasValue)
+            {
+                var releasePos = e.GetCurrentPoint(this).Position;
+                var dx = releasePos.X - _pressStartPos.Value.X;
+                var dy = releasePos.Y - _pressStartPos.Value.Y;
+                if (dx * dx + dy * dy < 25) // 5px squared
+                {
+                    OnSegmentClicked((float)releasePos.X, (float)releasePos.Y);
+                }
+            }
+
             _isLeftDragging = false;
             _isRightDragging = false;
             _isMiddleDragging = false;
             _lastPointerPos = null;
+            _pressStartPos = null;
             e.Handled = true;
         }
 
@@ -172,6 +226,83 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             _camera.Zoom((float)e.Delta.Y);
             InvalidateVisual();
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// Hit-tests click against all toolpath segments projected to screen space.
+        /// Finds the closest segment within a 10px tolerance and selects it.
+        /// </summary>
+        private void OnSegmentClicked(float screenX, float screenY)
+        {
+            var toolpath = Toolpath;
+            if (toolpath == null || toolpath.Segments.Count == 0) return;
+
+            var viewProj = _sceneCache.CachedViewProj;
+            float width = (float)Bounds.Width;
+            float height = (float)Bounds.Height;
+
+            float bestDistSq = float.MaxValue;
+            int bestIndex = -1;
+
+            for (int i = 0; i < toolpath.Segments.Count; i++)
+            {
+                var seg = toolpath.Segments[i];
+                var p1 = GcodeRenderOperation.ProjectToScreen(seg.Start, viewProj, width, height);
+                var p2 = GcodeRenderOperation.ProjectToScreen(seg.End, viewProj, width, height);
+
+                if (!p1.HasValue || !p2.HasValue) continue;
+
+                float distSq = DistanceToLineSegmentSq(screenX, screenY, p1.Value, p2.Value);
+                if (distSq < bestDistSq)
+                {
+                    bestDistSq = distSq;
+                    bestIndex = i;
+                }
+            }
+
+            // 10px tolerance (squared = 100)
+            if (bestIndex >= 0 && bestDistSq <= 100f)
+            {
+                SelectedSegmentIndex = bestIndex;
+                var segment = toolpath.Segments[bestIndex];
+                SelectedLineInfo = $"Line: {segment.SourceLineIndex + 1}";
+            }
+            else
+            {
+                // Clicked empty space — clear selection
+                SelectedSegmentIndex = -1;
+                SelectedLineInfo = "";
+            }
+        }
+
+        /// <summary>
+        /// Computes the squared distance from point (px, py) to line segment (p1 → p2).
+        /// </summary>
+        private static float DistanceToLineSegmentSq(float px, float py, SKPoint p1, SKPoint p2)
+        {
+            float dx = p2.X - p1.X;
+            float dy = p2.Y - p1.Y;
+            float lenSq = dx * dx + dy * dy;
+
+            if (lenSq < 0.001f)
+            {
+                // Degenerate segment (start == end): distance to point
+                float ex = px - p1.X;
+                float ey = py - p1.Y;
+                return ex * ex + ey * ey;
+            }
+
+            // Project point onto the line, clamped to [0,1]
+            float t = ((px - p1.X) * dx + (py - p1.Y) * dy) / lenSq;
+            t = Math.Clamp(t, 0f, 1f);
+
+            // Closest point on segment
+            float closestX = p1.X + t * dx;
+            float closestY = p1.Y + t * dy;
+
+            float distX = px - closestX;
+            float distY = py - closestY;
+            return distX * distX + distY * distY;
         }
     }
 }

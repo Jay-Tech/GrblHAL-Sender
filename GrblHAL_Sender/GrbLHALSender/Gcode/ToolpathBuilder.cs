@@ -29,10 +29,21 @@ namespace GrbLHALSender.Gcode
             _feedRate = 0f;
             _totalTimeSeconds = 0;
 
-            foreach (var line in gCodeLines)
+            var lineToFirstSegment = new int[gCodeLines.Count + 1];
+
+            for (int i = 0; i < gCodeLines.Count; i++)
             {
-                ProcessLine(line.Text, toolpath);
+                lineToFirstSegment[i] = toolpath.Segments.Count;
+                ProcessLine(gCodeLines[i].Text, toolpath);
+
+                // Tag all segments produced by this line
+                for (int s = lineToFirstSegment[i]; s < toolpath.Segments.Count; s++)
+                    toolpath.Segments[s].SourceLineIndex = i;
             }
+
+            // Sentinel: one past the last line maps to total segment count
+            lineToFirstSegment[gCodeLines.Count] = toolpath.Segments.Count;
+            toolpath.LineToFirstSegment = lineToFirstSegment;
 
             toolpath.TimeEstimateSeconds = _totalTimeSeconds;
             CalculateBounds(toolpath);

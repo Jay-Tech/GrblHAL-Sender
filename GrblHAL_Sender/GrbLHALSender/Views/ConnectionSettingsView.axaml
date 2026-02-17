@@ -14,7 +14,12 @@
       <CheckBox Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" VerticalContentAlignment="Center"
                 HorizontalContentAlignment="Center" Content="Auto Connect"
                 IsChecked="{Binding IsAutoStart}"></CheckBox>
-      
+
+      <CheckBox Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                HorizontalContentAlignment="Center" Content="Toolpath Progress"
+                IsChecked="{Binding ShowToolpathProgress}"
+                ToolTip.Tip="Show cut progress on the 3D toolpath during job execution. Disable to save resources on lower-power devices."/>
+
       <!-- Connection Type -->
       <TextBlock Text="Connection Type" Foreground="#CCCCCC" FontSize="13"/>
       <ComboBox ItemsSource="{Binding ConnectionTypes}"

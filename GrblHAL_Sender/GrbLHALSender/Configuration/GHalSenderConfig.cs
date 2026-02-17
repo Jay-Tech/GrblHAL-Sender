@@ -19,6 +19,7 @@ public class GHalSenderConfig
     public ConnectionType Connection { get; set; } = ConnectionType.Tcp;
     public bool UseMetric { get; set; } = true;
     public bool AutoConnect { get; set; } = false;
+    public bool ShowToolpathProgress { get; set; } = true;
     public SerialSettings SerialSettings { get; set; } = new("COM1");
     public TcpSettings TcpSettings { get; set; } = new(23, "192.168.5.1" );
     public WebSocketSettings WebSocketSettings { get; set; } = new(81, "192.168.5.1");
