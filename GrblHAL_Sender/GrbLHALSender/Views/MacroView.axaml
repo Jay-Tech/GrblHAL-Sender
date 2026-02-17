@@ -40,15 +40,21 @@
 				<Grid ColumnDefinitions="*,*,*" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 					<Button Grid.Column="0" Margin="1,0" Content="New"
 							Command="{Binding NewMacroCommand}"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
 							FontSize="24" HorizontalAlignment="Stretch" />
 					<Button Grid.Column="1" Margin="1,0" Content="Save"
 							CommandParameter="{Binding #TbName.Text}"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
 							Command="{Binding SaveMacroCommand}"
 							FontSize="24" HorizontalAlignment="Stretch" />
 					<Button Grid.Column="2" x:Name="Button" Margin="1,0" Content="Delete"
 							Command="{Binding DeleteMacroCommand}"
 							CommandParameter="{Binding #LbMacro.SelectedItem}"
-							FontSize="24" HorizontalAlignment="Stretch" />
+							HorizontalContentAlignment="Center"
+							VerticalContentAlignment="Center"
+                            FontSize="24" HorizontalAlignment="Stretch" />
 				</Grid>
 			</Border>
 		</Grid>

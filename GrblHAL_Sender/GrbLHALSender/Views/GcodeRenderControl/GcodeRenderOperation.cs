@@ -11,6 +11,70 @@ using SkiaSharp;
 
 namespace GrbLHALSender.Views.GcodeRenderControl
 {
+    /// <summary>
+    /// Caches the static toolpath scene (grid + axes + toolpath segments) as an SKPicture.
+    /// The cache is invalidated when the camera, toolpath, machine settings, or control size change.
+    /// When only the spindle position changes, the cached scene is replayed cheaply and only the
+    /// spindle indicator is redrawn — avoiding the per-frame cost of projecting thousands of segments.
+    /// </summary>
+    public class ToolpathSceneCache
+    {
+        private SKPicture? _cachedScene;
+        private Matrix4x4 _cachedViewProj;
+        private float _cachedWidth;
+        private float _cachedHeight;
+        private ToolpathData? _cachedToolpath;
+        private MachineSettings? _cachedMachineSettings;
+        private Point3D? _cachedWco;
+
+        public SKPicture? GetOrCreate(
+            ToolpathData? toolpath, Camera3D camera, MachineSettings? machineSettings,
+            Point3D? wco, float width, float height)
+        {
+            var view = camera.GetViewMatrix();
+            var proj = camera.GetProjectionMatrix(width, height);
+            var viewProj = view * proj;
+
+            // Check if cache is still valid
+            if (_cachedScene != null &&
+                _cachedViewProj == viewProj &&
+                Math.Abs(_cachedWidth - width) < 0.5f &&
+                Math.Abs(_cachedHeight - height) < 0.5f &&
+                ReferenceEquals(_cachedToolpath, toolpath) &&
+                ReferenceEquals(_cachedMachineSettings, machineSettings) &&
+                Equals(_cachedWco, wco))
+            {
+                return _cachedScene;
+            }
+
+            // Rebuild the cached scene
+            _cachedScene?.Dispose();
+
+            using var recorder = new SKPictureRecorder();
+            var canvas = recorder.BeginRecording(new SKRect(0, 0, width, height));
+
+            GcodeRenderOperation.DrawStaticScene(canvas, viewProj, width, height, toolpath, machineSettings, wco);
+
+            _cachedScene = recorder.EndRecording();
+            _cachedViewProj = viewProj;
+            _cachedWidth = width;
+            _cachedHeight = height;
+            _cachedToolpath = toolpath;
+            _cachedMachineSettings = machineSettings;
+            _cachedWco = wco;
+
+            return _cachedScene;
+        }
+
+        public Matrix4x4 CachedViewProj => _cachedViewProj;
+
+        public void Invalidate()
+        {
+            _cachedScene?.Dispose();
+            _cachedScene = null;
+        }
+    }
+
     public class GcodeRenderOperation : ICustomDrawOperation
     {
         private readonly ToolpathData? _toolpath;
@@ -18,6 +82,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private readonly Point3D? _spindlePosition;
         private readonly MachineSettings? _machineSettings;
         private readonly Point3D? _wco;
+        private readonly ToolpathSceneCache _sceneCache;
 
         private static readonly SKPaint RapidPaint = new()
         {
@@ -79,12 +144,14 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         };
 
         public GcodeRenderOperation(Rect bounds, ToolpathData? toolpath, Camera3D camera,
+            ToolpathSceneCache sceneCache,
             Point3D? spindlePosition = null, MachineSettings? machineSettings = null,
             Point3D? workCoordinateOffset = null)
         {
             Bounds = bounds;
             _toolpath = toolpath;
             _camera = camera;
+            _sceneCache = sceneCache;
             _spindlePosition = spindlePosition;
             _machineSettings = machineSettings;
             _wco = workCoordinateOffset;
@@ -114,21 +181,41 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // Background
             canvas.DrawRect(0, 0, width, height, BackgroundPaint);
 
-            // Build view-projection matrix
-            var view = _camera.GetViewMatrix();
-            var proj = _camera.GetProjectionMatrix(width, height);
-            var viewProj = view * proj;
+            // Get or create the cached static scene (grid + axes + toolpath)
+            var cachedScene = _sceneCache.GetOrCreate(
+                _toolpath, _camera, _machineSettings, _wco, width, height);
 
-            // Draw grid at Z=0
-            DrawGrid(canvas, viewProj, width, height);
-
-            // Draw axis indicators
-            DrawAxes(canvas, viewProj, width, height);
-
-            // Draw toolpath segments if loaded
-            if (_toolpath != null)
+            if (cachedScene != null)
             {
-                foreach (var segment in _toolpath.Segments)
+                // Replay the cached scene — no per-segment projection needed
+                canvas.DrawPicture(cachedScene);
+            }
+
+            // Draw spindle on top (this is the only per-frame dynamic element)
+            if (_spindlePosition.HasValue)
+            {
+                var viewProj = _sceneCache.CachedViewProj;
+                DrawSpindle(canvas, viewProj, width, height, _spindlePosition.Value);
+            }
+
+            canvas.Restore();
+        }
+
+        /// <summary>
+        /// Draws the static scene elements (grid, axes, toolpath segments).
+        /// Called by the cache when rebuilding — NOT called every frame.
+        /// </summary>
+        internal static void DrawStaticScene(SKCanvas canvas, Matrix4x4 viewProj,
+            float width, float height, ToolpathData? toolpath,
+            MachineSettings? machineSettings, Point3D? wco)
+        {
+            DrawGrid(canvas, viewProj, width, height, machineSettings, toolpath, wco);
+            DrawAxes(canvas, viewProj, width, height, machineSettings, toolpath, wco);
+
+            // Draw toolpath segments
+            if (toolpath != null)
+            {
+                foreach (var segment in toolpath.Segments)
                 {
                     var p1 = ProjectToScreen(segment.Start, viewProj, width, height);
                     var p2 = ProjectToScreen(segment.End, viewProj, width, height);
@@ -146,55 +233,48 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                     canvas.DrawLine(p1.Value, p2.Value, paint);
                 }
             }
-
-            // Draw spindle/CNC bit indicator at current machine position
-            if (_spindlePosition.HasValue)
-            {
-                DrawSpindle(canvas, viewProj, width, height, _spindlePosition.Value);
-            }
-
-            canvas.Restore();
         }
 
-        private void DrawGrid(SKCanvas canvas, Matrix4x4 viewProj, float width, float height)
+        private static void DrawGrid(SKCanvas canvas, Matrix4x4 viewProj, float width, float height,
+            MachineSettings? machineSettings, ToolpathData? toolpath, Point3D? wco)
         {
             float gridMinX, gridMaxX, gridMinY, gridMaxY, spacing;
             float gridZ = 0f;
 
             // Use machine dimensions ($130/$131/$132) if available
             // CNC Z convention: Z=0 is home (top of travel), work surface is at Z=-ZSize
-            bool hasMachineBounds = _machineSettings != null &&
-                                    _machineSettings.XSize > 0 &&
-                                    _machineSettings.YSize > 0;
+            bool hasMachineBounds = machineSettings != null &&
+                                    machineSettings.XSize > 0 &&
+                                    machineSettings.YSize > 0;
 
             // WCO converts machine coords to work coords: WPos = MPos - WCO
             // The toolpath is in work coordinates, so the grid (machine coords) must
             // be shifted by -WCO to align with the toolpath.
-            float wcoX = _wco?.X ?? 0f;
-            float wcoY = _wco?.Y ?? 0f;
-            float wcoZ = _wco?.Z ?? 0f;
+            float wcoX = wco?.X ?? 0f;
+            float wcoY = wco?.Y ?? 0f;
+            float wcoZ = wco?.Z ?? 0f;
 
             if (hasMachineBounds)
             {
                 // Machine grid in machine coords: X=[0, XSize], Y=[-YSize, 0]
                 // Convert to work coords by subtracting WCO
                 gridMinX = 0f - wcoX;
-                gridMaxX = (float)_machineSettings!.XSize - wcoX;
-                gridMinY = -(float)_machineSettings.YSize - wcoY;
+                gridMaxX = (float)machineSettings!.XSize - wcoX;
+                gridMinY = -(float)machineSettings.YSize - wcoY;
                 gridMaxY = 0f - wcoY;
                 // Grid Z: work surface is at machine Z=-ZSize, in work coords: -ZSize - wcoZ
-                gridZ = _machineSettings.ZSize > 0 ? -(float)_machineSettings.ZSize - wcoZ : -wcoZ;
-                float maxDim = MathF.Max((float)_machineSettings.XSize, (float)_machineSettings.YSize);
+                gridZ = machineSettings.ZSize > 0 ? -(float)machineSettings.ZSize - wcoZ : -wcoZ;
+                float maxDim = MathF.Max((float)machineSettings.XSize, (float)machineSettings.YSize);
                 spacing = CalculateGridSpacing(maxDim * 0.7f);
             }
-            else if (_toolpath != null && _toolpath.Segments.Count > 0)
+            else if (toolpath != null && toolpath.Segments.Count > 0)
             {
-                float gridExtent = _toolpath.MaxDimension * 0.7f;
+                float gridExtent = toolpath.MaxDimension * 0.7f;
                 spacing = CalculateGridSpacing(gridExtent);
-                gridMinX = MathF.Floor((_toolpath.MinBounds.X - spacing) / spacing) * spacing;
-                gridMaxX = MathF.Ceiling((_toolpath.MaxBounds.X + spacing) / spacing) * spacing;
-                gridMinY = MathF.Floor((_toolpath.MinBounds.Y - spacing) / spacing) * spacing;
-                gridMaxY = MathF.Ceiling((_toolpath.MaxBounds.Y + spacing) / spacing) * spacing;
+                gridMinX = MathF.Floor((toolpath.MinBounds.X - spacing) / spacing) * spacing;
+                gridMaxX = MathF.Ceiling((toolpath.MaxBounds.X + spacing) / spacing) * spacing;
+                gridMinY = MathF.Floor((toolpath.MinBounds.Y - spacing) / spacing) * spacing;
+                gridMaxY = MathF.Ceiling((toolpath.MaxBounds.Y + spacing) / spacing) * spacing;
             }
             else
             {
@@ -223,20 +303,21 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             }
         }
 
-        private void DrawAxes(SKCanvas canvas, Matrix4x4 viewProj, float width, float height)
+        private static void DrawAxes(SKCanvas canvas, Matrix4x4 viewProj, float width, float height,
+            MachineSettings? machineSettings, ToolpathData? toolpath, Point3D? wco)
         {
             float axisLen;
-            if (_machineSettings != null && _machineSettings.XSize > 0)
-                axisLen = (float)Math.Max(_machineSettings.XSize, _machineSettings.YSize) * 0.1f;
-            else if (_toolpath != null && _toolpath.Segments.Count > 0)
-                axisLen = _toolpath.MaxDimension * 0.15f;
+            if (machineSettings != null && machineSettings.XSize > 0)
+                axisLen = (float)Math.Max(machineSettings.XSize, machineSettings.YSize) * 0.1f;
+            else if (toolpath != null && toolpath.Segments.Count > 0)
+                axisLen = toolpath.MaxDimension * 0.15f;
             else
                 axisLen = 50f;
 
             // WCO offset: axes are at machine origin (0,0,0), converted to work coords
-            float wcoX = _wco?.X ?? 0f;
-            float wcoY = _wco?.Y ?? 0f;
-            float wcoZ = _wco?.Z ?? 0f;
+            float wcoX = wco?.X ?? 0f;
+            float wcoY = wco?.Y ?? 0f;
+            float wcoZ = wco?.Z ?? 0f;
 
             // Machine origin in work coordinates
             float originX = -wcoX;
@@ -245,8 +326,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
             // CNC Z convention: Z=0 is home (top), work surface is at Z=-ZSize
             // Work surface in work coords: -ZSize - wcoZ
-            float gridZ = (_machineSettings != null && _machineSettings.ZSize > 0)
-                ? -(float)_machineSettings.ZSize - wcoZ
+            float gridZ = (machineSettings != null && machineSettings.ZSize > 0)
+                ? -(float)machineSettings.ZSize - wcoZ
                 : originZ;
 
             // X/Y axes originate at back-left corner on the work surface
@@ -418,7 +499,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                           position.X, position.Y + crossSize, crossPaint);
         }
 
-        private static SKPoint? ProjectToScreen(Point3D point, Matrix4x4 viewProj, float width, float height)
+        internal static SKPoint? ProjectToScreen(Point3D point, Matrix4x4 viewProj, float width, float height)
         {
             var v = new Vector4(point.X, point.Y, point.Z, 1f);
             var clip = Vector4.Transform(v, viewProj);

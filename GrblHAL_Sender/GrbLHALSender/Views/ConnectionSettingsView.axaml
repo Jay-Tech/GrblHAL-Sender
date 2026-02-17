@@ -56,11 +56,21 @@
 
       <!-- Connect Button -->
       <Grid  Grid.ColumnDefinitions="*,*">
-      <Button Grid.Column="0"  Content="Save" HorizontalAlignment="Stretch" Height="35"
-              HorizontalContentAlignment="Center" FontSize="15" Margin="5,0"
+      <Button Grid.Column="0"  Content="Save" 
+              HorizontalAlignment="Stretch" 
+              Height="35"
+              HorizontalContentAlignment="Center" 
+              VerticalContentAlignment="Center"
+              FontSize="15" Margin="5,0"
               Command="{Binding SaveConfigCommand}"/>
-      <Button Grid.Column="1" Content="Close" HorizontalAlignment="Stretch" Height="35"
-              HorizontalContentAlignment="Center" FontSize="15" Margin="5,0"
+      <Button Grid.Column="1" 
+              Content="Close" 
+              HorizontalAlignment="Stretch" 
+              Height="35"
+              HorizontalContentAlignment="Center" 
+              VerticalContentAlignment="Center"
+              FontSize="15" 
+              Margin="5,0"
               Command="{Binding CloseCommand}"/>
       </Grid>
 

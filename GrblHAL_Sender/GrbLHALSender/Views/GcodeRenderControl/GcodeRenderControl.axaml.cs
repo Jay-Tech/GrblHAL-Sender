@@ -46,6 +46,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         }
 
         private readonly Camera3D _camera = new();
+        private readonly ToolpathSceneCache _sceneCache = new();
         private Point? _lastPointerPos;
         private bool _isLeftDragging;
         private bool _isRightDragging;
@@ -107,6 +108,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 new Rect(0, 0, Bounds.Width, Bounds.Height),
                 toolpath,
                 _camera,
+                _sceneCache,
                 SpindlePosition,
                 machine,
                 WorkCoordinateOffset);
