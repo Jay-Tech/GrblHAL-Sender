@@ -1,197 +1,290 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="550"
-             x:Class="GrbLHALSender.Views.ProbeView"
-             x:DataType="viewModels:ProbeViewModel">
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+			 mc:Ignorable="d" d:DesignWidth="550" d:DesignHeight="550"
+			 x:Class="GrbLHALSender.Views.ProbeView"
+			 x:DataType="viewModels:ProbeViewModel">
 
-  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="10">
+	<Grid RowDefinitions="Auto,Auto,*,Auto" Margin="10">
 
-    <!-- Probe Tool Type Selection -->
-    <Border Grid.Row="0" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
-      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowDefinitions="Auto">
-        <Label Grid.Column="0" Content="Probe Type:" FontSize="16"
-               VerticalAlignment="Center" Margin="0,0,10,0"/>
-        <RadioButton Grid.Column="1" Content="Touch Plate" FontSize="14"
-                     GroupName="ProbeToolType"
-                     IsChecked="{Binding IsTouchPlate}"
-                     Command="{Binding SetToolTypeTouchPlateCommand}"
-                     VerticalAlignment="Center" Margin="0,0,15,0"/>
-        <RadioButton Grid.Column="2" Content="3D Probe" FontSize="14"
-                     GroupName="ProbeToolType"
-                     IsChecked="{Binding !IsTouchPlate}"
-                     Command="{Binding SetToolTypeProbe3DCommand}"
-                     VerticalAlignment="Center" Margin="0,0,20,0"/>
-        <Label Grid.Column="3" Content="Diameter:" FontSize="14"
-               VerticalAlignment="Center" Margin="0,0,5,0"/>
-        <TextBox Grid.Column="4" Text="{Binding ProbeDiameter}" FontSize="14"
-                 Width="70" Height="30" HorizontalContentAlignment="Center"
-                 VerticalContentAlignment="Center" Margin="0,0,15,0"/>
-        <StackPanel Grid.Column="5" Orientation="Horizontal"
-                    IsVisible="{Binding IsTouchPlate}">
-          <Label Content="Plate Thickness:" FontSize="14"
-                 VerticalAlignment="Center" Margin="0,0,5,0"/>
-          <TextBox Text="{Binding TouchPlateThickness}" FontSize="14"
-                   Width="70" Height="30" HorizontalContentAlignment="Center"
-                   VerticalContentAlignment="Center"/>
-        </StackPanel>
-      </Grid>
-    </Border>
+		<!-- Probe Tool Type Selection -->
+		<Border Grid.Row="0" BorderThickness="1" CornerRadius="4" Padding="10,8"
+				Margin="0,0,0,0">
+			<Grid RowDefinitions="*,*" >
+				<Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto">
+					<Label  Grid.Column="0"
+							Content="Probe Type:"
+							FontSize="16"
+							VerticalAlignment="Center"
+							Margin="0,0,10,0"/>
+					<RadioButton  Grid.Column="1"
+								  Content="Touch Plate"
+								  FontSize="14"
+								  GroupName="ProbeToolType"
+								  IsChecked="{Binding IsTouchPlate}"
+								  Command="{Binding SetToolTypeTouchPlateCommand}"
+								  VerticalAlignment="Center"
+								  Margin="0,0,15,0"/>
+					<RadioButton  Grid.Column="2"
+								  Content="3D Probe"
+								  FontSize="14"
+								  GroupName="ProbeToolType"
+								  IsChecked="{Binding !IsTouchPlate}"
+								  Command="{Binding SetToolTypeProbe3DCommand}"
+								  VerticalAlignment="Center"
+								  Margin="0,0,20,0"/>
+				</Grid>
+				<Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto">
+					<Label Grid.Column="0"
+						   Content="Diameter:"
+						   FontSize="14"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   Margin="10,10,10,0"/>
+					<TextBox  Grid.Column="1"
+							  Text="{Binding ProbeDiameter}"
+							  FontSize="14"
+							  Width="65"
+							  Height="30"
+							  VerticalAlignment="Center"
+							  HorizontalAlignment="Left"
+							  HorizontalContentAlignment="Center"
+							  VerticalContentAlignment="Center"
+							  Margin="0,10,25,0"/>
+					<StackPanel  Grid.Column="2" Orientation="Horizontal"
+								 VerticalAlignment="Center"
+								 HorizontalAlignment="Left"
+								 IsVisible="{Binding IsTouchPlate}">
+						<Label Content="Plate Thickness:"
+							   FontSize="14"
+							   HorizontalAlignment="Right"
+							   HorizontalContentAlignment="Left"
+							   VerticalContentAlignment="Center"
+							   VerticalAlignment="Center"
+							   Margin="0,10,10,0"/>
+						<TextBox Text="{Binding TouchPlateThickness}"
+								 FontSize="14"
+								 Width="65"
+								 Height="30"
+                                 VerticalAlignment="Center"
+                                 HorizontalAlignment="Left"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+								 Margin="0,10,10,0"/>
+					</StackPanel>
+				</Grid>
+			</Grid>
+		</Border>
 
-    <!-- Shared Parameters -->
-    <Border Grid.Row="1" BorderThickness="1" CornerRadius="4" Padding="10,5" Margin="0,0,0,8">
-      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowDefinitions="Auto">
-        <Label Grid.Column="0" Content="Search Rate:" FontSize="13"
-               VerticalAlignment="Center" Margin="0,0,4,0"/>
-        <TextBox Grid.Column="1" Text="{Binding SearchRate}" FontSize="13"
-                 Width="65" Height="28" HorizontalContentAlignment="Center"
-                 VerticalContentAlignment="Center" Margin="0,0,10,0"/>
-        <Label Grid.Column="2" Content="Latch Rate:" FontSize="13"
-               VerticalAlignment="Center" Margin="0,0,4,0"/>
-        <TextBox Grid.Column="3" Text="{Binding LatchRate}" FontSize="13"
-                 Width="65" Height="28" HorizontalContentAlignment="Center"
-                 VerticalContentAlignment="Center" Margin="0,0,10,0"/>
-        <Label Grid.Column="4" Content="Distance:" FontSize="13"
-               VerticalAlignment="Center" Margin="0,0,4,0"/>
-        <TextBox Grid.Column="5" Text="{Binding ProbeDistance}" FontSize="13"
-                 Width="65" Height="28" HorizontalContentAlignment="Center"
-                 VerticalContentAlignment="Center" Margin="0,0,10,0"/>
-        <Label Grid.Column="6" Content="Latch Dist:" FontSize="13"
-               VerticalAlignment="Center" Margin="0,0,4,0"/>
-        <TextBox Grid.Column="7" Text="{Binding LatchDistance}" FontSize="13"
-                 Width="65" Height="28" HorizontalContentAlignment="Center"
-                 VerticalContentAlignment="Center"/>
-      </Grid>
-    </Border>
+		<!-- Shared Parameters -->
+		<Border Grid.Row="1" BorderThickness="1" CornerRadius="4" Padding="10,5" Margin="0,0,0,8">
+			<Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="*,*">
+				<Label Grid.Row="0"
+					   Grid.Column="0"
+					   Content="Search Rate:"
+					   FontSize="13"
+					   VerticalAlignment="Center"
+					   Margin="0,0,4,0"/>
+				<TextBox Grid.Row="0" Grid.Column="1"
+						 Text="{Binding SearchRate}"
+						 FontSize="13"
+						 Width="65" Height="28"
+						 HorizontalContentAlignment="Center"
+						 VerticalContentAlignment="Center"
+						 Margin="0,0,10,0"/>
+				<Label Grid.Row="0" Grid.Column="2"
+					   Content="Latch Rate:" FontSize="13"
+					   VerticalAlignment="Center"
+					   Margin="0,0,4,0"/>
+				<TextBox Grid.Row="0" Grid.Column="3"
+						 Text="{Binding LatchRate}"
+						 FontSize="13"
+						 Width="65" Height="28"
+						 HorizontalContentAlignment="Center"
+						 VerticalContentAlignment="Center"
+						 Margin="0,0,10,0"/>
+				<Label Grid.Row="1" Grid.Column="0"
+					   Content="Distance:"
+					   HorizontalAlignment="Right"
+					   FontSize="13"
+					   VerticalAlignment="Center"
+					   Margin="0,10,5,0"/>
+				<TextBox Grid.Row="1" Grid.Column="1"
+						 Text="{Binding ProbeDistance}"
+						 FontSize="13"
+						 Width="65" Height="28"
+						 HorizontalContentAlignment="Center"
+						 VerticalContentAlignment="Center"
+						 Margin="0,10,10,0"/>
+				<Label Grid.Row="1" Grid.Column="2"
+					   Content="Latch Dist:"
+					   FontSize="13"
+					   HorizontalAlignment="Right"
+					   VerticalAlignment="Center"
+					   Margin="0,10,5,0"/>
+				<TextBox Grid.Row="1" Grid.Column="3"
+						 Text="{Binding LatchDistance}"
+						 FontSize="13"
+						 Width="65" Height="28"
+						 Margin="0,10,10,0"
+						 HorizontalContentAlignment="Center"
+						 VerticalContentAlignment="Center"/>
+			</Grid>
+		</Border>
 
-    <!-- Tab Control for Probe Types -->
-    <TabControl Grid.Row="2" TabStripPlacement="Top">
+		<!-- Tab Control for Probe Types -->
+		<TabControl Grid.Row="2" TabStripPlacement="Top">
 
-      <!-- Z Height Tab -->
-      <TabItem Header="Z Height" FontSize="16" Padding="15,5">
-        <Grid RowDefinitions="*,Auto" Margin="10">
-          <StackPanel Grid.Row="0" Orientation="Vertical"
-                      HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="15">
-            <TextBlock Text="Position probe above workpiece surface, then press Probe Z."
-                       FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center"
-                       Margin="0,0,0,10"/>
-            <Button Content="Probe Z" FontSize="20" Height="55" Width="160"
-                    CornerRadius="6" HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"
-                    HorizontalAlignment="Center"
-                    IsEnabled="{Binding !IsProbing}"
-                    Command="{Binding ProbeZCommand}"/>
-          </StackPanel>
-        </Grid>
-      </TabItem>
+			<!-- Z Height Tab -->
+			<TabItem Header="Z Height" FontSize="16" Padding="15,5">
+				<Grid RowDefinitions="*,Auto" Margin="10">
+					<StackPanel Grid.Row="0" Orientation="Vertical"
+								HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="15">
+						<TextBlock Text="Position probe above workpiece surface, then press Probe Z."
+								   FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center"
+								   Margin="0,0,0,10"/>
+						<Button Content="Probe Z" FontSize="20" Height="55" Width="160"
+								CornerRadius="6" HorizontalContentAlignment="Center"
+								VerticalContentAlignment="Center"
+								HorizontalAlignment="Center"
+								IsEnabled="{Binding !IsProbing}"
+								Command="{Binding ProbeZCommand}"/>
+					</StackPanel>
+				</Grid>
+			</TabItem>
 
-      <!-- Corner Tab -->
-      <TabItem Header="Corner" FontSize="16" Padding="15,5">
-        <Grid RowDefinitions="Auto,Auto,*" Margin="10" ColumnDefinitions="*,*">
+			<!-- Corner Tab -->
+			<TabItem Header="Corner" FontSize="16" Padding="15,5">
+				<Grid RowDefinitions="Auto,Auto,*" Margin="10" ColumnDefinitions="*,*">
 
-          <!-- Corner Selection -->
-          <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,10">
-            <Label Content="Select Corner:" FontSize="14" Margin="0,0,0,5"/>
-            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" HorizontalAlignment="Center">
-              <RadioButton Grid.Row="0" Grid.Column="0" Content="Back Left" FontSize="14"
-                           GroupName="CornerDir" Margin="5"
-                           Command="{Binding SetCornerCommand}" CommandParameter="BackLeft"/>
-              <RadioButton Grid.Row="0" Grid.Column="1" Content="Back Right" FontSize="14"
-                           GroupName="CornerDir" Margin="5"
-                           Command="{Binding SetCornerCommand}" CommandParameter="BackRight"/>
-              <RadioButton Grid.Row="1" Grid.Column="0" Content="Front Left" FontSize="14"
-                           GroupName="CornerDir" IsChecked="True" Margin="5"
-                           Command="{Binding SetCornerCommand}" CommandParameter="FrontLeft"/>
-              <RadioButton Grid.Row="1" Grid.Column="1" Content="Front Right" FontSize="14"
-                           GroupName="CornerDir" Margin="5"
-                           Command="{Binding SetCornerCommand}" CommandParameter="FrontRight"/>
-            </Grid>
-          </StackPanel>
+					<!-- Corner Selection -->
+					<StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,10">
+						<Label Content="Select Corner:" FontSize="14" Margin="0,0,0,5"/>
+						<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" HorizontalAlignment="Center">
+							<RadioButton Grid.Row="0" Grid.Column="0" Content="Back Left" FontSize="14"
+										 GroupName="CornerDir" Margin="5"
+										 Command="{Binding SetCornerCommand}" CommandParameter="BackLeft"/>
+							<RadioButton Grid.Row="0" Grid.Column="1" Content="Back Right" FontSize="14"
+										 GroupName="CornerDir" Margin="5"
+										 Command="{Binding SetCornerCommand}" CommandParameter="BackRight"/>
+							<RadioButton Grid.Row="1" Grid.Column="0" Content="Front Left" FontSize="14"
+										 GroupName="CornerDir" IsChecked="True" Margin="5"
+										 Command="{Binding SetCornerCommand}" CommandParameter="FrontLeft"/>
+							<RadioButton Grid.Row="1" Grid.Column="1" Content="Front Right" FontSize="14"
+										 GroupName="CornerDir" Margin="5"
+										 Command="{Binding SetCornerCommand}" CommandParameter="FrontRight"/>
+						</Grid>
+					</StackPanel>
 
-          <!-- Options -->
-          <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,0,0,10">
-            <CheckBox Content="Include Z Probe" FontSize="14"
-                      IsChecked="{Binding IncludeZInCorner}" Margin="0,0,0,5"/>
-            <StackPanel Orientation="Horizontal">
-              <Label Content="Clearance Height:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
-              <TextBox Text="{Binding ClearanceHeight}" FontSize="13" Width="65" Height="28"
-                       HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-            </StackPanel>
-          </StackPanel>
+					<!-- Options -->
+					<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,0,0,10">
+						<CheckBox Content="Include Z Probe" FontSize="14"
+								  IsChecked="{Binding IncludeZInCorner}" Margin="0,0,0,5"/>
+						<StackPanel Orientation="Horizontal">
+							<Label Content="Clearance Height:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
+							<TextBox Text="{Binding ClearanceHeight}" FontSize="13" Width="65" Height="28"
+									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+						</StackPanel>
+					</StackPanel>
 
-          <!-- Probe Button -->
-          <Button Grid.Row="1" Grid.Column="1" Content="Probe Corner" FontSize="18"
-                  Height="50" Width="160" CornerRadius="6"
-                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                  IsEnabled="{Binding !IsProbing}"
-                  Command="{Binding ProbeCornerCommand}"/>
-        </Grid>
-      </TabItem>
+					<!-- Probe Button -->
+					<Button Grid.Row="1" Grid.Column="1" 
+                            Content="Probe Corner" 
+                            FontSize="18"
+							Height="50" Width="160" 
+                            CornerRadius="6"
+							HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+							HorizontalContentAlignment="Center" 
+                            VerticalContentAlignment="Center"
+							Margin="0,10,0,0"
+							IsEnabled="{Binding !IsProbing}"
+							Command="{Binding ProbeCornerCommand}"/>
+				</Grid>
+			</TabItem>
 
-      <!-- Center Finder Tab -->
-      <TabItem Header="Center Finder" FontSize="16" Padding="15,5">
-        <Grid RowDefinitions="Auto,Auto,*" Margin="10" ColumnDefinitions="*,*">
+			<!-- Center Finder Tab -->
+			<TabItem Header="Center Finder" FontSize="16" Padding="15,5">
+				<Grid RowDefinitions="Auto,Auto,*" Margin="10" ColumnDefinitions="*,*">
 
-          <!-- Type Selection -->
-          <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,10">
-            <Label Content="Feature Type:" FontSize="14" Margin="0,0,0,5"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
-              <RadioButton Content="Bore" FontSize="14" GroupName="CenterType" IsChecked="True"
-                           Command="{Binding SetCenterTypeCommand}" CommandParameter="Bore"/>
-              <RadioButton Content="Rectangle" FontSize="14" GroupName="CenterType"
-                           Command="{Binding SetCenterTypeCommand}" CommandParameter="Rectangle"/>
-              <RadioButton Content="Boss" FontSize="14" GroupName="CenterType"
-                           Command="{Binding SetCenterTypeCommand}" CommandParameter="Boss"/>
-            </StackPanel>
-          </StackPanel>
+					<!-- Type Selection -->
+					<StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,10">
+						<Label Content="Feature Type:" FontSize="14" Margin="0,0,0,5"/>
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
+							<RadioButton Content="Bore" FontSize="14" GroupName="CenterType" IsChecked="True"
+										 Command="{Binding SetCenterTypeCommand}" CommandParameter="Bore"/>
+							<RadioButton Content="Rectangle" FontSize="14" GroupName="CenterType"
+										 Command="{Binding SetCenterTypeCommand}" CommandParameter="Rectangle"/>
+							<RadioButton Content="Boss" FontSize="14" GroupName="CenterType"
+										 Command="{Binding SetCenterTypeCommand}" CommandParameter="Boss"/>
+						</StackPanel>
+					</StackPanel>
 
-          <!-- Parameters -->
-          <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Spacing="5">
-            <StackPanel Orientation="Horizontal">
-              <Label Content="Approx Size:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
-              <TextBox Text="{Binding ApproxSize}" FontSize="13" Width="65" Height="28"
-                       HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal">
-              <Label Content="Clearance Height:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
-              <TextBox Text="{Binding ClearanceHeight}" FontSize="13" Width="65" Height="28"
-                       HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-            </StackPanel>
-          </StackPanel>
+					<!-- Parameters -->
+					<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Spacing="5">
+						<StackPanel Orientation="Horizontal">
+							<Label Content="Approx Size:" 
+                                   FontSize="13" 
+                                   VerticalAlignment="Center" 
+                                   Margin="0,0,5,0"/>
+							<TextBox Text="{Binding ApproxSize}"
+                                     FontSize="13" 
+                                     Width="65" 
+                                     Height="28"
+									 HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center"/>
+						</StackPanel>
+						<StackPanel Orientation="Horizontal">
+							<Label Content="Clearance Height:" 
+                                   FontSize="13" 
+                                   VerticalAlignment="Center" 
+                                   Margin="0,0,5,0"/>
+							<TextBox Text="{Binding ClearanceHeight}" 
+                                     FontSize="13" Width="65" Height="28"
+									 HorizontalAlignment="Right"
+									 HorizontalContentAlignment="Center" 
+                                     VerticalContentAlignment="Center"/>
+						</StackPanel>
+					</StackPanel>
 
-          <!-- Probe Button -->
-          <Button Grid.Row="1" Grid.Column="1" Content="Find Center" FontSize="18"
-                  Height="50" Width="160" CornerRadius="6"
-                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                  IsEnabled="{Binding !IsProbing}"
-                  Command="{Binding ProbeCenterCommand}"/>
-        </Grid>
-      </TabItem>
-    </TabControl>
+					<!-- Probe Button -->
+					<Button Grid.Row="1" Grid.Column="1" 
+                            Content="Find Center"
+                            FontSize="18"
+							Margin="0,20,0,0"
+							Height="50" Width="160" 
+                            CornerRadius="6"
+							HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+							HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+							IsEnabled="{Binding !IsProbing}"
+							Command="{Binding ProbeCenterCommand}"/>
+				</Grid>
+			</TabItem>
+		</TabControl>
 
-    <!-- Results Section -->
-    <Border Grid.Row="3" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
-      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowDefinitions="Auto">
-        <Label Grid.Column="0" Content="X:" FontSize="16" FontWeight="Bold"
-               VerticalAlignment="Center" Margin="0,0,3,0"/>
-        <Label Grid.Column="1" Content="{Binding ProbeXResult}" FontSize="16"
-               VerticalAlignment="Center" MinWidth="80" Margin="0,0,15,0"/>
-        <Label Grid.Column="2" Content="Y:" FontSize="16" FontWeight="Bold"
-               VerticalAlignment="Center" Margin="0,0,3,0"/>
-        <Label Grid.Column="3" Content="{Binding ProbeYResult}" FontSize="16"
-               VerticalAlignment="Center" MinWidth="80" Margin="0,0,15,0"/>
-        <Label Grid.Column="4" Content="Z:" FontSize="16" FontWeight="Bold"
-               VerticalAlignment="Center" Margin="0,0,3,0"/>
-        <Label Grid.Column="5" Content="{Binding ProbeZResult}" FontSize="16"
-               VerticalAlignment="Center" MinWidth="80" Margin="0,0,15,0"/>
-        <Label Grid.Column="7" Content="{Binding ProbeStatus}" FontSize="14"
-               VerticalAlignment="Center" HorizontalAlignment="Right"
-               Foreground="{DynamicResource SystemAccentColor}"/>
-      </Grid>
-    </Border>
-  </Grid>
+		<!-- Results Section -->
+		<Border Grid.Row="3" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
+			<Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowDefinitions="Auto">
+				<Label Grid.Column="0" Content="X:" FontSize="16" FontWeight="Bold"
+					   VerticalAlignment="Center" Margin="0,0,3,0"/>
+				<Label Grid.Column="1" Content="{Binding ProbeXResult}" FontSize="16"
+					   VerticalAlignment="Center" MinWidth="80" Margin="0,0,15,0"/>
+				<Label Grid.Column="2" Content="Y:" FontSize="16" FontWeight="Bold"
+					   VerticalAlignment="Center" Margin="0,0,3,0"/>
+				<Label Grid.Column="3" Content="{Binding ProbeYResult}" FontSize="16"
+					   VerticalAlignment="Center" MinWidth="80" Margin="0,0,15,0"/>
+				<Label Grid.Column="4" Content="Z:" FontSize="16" FontWeight="Bold"
+					   VerticalAlignment="Center" Margin="0,0,3,0"/>
+				<Label Grid.Column="5" Content="{Binding ProbeZResult}" FontSize="16"
+					   VerticalAlignment="Center" MinWidth="80" Margin="0,0,15,0"/>
+				<Label Grid.Column="7" Content="{Binding ProbeStatus}" FontSize="14"
+					   VerticalAlignment="Center" HorizontalAlignment="Right"
+					   Foreground="{DynamicResource SystemAccentColor}"/>
+			</Grid>
+		</Border>
+	</Grid>
 </UserControl>
