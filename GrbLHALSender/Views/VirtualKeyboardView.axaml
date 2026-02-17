@@ -49,7 +49,7 @@
         <!-- Row 2: (pad) Q W E R T Y U I O P BackSpace -->
         <Grid Grid.Row="1" ColumnDefinitions="10,*,*,*,*,*,*,*,*,*,*,1.5*">
             <Border Grid.Column="0"/>
-            <Button Grid.Column="1"  Classes="kb" Content="Q"  CommandParameter="Q"  Command="{Binding KeyPressCommand}"/>
+            <Button Grid.Column="1"  Classes="kb" Content="Q"  CommandParameter="Q" Margin="-8,0,0,0" Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="2"  Classes="kb" Content="W"  CommandParameter="W"  Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="3"  Classes="kb" Content="E"  CommandParameter="E"  Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="4"  Classes="kb" Content="R"  CommandParameter="R"  Command="{Binding KeyPressCommand}"/>
@@ -59,7 +59,7 @@
             <Button Grid.Column="8"  Classes="kb" Content="I"  CommandParameter="I"  Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="9"  Classes="kb" Content="O"  CommandParameter="O"  Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="10" Classes="kb" Content="P"  CommandParameter="P"  Command="{Binding KeyPressCommand}"/>
-            <Button Grid.Column="11" Classes="kb" Content="BackSpace" FontSize="14" Margin="0,0,10,0"
+            <Button Grid.Column="11" Classes="kb" Content="BackSpace" FontSize="14" Margin="0,0,5,0"
                     CommandParameter="BackSpace" Command="{Binding KeyPressCommand}"/>
         </Grid>
 
@@ -76,7 +76,7 @@
             <Button Grid.Column="8"  Classes="kb" Content="K"     CommandParameter="K"     Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="9"  Classes="kb" Content="L"     CommandParameter="L"     Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="10" Classes="kb" Content=";"     CommandParameter=";"     Command="{Binding KeyPressCommand}"/>
-            <Button Grid.Column="11" Classes="kb" Content="Enter" FontSize="14"
+            <Button Grid.Column="11" Classes="kb" Content="Enter" FontSize="14" Margin="0,0,5,0"
                     CommandParameter="Enter" Command="{Binding KeyPressCommand}"/>
         </Grid>
 
@@ -93,7 +93,7 @@
             <Button Classes="kb" Content="M"   CommandParameter="M"    Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content=","   CommandParameter=","    Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="."   CommandParameter="."    Command="{Binding KeyPressCommand}"/>
-            <Button Classes="kb" Content="/"   CommandParameter="/"    Command="{Binding KeyPressCommand}"/>
+            <Button Classes="kb" Content="/"   CommandParameter="/"  Margin="0,0,8,0"   Command="{Binding KeyPressCommand}"/>
         </UniformGrid>
 
         <!-- Row 5: G90 G91 ... Space ... X0 Y0 -->
@@ -102,7 +102,7 @@
             <Button Grid.Column="1" Classes="kb" Content="G91" CommandParameter="G91 " Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="2" Classes="kb" Content="Space" CommandParameter="Space" Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="3" Classes="kb" Content="X0"  CommandParameter="X0"   Command="{Binding KeyPressCommand}"/>
-            <Button Grid.Column="4" Classes="kb" Content="Y0"  CommandParameter="Y0"   Command="{Binding KeyPressCommand}"/>
+            <Button Grid.Column="4" Classes="kb" Content="Y0"  CommandParameter="Y0" Margin="0,0,5,0"   Command="{Binding KeyPressCommand}"/>
         </Grid>
 
     </Grid>

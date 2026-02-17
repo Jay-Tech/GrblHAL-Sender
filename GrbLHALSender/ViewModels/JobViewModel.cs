@@ -50,6 +50,10 @@ namespace GrbLHALSender.ViewModels
         private readonly object _bufferLock = new();
         private string _holdButtonText;
 
+        // Throttled GcodeFileIndex: store latest value, push to UI on a timer
+        private volatile int _latestFileIndex;
+        private DispatcherTimer? _fileIndexTimer;
+
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
         public JobState JobState { get; set; }
@@ -188,6 +192,11 @@ namespace GrbLHALSender.ViewModels
 
             ListenToState(true);
             JobRunning = true;
+
+            // Start throttled UI update for file index (~5 Hz)
+            _fileIndexTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+            _fileIndexTimer.Tick += FileIndexTimerTick;
+            _fileIndexTimer.Start();
 
             // Pre-fill the buffer — event-driven from here on
             // (each "ok" ack calls FillBuffer to keep the buffer topped off)
@@ -359,8 +368,7 @@ namespace GrbLHALSender.ViewModels
                 _ackPending++;
                 lock (_bufferLock) { _lineLengths.Enqueue(lineBytes); }
 
-                var idx = _index;
-                Dispatcher.UIThread.Post(() => GcodeFileIndex = idx);
+                _latestFileIndex = _index;
                 _index++;
             }
         }
@@ -378,6 +386,8 @@ namespace GrbLHALSender.ViewModels
         {
             // Unsubscribe FIRST to prevent any more ack events from firing FillBuffer
             ListenToState(false);
+            _fileIndexTimer?.Stop();
+            _fileIndexTimer = null;
             _cancelToken?.Cancel();
             JobState = finalState;
             _index = 0;
@@ -389,6 +399,13 @@ namespace GrbLHALSender.ViewModels
             JobRunning = false;
             _cancelToken?.Dispose();
             _cancelToken = null;
+        }
+
+        private void FileIndexTimerTick(object? sender, EventArgs e)
+        {
+            var idx = _latestFileIndex;
+            if (idx != _gCodeFileIndex)
+                GcodeFileIndex = idx;
         }
 
         private void GCodeControl()

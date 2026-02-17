@@ -17,6 +17,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reactive;
 using System.Reflection.Metadata.Ecma335;
+using System.Threading;
 using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels;
@@ -66,6 +67,14 @@ public class MainViewModel : ViewModelBase
     private string _unloadToolMacro;
     private string _tlrMacro;
     private readonly GamepadService _gamepadService;
+
+    // UI throttling: store latest state off-thread, push to UI on a timer
+    private volatile RealTImeState? _latestState;
+    private DispatcherTimer? _uiUpdateTimer;
+
+    // Buffered console log messages — accumulated on the data thread, drained on UI timer
+    private readonly Queue<string> _consoleLogBuffer = new();
+    private readonly object _consoleLogLock = new();
 
     public ObservableCollection<Signal> SignalList
     {
@@ -292,6 +301,11 @@ public class MainViewModel : ViewModelBase
         _commManager.onOptionsUpdated += _commManager_onOptionsUpdated;
         _commManager.onSettingUpdated += _commManager_onSettingUpdated;
         _commManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
+
+        // Throttled UI update timer — coalesces status updates to ~10 Hz
+        _uiUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        _uiUpdateTimer.Tick += UiUpdateTimerTick;
+        _uiUpdateTimer.Start();
 
         ConnectCommand = ReactiveCommand.Create(Connect);
         ZeroAxis = ReactiveCommand.Create<string>(Zero);
@@ -577,63 +591,96 @@ public class MainViewModel : ViewModelBase
     }
     private void _commManager_OnConsoleLogReceived(object? sender, string e)
     {
-        if (ShowConsole)
-            ConsoleOutput.Add(e);
+        // Buffer console messages — they arrive on the data thread and cannot
+        // safely modify the ObservableCollection directly. The UI timer drains them.
+        if (!ShowConsole) return;
+        lock (_consoleLogLock)
+        {
+            _consoleLogBuffer.Enqueue(e);
+        }
     }
     private void _commManager_OnStateReceived(object? sender, RealTImeState e)
     {
+        // Store the latest state — the UI timer will pick it up and apply it.
+        // This avoids flooding the UI thread with property notifications on every poll.
+        _latestState = e;
+    }
+
+    /// <summary>
+    /// Timer callback that applies the latest machine state to UI-bound properties.
+    /// Runs on the UI thread at ~10 Hz, coalescing multiple status updates into one pass.
+    /// </summary>
+    private void UiUpdateTimerTick(object? sender, EventArgs e)
+    {
+        var state = Interlocked.Exchange(ref _latestState, null);
+        if (state == null) return;
+
         Connected = true;
-        for (int i = 0; i < e.MPos.Length; i++)
+        for (int i = 0; i < state.MPos.Length; i++)
         {
             var pos = new Position
             {
-                MPos = double.Parse(e.MPos[i])
+                MPos = double.Parse(state.MPos[i])
             };
-            if (e.Wco.Length > 0)
+            if (state.Wco.Length > 0)
             {
-                pos.Wco = double.Parse(e.MPos[i]) - double.Parse(e?.Wco[i] ?? "0.0");
+                pos.Wco = double.Parse(state.MPos[i]) - double.Parse(state?.Wco[i] ?? "0.0");
             }
 
             AxisCollection[i].Position = pos;
         }
-        HomeState = e.Home;
-        State = e;
-        TLR = e.TLR;
+        HomeState = state.Home;
+        State = state;
+        TLR = state.TLR;
         SetFeedAndSpeeds(State);
-        Tool = e.Tool;
+        Tool = state.Tool;
 
         // Update spindle position for 3D visualizer
         // G-code toolpath is in work coordinates, so we must convert MPos to WPos
         // WPos = MPos - WCO (Work Coordinate Offset)
-        if (e.MPos.Length >= 3 &&
-            float.TryParse(e.MPos[0], out float mx) &&
-            float.TryParse(e.MPos[1], out float my) &&
-            float.TryParse(e.MPos[2], out float mz))
+        if (state.MPos.Length >= 3 &&
+            float.TryParse(state.MPos[0], out float mx) &&
+            float.TryParse(state.MPos[1], out float my) &&
+            float.TryParse(state.MPos[2], out float mz))
         {
             float wx = mx, wy = my, wz = mz;
-            if (e.Wco.Length >= 3 &&
-                float.TryParse(e.Wco[0], out float wcoX) &&
-                float.TryParse(e.Wco[1], out float wcoY) &&
-                float.TryParse(e.Wco[2], out float wcoZ))
+            if (state.Wco.Length >= 3 &&
+                float.TryParse(state.Wco[0], out float wcoX) &&
+                float.TryParse(state.Wco[1], out float wcoY) &&
+                float.TryParse(state.Wco[2], out float wcoZ))
             {
                 wx = mx - wcoX;
                 wy = my - wcoY;
                 wz = mz - wcoZ;
-                WorkCoordinateOffset = new Point3D(wcoX, wcoY, wcoZ);
+                var newWco = new Point3D(wcoX, wcoY, wcoZ);
+                if (_workCoordinateOffset == null || !_workCoordinateOffset.Value.Equals(newWco))
+                    WorkCoordinateOffset = newWco;
             }
-            SpindlePosition = new Point3D(wx, wy, wz);
+            var newSpindlePos = new Point3D(wx, wy, wz);
+            if (_spindlePosition == null || !_spindlePosition.Value.Equals(newSpindlePos))
+                SpindlePosition = newSpindlePos;
         }
 
-        AlarmActive = e.GrblHalState == "Alarm";
+        AlarmActive = state.GrblHalState == "Alarm";
+
+        // Drain buffered console log messages (from data thread) to UI
+        lock (_consoleLogLock)
+        {
+            while (_consoleLogBuffer.Count > 0)
+            {
+                ConsoleOutput.Add(_consoleLogBuffer.Dequeue());
+            }
+        }
+        if (ShowConsole && ShowRTCommands)
+        {
+            ConsoleOutput.Add(state.RawRt);
+        }
         if (ConsoleOutput.Count > 200)
         {
             ConsoleOutput.Clear();
         }
-        if (ShowConsole && ShowRTCommands)
-        {
-            ConsoleOutput.Add(e.RawRt);
-        }
-        ProcessSignals(e.SignalStatus);
+
+        ProcessSignals(state.SignalStatus);
     }
 
     public bool ShowConsole { get; set; }
@@ -659,19 +706,14 @@ public class MainViewModel : ViewModelBase
     }
     private void ProcessSignals(List<char> signals)
     {
-        if (signals.Count == 0)
+        // Single pass: set each signal's Triggered state only if it actually changed.
+        // This avoids redundant property change notifications that would trigger
+        // unnecessary UI binding updates and layout passes.
+        foreach (var sig in SignalList)
         {
-            if (!SignalList.Any(x => x.Triggered)) return;
-
-            foreach (var signal in from signal in SignalList where signal.Triggered select signal)
-            {
-                signal.Triggered = false;
-            }
-            return;
-        }
-        foreach (var signal in from signal in signals from sig in SignalList where sig.Id == signal select sig)
-        {
-            signal.Triggered = true;
+            bool shouldBeTriggered = signals.Count > 0 && signals.Contains(sig.Id);
+            if (sig.Triggered != shouldBeTriggered)
+                sig.Triggered = shouldBeTriggered;
         }
     }
     private void _commManager_onSettingUpdated(object? sender, List<GrblHalSetting> e)

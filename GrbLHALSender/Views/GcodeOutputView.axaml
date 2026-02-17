@@ -15,7 +15,6 @@
 			CornerRadius="6" Margin="0,50,5,50"
 			MaxWidth="420" MinWidth="350">
 		<ListBox x:Name="ListBoxGCode"
-				 SelectedIndex="{Binding GcodeFileIndex, Mode=OneWay}"
 				 ItemsSource="{Binding GCodeOutPut}"
 				 VerticalAlignment="Stretch"
 				 HorizontalAlignment="Stretch"

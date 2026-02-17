@@ -139,7 +139,11 @@ namespace GrbLHALSender.Communication
 
         private void SendState(RealTImeState rtState)
         {
-            _dispatcher.InvokeAsync(() => OnStateReceived(this, rtState), DispatcherPriority.Background);
+            // Fire directly on the data thread — subscribers are responsible for
+            // their own UI marshalling (e.g., storing state in a volatile field
+            // and applying it on a timer). This avoids flooding the dispatcher
+            // queue with InvokeAsync work items during high-frequency streaming.
+            OnStateReceived?.Invoke(this, rtState);
         }
 
         public void NewTcpConnection(TcpSettings tcpSettings)
