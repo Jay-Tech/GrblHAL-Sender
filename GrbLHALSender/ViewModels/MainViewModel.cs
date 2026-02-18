@@ -116,6 +116,7 @@ public class MainViewModel : ViewModelBase
     public ConnectionViewModel ConnectionViewModel { get; set; }
     public DialogViewModel DialogViewModel { get; set; }
     public MdiViewModel MdiViewModel { get; set; }
+    public AppConfigViewModel AppConfigViewModel { get; set; }
     public string UnitSystem { get; set; } = "G21";
     public bool UseMetric { get; set; }
     public ProbeViewModel ProbeViewModel
@@ -279,7 +280,7 @@ public class MainViewModel : ViewModelBase
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
-        MdiViewModel mdiViewModel, GamepadService gamepadService)
+        MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel)
     {
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
@@ -292,6 +293,7 @@ public class MainViewModel : ViewModelBase
         ConnectionViewModel = connectionViewModel;
         DialogViewModel = dialogViewModel;
         MdiViewModel = mdiViewModel;
+        AppConfigViewModel = appConfigViewModel;
         MdiViewModel.MidiTextCommitted += MainViewModel_MidiTextCommitted;
         ConnectionViewModel.LoadFromConfig(_config);
         ProbeViewModel.LoadFromConfig(_config);
@@ -521,12 +523,12 @@ public class MainViewModel : ViewModelBase
         JogRate = JogRateList[^1];
         ToolList.AddRange(_config.ToolList.Tools);
         AtcEnabled = _config.AtcConfig.EnableAtc;
-        TlrCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.TlrMacroName);
+        TlrCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.TlrMacroName) && AtcEnabled;
         if (TlrCommandEnabled)
         {
             _tlrMacro = _config.AtcConfig.TlrMacroName ??" ";
         }
-        UnloadToolCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.UnloadToolMacroName);
+        UnloadToolCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.UnloadToolMacroName) && AtcEnabled;
         if (UnloadToolCommandEnabled)
         {
             _unloadToolMacro = _config.AtcConfig.UnloadToolMacroName ?? "";

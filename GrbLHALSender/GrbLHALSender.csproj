@@ -39,4 +39,10 @@
     <PackageReference Include="Xaml.Behaviors.Avalonia" Version="11.3.9.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Views\AppConfigView.axaml.cs">
+      <DependentUpon>AppConfigView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

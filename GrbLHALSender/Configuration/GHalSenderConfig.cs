@@ -44,8 +44,8 @@ public class GHalSenderConfig
 
     public double[] JogDistanceImperial { get; set; } =
     [
+        .001,
         .01,
-        .5,
         1
     ];
 

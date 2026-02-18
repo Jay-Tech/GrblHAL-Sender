@@ -19,6 +19,6 @@ class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace()
-            .UseReactiveUI();
-    //.UseReactiveUI().With(new Win32PlatformOptions { RenderingMode = new[] { Win32RenderingMode.Wgl } });
+            .UseReactiveUI()
+    .UseReactiveUI().With(new Win32PlatformOptions { RenderingMode = [Win32RenderingMode.Vulkan] });
 }

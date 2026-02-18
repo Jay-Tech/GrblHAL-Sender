@@ -1,0 +1,135 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using GrbLHALSender.Configuration;
+using ReactiveUI;
+
+namespace GrbLHALSender.ViewModels
+{
+    public class AppConfigViewModel : ViewModelBase
+    {
+        private readonly ConfigManager _configManager;
+        private GHalSenderConfig _appConfig;
+        private bool _enableCutLines;
+        private bool _useMetric;
+        private double[] _metricJogDistance = [];
+        private double[] _metricJogSpeed = [];
+        private double[] _imperialJogDistance = [];
+        private double[] _imperialJogSpeed = [];
+        private bool _isAtcEnabled;
+        private int _atcToolCount;
+        private string _tlrMacro;
+        private string _unloadMacro;
+        private bool _isGamePadEnabled;
+
+
+        public bool EnableCutLines
+        {
+            get => _enableCutLines;
+            set => this.RaiseAndSetIfChanged(ref _enableCutLines, value);
+        }
+
+        public bool UseMetric
+        {
+            get => _useMetric;
+            set => this.RaiseAndSetIfChanged(ref _useMetric, value);
+        }
+
+        public double[] MetricJogDistance
+        {
+            get => _metricJogDistance;
+            set => this.RaiseAndSetIfChanged(ref _metricJogDistance, value);
+        }
+
+        public double[] MetricJogSpeed
+        {
+            get => _metricJogSpeed;
+            set => this.RaiseAndSetIfChanged(ref _metricJogSpeed, value);
+        }
+
+        public double[] ImperialJogDistance
+        {
+            get => _imperialJogDistance;
+            set => this.RaiseAndSetIfChanged(ref _imperialJogDistance, value);
+        }
+
+        public double[] ImperialJogSpeed
+        {
+            get => _imperialJogSpeed;
+            set => this.RaiseAndSetIfChanged(ref _imperialJogSpeed, value);
+        }
+
+        public bool IsAtcEnabled
+        {
+            get => _isAtcEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isAtcEnabled, value);
+        }
+
+        public int AtcToolCount
+        {
+            get => _atcToolCount;
+            set => this.RaiseAndSetIfChanged(ref _atcToolCount, value);
+        }
+        public string? TlrMacro
+        {
+            get => _tlrMacro;
+            set => this.RaiseAndSetIfChanged(ref _tlrMacro, value);
+        }
+
+        public string? UnloadMacro
+        {
+            get => _unloadMacro;
+            set => this.RaiseAndSetIfChanged(ref _unloadMacro, value);
+        }
+
+        public bool IsGamePadEnabled
+        {
+            get => _isGamePadEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isAtcEnabled, value);
+        }
+        public ICommand SaveConfigCommand { get; }
+        public ICommand CloseCommand { get; }
+
+        public AppConfigViewModel(ConfigManager configManager)
+        {
+            _configManager = configManager;
+            SaveConfigCommand = ReactiveCommand.Create(SaveConfig);
+            _configManager.OnConfigLoaded += _configManager_OnConfigLoaded;
+        }
+
+        private void _configManager_OnConfigLoaded(object? sender, GHalSenderConfig e)
+        {
+            _appConfig = e;
+            EnableCutLines = _appConfig.ShowToolpathProgress;
+            UseMetric = _appConfig.UseMetric;
+            MetricJogDistance = _appConfig.JogDistanceMetric;
+            MetricJogSpeed = _appConfig.JogSpeedMetric;
+            ImperialJogDistance = _appConfig.JogDistanceImperial;
+            ImperialJogSpeed = _appConfig.JogSpeedImperial;
+            IsAtcEnabled = _appConfig.AtcConfig.EnableAtc;
+            AtcToolCount = _appConfig.ToolList.Tools.Count;
+            TlrMacro = _appConfig.AtcConfig.TlrMacroName;
+            UnloadMacro = _appConfig.AtcConfig.UnloadToolMacroName;
+            IsGamePadEnabled = _appConfig.GamepadConfig.Enabled;
+        }
+
+        public void SaveConfig()
+        {
+            _appConfig.ShowToolpathProgress = EnableCutLines;
+            _appConfig.UseMetric = UseMetric;
+            _appConfig.JogDistanceMetric = MetricJogDistance;
+            _appConfig.JogSpeedMetric = MetricJogSpeed;
+            _appConfig.JogDistanceImperial = ImperialJogDistance;
+            _appConfig.JogSpeedImperial = ImperialJogSpeed;
+            _appConfig.AtcConfig.EnableAtc = IsAtcEnabled;
+            _appConfig.ToolList.Tools = Enumerable.Range(1, AtcToolCount).ToList();
+            _appConfig.AtcConfig.TlrMacroName = TlrMacro ?? "";
+            _appConfig.AtcConfig.UnloadToolMacroName = UnloadMacro ?? "";
+            _appConfig.GamepadConfig.Enabled = IsGamePadEnabled;
+            _configManager.SaveConfig();
+        }
+    }
+}
