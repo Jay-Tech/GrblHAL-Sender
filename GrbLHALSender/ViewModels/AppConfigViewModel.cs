@@ -9,7 +9,7 @@ using ReactiveUI;
 
 namespace GrbLHALSender.ViewModels
 {
-    public class AppConfigViewModel : ViewModelBase
+    public class AppConfigViewModel : ViewModelBase, IDialogCloseable
     {
         private readonly ConfigManager _configManager;
         private GHalSenderConfig _appConfig;
@@ -88,8 +88,9 @@ namespace GrbLHALSender.ViewModels
         public bool IsGamePadEnabled
         {
             get => _isGamePadEnabled;
-            set => this.RaiseAndSetIfChanged(ref _isAtcEnabled, value);
+            set => this.RaiseAndSetIfChanged(ref _isGamePadEnabled, value);
         }
+        public Action? CloseAction { get; set; }
         public ICommand SaveConfigCommand { get; }
         public ICommand CloseCommand { get; }
 
@@ -97,6 +98,7 @@ namespace GrbLHALSender.ViewModels
         {
             _configManager = configManager;
             SaveConfigCommand = ReactiveCommand.Create(SaveConfig);
+            CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
             _configManager.OnConfigLoaded += _configManager_OnConfigLoaded;
         }
 

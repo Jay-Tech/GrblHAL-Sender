@@ -72,11 +72,15 @@ public partial class DialogButtonView : UserControl
                 return (macroView, 450, 500);
 
             case DialogType.Probe:
-                var probeView = new ProbeView();
+                var probeView = new ProbeView
+                {
+                    MinHeight = 595,
+                    MinWidth = 480
+                };
                 var probeMainVm = GetMainViewModel();
                 if (probeMainVm != null)
                     probeView.DataContext = probeMainVm.ProbeViewModel;
-                return (probeView, 440, 540);
+                return (probeView, 480, 595);
             case DialogType.AppConfig:
                  var appConfigView = new AppConfigView();
                  var appConfigViewVm = GetMainViewModel();
@@ -109,6 +113,18 @@ public partial class DialogButtonView : UserControl
             width: width,
             height: height
         );
+
+        // Wire up CloseAction for any dialog whose ViewModel implements IDialogCloseable
+        if (content.DataContext is IDialogCloseable closeable)
+        {
+            closeable.CloseAction = () => dialogWindow.Close();
+        }
+
+        // Wire up CloseConsoleAction for Console (DataContext is MainViewModel, not IDialogCloseable)
+        if (dialogType == DialogType.Console && content.DataContext is MainViewModel consoleMainVm)
+        {
+            consoleMainVm.CloseConsoleAction = () => dialogWindow.Close();
+        }
 
         // Track open/close state
         _viewModel?.MarkDialogOpened(dialogType);

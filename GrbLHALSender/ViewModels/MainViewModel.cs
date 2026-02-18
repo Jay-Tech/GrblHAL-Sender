@@ -108,6 +108,7 @@ public class MainViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _jogStepList, value);
     }
 
+    public bool ShowConsole { get; set; }
     public bool ShowRTCommands { get; set; }
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
@@ -264,6 +265,8 @@ public class MainViewModel : ViewModelBase
     public ICommand SetTlrCommand { get; }
     public ICommand UnloadToolCommand { get; }
     public ICommand OpenProbeCommand { get; }
+    public Action? CloseConsoleAction { get; set; }
+    public ICommand CloseConsoleCommand { get; }
 
     public ReactiveCommand<object, Unit> DoubleTapCommand
     {
@@ -343,6 +346,7 @@ public class MainViewModel : ViewModelBase
         SetTlrCommand = ReactiveCommand.Create(SetTlr);
         UnloadToolCommand = ReactiveCommand.Create(UnloadTool);
         OpenProbeCommand = ReactiveCommand.Create(OpenProbe);
+        CloseConsoleCommand = ReactiveCommand.Create(() => CloseConsoleAction?.Invoke());
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values
         _axis =
@@ -688,8 +692,6 @@ public class MainViewModel : ViewModelBase
 
         ProcessSignals(state.SignalStatus);
     }
-
-    public bool ShowConsole { get; set; }
 
     private void SetFeedAndSpeeds(RealTImeState rt)
     {
