@@ -63,6 +63,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<ConnectionViewModel>();
         collection.AddTransient<DialogViewModel>();
         collection.AddTransient<MdiViewModel>();
+        collection.AddTransient<AppConfigViewModel>();
     }
 
 }

@@ -77,7 +77,12 @@ public partial class DialogButtonView : UserControl
                 if (probeMainVm != null)
                     probeView.DataContext = probeMainVm.ProbeViewModel;
                 return (probeView, 440, 540);
-
+            case DialogType.AppConfig:
+                 var appConfigView = new AppConfigView();
+                 var appConfigViewVm = GetMainViewModel();
+                 if (appConfigViewVm != null)
+                     appConfigView.DataContext = appConfigViewVm.AppConfigViewModel;
+                 return (appConfigView, 525, 550);
             default:
                 var placeholder = new TextBlock
                 {

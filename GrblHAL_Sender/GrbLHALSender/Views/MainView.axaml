@@ -653,6 +653,8 @@
 														Width="120"
 														Command="{Binding  $parent[Grid].((viewModels:MainViewModel)DataContext).SetToolSelectCommand}"
 														CommandParameter="{Binding #ToolButton.Content}"
+														HorizontalContentAlignment="Center"
+														VerticalContentAlignment="Center"
 														HorizontalAlignment="Stretch"
 														VerticalAlignment="Stretch" />
 											</DataTemplate>
