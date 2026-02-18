@@ -12,7 +12,7 @@
 
 	<Border HorizontalAlignment="Right" VerticalAlignment="Stretch"
 			Background="{StaticResource DarkReduceBrushAlpha}"
-			CornerRadius="6" Margin="0,50,5,50"
+			CornerRadius="6" Margin="0,60,5,75"
 			MaxWidth="420" MinWidth="350">
 		<ListBox x:Name="ListBoxGCode"
 				 ItemsSource="{Binding GCodeOutPut}"
@@ -22,6 +22,11 @@
 				 Foreground="White"
 				 ScrollViewer.VerticalScrollBarVisibility="Auto"
 				 FontSize="18">
+			<ListBox.Styles>
+				<Style Selector="ListBoxItem">
+					<Setter Property="Padding" Value="5"/>
+				</Style>
+			</ListBox.Styles>
 
 			<ListBox.ItemTemplate>
 				<DataTemplate>
