@@ -67,11 +67,12 @@
                     HorizontalAlignment="Stretch" 
                     VerticalAlignment="Stretch" 
                     Margin="0,5,0,0">
-				<Grid ColumnDefinitions="*,*,*" 
+				<Grid ColumnDefinitions="*,*,*,*" 
                       VerticalAlignment="Stretch" 
                       HorizontalAlignment="Stretch">
 					<Button Grid.Column="0" 
                             Margin="1,0" 
+                            CornerRadius="6"
                             Content="New"
                             FontSize="24"
 							Command="{Binding NewMacroCommand}"
@@ -80,6 +81,7 @@
                             HorizontalAlignment="Stretch"/>
 					<Button Grid.Column="1" 
                             Margin="1,0" 
+                            CornerRadius="6"
                             Content="Save"
                             FontSize="24"
 							CommandParameter="{Binding #TbName.Text}"
@@ -89,11 +91,20 @@
                             HorizontalAlignment="Stretch" />
 					<Button Grid.Column="2" x:Name="Button" 
                             Margin="1,0" 
+                            CornerRadius="6"
                             Content="Delete"
 							Command="{Binding DeleteMacroCommand}"
 							CommandParameter="{Binding #LbMacro.SelectedItem}"
 							HorizontalContentAlignment="Center"
 							VerticalContentAlignment="Center"
+                            FontSize="24" HorizontalAlignment="Stretch" />
+                    <Button Grid.Column="3" x:Name="CloseButton" 
+                            Margin="1,0" 
+                            CornerRadius="6"
+                            Content="Close"
+                            Command="{Binding CloseCommand}"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
                             FontSize="24" HorizontalAlignment="Stretch" />
 				</Grid>
 			</Border>

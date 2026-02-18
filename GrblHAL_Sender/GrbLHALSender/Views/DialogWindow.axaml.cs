@@ -15,5 +15,7 @@ public partial class DialogWindow : Window
         Width = width;
         Height = height;
         DialogContent.Content = content;
+        MinWidth = width;
+        MinHeight = height;
     }
 }

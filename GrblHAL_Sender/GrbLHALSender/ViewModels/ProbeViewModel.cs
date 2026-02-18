@@ -10,7 +10,7 @@ using ReactiveUI;
 
 namespace GrbLHALSender.ViewModels
 {
-    public class ProbeViewModel : ViewModelBase
+    public class ProbeViewModel : ViewModelBase, IDialogCloseable
     {
         private readonly CommunicationManager _communicationManager;
         private readonly ConfigManager _configManager;
@@ -155,6 +155,8 @@ namespace GrbLHALSender.ViewModels
         public ICommand SetToolTypeProbe3DCommand { get; }
         public ICommand SetCornerCommand { get; }
         public ICommand SetCenterTypeCommand { get; }
+        public Action? CloseAction { get; set; }
+        public ICommand CloseCommand { get; }
 
         public ProbeViewModel(CommunicationManager communicationManager, ConfigManager configManager)
         {
@@ -168,7 +170,8 @@ namespace GrbLHALSender.ViewModels
             SetToolTypeProbe3DCommand = ReactiveCommand.Create(() => SelectedToolType = ProbeToolType.Probe3D);
             SetCornerCommand = ReactiveCommand.Create<string>(s => SelectedCorner = Enum.Parse<CornerDirection>(s));
             SetCenterTypeCommand = ReactiveCommand.Create<string>(s => SelectedCenterType = Enum.Parse<CenterFinderType>(s));
-
+            CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
+           
             // Update IsTouchPlate when SelectedToolType changes
             this.WhenAnyValue(x => x.SelectedToolType)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(IsTouchPlate)));

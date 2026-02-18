@@ -10,7 +10,7 @@ using ReactiveUI;
 
 namespace GrbLHALSender.ViewModels;
 
-public class MacroViewModel: ViewModelBase
+public class MacroViewModel: ViewModelBase, IDialogCloseable
 {
     private Macro _selectedItem;
     private int _macroSelectedIndex;
@@ -73,8 +73,9 @@ public class MacroViewModel: ViewModelBase
     public ICommand NewMacroCommand { get; }
     public ICommand OpenMacroPanel { get; }
     public ICommand CloseMacroCommand { get; }
+    public Action? CloseAction { get; set; }
+    public ICommand CloseCommand { get; }
 
-   
 
     private ReactiveCommand<object, Unit> _doubleMacroTapCommand;
     public MacroViewModel(ConfigManager configManger, CommunicationManager commsManager)
@@ -88,6 +89,7 @@ public class MacroViewModel: ViewModelBase
         NewMacroCommand = ReactiveCommand.Create(NewMacro);
         CloseMacroCommand = ReactiveCommand.Create(CloseMacroControl);
         OpenMacroPanel = ReactiveCommand.Create(MacroControl);
+        CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
     }
 
     private void _configManger_OnConfigLoaded(object? sender, GHalSenderConfig e)
