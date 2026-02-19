@@ -189,7 +189,8 @@ namespace GrbLHALSender.ViewModels
             SetCornerCommand = ReactiveCommand.Create<string>(s => SelectedCorner = Enum.Parse<CornerDirection>(s));
             SetCenterTypeCommand = ReactiveCommand.Create<string>(s => SelectedCenterType = Enum.Parse<CenterFinderType>(s));
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
-           
+            
+
             // Update IsTouchPlate when SelectedToolType changes
             this.WhenAnyValue(x => x.SelectedToolType)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(IsTouchPlate)));
@@ -208,6 +209,13 @@ namespace GrbLHALSender.ViewModels
             ClearanceHeight = pc.ClearanceHeight;
             ApproxSize = pc.ApproxSize;
             UnitSystem = config.UseMetric ? "G21" : "G20";
+            config?.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(GHalSenderConfig.UseMetric))
+                {
+                    UnitSystem = config.UseMetric ? "G21" : "G20";
+                }
+            };
         }
 
         public void SaveToConfig(GHalSenderConfig config)

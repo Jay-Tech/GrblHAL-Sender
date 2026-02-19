@@ -355,7 +355,6 @@ namespace GrbLHALSender.Communication
             if (asSpan[0].StartsWith("SIGNALS"))
             {
                 grblHalOptions.SignalLabels = asSpan[1].ToCharArray().ToList();
-                grblHalOptions.SignalLabels.Add("P");
                 if (grblHalOptions.AxisLabels.Count > 0)
                 {
                     grblHalOptions.SignalLabels.AddOrInsertRange(grblHalOptions.AxisLabels, 0);
