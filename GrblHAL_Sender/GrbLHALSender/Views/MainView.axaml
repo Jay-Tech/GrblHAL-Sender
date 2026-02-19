@@ -204,6 +204,9 @@
 													HorizontalContentAlignment="Left"
 													HorizontalAlignment ="Stretch"
 													VerticalAlignment="Stretch"></Label>
+											<TextBlock Text="{Binding $parent[ItemsControl].((viewModels:MainViewModel)DataContext).MachineSettings.UnitLabel}"
+													   FontSize="18" VerticalAlignment="Top"
+													   Opacity="0.6" Margin="2,-6,0,0"/>
 											<Label  Focusable="False"
 													Content="{Binding Path=Position.MPos,StringFormat=N3}"
 													FontSize="16" MinWidth="175" Height="25"

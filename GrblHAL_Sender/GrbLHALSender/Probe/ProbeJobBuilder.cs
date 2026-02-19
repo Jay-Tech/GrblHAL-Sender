@@ -36,6 +36,8 @@ namespace GrbLHALSender.Probe
         public string ClearanceHeight { get; set; }
         public string TouchPlateThickness { get; set; }
         public ProbeToolType ToolType { get; set; }
+        /// <summary>G21 (metric) or G20 (imperial) — prepended to probe sequences.</summary>
+        public string UnitSystem { get; set; } = "G21";
 
         public ProbeState ProbeState { get; set; }
 
@@ -47,6 +49,7 @@ namespace GrbLHALSender.Probe
         {
             return
             [
+                UnitSystem,
                 "G91",
                 $"{ProbeCommand}F{ProbeSearchRate}Z-{ProbeDistance}",
                 $"G0Z{LatchDistance}",
@@ -65,6 +68,7 @@ namespace GrbLHALSender.Probe
 
             return
             [
+                UnitSystem,
                 "G91",
                 $"{ProbeCommand}F{ProbeSearchRate}{axis}{sign}{ProbeDistance}",
                 $"G0{axis}{retractSign}{LatchDistance}",
@@ -90,6 +94,7 @@ namespace GrbLHALSender.Probe
             // Retract Z to clearance, then probe X
             var xPhase = new List<string>
             {
+                UnitSystem,
                 "G91",
                 $"G0Z{ClearanceHeight}"
             };
@@ -101,6 +106,7 @@ namespace GrbLHALSender.Probe
             var xRetractSign = xSign > 0 ? "-" : "";
             var yPhase = new List<string>
             {
+                UnitSystem,
                 "G91",
                 $"G0X{xRetractSign}{ProbeDistance}"
             };
@@ -126,6 +132,7 @@ namespace GrbLHALSender.Probe
             // Phase 2: Return to start, probe X-
             var xNegPhase = new List<string>
             {
+                UnitSystem,
                 "G91",
                 $"G0X-{ProbeDistance}"  // move back past start toward X-
             };
@@ -138,6 +145,7 @@ namespace GrbLHALSender.Probe
             // Phase 4: Return to start, probe Y-
             var yNegPhase = new List<string>
             {
+                UnitSystem,
                 "G91",
                 $"G0Y-{ProbeDistance}"
             };
@@ -161,6 +169,7 @@ namespace GrbLHALSender.Probe
             // Phase 1: Move to +X side, drop to probe height, probe X- (toward boss)
             var xPosPhase = new List<string>
             {
+                UnitSystem,
                 "G91",
                 $"G0X{halfSize}",
                 $"G0Z-{ClearanceHeight}"
@@ -171,6 +180,7 @@ namespace GrbLHALSender.Probe
             // Phase 2: Retract Z, move to -X side, drop, probe X+ (toward boss)
             var xNegPhase = new List<string>
             {
+                UnitSystem,
                 "G91",
                 $"G0Z{ClearanceHeight}",
                 $"G0X-{(double.Parse(halfSize) * 2).ToString()}",
@@ -182,6 +192,7 @@ namespace GrbLHALSender.Probe
             // Phase 3: Retract Z, return to center X, move to +Y side, drop, probe Y-
             var yPosPhase = new List<string>
             {
+                UnitSystem,
                 "G91",
                 $"G0Z{ClearanceHeight}",
                 $"G0X{halfSize}",
@@ -194,6 +205,7 @@ namespace GrbLHALSender.Probe
             // Phase 4: Retract Z, move to -Y side, drop, probe Y+
             var yNegPhase = new List<string>
             {
+                UnitSystem,
                 "G91",
                 $"G0Z{ClearanceHeight}",
                 $"G0Y-{(double.Parse(halfSize) * 2).ToString()}",

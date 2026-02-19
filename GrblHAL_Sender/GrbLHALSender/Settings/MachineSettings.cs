@@ -37,8 +37,17 @@ namespace GrbLHALSender.Settings
         public bool ReportInMetric
         {
             get => _reportInMetric;
-            set => this.RaiseAndSetIfChanged(ref _reportInMetric, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _reportInMetric, value);
+                this.RaisePropertyChanged(nameof(UnitLabel));
+            }
         }
+
+        /// <summary>
+        /// Returns "mm" or "in" based on the machine's $13 setting.
+        /// </summary>
+        public string UnitLabel => ReportInMetric ? "mm" : "in";
 
         //grbl settings $110  X rapid
         public double XRapid
