@@ -12,10 +12,14 @@ using System.Numerics;
 namespace GrbLHALSender.Views.GcodeRenderControl
 {
     /// <summary>
-    /// Caches the static toolpath scene (grid + axes + toolpath segments) as an SKPicture.
-    /// The cache is invalidated when the camera, toolpath, machine settings, or control size change.
-    /// When only the spindle position changes, the cached scene is replayed cheaply and only the
-    /// spindle indicator is redrawn — avoiding the per-frame cost of projecting thousands of segments.
+    /// Two-layer cache for the toolpath scene:
+    /// 1. Static layer (grid + axes + all toolpath segments in normal colors) — only invalidated
+    ///    when camera, toolpath, machine settings, WCO, or control size change.
+    /// 2. Projected screen coordinates — cached alongside the static layer so the progress
+    ///    overlay and selection highlight can be drawn cheaply without re-projecting.
+    ///
+    /// When only CompletedSegmentIndex or SpindlePosition change, the static SKPicture is
+    /// simply replayed and only the overlay segments are redrawn using pre-projected coordinates.
     /// </summary>
     public class ToolpathSceneCache
     {
@@ -26,13 +30,15 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private ToolpathData? _cachedToolpath;
         private MachineSettings? _cachedMachineSettings;
         private Point3D? _cachedWco;
-        private int _cachedCompletedIndex;
-        private int _cachedSelectedIndex;
+
+        // Pre-projected screen coordinates for each segment (start and end).
+        // Null entries indicate segments behind the camera.
+        private SKPoint?[]? _projectedStarts;
+        private SKPoint?[]? _projectedEnds;
 
         public SKPicture? GetOrCreate(
             ToolpathData? toolpath, Camera3D camera, MachineSettings? machineSettings,
-            Point3D? wco, float width, float height, int completedSegmentIndex = -1,
-            int selectedSegmentIndex = -1)
+            Point3D? wco, float width, float height)
         {
             var view = camera.GetViewMatrix();
             var proj = camera.GetProjectionMatrix(width, height);
@@ -45,9 +51,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 Math.Abs(_cachedHeight - height) < 0.5f &&
                 ReferenceEquals(_cachedToolpath, toolpath) &&
                 ReferenceEquals(_cachedMachineSettings, machineSettings) &&
-                Equals(_cachedWco, wco) &&
-                _cachedCompletedIndex == completedSegmentIndex &&
-                _cachedSelectedIndex == selectedSegmentIndex)
+                Equals(_cachedWco, wco))
             {
                 return _cachedScene;
             }
@@ -55,10 +59,14 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // Rebuild the cached scene
             _cachedScene?.Dispose();
 
+            // Pre-project all segment screen coordinates
+            ProjectAllSegments(toolpath, viewProj, width, height);
+
             using var recorder = new SKPictureRecorder();
             var canvas = recorder.BeginRecording(new SKRect(0, 0, width, height));
 
-            GcodeRenderOperation.DrawStaticScene(canvas, viewProj, width, height, toolpath, machineSettings, wco, completedSegmentIndex, selectedSegmentIndex);
+            GcodeRenderOperation.DrawStaticScene(canvas, viewProj, width, height,
+                toolpath, machineSettings, wco, _projectedStarts, _projectedEnds);
 
             _cachedScene = recorder.EndRecording();
             _cachedViewProj = viewProj;
@@ -67,18 +75,42 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             _cachedToolpath = toolpath;
             _cachedMachineSettings = machineSettings;
             _cachedWco = wco;
-            _cachedCompletedIndex = completedSegmentIndex;
-            _cachedSelectedIndex = selectedSegmentIndex;
 
             return _cachedScene;
         }
 
         public Matrix4x4 CachedViewProj => _cachedViewProj;
+        public SKPoint?[]? ProjectedStarts => _projectedStarts;
+        public SKPoint?[]? ProjectedEnds => _projectedEnds;
 
         public void Invalidate()
         {
             _cachedScene?.Dispose();
             _cachedScene = null;
+        }
+
+        private void ProjectAllSegments(ToolpathData? toolpath, Matrix4x4 viewProj, float width, float height)
+        {
+            if (toolpath == null || toolpath.Segments.Count == 0)
+            {
+                _projectedStarts = null;
+                _projectedEnds = null;
+                return;
+            }
+
+            int count = toolpath.Segments.Count;
+            if (_projectedStarts == null || _projectedStarts.Length != count)
+            {
+                _projectedStarts = new SKPoint?[count];
+                _projectedEnds = new SKPoint?[count];
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                var seg = toolpath.Segments[i];
+                _projectedStarts[i] = GcodeRenderOperation.ProjectToScreen(seg.Start, viewProj, width, height);
+                _projectedEnds[i] = GcodeRenderOperation.ProjectToScreen(seg.End, viewProj, width, height);
+            }
         }
     }
 
@@ -209,17 +241,21 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // Background
             canvas.DrawRect(0, 0, width, height, BackgroundPaint);
 
-            // Get or create the cached static scene (grid + axes + toolpath)
+            // Get or create the cached static scene (grid + axes + all toolpath in normal colors).
+            // This does NOT include completed/selected overlays — those are drawn dynamically below
+            // using pre-projected coordinates, so changing CompletedSegmentIndex never busts this cache.
             var cachedScene = _sceneCache.GetOrCreate(
-                _toolpath, _camera, _machineSettings, _wco, width, height, _completedSegmentIndex, _selectedSegmentIndex);
+                _toolpath, _camera, _machineSettings, _wco, width, height);
 
             if (cachedScene != null)
             {
-                // Replay the cached scene — no per-segment projection needed
                 canvas.DrawPicture(cachedScene);
             }
 
-            // Draw spindle on top (this is the only per-frame dynamic element)
+            // Draw progress overlay using pre-projected screen coordinates (no re-projection needed)
+            DrawProgressOverlay(canvas);
+
+            // Draw spindle on top (dynamic per-frame element)
             if (_spindlePosition.HasValue)
             {
                 var viewProj = _sceneCache.CachedViewProj;
@@ -230,47 +266,69 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         }
 
         /// <summary>
-        /// Draws the static scene elements (grid, axes, toolpath segments).
+        /// Draws the completed-segment overlay and selection highlight using pre-projected
+        /// screen coordinates from the cache. No matrix math — just DrawLine calls with
+        /// cached SKPoints. Typically redraws only a fraction of total segments.
+        /// </summary>
+        private void DrawProgressOverlay(SKCanvas canvas)
+        {
+            var starts = _sceneCache.ProjectedStarts;
+            var ends = _sceneCache.ProjectedEnds;
+            if (starts == null || ends == null || _toolpath == null) return;
+
+            int segCount = _toolpath.Segments.Count;
+
+            // Draw completed segments (overdraws on top of the static scene)
+            if (_completedSegmentIndex > 0)
+            {
+                int limit = Math.Min(_completedSegmentIndex, segCount);
+                for (int i = 0; i < limit; i++)
+                {
+                    if (starts[i].HasValue && ends[i].HasValue)
+                        canvas.DrawLine(starts[i]!.Value, ends[i]!.Value, CompletedPaint);
+                }
+            }
+
+            // Draw selected segment highlight
+            if (_selectedSegmentIndex >= 0 && _selectedSegmentIndex < segCount)
+            {
+                var p1 = starts[_selectedSegmentIndex];
+                var p2 = ends[_selectedSegmentIndex];
+                if (p1.HasValue && p2.HasValue)
+                    canvas.DrawLine(p1.Value, p2.Value, SelectedPaint);
+            }
+        }
+
+        /// <summary>
+        /// Draws the static scene elements (grid, axes, toolpath segments in normal colors).
         /// Called by the cache when rebuilding — NOT called every frame.
+        /// Uses pre-projected screen coordinates to avoid redundant projection work.
+        /// Completed/selected overlays are drawn separately in DrawProgressOverlay().
         /// </summary>
         internal static void DrawStaticScene(SKCanvas canvas, Matrix4x4 viewProj,
             float width, float height, ToolpathData? toolpath,
-            MachineSettings? machineSettings, Point3D? wco, int completedSegmentIndex = -1,
-            int selectedSegmentIndex = -1)
+            MachineSettings? machineSettings, Point3D? wco,
+            SKPoint?[]? projectedStarts, SKPoint?[]? projectedEnds)
         {
             DrawGrid(canvas, viewProj, width, height, machineSettings, toolpath, wco);
             DrawAxes(canvas, viewProj, width, height, machineSettings, toolpath, wco);
 
-            // Draw toolpath segments
-            if (toolpath != null)
+            // Draw toolpath segments using pre-projected screen coordinates
+            if (toolpath != null && projectedStarts != null && projectedEnds != null)
             {
                 for (int i = 0; i < toolpath.Segments.Count; i++)
                 {
-                    var segment = toolpath.Segments[i];
-                    var p1 = ProjectToScreen(segment.Start, viewProj, width, height);
-                    var p2 = ProjectToScreen(segment.End, viewProj, width, height);
-
+                    var p1 = projectedStarts[i];
+                    var p2 = projectedEnds[i];
                     if (!p1.HasValue || !p2.HasValue) continue;
 
-                    SKPaint paint;
-                    if (selectedSegmentIndex >= 0 && i == selectedSegmentIndex)
+                    var paint = toolpath.Segments[i].Type switch
                     {
-                        paint = SelectedPaint;
-                    }
-                    else if (completedSegmentIndex >= 0 && i < completedSegmentIndex)
-                    {
-                        paint = CompletedPaint;
-                    }
-                    else
-                    {
-                        paint = segment.Type switch
-                        {
-                            MoveType.Rapid => RapidPaint,
-                            MoveType.Cut => CutPaint,
-                            MoveType.Traverse => TraversePaint,
-                            _ => RapidPaint
-                        };
-                    }
+                        MoveType.Rapid => RapidPaint,
+                        MoveType.Cut => CutPaint,
+                        MoveType.Traverse => TraversePaint,
+                        _ => RapidPaint
+                    };
 
                     canvas.DrawLine(p1.Value, p2.Value, paint);
                 }
