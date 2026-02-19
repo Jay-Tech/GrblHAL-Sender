@@ -3,10 +3,11 @@ using GrbLHALSender.Gamepad;
 using GrbLHALSender.Probe;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace GrbLHALSender.Configuration;
 
-public class GHalSenderConfig
+public class GHalSenderConfig :ObservableObject
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ConnectionType
@@ -17,7 +18,13 @@ public class GHalSenderConfig
     }
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public ConnectionType Connection { get; set; } = ConnectionType.Tcp;
-    public bool UseMetric { get; set; } = true;
+
+    public bool UseMetric
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = true;
+
     public bool AutoConnect { get; set; } = false;
     public bool ShowToolpathProgress { get; set; } = true;
     public SerialSettings SerialSettings { get; set; } = new("COM1");
