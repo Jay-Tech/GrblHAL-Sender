@@ -25,12 +25,28 @@
 			<Setter Property="Background" Value="PaleGreen" />
 		</Style>
 
+		<Style Selector="Label.metric">
+			<Setter Property="Content" Value= "Display:Metric"/>
+		</Style>
+		<Style Selector="Label.imperial">
+			<Setter Property="Content" Value="Display:Inches"/>
+		</Style>
+
+        <Style Selector="Label.machineMetric">
+            <Setter Property="Content" Value= "Machine:Metric"/>
+        </Style>
+        <Style Selector="Label.machineImperial">
+            <Setter Property="Content" Value="Machine:Inches"/>
+        </Style>
+
+
+
 	</UserControl.Styles>
 	<!--Header-->
 	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="Transparent" >
 		<Border x:Name="HeaderBorder" Grid.Row="0"  Grid.ColumnSpan="3" Height="45" BorderThickness="1"  >
 			<!--Connect, WCS, Tool-->
-			<Grid ColumnDefinitions="125,125,150,150,155,150,*,200,110">
+			<Grid ColumnDefinitions="125,105,150,125,125,150,200,200,*,200,110">
 				<StackPanel  Grid.Column="0" Orientation="Horizontal" >
 					<Button  Margin="3,0,0,0"
 							 HorizontalAlignment="Left"
@@ -45,7 +61,7 @@
 						   Classes.inactive="{Binding !Connected, FallbackValue=true}"
 						   HorizontalContentAlignment="Center"
 						   VerticalContentAlignment="Center"
-						   HorizontalAlignment="Center"
+						   HorizontalAlignment="Left"
 						   CornerRadius="0,3,3,0"
 						   VerticalAlignment="Center"
 						   Width="10"
@@ -60,7 +76,7 @@
 					   Content="{Binding State.GrblHalState}" />
 				<Label Grid.Column="2"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="5,0,0,0"
+					   Margin="0,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding State.WCS,
@@ -68,7 +84,7 @@
 					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="3"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="5,0,0,0"
+					   Margin="0,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding State.Tool, StringFormat={} Tool:{0}}"
@@ -76,26 +92,45 @@
 				<Label Grid.Column="4"
 					   x:Name="JogStepLabel"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="5,0,0,0"
+					   Margin="0,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding JogStep, StringFormat={} Step:{0}}"
 					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="5"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="5,0,0,0"
+					   Margin="0,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left" x:Name="JogFeedLabel"
 					   Content="{Binding JogRate, StringFormat={} Feed:{0}}"
 					   IsVisible="{Binding Connected}"/>
-
-
-				<ItemsRepeater Grid.Column="6"
-							   ClipToBounds="True"
-							   HorizontalAlignment="Stretch"
-							   Margin="50,0,50,0"
-							   VerticalAlignment="Stretch"
-							   ItemsSource="{Binding SignalList}">
+                <Label Grid.Column="6"
+                       FontSize="{DynamicResource BaseFontSize}"
+                       Margin="0,0,0,0"
+                       VerticalAlignment="Center"
+                       Classes.metric="{Binding UseMetric}" 
+                       Classes.imperial="{Binding !UseMetric}"
+                       HorizontalAlignment="Left" x:Name="DisplayUnitLabel"
+					   
+                       IsVisible="{Binding Connected}">
+                </Label>
+                <Label Grid.Column="7"
+                       FontSize="{DynamicResource BaseFontSize}"
+                       Margin="0,0,0,0"
+                       VerticalAlignment="Center"
+                       Classes.machineMetric="{Binding MachineSettings.ReportInMetric}" 
+                       Classes.machineImperial="{Binding !MachineSettings.ReportInMetric}"
+                       HorizontalAlignment="Left" x:Name="MachineUnitLabel"
+					   
+                       IsVisible="{Binding Connected}">
+                </Label>
+				
+                <ItemsRepeater Grid.Column="8"
+                               ClipToBounds="True"
+                               HorizontalAlignment="Stretch"
+                               Margin="50,0,50,0"
+                               VerticalAlignment="Stretch"
+                               ItemsSource="{Binding SignalList}">
 					<ItemsRepeater.Layout>
 						<StackLayout Orientation="Horizontal" Spacing="3"/>
 					</ItemsRepeater.Layout >
@@ -119,8 +154,9 @@
 						</DataTemplate>
 					</ItemsRepeater.ItemTemplate>
 				</ItemsRepeater>
+               
 
-				<Button Grid.Column="7"
+				<Button Grid.Column="9"
 						x:Name="AlButton"
 						IsVisible="{Binding AlarmActive}"
 						Height="40"
@@ -134,11 +170,11 @@
 						Margin="2,0"
 						Background ="Red" Width="100">
 				</Button>
-				<Button Grid.Column="8"
+				<Button Grid.Column="10"
 						Height="40"
 						Content="Unlock"
 						FontSize="{DynamicResource BaseFontSize}"
-						Margin="2,0"
+						Margin="5,0"
 						VerticalAlignment="Center"
 						HorizontalAlignment="Right"
 						Command="{Binding UnLockCommand}"
@@ -238,7 +274,7 @@
 							FontSize="{DynamicResource BaseFontSize}"
 							Content="Zero All"
 							Height="40"
-							HorizontalContentAlignment="Center" 
+							HorizontalContentAlignment="Center"
 							VerticalContentAlignment="Center"
 							HorizontalAlignment="Stretch"
 							Command="{Binding ZeroAllCommand}" />
@@ -521,8 +557,8 @@
 						<Button Grid.Row="1" Grid.Column="1"
 								CornerRadius="20"
 								Name="StopAll"
-                                Margin="4"
-                                Classes="b2"
+								Margin="4"
+								Classes="b2"
 								Command="{Binding JogCancelCommand}"
 								Content="{icons:MaterialIconExt Kind=StopCircleOutline, Size=86}"/>
 						<Button Grid.Row="0" Grid.Column="3"
