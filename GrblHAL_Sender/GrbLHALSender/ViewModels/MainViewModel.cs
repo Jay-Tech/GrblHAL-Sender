@@ -1,5 +1,4 @@
-﻿using Avalonia.Media;
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DynamicData;
 using GrbLHALSender.Communication;
@@ -13,10 +12,8 @@ using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using System.Reactive;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using System.Windows.Input;
 
@@ -339,7 +336,7 @@ public class MainViewModel : ViewModelBase
         };
 
         // Throttled UI update timer — coalesces status updates to ~10 Hz
-        _uiUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+        _uiUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _uiUpdateTimer.Tick += UiUpdateTimerTick;
         _uiUpdateTimer.Start();
 
@@ -422,10 +419,6 @@ public class MainViewModel : ViewModelBase
             ConsoleOutput.Add($"Connection failed: {e.Message}");
         }
     }
-
-
-
-
 
     private void MainViewModel_MidiTextCommitted(string command)
     {
