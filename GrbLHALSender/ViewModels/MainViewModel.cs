@@ -723,21 +723,29 @@ public class MainViewModel : ViewModelBase
 
         AlarmActive = state.GrblHalState == "Alarm";
 
-        // Drain buffered console log messages (from data thread) to UI
-        lock (_consoleLogLock)
+        // Drain buffered console log messages (from data thread) to UI.
+        // Only process when the console panel is visible to avoid unnecessary
+        // CollectionChanged events and ListBox layout work.
+        if (ShowConsole)
         {
-            while (_consoleLogBuffer.Count > 0)
+            lock (_consoleLogLock)
             {
-                ConsoleOutput.Add(_consoleLogBuffer.Dequeue());
+                while (_consoleLogBuffer.Count > 0)
+                    ConsoleOutput.Add(_consoleLogBuffer.Dequeue());
             }
+            if (ShowRTCommands)
+                ConsoleOutput.Add(state.RawRt);
+
+            if (ConsoleOutput.Count > 200)
+                ConsoleOutput.Clear();
         }
-        if (ShowConsole && ShowRTCommands)
+        else
         {
-            ConsoleOutput.Add(state.RawRt);
-        }
-        if (ConsoleOutput.Count > 200)
-        {
-            ConsoleOutput.Clear();
+            // Console hidden — discard buffered messages to prevent unbounded growth
+            lock (_consoleLogLock)
+            {
+                _consoleLogBuffer.Clear();
+            }
         }
 
         ProcessSignals(state.SignalStatus);

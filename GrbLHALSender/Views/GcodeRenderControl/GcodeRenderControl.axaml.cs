@@ -92,7 +92,11 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
         static GcodeRenderControl()
         {
-            AffectsRender<GcodeRenderControl>(ToolpathProperty, SpindlePositionProperty, MachineSettingsProperty, WorkCoordinateOffsetProperty, CompletedSegmentIndexProperty, SelectedSegmentIndexProperty);
+            // Only properties that require a full scene cache rebuild are in AffectsRender.
+            // CompletedSegmentIndex and SelectedSegmentIndex are NOT here — they use
+            // pre-projected coordinates and only need a lightweight InvalidateVisual().
+            AffectsRender<GcodeRenderControl>(ToolpathProperty, SpindlePositionProperty,
+                MachineSettingsProperty, WorkCoordinateOffsetProperty);
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -103,12 +107,17 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 change.Property == WorkCoordinateOffsetProperty)
             {
                 _fitted = false;
-                // Clear selection when toolpath changes
                 if (change.Property == ToolpathProperty)
                 {
                     SelectedSegmentIndex = -1;
                     SelectedLineInfo = "";
                 }
+                InvalidateVisual();
+            }
+            else if (change.Property == CompletedSegmentIndexProperty ||
+                     change.Property == SelectedSegmentIndexProperty)
+            {
+                // Lightweight repaint — uses pre-projected coordinates, no cache rebuild
                 InvalidateVisual();
             }
         }
