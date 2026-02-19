@@ -1,7 +1,7 @@
-﻿using System;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Xaml.Interactivity;
+using System;
 
 namespace GrbLHALSender.Behaviors;
 
@@ -34,7 +34,7 @@ public class ScrollToEndBehavior : Behavior<ListBox>
     {
         if (sender is ScrollViewer sw && !_scrolling)
         {
-            _shouldScrollToEnd = Math.Abs(sw.Offset.Y - sw.Extent.Height + sw.Viewport.Height) >5; // need to define some px of tolerance here
+            _shouldScrollToEnd = Math.Abs(sw.Offset.Y - sw.Extent.Height + sw.Viewport.Height) > 5; // need to define some px of tolerance here
         }
 
         if (_shouldScrollToEnd && AssociatedObject?.Items.Count > 0)

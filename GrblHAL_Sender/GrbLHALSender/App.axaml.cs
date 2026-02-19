@@ -27,7 +27,7 @@ public partial class App : Application
         collection.AddCommonServices();
         var services = collection.BuildServiceProvider();
         var vm = services.GetRequiredService<MainViewModel>();
-        
+
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -40,7 +40,7 @@ public partial class App : Application
         {
             singleViewPlatform.MainView = new MainView
             {
-                DataContext =vm
+                DataContext = vm
             };
         }
 

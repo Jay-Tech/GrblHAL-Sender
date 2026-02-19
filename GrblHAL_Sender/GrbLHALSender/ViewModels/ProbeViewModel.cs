@@ -1,12 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Reactive;
-using System.Windows.Input;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Probe;
 using GrbLHALSender.Utility;
 using ReactiveUI;
+using System;
+using System.Collections.Generic;
+using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels
 {
@@ -189,7 +188,7 @@ namespace GrbLHALSender.ViewModels
             SetCornerCommand = ReactiveCommand.Create<string>(s => SelectedCorner = Enum.Parse<CornerDirection>(s));
             SetCenterTypeCommand = ReactiveCommand.Create<string>(s => SelectedCenterType = Enum.Parse<CenterFinderType>(s));
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
-            
+
 
             // Update IsTouchPlate when SelectedToolType changes
             this.WhenAnyValue(x => x.SelectedToolType)

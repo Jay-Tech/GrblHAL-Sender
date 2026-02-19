@@ -69,10 +69,10 @@ namespace GrbLHALSender.Communication
         {
             _serialPort.DataReceived -= SerialPort_DataReceived;
             _tokenSource?.Cancel();
-             Thread.Sleep(100);
+            Thread.Sleep(100);
             _serialPort.DtrEnable = false;
             _serialPort.RtsEnable = false;
-            if(!_serialPort.IsOpen) return;
+            if (!_serialPort.IsOpen) return;
             _serialPort?.DiscardInBuffer();
             _serialPort?.DiscardOutBuffer();
             _serialPort?.Dispose();

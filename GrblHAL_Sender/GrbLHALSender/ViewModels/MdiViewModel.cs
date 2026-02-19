@@ -1,15 +1,11 @@
-﻿using System;
-using System.Diagnostics.Tracing;
-using ReactiveUI;
+﻿using ReactiveUI;
+using System;
 using System.Windows.Input;
-using Avalonia.Xaml.Interactivity;
-using GrbLHALSender.Communication;
-using Silk.NET.Vulkan;
 
 namespace GrbLHALSender.ViewModels
 {
-   
-    public  class MdiViewModel : ViewModelBase
+
+    public class MdiViewModel : ViewModelBase
     {
         public event Action<string> MidiTextCommitted;
         private string _mdiText;
@@ -45,18 +41,18 @@ namespace GrbLHALSender.ViewModels
                     text = " ";
                     break;
                 case "Del":
-                {
-                    if (MdiText.EndsWith("\r\n"))
                     {
-                        MdiText = MdiText.TrimEnd();
+                        if (MdiText.EndsWith("\r\n"))
+                        {
+                            MdiText = MdiText.TrimEnd();
+                            return;
+                        }
+
+                        if (MdiText.Length >= 1)
+                            MdiText = MdiText.Remove(MdiText.Length - 1);
                         return;
+
                     }
-
-                    if (MdiText.Length >= 1)
-                        MdiText = MdiText.Remove(MdiText.Length - 1);
-                    return;
-
-                }
                 default:
                     text = key;
                     break;
@@ -66,7 +62,7 @@ namespace GrbLHALSender.ViewModels
             CaretIndex = MdiText.Length;
         }
 
-       
+
 
         private void CommitMdiText(string command)
         {

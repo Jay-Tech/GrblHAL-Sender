@@ -38,7 +38,7 @@ public class ConfigManager
         var gHalSenderConfig = JsonSerializer.Deserialize<GHalSenderConfig>(readData);
         OnConfigLoaded?.Invoke(this, gHalSenderConfig);
         return GHalSenderConfig = gHalSenderConfig ?? new GHalSenderConfig();
-            
+
     }
 }
 

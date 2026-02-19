@@ -1,7 +1,7 @@
-using System;
-using System.Numerics;
 using GrbLHALSender.Gcode;
 using GrbLHALSender.Settings;
+using System;
+using System.Numerics;
 
 namespace GrbLHALSender.Views.GcodeRenderControl
 {

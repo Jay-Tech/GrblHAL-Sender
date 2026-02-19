@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Layout;
 using Avalonia.Media;
 using GrbLHALSender.Settings;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace GrbLHALSender.Convertors
 {

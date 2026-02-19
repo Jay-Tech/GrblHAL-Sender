@@ -1,8 +1,8 @@
-﻿using System;
+﻿using GrbLHALSender.Configuration;
+using ReactiveUI;
+using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using GrbLHALSender.Configuration;
-using ReactiveUI;
 
 namespace GrbLHALSender.ViewModels
 {

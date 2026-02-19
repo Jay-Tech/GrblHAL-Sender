@@ -1,14 +1,14 @@
+using Avalonia.Threading;
+using GrbLHALSender.Configuration;
+using GrbLHALSender.Utility;
+using GrbLHALSender.ViewModels;
+using Hexa.NET.SDL3;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using Avalonia.Threading;
-using GrbLHALSender.Configuration;
-using GrbLHALSender.Utility;
-using GrbLHALSender.ViewModels;
-using Hexa.NET.SDL3;
 
 namespace GrbLHALSender.Gamepad;
 

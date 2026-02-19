@@ -23,7 +23,7 @@ namespace GrbLHALSender.Communication
 
         public bool IsConnected { get; set; }
 
-        
+
         public Tcp(TcpSettings settings)
         {
             TryConnect(settings);

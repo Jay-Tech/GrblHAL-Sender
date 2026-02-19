@@ -1,5 +1,3 @@
-using System;
-using System.Numerics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -7,6 +5,7 @@ using Avalonia.Media;
 using GrbLHALSender.Gcode;
 using GrbLHALSender.Settings;
 using SkiaSharp;
+using System;
 
 namespace GrbLHALSender.Views.GcodeRenderControl
 {
