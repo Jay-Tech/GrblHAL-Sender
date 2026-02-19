@@ -1,9 +1,9 @@
-﻿using System;
-using System.Windows.Input;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using System;
+using System.Windows.Input;
 
 namespace GrbLHALSender.Behaviors;
 /// <summary>

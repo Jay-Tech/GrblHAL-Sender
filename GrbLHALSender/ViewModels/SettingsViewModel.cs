@@ -1,15 +1,14 @@
-﻿using System;
+﻿using Avalonia.Platform.Storage;
+using GrbLHALSender.Communication;
+using GrbLHALSender.Configuration;
+using GrbLHALSender.Settings;
+using ReactiveUI;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Avalonia.Platform.Storage;
-using GrbLHALSender.Communication;
-using GrbLHALSender.Configuration;
-using GrbLHALSender.Settings;
-using ReactiveUI;
 
 namespace GrbLHALSender.ViewModels
 {

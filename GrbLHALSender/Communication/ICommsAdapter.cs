@@ -8,6 +8,6 @@ namespace GrbLHALSender.Communication
         void WriteByte(byte data);
         void WriteCommand(string command);
         void Close();
-        bool IsConnected { get;  set; }
+        bool IsConnected { get; set; }
     }
 }

@@ -1,12 +1,11 @@
-﻿using System;
-using System.Globalization;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
-using Avalonia.Input;
 using Avalonia.Threading;
 using GrbLHALSender.Convertors;
 using ReactiveUI;
+using System;
+using System.Globalization;
 
 namespace GrbLHALSender.Settings;
 

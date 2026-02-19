@@ -1,6 +1,6 @@
-﻿using System;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Media;
+using System;
 
 namespace GrbLHALSender.Views;
 

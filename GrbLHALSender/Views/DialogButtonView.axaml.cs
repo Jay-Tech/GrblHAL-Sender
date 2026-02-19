@@ -1,4 +1,3 @@
-using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -6,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
 using GrbLHALSender.ViewModels;
+using System;
 
 namespace GrbLHALSender.Views;
 
@@ -82,11 +82,11 @@ public partial class DialogButtonView : UserControl
                     probeView.DataContext = probeMainVm.ProbeViewModel;
                 return (probeView, 480, 595);
             case DialogType.AppConfig:
-                 var appConfigView = new AppConfigView();
-                 var appConfigViewVm = GetMainViewModel();
-                 if (appConfigViewVm != null)
-                     appConfigView.DataContext = appConfigViewVm.AppConfigViewModel;
-                 return (appConfigView, 525, 550);
+                var appConfigView = new AppConfigView();
+                var appConfigViewVm = GetMainViewModel();
+                if (appConfigViewVm != null)
+                    appConfigView.DataContext = appConfigViewVm.AppConfigViewModel;
+                return (appConfigView, 525, 550);
             default:
                 var placeholder = new TextBlock
                 {
@@ -168,25 +168,25 @@ public partial class DialogButtonView : UserControl
         {
             // Position Console dialog in the lower-left area
             case DialogType.Console when parentWindow != null:
-            {
-                dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                var parentPos = parentWindow.Position;
-                dialogWindow.Position = new PixelPoint(
-                    parentPos.X + 270,
-                    parentPos.Y + 375
-                );
-                break;
-            }
+                {
+                    dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                    var parentPos = parentWindow.Position;
+                    dialogWindow.Position = new PixelPoint(
+                        parentPos.X + 270,
+                        parentPos.Y + 375
+                    );
+                    break;
+                }
             case DialogType.Macro when parentWindow != null:
-            {
-                dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                var parentPos = parentWindow.Position;
-                dialogWindow.Position = new PixelPoint(
-                    parentPos.X + 270,
-                    parentPos.Y + 375
-                );
-                break;
-            }
+                {
+                    dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                    var parentPos = parentWindow.Position;
+                    dialogWindow.Position = new PixelPoint(
+                        parentPos.X + 270,
+                        parentPos.Y + 375
+                    );
+                    break;
+                }
             default:
                 break;
                 //throw new ArgumentOutOfRangeException(nameof(dialogType), dialogType, null);

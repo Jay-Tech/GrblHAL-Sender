@@ -7,7 +7,7 @@ namespace GrbLHALSender.Settings;
 public class GrblHALSettings
 {
     public List<GrblHalSetting> SettingCollection { get; set; }
-    
+
     public GrblHALSettings()
     {
         SettingCollection = new List<GrblHalSetting>();

@@ -1,16 +1,16 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using GrbLHALSender.Communication;
+using GrbLHALSender.Configuration;
+using ReactiveUI;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Windows.Input;
-using CommunityToolkit.Mvvm.ComponentModel;
-using GrbLHALSender.Communication;
-using GrbLHALSender.Configuration;
-using ReactiveUI;
 
 namespace GrbLHALSender.ViewModels;
 
-public class MacroViewModel: ViewModelBase, IDialogCloseable
+public class MacroViewModel : ViewModelBase, IDialogCloseable
 {
     private Macro _selectedItem;
     private int _macroSelectedIndex;
@@ -21,9 +21,9 @@ public class MacroViewModel: ViewModelBase, IDialogCloseable
     private readonly ConfigManager _configManger;
     private readonly CommunicationManager _commsManager;
     public ObservableCollection<Macro> MacroList { get; set; }
-        
-       
-       
+
+
+
     public Macro SelectedItem
     {
         get => _selectedItem;
@@ -100,7 +100,7 @@ public class MacroViewModel: ViewModelBase, IDialogCloseable
     {
         DisplayMacroControl = !DisplayMacroControl;
     }
-    
+
     private void CloseMacroControl()
     {
         DisplayMacroControl = !DisplayMacroControl;

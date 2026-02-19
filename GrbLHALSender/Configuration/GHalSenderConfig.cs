@@ -1,19 +1,19 @@
-﻿using GrbLHALSender.Communication;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using GrbLHALSender.Communication;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.Probe;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace GrbLHALSender.Configuration;
 
-public class GHalSenderConfig :ObservableObject
+public class GHalSenderConfig : ObservableObject
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ConnectionType
     {
         Serial,
-        Tcp, 
+        Tcp,
         WebSocket
     }
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -28,7 +28,7 @@ public class GHalSenderConfig :ObservableObject
     public bool AutoConnect { get; set; } = false;
     public bool ShowToolpathProgress { get; set; } = true;
     public SerialSettings SerialSettings { get; set; } = new("COM1");
-    public TcpSettings TcpSettings { get; set; } = new(23, "192.168.5.1" );
+    public TcpSettings TcpSettings { get; set; } = new(23, "192.168.5.1");
     public WebSocketSettings WebSocketSettings { get; set; } = new(81, "192.168.5.1");
     public AtcConfig AtcConfig { get; set; } = new();
     public GamepadConfig GamepadConfig { get; set; } = new();

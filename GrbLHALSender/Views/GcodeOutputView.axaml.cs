@@ -1,8 +1,7 @@
-using System;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using GrbLHALSender.ViewModels;
+using System;
 
 namespace GrbLHALSender.Views;
 

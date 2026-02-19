@@ -8,7 +8,6 @@ using Avalonia.VisualTree;
 using GrbLHALSender.ViewModels;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace GrbLHALSender.Views;
@@ -156,7 +155,7 @@ public partial class MainView : UserControl
         _keyboardWindow.WindowStartupLocation = WindowStartupLocation.Manual;
         _keyboardWindow.Position = new PixelPoint(
             (int)(parentWindow.Position.X + (parentWindow.Bounds.Width - _keyboardWindow.Width) / 2),
-            (int)(parentWindow.Bounds.Height - _keyboardWindow.Height -100));
+            (int)(parentWindow.Bounds.Height - _keyboardWindow.Height - 100));
         _keyboardWindow.Closed += (_, _) =>
         {
             _keyboardWindow = null;

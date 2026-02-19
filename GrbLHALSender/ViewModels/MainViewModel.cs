@@ -48,7 +48,7 @@ public class MainViewModel : ViewModelBase
     private double _jogStep;
     private double _jogRate;
     private string _mdiText;
-    private int _actulRpm;
+    private int _actualRpm;
     private int _feedRate;
     private int _feedOverRide;
     private int _spindleSetRpm;
@@ -173,15 +173,15 @@ public class MainViewModel : ViewModelBase
         get => _selectedTool;
         set => this.RaiseAndSetIfChanged(ref _selectedTool, value);
     }
-    public int SpindleRPM
+    public int SpindleRpm
     {
         get => _spindleRpm;
         set => this.RaiseAndSetIfChanged(ref _spindleRpm, value);
     }
-    public int ActulRPM
+    public int ActualRpm
     {
-        get => _actulRpm;
-        set => this.RaiseAndSetIfChanged(ref _actulRpm, value);
+        get => _actualRpm;
+        set => this.RaiseAndSetIfChanged(ref _actualRpm, value);
     }
     public RealTImeState State
     {
@@ -755,11 +755,11 @@ public class MainViewModel : ViewModelBase
         }
         if (int.TryParse(rt.ProgramRPM, out var ps))
         {
-            SpindleRPM = ps;
+            SpindleRpm = ps;
         }
         if (int.TryParse(rt.ActualRpm, out var rpm))
         {
-            this.ActulRPM = rpm;
+            this.ActualRpm = rpm;
         }
     }
     private void ProcessSignals(List<char> signals)

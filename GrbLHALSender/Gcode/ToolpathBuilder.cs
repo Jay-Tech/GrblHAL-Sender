@@ -97,7 +97,12 @@ namespace GrbLHALSender.Gcode
                     case 43: // tool length comp
                     case 49: // cancel tool length comp
                     case 53: // machine coords
-                    case 54: case 55: case 56: case 57: case 58: case 59: // WCS
+                    case 54:
+                    case 55:
+                    case 56:
+                    case 57:
+                    case 58:
+                    case 59: // WCS
                     case 80: // cancel canned cycle
                     case 94: // feed per minute
                         return;

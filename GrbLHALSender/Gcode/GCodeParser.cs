@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace GrbLHALSender.Gcode;
 
-public class GCodeParser 
+public class GCodeParser
 {
     private string? _line;
     public List<GCodeLine> GCodeJob { get; set; }
-        
+
     public void ParseGCodeFile(string file, Action<List<GCodeLine>> callBack)
     {
         Task.Factory.StartNew((() =>
@@ -20,7 +20,7 @@ public class GCodeParser
 
     private List<GCodeLine> ParseJob(string file, Action<List<GCodeLine>> callback)
     {
-        GCodeJob = new List<GCodeLine>(); 
+        GCodeJob = new List<GCodeLine>();
         int index = 0;
         StreamReader sr = new StreamReader(file);
         _line = sr.ReadLine();
@@ -32,7 +32,7 @@ public class GCodeParser
                 index++;
             }
             _line = sr.ReadLine();
-               
+
         }
         sr.Close();
         return GCodeJob;

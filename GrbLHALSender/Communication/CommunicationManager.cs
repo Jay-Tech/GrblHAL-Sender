@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 using DynamicData;
 using DynamicData.Binding;
 using GrbLHALSender.Probe;
 using GrbLHALSender.Settings;
 using GrbLHALSender.States;
 using GrbLHALSender.Utility;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
 using Timer = System.Timers.Timer;
 
 
@@ -126,8 +126,8 @@ namespace GrbLHALSender.Communication
                     .Ascending(s => s.GroupId)
                     .ThenByAscending(s => s.Id));
             _machineData = new MachineSettings();
-            
-            _machineData.SetXBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XAxisLength)?.SettingValue??"");
+
+            _machineData.SetXBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XAxisLength)?.SettingValue ?? "");
             _machineData.SetYBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.YAxisLength)?.SettingValue ?? "");
             _machineData.SetZBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ZAxisLength)?.SettingValue ?? "");
             _machineData.SetXRapid(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XRapid)?.SettingValue ?? "");
@@ -472,7 +472,7 @@ namespace GrbLHALSender.Communication
                         case "In":
                             var signals = int.Parse(value);
                             break;
-                       
+
                     }
                 }
             }

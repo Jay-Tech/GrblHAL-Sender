@@ -1,7 +1,7 @@
-using System;
-using System.Windows.Input;
 using Avalonia.Controls;
 using ReactiveUI;
+using System;
+using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels;
 

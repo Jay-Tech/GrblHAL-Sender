@@ -1,6 +1,5 @@
-﻿using System;
-using Avalonia.Xaml.Interactions.Custom;
-using ReactiveUI;
+﻿using ReactiveUI;
+using System;
 
 namespace GrbLHALSender.Settings
 {
