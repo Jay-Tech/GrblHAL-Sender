@@ -163,11 +163,13 @@ namespace GrbLHALSender.ViewModels
         {
             var builder = new ToolpathBuilder();
 
-            // Use machine rapid rates from $110/$111/$112 if available, fallback to 5000 mm/min
+            // Use machine rapid rates in display units (mm or inches depending on $13)
+            // $110/$111/$112 are always stored in mm; Display* converts to inches when $13=1
             var machine = _commsManager.MachineData;
             if (machine != null)
             {
-                var rapids = new[] { machine.XRapid, machine.YRapid, machine.ZRapid };
+                builder.DisplayIsMetric = machine.ReportInMetric;
+                var rapids = new[] { machine.DisplayXRapid, machine.DisplayYRapid, machine.DisplayZRapid };
                 var validRapids = rapids.Where(r => r > 0).ToArray();
                 if (validRapids.Length > 0)
                     builder.RapidRate = (float)validRapids.Min();

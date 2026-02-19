@@ -22,8 +22,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             MachineSettings? machineSettings = null, Point3D? wco = null)
         {
             bool hasMachine = machineSettings != null &&
-                              machineSettings.XSize > 0 &&
-                              machineSettings.YSize > 0;
+                              machineSettings.DisplayXSize > 0 &&
+                              machineSettings.DisplayYSize > 0;
 
             if (hasMachine)
             {
@@ -51,11 +51,11 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             float wcoY = wco?.Y ?? 0f;
             float wcoZ = wco?.Z ?? 0f;
 
-            CenterX = (float)machineSettings.XSize / 2f - wcoX;
-            CenterY = -(float)machineSettings.YSize / 2f - wcoY;
-            float gridZ = machineSettings.ZSize > 0 ? -(float)machineSettings.ZSize - wcoZ : -wcoZ;
+            CenterX = (float)machineSettings.DisplayXSize / 2f - wcoX;
+            CenterY = -(float)machineSettings.DisplayYSize / 2f - wcoY;
+            float gridZ = machineSettings.DisplayZSize > 0 ? -(float)machineSettings.DisplayZSize - wcoZ : -wcoZ;
             CenterZ = gridZ;
-            float dim = MathF.Max((float)machineSettings.XSize, (float)machineSettings.YSize);
+            float dim = MathF.Max((float)machineSettings.DisplayXSize, (float)machineSettings.DisplayYSize);
             // Account for viewport aspect ratio so the grid fits nicely
             float aspect = viewportWidth / viewportHeight;
             float fitDim = aspect > 1f ? dim : dim / aspect;

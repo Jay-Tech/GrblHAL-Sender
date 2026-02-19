@@ -14,24 +14,26 @@ namespace GrbLHALSender.Settings
         private double _yRapid;
         private double _zRapid;
 
-        // grbl setting $130, 
+        // grbl setting $130,
         public double XSize
         {
             get => _xSize;
-            set => this.RaiseAndSetIfChanged(ref _xSize, value);
+            set { this.RaiseAndSetIfChanged(ref _xSize, value); this.RaisePropertyChanged(nameof(DisplayXSize)); }
         }
         //grbl setting$131
         public double YSize
         {
             get => _ySize;
-            set => this.RaiseAndSetIfChanged(ref _ySize, value);
+            set { this.RaiseAndSetIfChanged(ref _ySize, value); this.RaisePropertyChanged(nameof(DisplayYSize)); }
         }
         //grbl setting $132
         public double ZSize
         {
             get => _zSize;
-            set => this.RaiseAndSetIfChanged(ref _zSize, value);
+            set { this.RaiseAndSetIfChanged(ref _zSize, value); this.RaisePropertyChanged(nameof(DisplayZSize)); }
         }
+
+        private const double MmToInch = 25.4;
 
         //grbl settings $13  report metric or inches
         public bool ReportInMetric
@@ -41,6 +43,7 @@ namespace GrbLHALSender.Settings
             {
                 this.RaiseAndSetIfChanged(ref _reportInMetric, value);
                 this.RaisePropertyChanged(nameof(UnitLabel));
+                RaiseDisplayPropertiesChanged();
             }
         }
 
@@ -49,25 +52,35 @@ namespace GrbLHALSender.Settings
         /// </summary>
         public string UnitLabel => ReportInMetric ? "mm" : "in";
 
+        // Display-unit properties: returns values in the display unit (mm or inches)
+        // Machine settings $130/$131/$132 and $110/$111/$112 are always stored in mm.
+        // When $13=1 (imperial), these convert mm → inches for rendering/display.
+        public double DisplayXSize => ReportInMetric ? XSize : XSize / MmToInch;
+        public double DisplayYSize => ReportInMetric ? YSize : YSize / MmToInch;
+        public double DisplayZSize => ReportInMetric ? ZSize : ZSize / MmToInch;
+        public double DisplayXRapid => ReportInMetric ? XRapid : XRapid / MmToInch;
+        public double DisplayYRapid => ReportInMetric ? YRapid : YRapid / MmToInch;
+        public double DisplayZRapid => ReportInMetric ? ZRapid : ZRapid / MmToInch;
+
         //grbl settings $110  X rapid
         public double XRapid
         {
             get => _xRapid;
-            set => this.RaiseAndSetIfChanged(ref _xRapid,value);
+            set { this.RaiseAndSetIfChanged(ref _xRapid, value); this.RaisePropertyChanged(nameof(DisplayXRapid)); }
         }
 
         //grbl settings $111  Y rapid
         public double YRapid
         {
             get => _yRapid;
-            set => this.RaiseAndSetIfChanged(ref _yRapid, value);
+            set { this.RaiseAndSetIfChanged(ref _yRapid, value); this.RaisePropertyChanged(nameof(DisplayYRapid)); }
         }
 
         //grbl settings $112  Z rapid
         public double ZRapid
         {
             get => _zRapid;
-            set => this.RaiseAndSetIfChanged(ref _zRapid, value);
+            set { this.RaiseAndSetIfChanged(ref _zRapid, value); this.RaisePropertyChanged(nameof(DisplayZRapid)); }
         }
 
         public void SetIsMetric(string value)
@@ -119,6 +132,16 @@ namespace GrbLHALSender.Settings
             {
                 ZRapid = rapid;
             }
+        }
+
+        private void RaiseDisplayPropertiesChanged()
+        {
+            this.RaisePropertyChanged(nameof(DisplayXSize));
+            this.RaisePropertyChanged(nameof(DisplayYSize));
+            this.RaisePropertyChanged(nameof(DisplayZSize));
+            this.RaisePropertyChanged(nameof(DisplayXRapid));
+            this.RaisePropertyChanged(nameof(DisplayYRapid));
+            this.RaisePropertyChanged(nameof(DisplayZRapid));
         }
     }
 }
