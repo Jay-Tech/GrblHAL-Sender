@@ -242,7 +242,7 @@
 													   HorizontalAlignment ="Stretch"
 													   VerticalAlignment="Stretch"></Label>
 												<TextBlock Grid.Column="1"
-														   Text="{Binding $parent[ItemsControl].((viewModels:MainViewModel)DataContext).MachineSettings.UnitLabel}"
+														   Text="{Binding $parent[ItemsControl].((viewModels:MainViewModel)DataContext).UnitText}"
 														   FontSize="18"
 														   VerticalAlignment="Center"
 														   HorizontalAlignment="Left"

@@ -75,6 +75,9 @@ public class MainViewModel : ViewModelBase
     // Buffered console log messages — accumulated on the data thread, drained on UI timer
     private readonly Queue<string> _consoleLogBuffer = new();
     private readonly object _consoleLogLock = new();
+    private bool _useMetric;
+    private bool _machineInMetric;
+    private string _unitText;
 
     public ObservableCollection<Signal> SignalList
     {
@@ -119,7 +122,25 @@ public class MainViewModel : ViewModelBase
     public MdiViewModel MdiViewModel { get; set; }
     public AppConfigViewModel AppConfigViewModel { get; set; }
     public string UnitSystem { get; set; } = "G21";
-    public bool UseMetric { get; set; }
+
+    public bool UseMetric
+    {
+        get => _useMetric;
+        set => this.RaiseAndSetIfChanged(ref _useMetric, value);
+    }
+
+    public bool MachineInMetric
+    {
+        get => _machineInMetric;
+        set => this.RaiseAndSetIfChanged(ref _machineInMetric, value);
+    }
+
+    public string UnitText
+    {
+        get => _unitText;
+        set => this.RaiseAndSetIfChanged(ref _unitText, value);
+    }
+
     public ProbeViewModel ProbeViewModel
     {
         get => _probeViewModel;
@@ -308,8 +329,17 @@ public class MainViewModel : ViewModelBase
         _commManager.onSettingUpdated += _commManager_onSettingUpdated;
         _commManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
 
+
+        _configManager?.GHalSenderConfig?.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(GHalSenderConfig.UseMetric))
+            {
+                SetUpUiUnit();
+            }
+        };
+
         // Throttled UI update timer — coalesces status updates to ~10 Hz
-        _uiUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        _uiUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
         _uiUpdateTimer.Tick += UiUpdateTimerTick;
         _uiUpdateTimer.Start();
 
@@ -392,6 +422,10 @@ public class MainViewModel : ViewModelBase
             ConsoleOutput.Add($"Connection failed: {e.Message}");
         }
     }
+
+
+
+
 
     private void MainViewModel_MidiTextCommitted(string command)
     {
@@ -518,25 +552,31 @@ public class MainViewModel : ViewModelBase
 
     private void SetUpUiSettings()
     {
-        UseMetric = _config.UseMetric;
-        UnitSystem = _config.UseMetric ? "G21" : "G20";
-        AutoConnect = _config.AutoConnect;
-        JogRateList = new ObservableCollection<double>(UseMetric ? _config.JogSpeedMetric : _config.JogSpeedImperial);
-        JogStepList = new ObservableCollection<double>(UseMetric ? _config.JogDistanceMetric : _config.JogDistanceImperial);
-        JogStep = JogStepList[^1];
-        JogRate = JogRateList[^1];
+        SetUpUiUnit();
         ToolList.AddRange(_config.ToolList.Tools);
         AtcEnabled = _config.AtcConfig.EnableAtc;
         TlrCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.TlrMacroName) && AtcEnabled;
         if (TlrCommandEnabled)
         {
-            _tlrMacro = _config.AtcConfig.TlrMacroName ??" ";
+            _tlrMacro = _config.AtcConfig.TlrMacroName ?? " ";
         }
         UnloadToolCommandEnabled = !string.IsNullOrEmpty(_config.AtcConfig.UnloadToolMacroName) && AtcEnabled;
         if (UnloadToolCommandEnabled)
         {
             _unloadToolMacro = _config.AtcConfig.UnloadToolMacroName ?? "";
         }
+    }
+
+    private void SetUpUiUnit()
+    {
+        UseMetric = _config.UseMetric;
+        UnitText = UseMetric ? "mm" : "in";
+        UnitSystem = UseMetric ? "G21" : "G20";
+        AutoConnect = _config.AutoConnect;
+        JogRateList = new ObservableCollection<double>(UseMetric ? _config.JogSpeedMetric : _config.JogSpeedImperial);
+        JogStepList = new ObservableCollection<double>(UseMetric ? _config.JogDistanceMetric : _config.JogDistanceImperial);
+        JogStep = JogStepList[^1];
+        JogRate = JogRateList[^1];
     }
     private void Wcs(string command)
     {
@@ -625,13 +665,30 @@ public class MainViewModel : ViewModelBase
         Connected = true;
         for (int i = 0; i < state.MPos.Length; i++)
         {
-            var pos = new Position
+            //var pos = new Position
+            //{
+            //    MPos = double.Parse(state.MPos[i])
+
+
+            //};
+            var pos = new Position();
+            var machinePos = double.Parse(state.MPos[i]);
+            pos.MPos = UseMetric switch
             {
-                MPos = double.Parse(state.MPos[i])
+                false when MachineInMetric => machinePos / 25.4,
+                true when !MachineInMetric => machinePos * 25.4,
+                _ => machinePos
             };
             if (state.Wco.Length > 0)
             {
-                pos.Wco = double.Parse(state.MPos[i]) - double.Parse(state?.Wco[i] ?? "0.0");
+                var wco = double.Parse(state.MPos[i]) - double.Parse(state?.Wco[i] ?? "0.0");
+
+                pos.Wco = UseMetric switch
+                {
+                    false when MachineInMetric => wco / 25.4,
+                    true when !MachineInMetric => wco * 25.4,
+                    _ => wco
+                };
             }
 
             AxisCollection[i].Position = pos;
@@ -727,6 +784,13 @@ public class MainViewModel : ViewModelBase
     private void _commManager_onSettingUpdated(object? sender, List<GrblHalSetting> e)
     {
         MachineSettings = _commManager.MachineData;
+
+        MachineInMetric = _commManager.MachineData.ReportInMetric;
+        if (UseMetric != MachineInMetric)
+        {
+            SetUpUiUnit();
+        }
+
     }
     private void _commManager_onOptionsUpdated(object? sender, GrblHALOptions e)
     {
@@ -774,7 +838,7 @@ public class MainViewModel : ViewModelBase
         SendCommand(command);
     }
 
-    private string  GetMachineDistance(string axis)
+    private string GetMachineDistance(string axis)
     {
         var distance = axis switch
         {
