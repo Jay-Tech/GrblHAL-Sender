@@ -24,6 +24,7 @@ namespace GrbLHALSender.ViewModels
         private double _latchDistance = 1;
         private double _clearanceHeight = 5;
         private double _approxSize = 25;
+        private string _unitSystem = "G21";
 
         private CornerDirection _selectedCorner = CornerDirection.FrontLeft;
         private CenterFinderType _selectedCenterType = CenterFinderType.Bore;
@@ -99,6 +100,23 @@ namespace GrbLHALSender.ViewModels
             get => _approxSize;
             set => this.RaiseAndSetIfChanged(ref _approxSize, value);
         }
+
+        public string UnitSystem
+        {
+            get => _unitSystem;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _unitSystem, value);
+                this.RaisePropertyChanged(nameof(UnitLabel));
+                this.RaisePropertyChanged(nameof(RateLabel));
+            }
+        }
+
+        /// <summary>Returns "mm" or "in" based on the current unit system.</summary>
+        public string UnitLabel => UnitSystem == "G21" ? "mm" : "in";
+
+        /// <summary>Returns "mm/min" or "in/min" based on the current unit system.</summary>
+        public string RateLabel => UnitSystem == "G21" ? "mm/min" : "in/min";
 
         public CornerDirection SelectedCorner
         {
@@ -189,6 +207,7 @@ namespace GrbLHALSender.ViewModels
             LatchDistance = pc.LatchDistance;
             ClearanceHeight = pc.ClearanceHeight;
             ApproxSize = pc.ApproxSize;
+            UnitSystem = config.UseMetric ? "G21" : "G20";
         }
 
         public void SaveToConfig(GHalSenderConfig config)
@@ -216,7 +235,8 @@ namespace GrbLHALSender.ViewModels
                 LatchDistance = LatchDistance.ToInvariantString(),
                 ClearanceHeight = ClearanceHeight.ToInvariantString(),
                 TouchPlateThickness = TouchPlateThickness.ToInvariantString(),
-                ToolType = SelectedToolType
+                ToolType = SelectedToolType,
+                UnitSystem = UnitSystem
             };
         }
 

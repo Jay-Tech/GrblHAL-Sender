@@ -36,27 +36,31 @@
 								  VerticalAlignment="Center"
 								  Margin="0,0,20,0"/>
 				</Grid>
-				<Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto">
+				<Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto">
 					<Label Grid.Column="0"
 						   Content="Diameter:"
 						   FontSize="14"
 						   HorizontalAlignment="Right"
 						   VerticalAlignment="Center"
 						   Margin="10,10,10,0"/>
-					<TextBox  Grid.Column="1"
-							  Text="{Binding ProbeDiameter}"
-							  FontSize="14"
-							  Width="65"
-							  Height="30"
-							  VerticalAlignment="Center"
-							  HorizontalAlignment="Left"
-							  HorizontalContentAlignment="Center"
-							  VerticalContentAlignment="Center"
-							  Margin="0,10,25,0"/>
-					<StackPanel  Grid.Column="2" Orientation="Horizontal"
+					<StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+						<TextBox Text="{Binding ProbeDiameter}"
+								 FontSize="14"
+								 Width="65"
+								 Height="30"
 								 VerticalAlignment="Center"
 								 HorizontalAlignment="Left"
-								 IsVisible="{Binding IsTouchPlate}">
+								 HorizontalContentAlignment="Center"
+								 VerticalContentAlignment="Center"
+								 Margin="0,10,2,0"/>
+						<TextBlock Text="{Binding UnitLabel}"
+								   FontSize="13" VerticalAlignment="Center"
+								   Opacity="0.6" Margin="0,10,15,0"/>
+					</StackPanel>
+					<StackPanel Grid.Column="2" Orientation="Horizontal"
+								VerticalAlignment="Center"
+								HorizontalAlignment="Left"
+								IsVisible="{Binding IsTouchPlate}">
 						<Label Content="Plate Thickness:"
 							   FontSize="14"
 							   HorizontalAlignment="Right"
@@ -72,7 +76,10 @@
                                  HorizontalAlignment="Left"
                                  HorizontalContentAlignment="Center"
                                  VerticalContentAlignment="Center"
-								 Margin="0,10,10,0"/>
+								 Margin="0,10,2,0"/>
+						<TextBlock Text="{Binding UnitLabel}"
+								   FontSize="13" VerticalAlignment="Center"
+								   Opacity="0.6" Margin="0,10,10,0"/>
 					</StackPanel>
 				</Grid>
 			</Grid>
@@ -80,9 +87,9 @@
 
 		<!-- Shared Parameters -->
 		<Border Grid.Row="1" BorderThickness="1" CornerRadius="4"
-                Padding="10,5" 
+                Padding="10,5"
                 Margin="0,0,0,8">
-			<Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="*,*">
+			<Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowDefinitions="*,*">
 				<Label Grid.Row="0"
 					   Grid.Column="0"
 					   Content="Search Rate:"
@@ -95,18 +102,26 @@
 						 Width="65" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
-						 Margin="0,0,10,0"/>
-				<Label Grid.Row="0" Grid.Column="2"
+						 Margin="0,0,2,0"/>
+				<TextBlock Grid.Row="0" Grid.Column="2"
+						   Text="{Binding RateLabel}"
+						   FontSize="13" VerticalAlignment="Center"
+						   Opacity="0.6" Margin="0,0,10,0"/>
+				<Label Grid.Row="0" Grid.Column="3"
 					   Content="Latch Rate:" FontSize="13"
 					   VerticalAlignment="Center"
 					   Margin="0,0,4,0"/>
-				<TextBox Grid.Row="0" Grid.Column="3"
+				<TextBox Grid.Row="0" Grid.Column="4"
 						 Text="{Binding LatchRate}"
 						 FontSize="13"
 						 Width="65" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
-						 Margin="0,0,10,0"/>
+						 Margin="0,0,2,0"/>
+				<TextBlock Grid.Row="0" Grid.Column="5"
+						   Text="{Binding RateLabel}"
+						   FontSize="13" VerticalAlignment="Center"
+						   Opacity="0.6" Margin="0,0,10,0"/>
 				<Label Grid.Row="1" Grid.Column="0"
 					   Content="Distance:"
 					   HorizontalAlignment="Right"
@@ -119,20 +134,28 @@
 						 Width="65" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
-						 Margin="0,10,10,0"/>
-				<Label Grid.Row="1" Grid.Column="2"
+						 Margin="0,10,2,0"/>
+				<TextBlock Grid.Row="1" Grid.Column="2"
+						   Text="{Binding UnitLabel}"
+						   FontSize="13" VerticalAlignment="Center"
+						   Opacity="0.6" Margin="0,10,10,0"/>
+				<Label Grid.Row="1" Grid.Column="3"
 					   Content="Latch Dist:"
 					   FontSize="13"
 					   HorizontalAlignment="Right"
 					   VerticalAlignment="Center"
 					   Margin="0,10,5,0"/>
-				<TextBox Grid.Row="1" Grid.Column="3"
+				<TextBox Grid.Row="1" Grid.Column="4"
 						 Text="{Binding LatchDistance}"
 						 FontSize="13"
 						 Width="65" Height="28"
-						 Margin="0,10,10,0"
+						 Margin="0,10,2,0"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"/>
+				<TextBlock Grid.Row="1" Grid.Column="5"
+						   Text="{Binding UnitLabel}"
+						   FontSize="13" VerticalAlignment="Center"
+						   Opacity="0.6" Margin="0,10,10,0"/>
 			</Grid>
 		</Border>
 
@@ -187,7 +210,11 @@
 						<StackPanel Orientation="Horizontal">
 							<Label Content="Clearance Height:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
 							<TextBox Text="{Binding ClearanceHeight}" FontSize="13" Width="65" Height="28"
-									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+									 Margin="0,0,2,0"/>
+							<TextBlock Text="{Binding UnitLabel}"
+									   FontSize="13" VerticalAlignment="Center"
+									   Opacity="0.6"/>
 						</StackPanel>
 					</StackPanel>
 
@@ -227,27 +254,35 @@
 					<!-- Parameters -->
 					<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Spacing="5">
 						<StackPanel Orientation="Horizontal">
-							<Label Content="Approx Size:" 
-                                   FontSize="13" 
-                                   VerticalAlignment="Center" 
+							<Label Content="Approx Size:"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
                                    Margin="0,0,5,0"/>
 							<TextBox Text="{Binding ApproxSize}"
-                                     FontSize="13" 
-                                     Width="65" 
+                                     FontSize="13"
+                                     Width="65"
                                      Height="28"
 									 HorizontalContentAlignment="Center"
-                                     VerticalContentAlignment="Center"/>
+                                     VerticalContentAlignment="Center"
+									 Margin="0,0,2,0"/>
+							<TextBlock Text="{Binding UnitLabel}"
+									   FontSize="13" VerticalAlignment="Center"
+									   Opacity="0.6"/>
 						</StackPanel>
 						<StackPanel Orientation="Horizontal">
-							<Label Content="Clearance Height:" 
-                                   FontSize="13" 
-                                   VerticalAlignment="Center" 
+							<Label Content="Clearance Height:"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
                                    Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ClearanceHeight}" 
+							<TextBox Text="{Binding ClearanceHeight}"
                                      FontSize="13" Width="65" Height="28"
 									 HorizontalAlignment="Right"
-									 HorizontalContentAlignment="Center" 
-                                     VerticalContentAlignment="Center"/>
+									 HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center"
+									 Margin="0,0,2,0"/>
+							<TextBlock Text="{Binding UnitLabel}"
+									   FontSize="13" VerticalAlignment="Center"
+									   Opacity="0.6"/>
 						</StackPanel>
 					</StackPanel>
 
