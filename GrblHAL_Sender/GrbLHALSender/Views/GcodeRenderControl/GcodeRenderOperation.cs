@@ -286,8 +286,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // Use machine dimensions ($130/$131/$132) if available
             // CNC Z convention: Z=0 is home (top of travel), work surface is at Z=-ZSize
             bool hasMachineBounds = machineSettings != null &&
-                                    machineSettings.XSize > 0 &&
-                                    machineSettings.YSize > 0;
+                                    machineSettings.DisplayXSize > 0 &&
+                                    machineSettings.DisplayYSize > 0;
 
             // WCO converts machine coords to work coords: WPos = MPos - WCO
             // The toolpath is in work coordinates, so the grid (machine coords) must
@@ -301,12 +301,12 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 // Machine grid in machine coords: X=[0, XSize], Y=[-YSize, 0]
                 // Convert to work coords by subtracting WCO
                 gridMinX = 0f - wcoX;
-                gridMaxX = (float)machineSettings!.XSize - wcoX;
-                gridMinY = -(float)machineSettings.YSize - wcoY;
+                gridMaxX = (float)machineSettings!.DisplayXSize - wcoX;
+                gridMinY = -(float)machineSettings.DisplayYSize - wcoY;
                 gridMaxY = 0f - wcoY;
                 // Grid Z: work surface is at machine Z=-ZSize, in work coords: -ZSize - wcoZ
-                gridZ = machineSettings.ZSize > 0 ? -(float)machineSettings.ZSize - wcoZ : -wcoZ;
-                float maxDim = MathF.Max((float)machineSettings.XSize, (float)machineSettings.YSize);
+                gridZ = machineSettings.DisplayZSize > 0 ? -(float)machineSettings.DisplayZSize - wcoZ : -wcoZ;
+                float maxDim = MathF.Max((float)machineSettings.DisplayXSize, (float)machineSettings.DisplayYSize);
                 spacing = CalculateGridSpacing(maxDim * 0.7f);
             }
             else if (toolpath != null && toolpath.Segments.Count > 0)
@@ -349,8 +349,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             MachineSettings? machineSettings, ToolpathData? toolpath, Point3D? wco)
         {
             float axisLen;
-            if (machineSettings != null && machineSettings.XSize > 0)
-                axisLen = (float)Math.Max(machineSettings.XSize, machineSettings.YSize) * 0.1f;
+            if (machineSettings != null && machineSettings.DisplayXSize > 0)
+                axisLen = (float)Math.Max(machineSettings.DisplayXSize, machineSettings.DisplayYSize) * 0.1f;
             else if (toolpath != null && toolpath.Segments.Count > 0)
                 axisLen = toolpath.MaxDimension * 0.15f;
             else
@@ -368,8 +368,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
             // CNC Z convention: Z=0 is home (top), work surface is at Z=-ZSize
             // Work surface in work coords: -ZSize - wcoZ
-            float gridZ = (machineSettings != null && machineSettings.ZSize > 0)
-                ? -(float)machineSettings.ZSize - wcoZ
+            float gridZ = (machineSettings != null && machineSettings.DisplayZSize > 0)
+                ? -(float)machineSettings.DisplayZSize - wcoZ
                 : originZ;
 
             // X/Y axes originate at back-left corner on the work surface
@@ -412,10 +412,16 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private void DrawSpindle(SKCanvas canvas, Matrix4x4 viewProj, float width, float height, Point3D pos)
         {
             // Scale spindle dimensions relative to the visible scene size
-            // so it remains visible regardless of the toolpath dimensions
-            float scaleRef = _toolpath != null && _toolpath.MaxDimension > 0
-                ? _toolpath.MaxDimension
-                : 600f;
+            // so it remains visible regardless of the toolpath dimensions.
+            // Use toolpath extent first, then machine display dimensions (which respect $13 units),
+            // then a small default fallback.
+            float scaleRef;
+            if (_toolpath != null && _toolpath.MaxDimension > 0)
+                scaleRef = _toolpath.MaxDimension;
+            else if (_machineSettings != null && _machineSettings.DisplayXSize > 0)
+                scaleRef = (float)Math.Max(_machineSettings.DisplayXSize, _machineSettings.DisplayYSize);
+            else
+                scaleRef = 600f;
 
             float bitLength = scaleRef * 0.03f;     // Cone/bit tip length (~3% of scene)
             float shaftLength = scaleRef * 0.07f;    // Shaft/collet length (~7% of scene)

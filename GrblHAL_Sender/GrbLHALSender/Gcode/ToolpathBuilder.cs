@@ -8,17 +8,36 @@ namespace GrbLHALSender.Gcode
         private int _motionMode; // 0=G0, 1=G1, 2=G2, 3=G3
         private float _x, _y, _z;
         private bool _absoluteMode = true; // G90
-        private float _feedRate;        // current F feed rate (mm/min)
+        private bool _fileIsMetric = true; // tracks G20/G21 in the file (G21=true, G20=false)
+        private float _feedRate;        // current F feed rate (display units/min)
         private double _totalTimeSeconds; // accumulated job time
 
-        // Default rapid rate when machine settings are not available (mm/min)
+        private const float MmPerInch = 25.4f;
+
+        // Default rapid rate when machine settings are not available (display units/min)
         private const float DefaultRapidRate = 5000f;
 
         /// <summary>
         /// Optional: set machine rapid rates from $110/$111/$112 settings before building.
-        /// If set, rapids use this instead of the default.
+        /// Should be in the display unit (already converted via DisplayXRapid etc.).
         /// </summary>
         public float RapidRate { get; set; } = DefaultRapidRate;
+
+        /// <summary>
+        /// Set to true if the machine's display unit is metric (mm), false for imperial (inches).
+        /// Derived from MachineSettings.ReportInMetric ($13 setting).
+        /// When the G-code file unit (G20/G21) differs from the display unit, coordinates are scaled
+        /// so the toolpath always renders in the display unit's coordinate space.
+        /// </summary>
+        public bool DisplayIsMetric { get; set; } = true;
+
+        /// <summary>
+        /// Returns the scale factor to convert from the file's current unit to the display unit.
+        /// File mm → Display inches: 1/25.4.  File inches → Display mm: 25.4.  Same unit: 1.0.
+        /// </summary>
+        private float UnitScale => (_fileIsMetric == DisplayIsMetric)
+            ? 1f
+            : _fileIsMetric ? 1f / MmPerInch : MmPerInch;
 
         public ToolpathData BuildToolpath(List<GCodeLine> gCodeLines)
         {
@@ -26,6 +45,7 @@ namespace GrbLHALSender.Gcode
             _motionMode = 0;
             _x = 0f; _y = 0f; _z = 0f;
             _absoluteMode = true;
+            _fileIsMetric = true; // G-code defaults to G21 (mm) until G20 is encountered
             _feedRate = 0f;
             _totalTimeSeconds = 0;
 
@@ -67,12 +87,12 @@ namespace GrbLHALSender.Gcode
                     case 1: _motionMode = 1; break;
                     case 2: _motionMode = 2; break;
                     case 3: _motionMode = 3; break;
+                    case 20: _fileIsMetric = false; return; // inches
+                    case 21: _fileIsMetric = true; return;  // mm
                     case 4:  // dwell
                     case 17: // XY plane
                     case 18: // XZ plane
                     case 19: // YZ plane
-                    case 20: // inches
-                    case 21: // mm
                     case 28: // home
                     case 43: // tool length comp
                     case 49: // cancel tool length comp
@@ -97,21 +117,25 @@ namespace GrbLHALSender.Gcode
 
             var start = new Point3D(_x, _y, _z);
 
+            // Scale factor to convert file coordinates to display unit
+            float scale = UnitScale;
+
             // Compute target position (modal: keep current if not specified)
-            float targetX = cmd.HasParam('X') ? cmd.GetParam('X') : _x;
-            float targetY = cmd.HasParam('Y') ? cmd.GetParam('Y') : _y;
-            float targetZ = cmd.HasParam('Z') ? cmd.GetParam('Z') : _z;
+            // Raw file values are scaled to the display unit before use.
+            float targetX = cmd.HasParam('X') ? cmd.GetParam('X') * scale : _x;
+            float targetY = cmd.HasParam('Y') ? cmd.GetParam('Y') * scale : _y;
+            float targetZ = cmd.HasParam('Z') ? cmd.GetParam('Z') * scale : _z;
 
             if (!_absoluteMode)
             {
-                targetX = _x + (cmd.HasParam('X') ? cmd.GetParam('X') : 0f);
-                targetY = _y + (cmd.HasParam('Y') ? cmd.GetParam('Y') : 0f);
-                targetZ = _z + (cmd.HasParam('Z') ? cmd.GetParam('Z') : 0f);
+                targetX = _x + (cmd.HasParam('X') ? cmd.GetParam('X') * scale : 0f);
+                targetY = _y + (cmd.HasParam('Y') ? cmd.GetParam('Y') * scale : 0f);
+                targetZ = _z + (cmd.HasParam('Z') ? cmd.GetParam('Z') * scale : 0f);
             }
 
-            // Update feed rate if F parameter is present
+            // Update feed rate if F parameter is present (scale to display units/min)
             if (cmd.HasParam('F'))
-                _feedRate = cmd.GetParam('F');
+                _feedRate = cmd.GetParam('F') * scale;
 
             var end = new Point3D(targetX, targetY, targetZ);
             var moveType = DetermineMoveType(_motionMode, targetZ);
@@ -135,8 +159,8 @@ namespace GrbLHALSender.Gcode
             else if (_motionMode == 2 || _motionMode == 3)
             {
                 // Arc move (G2=CW, G3=CCW)
-                float i = cmd.GetParam('I', 0f);
-                float j = cmd.GetParam('J', 0f);
+                float i = cmd.GetParam('I', 0f) * scale;
+                float j = cmd.GetParam('J', 0f) * scale;
                 float arcLength = InterpolateArc(start, end, i, j, _motionMode == 2, moveType, toolpath);
 
                 // Accumulate time for arc

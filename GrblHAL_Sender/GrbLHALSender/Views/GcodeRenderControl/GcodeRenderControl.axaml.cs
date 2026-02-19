@@ -133,7 +133,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                     _camera.FitToView(toolpath, (float)Bounds.Width, (float)Bounds.Height, machine, wco);
                     _fitted = true;
                 }
-                else if (machine != null && machine.XSize > 0 && machine.YSize > 0)
+                else if (machine != null && machine.DisplayXSize > 0 && machine.DisplayYSize > 0)
                 {
                     // No toolpath yet — fit to machine grid at startup
                     _camera.FitToMachine(machine, (float)Bounds.Width, (float)Bounds.Height, wco);
