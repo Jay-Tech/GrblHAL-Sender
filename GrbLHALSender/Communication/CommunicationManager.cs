@@ -453,7 +453,8 @@ namespace GrbLHALSender.Communication
 
                             break;
                         case "H":
-                            var h = value.Split(":");
+                            var homeBlock = value.Split(":");
+                            var h = homeBlock[0].Split(",");
                             rtState.Home = h[0].StringToBool();
                             break;
                         case "D":

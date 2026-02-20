@@ -127,6 +127,12 @@ public class MachineStateService : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref _actualRpm, value);
     }
 
+    public int RpmOverride
+    {
+        get => _rpmOverride;
+        private set =>  this.RaiseAndSetIfChanged(ref _rpmOverride, value);
+    }
+
     // Display strings
     private string _wcsDisplay = "";
     public string WcsDisplay
@@ -167,6 +173,8 @@ public class MachineStateService : ReactiveObject, IDisposable
 
     // Raw state for consumers that need the full object (e.g., console RT display)
     private RealTImeState? _rawState;
+    private int _rpmOverride;
+
     public RealTImeState? RawState
     {
         get => _rawState;
@@ -300,6 +308,7 @@ public class MachineStateService : ReactiveObject, IDisposable
         if (int.TryParse(state.FeedOverRide, out var fo)) FeedOverride = fo;
         if (int.TryParse(state.ProgramRPM, out var ps)) SpindleRpm = ps;
         if (int.TryParse(state.ActualRpm, out var rpm)) ActualRpm = rpm;
+        if (int.TryParse(state.RpmOverRide, out var rO)) RpmOverride = rO;
 
         // --- Display values ---
         WcsDisplay = state.WCS ?? "";
@@ -310,6 +319,8 @@ public class MachineStateService : ReactiveObject, IDisposable
         // --- Signals ---
         SignalStatus = state.SignalStatus;
     }
+
+    
 
     /// <summary>
     /// Centralized metric/imperial conversion. Converts a value from machine native units
