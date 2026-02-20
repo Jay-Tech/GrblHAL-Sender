@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
+using GrbLHALSender.States;
 using GrbLHALSender.ViewModels;
 using GrbLHALSender.Views;
 using GrbLHALSender.WebServer;
@@ -55,6 +56,7 @@ public static class ServiceCollectionExtensions
     {
         collection.AddSingleton<ConfigManager>();
         collection.AddSingleton<CommunicationManager>();
+        collection.AddSingleton<MachineStateService>();
         collection.AddSingleton<GamepadService>();
         collection.AddSingleton<FileUploadService>();
         collection.AddSingleton<WebServerService>();

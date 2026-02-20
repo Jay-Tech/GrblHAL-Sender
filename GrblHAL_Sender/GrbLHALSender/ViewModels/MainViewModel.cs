@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
-using System.Threading;
 using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels;
@@ -25,6 +24,7 @@ public class MainViewModel : ViewModelBase
     private bool _fine;
     private readonly CommunicationManager _commManager;
     private readonly ConfigManager _configManager;
+    private readonly MachineStateService _machineStateService;
     private JobViewModel _jobViewModel;
     private ProbeViewModel _probeViewModel;
     private ObservableCollection<Axis> _axis;
@@ -70,10 +70,6 @@ public class MainViewModel : ViewModelBase
     private string _tlrMacro;
     private readonly GamepadService _gamepadService;
     private readonly WebServerService _webServerService;
-
-    // UI throttling: store latest state off-thread, push to UI on a timer
-    private volatile RealTImeState? _latestState;
-    private DispatcherTimer? _uiUpdateTimer;
 
     // Buffered console log messages — accumulated on the data thread, drained on UI timer
     private readonly Queue<string> _consoleLogBuffer = new();
@@ -334,7 +330,7 @@ public class MainViewModel : ViewModelBase
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
-        WebServerService webServerService)
+        WebServerService webServerService, MachineStateService machineStateService)
     {
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
@@ -354,7 +350,8 @@ public class MainViewModel : ViewModelBase
         JobViewModel.Config = _config;
 
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
-        _commManager.OnStateReceived += _commManager_OnStateReceived;
+        _machineStateService = machineStateService;
+        _machineStateService.PropertyChanged += OnMachineStateChanged;
         _commManager.onOptionsUpdated += _commManager_onOptionsUpdated;
         _commManager.onSettingUpdated += _commManager_onSettingUpdated;
         _commManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
@@ -367,11 +364,6 @@ public class MainViewModel : ViewModelBase
                 SetUpUiUnit();
             }
         };
-
-        // Throttled UI update timer — coalesces status updates to ~10 Hz
-        _uiUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
-        _uiUpdateTimer.Tick += UiUpdateTimerTick;
-        _uiUpdateTimer.Start();
 
         ConnectCommand = ReactiveCommand.Create(Connect);
         ZeroAxis = ReactiveCommand.Create<string>(Zero);
@@ -678,112 +670,47 @@ public class MainViewModel : ViewModelBase
             _consoleLogBuffer.Enqueue(e);
         }
     }
-    private void _commManager_OnStateReceived(object? sender, RealTImeState e)
-    {
-        // Store the latest state — the UI timer will pick it up and apply it.
-        // This avoids flooding the UI thread with property notifications on every poll.
-        _latestState = e;
-    }
-
     /// <summary>
-    /// Timer callback that applies the latest machine state to UI-bound properties.
-    /// Runs on the UI thread at ~10 Hz, coalescing multiple status updates into one pass.
+    /// Reacts to MachineStateService property changes (fires on UI thread at ~10 Hz).
+    /// Maps service typed values to UI-bound properties and drains console log buffer.
     /// </summary>
-    private void UiUpdateTimerTick(object? sender, EventArgs e)
+    private void OnMachineStateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        var state = Interlocked.Exchange(ref _latestState, null);
-        if (state == null) return;
+        var svc = _machineStateService;
+        if (!svc.Connected) return;
 
         Connected = true;
 
-        // Parse machine positions and WCO once, reuse for axis display and spindle.
-        // Avoids redundant double.Parse / float.TryParse calls (was 9+ parses per tick).
-        int axisCount = state.MPos.Length;
-        Span<double> mpos = stackalloc double[axisCount];
-        Span<double> wcoVals = stackalloc double[axisCount];
-        bool hasWco = state.Wco.Length > 0;
-
+        // Map service positions to AxisCollection (UI concern: Axis objects have commands)
+        int axisCount = Math.Min(svc.MachinePositions.Length, AxisCollection.Count);
         for (int i = 0; i < axisCount; i++)
         {
-            if (!double.TryParse(state.MPos[i], out mpos[i])) mpos[i] = 0;
-            if (hasWco && i < state.Wco.Length)
+            var pos = new Position
             {
-                if (!double.TryParse(state.Wco[i], out wcoVals[i])) wcoVals[i] = 0;
-            }
-        }
-
-        for (int i = 0; i < axisCount; i++)
-        {
-            var pos = new Position();
-            pos.MPos = UseMetric switch
-            {
-                false when MachineInMetric => mpos[i] / 25.4,
-                true when !MachineInMetric => mpos[i] * 25.4,
-                _ => mpos[i]
+                MPos = svc.MachinePositions[i],
+                Wco = svc.WorkPositions.Length > i ? svc.WorkPositions[i] : 0
             };
-            if (hasWco)
-            {
-                var wco = mpos[i] - wcoVals[i];
-                pos.Wco = UseMetric switch
-                {
-                    false when MachineInMetric => wco / 25.4,
-                    true when !MachineInMetric => wco * 25.4,
-                    _ => wco
-                };
-            }
-
             AxisCollection[i].Position = pos;
         }
-        HomeState = state.Home;
-        State = state;
-        TLR = state.TLR;
-        SetFeedAndSpeeds(State);
-        Tool = state.Tool;
 
-        // Update dedicated display properties — RaiseAndSetIfChanged uses string
-        // equality, so labels only re-render when the text actually changes.
-        GrblHalState = state.GrblHalState ?? "";
-        WcsDisplay = state.WCS ?? "";
-        ToolDisplay = state.Tool ?? "";
-        SubState = state.SubState ?? "";
+        // Copy typed values from service
+        HomeState = svc.HomeState;
+        State = svc.RawState;
+        TLR = svc.TLR;
+        FeedRate = svc.FeedRate;
+        FeedOverRide = svc.FeedOverride;
+        SpindleRpm = svc.SpindleRpm;
+        ActualRpm = svc.ActualRpm;
+        Tool = svc.ToolDisplay;
 
-        // Push connected state and machine state to JobViewModel for button enable/disable
-        JobViewModel.Connected = true;
-        if (!JobViewModel.JobRunning)
-        {
-            JobViewModel.JobState = state.GrblHalState switch
-            {
-                "Idle" => JobState.Idle,
-                "Alarm" => JobState.Alarm,
-                "Hold" => JobState.Hold,
-                "Tool" => JobState.Tool,
-                _ => JobViewModel.JobState
-            };
-        }
-        // Update spindle position for 3D visualizer using already-parsed values.
-        // G-code toolpath is in work coordinates: WPos = MPos - WCO
-        if (axisCount >= 3)
-        {
-            float wx = (float)mpos[0], wy = (float)mpos[1], wz = (float)mpos[2];
-            if (hasWco && state.Wco.Length >= 3)
-            {
-                float wcoX = (float)wcoVals[0], wcoY = (float)wcoVals[1], wcoZ = (float)wcoVals[2];
-                wx -= wcoX;
-                wy -= wcoY;
-                wz -= wcoZ;
-                var newWco = new Point3D(wcoX, wcoY, wcoZ);
-                if (_workCoordinateOffset == null || !_workCoordinateOffset.Value.Equals(newWco))
-                    WorkCoordinateOffset = newWco;
-            }
-            var newSpindlePos = new Point3D(wx, wy, wz);
-            if (_spindlePosition == null || !_spindlePosition.Value.Equals(newSpindlePos))
-                SpindlePosition = newSpindlePos;
+        GrblHalState = svc.GrblStateString;
+        WcsDisplay = svc.WcsDisplay;
+        ToolDisplay = svc.ToolDisplay;
+        SubState = svc.SubState;
 
-            // Push spindle position to JobViewModel for progress tracking
-            JobViewModel.CurrentSpindlePosition = newSpindlePos;
-        }
-
-        AlarmActive = state.GrblHalState == "Alarm";
+        SpindlePosition = svc.SpindlePosition;
+        WorkCoordinateOffset = svc.WorkCoordinateOffset;
+        AlarmActive = svc.AlarmActive;
 
         // Drain buffered console log messages (from data thread) to UI.
         // Only process when the console panel is visible to avoid unnecessary
@@ -795,8 +722,9 @@ public class MainViewModel : ViewModelBase
                 while (_consoleLogBuffer.Count > 0)
                     ConsoleOutput.Add(_consoleLogBuffer.Dequeue());
             }
-            if (ShowRTCommands)
-                ConsoleOutput.Add(state.RawRt);
+            var rawState = svc.RawState;
+            if (ShowRTCommands && rawState != null)
+                ConsoleOutput.Add(rawState.RawRt);
 
             if (ConsoleOutput.Count > 200)
                 ConsoleOutput.Clear();
@@ -810,28 +738,7 @@ public class MainViewModel : ViewModelBase
             }
         }
 
-        ProcessSignals(state.SignalStatus);
-    }
-
-    
-    private void SetFeedAndSpeeds(RealTImeState rt)
-    {
-        if (int.TryParse(rt.FeedRate, out var feedRate))
-        {
-            FeedRate = feedRate;
-        }
-        if (int.TryParse(rt.FeedOverRide, out var fo))
-        {
-            FeedOverRide = fo;
-        }
-        if (int.TryParse(rt.ProgramRPM, out var ps))
-        {
-            SpindleRpm = ps;
-        }
-        if (int.TryParse(rt.ActualRpm, out var rpm))
-        {
-            this.ActualRpm = rpm;
-        }
+        ProcessSignals(svc.SignalStatus);
     }
     private void ProcessSignals(List<char> signals)
     {

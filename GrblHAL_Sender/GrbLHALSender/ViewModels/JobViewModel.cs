@@ -22,6 +22,7 @@ namespace GrbLHALSender.ViewModels
     {
 
         private readonly CommunicationManager _commsManager;
+        private readonly MachineStateService _machineStateService;
 
         private bool _showGCodeConsole;
         private int _gCodeFileIndex;
@@ -58,8 +59,8 @@ namespace GrbLHALSender.ViewModels
         private int _completedSegmentIndex = -1;
         private string _selectedLineInfo = "";
 
-        // Set by MainViewModel from real-time status reports (work coordinates)
-        internal Point3D? CurrentSpindlePosition;
+        // Fed from MachineStateService via PropertyChanged subscription
+        private Point3D? CurrentSpindlePosition;
 
         // Set by MainViewModel — references config object so changes take effect immediately
         internal GHalSenderConfig? Config;
@@ -179,6 +180,36 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _canStartJob, value);
         }
 
+        /// <summary>
+        /// Reacts to MachineStateService property changes (fires on UI thread at ~10 Hz).
+        /// Feeds Connected, GrblState, and SpindlePosition from the centralized service.
+        /// </summary>
+        private void OnMachineStateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(MachineStateService.Connected):
+                    Connected = _machineStateService.Connected;
+                    break;
+                case nameof(MachineStateService.GrblState):
+                    if (!JobRunning)
+                    {
+                        JobState = _machineStateService.GrblState switch
+                        {
+                            GrblState.Idle => JobState.Idle,
+                            GrblState.Alarm => JobState.Alarm,
+                            GrblState.Hold => JobState.Hold,
+                            GrblState.Tool => JobState.Tool,
+                            _ => JobState
+                        };
+                    }
+                    break;
+                case nameof(MachineStateService.SpindlePosition):
+                    CurrentSpindlePosition = _machineStateService.SpindlePosition;
+                    break;
+            }
+        }
+
         private void UpdateButtonStates()
         {
             // Hold: enabled when connected, disabled when already in Hold state
@@ -193,9 +224,11 @@ namespace GrbLHALSender.ViewModels
                            JobState is (JobState.Idle or JobState.ProgramComplete or JobState.Stop));
         }
 
-        public JobViewModel(CommunicationManager manager)
+        public JobViewModel(CommunicationManager manager, MachineStateService machineStateService)
         {
             _commsManager = manager;
+            _machineStateService = machineStateService;
+            _machineStateService.PropertyChanged += OnMachineStateChanged;
             GCodeOutPut = new ObservableCollection<GCodeLine>();
             CloseGCodeConsole = ReactiveCommand.Create(CloseGcodeConsole);
             OpenGCodePanel = ReactiveCommand.Create(GCodeControl);
