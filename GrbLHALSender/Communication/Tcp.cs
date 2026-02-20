@@ -22,7 +22,8 @@ namespace GrbLHALSender.Communication
         private static readonly char[] Split = { '\r', '\n' };
 
         public bool IsConnected { get; set; }
-
+        private volatile bool _userClosed = false;
+        private int _reconnecting = 0;
 
         public Tcp(TcpSettings settings)
         {
@@ -32,6 +33,21 @@ namespace GrbLHALSender.Communication
         public bool TryConnect(TcpSettings settings)
         {
             _tcpSettings = settings;
+            _userClosed = false;
+            Interlocked.Exchange(ref _reconnecting, 0);
+
+            // Clean up any previous connection before reconnecting
+            if (_tokenSource != null)
+            {
+                _tokenSource.Cancel();
+                Thread.Sleep(50);
+                _tokenSource.Dispose();
+                _tokenSource = null;
+            }
+            try { _networkStream?.Close(); } catch { }
+            try { _tcpClient?.Close(); _tcpClient?.Dispose(); } catch { }
+            _networkStream = null;
+            _tcpClient = null;
 
             try
             {
@@ -77,6 +93,7 @@ namespace GrbLHALSender.Communication
 
         public void Close()
         {
+            _userClosed = true;
             _tokenSource?.Cancel();
             Thread.Sleep(100);
 
@@ -142,6 +159,7 @@ namespace GrbLHALSender.Communication
                     catch (Exception)
                     {
                         IsConnected = false;
+                        TriggerReconnect();
                         return;
                     }
 
@@ -180,6 +198,7 @@ namespace GrbLHALSender.Communication
                     {
                         // Connection closed by remote host
                         IsConnected = false;
+                        TriggerReconnect();
                         return;
                     }
 
@@ -191,10 +210,30 @@ namespace GrbLHALSender.Communication
                     if (!token.IsCancellationRequested)
                     {
                         IsConnected = false;
+                        TriggerReconnect();
                     }
                     return;
                 }
             }
+        }
+
+        private void TriggerReconnect()
+        {
+            if (_userClosed) return;
+            if (Interlocked.CompareExchange(ref _reconnecting, 1, 0) == 0)
+                Task.Run(ReconnectLoopAsync);
+        }
+
+        private async Task ReconnectLoopAsync()
+        {
+            while (!_userClosed)
+            {
+                await Task.Delay(3000);
+                if (_userClosed) break;
+                if (TryConnect(_tcpSettings))
+                    break;
+            }
+            Interlocked.Exchange(ref _reconnecting, 0);
         }
 
         private void ProcessReceivedData(string received)
