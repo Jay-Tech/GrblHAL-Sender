@@ -45,16 +45,15 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             Point3D? wco = null)
         {
             // Center camera on the machine work area, converted to work coordinates
-            // Machine grid in machine coords: X=[0,XSize], Y=[-YSize,0], Z=-ZSize (work surface)
+            // Machine grid in machine coords: X=[0,XSize], Y=[-YSize,0]
             // Work coords = Machine coords - WCO
             float wcoX = wco?.X ?? 0f;
             float wcoY = wco?.Y ?? 0f;
-            float wcoZ = wco?.Z ?? 0f;
 
             CenterX = (float)machineSettings.DisplayXSize / 2f - wcoX;
             CenterY = -(float)machineSettings.DisplayYSize / 2f - wcoY;
-            float gridZ = machineSettings.DisplayZSize > 0 ? -(float)machineSettings.DisplayZSize - wcoZ : -wcoZ;
-            CenterZ = gridZ;
+            // Grid/work surface is Z=0 in work coordinates (where the user set their Z zero)
+            CenterZ = 0f;
             float dim = MathF.Max((float)machineSettings.DisplayXSize, (float)machineSettings.DisplayYSize);
             // Account for viewport aspect ratio so the grid fits nicely
             float aspect = viewportWidth / viewportHeight;

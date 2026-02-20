@@ -362,8 +362,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 gridMaxX = (float)machineSettings!.DisplayXSize - wcoX;
                 gridMinY = -(float)machineSettings.DisplayYSize - wcoY;
                 gridMaxY = 0f - wcoY;
-                // Grid Z: work surface is at machine Z=-ZSize, in work coords: -ZSize - wcoZ
-                gridZ = machineSettings.DisplayZSize > 0 ? -(float)machineSettings.DisplayZSize - wcoZ : -wcoZ;
+                // Grid Z: work surface is Z=0 in work coordinates (this is where the user set their Z zero)
+                gridZ = 0f;
                 float maxDim = MathF.Max((float)machineSettings.DisplayXSize, (float)machineSettings.DisplayYSize);
                 spacing = CalculateGridSpacing(maxDim * 0.7f);
             }
@@ -424,13 +424,10 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             float originY = -wcoY;
             float originZ = -wcoZ;
 
-            // CNC Z convention: Z=0 is home (top), work surface is at Z=-ZSize
-            // Work surface in work coords: -ZSize - wcoZ
-            float gridZ = (machineSettings != null && machineSettings.DisplayZSize > 0)
-                ? -(float)machineSettings.DisplayZSize - wcoZ
-                : originZ;
+            // Work surface is Z=0 in work coordinates (the user's Z zero plane)
+            float gridZ = 0f;
 
-            // X/Y axes originate at back-left corner on the work surface
+            // X/Y axes originate at machine origin corner on the work surface (Z=0 work coords)
             var xyOrigin = ProjectToScreen(new Point3D(originX, originY, gridZ), viewProj, width, height);
             if (!xyOrigin.HasValue) return;
 
@@ -454,8 +451,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                     new SKFont(SKTypeface.Default, 14), yPaint);
             }
 
-            // Z axis - Blue (extends from work surface up to machine home Z=0)
-            // Machine home Z=0 in work coords = -wcoZ
+            // Z axis - Blue (extends from work surface Z=0 up to machine home at originZ=-wcoZ)
             var zBottom = xyOrigin; // starts at grid/work surface
             var zTop = ProjectToScreen(new Point3D(originX, originY, originZ), viewProj, width, height);
             if (zTop.HasValue)
