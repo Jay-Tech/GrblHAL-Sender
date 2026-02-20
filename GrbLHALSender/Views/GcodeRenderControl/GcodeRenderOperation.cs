@@ -124,6 +124,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private readonly ToolpathSceneCache _sceneCache;
         private readonly int _completedSegmentIndex;
         private readonly int _selectedSegmentIndex;
+        private readonly SKBitmap? _spindleImage;
 
         private static readonly SKPaint RapidPaint = new()
         {
@@ -204,7 +205,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             ToolpathSceneCache sceneCache,
             Point3D? spindlePosition = null, MachineSettings? machineSettings = null,
             Point3D? workCoordinateOffset = null, int completedSegmentIndex = -1,
-            int selectedSegmentIndex = -1)
+            int selectedSegmentIndex = -1, SKBitmap? spindleImage = null)
         {
             Bounds = bounds;
             _toolpath = toolpath;
@@ -215,6 +216,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             _wco = workCoordinateOffset;
             _completedSegmentIndex = completedSegmentIndex;
             _selectedSegmentIndex = selectedSegmentIndex;
+            _spindleImage = spindleImage;
         }
 
         public Rect Bounds { get; }
@@ -483,8 +485,6 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
             float bitLength = scaleRef * 0.03f;     // Cone/bit tip length (~3% of scene)
             float shaftLength = scaleRef * 0.07f;    // Shaft/collet length (~7% of scene)
-            float bitRadius = scaleRef * 0.008f;     // Bit radius at base of cone
-            float shaftRadius = scaleRef * 0.015f;   // Shaft radius
 
             // CNC convention: Z negative is down (into material), Z=0 is top surface
             // Spindle body extends ABOVE the tip in positive Z direction (away from material)
@@ -498,16 +498,95 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
             if (!tipScreen.HasValue || !bitTopScreen.HasValue || !shaftTopScreen.HasValue) return;
 
-            // Calculate perpendicular direction for width in screen space
-            float dx = bitTopScreen.Value.X - tipScreen.Value.X;
-            float dy = bitTopScreen.Value.Y - tipScreen.Value.Y;
+            // Calculate axis direction and length in screen space
+            float dx = shaftTopScreen.Value.X - tipScreen.Value.X;
+            float dy = shaftTopScreen.Value.Y - tipScreen.Value.Y;
+            float totalScreenLen = MathF.Sqrt(dx * dx + dy * dy);
+
+            // If the spindle projects too small (e.g. looking straight down), use a fixed marker
+            if (totalScreenLen < 5f)
+            {
+                DrawSpindleTopView(canvas, tipScreen.Value);
+                return;
+            }
+
+            // Try image-based rendering first
+            if (_spindleImage != null)
+            {
+                DrawSpindleImage(canvas, tipScreen.Value, shaftTopScreen.Value, totalScreenLen);
+                DrawCrosshair(canvas, tipScreen.Value);
+                return;
+            }
+
+            // Fallback: procedural drawing
+            DrawSpindleProcedural(canvas, tipScreen.Value, bitTopScreen.Value, shaftTopScreen.Value,
+                scaleRef, bitLength);
+        }
+
+        /// <summary>
+        /// Draws the spindle using a user-supplied image, scaled and rotated to match
+        /// the 3D projection from tip to shaftTop. The image is centered on the crosshair
+        /// (tip position) so the tool tip sits in the middle of the image.
+        /// </summary>
+        private void DrawSpindleImage(SKCanvas canvas, SKPoint tipScreen, SKPoint shaftTopScreen, float totalScreenLen)
+        {
+            var img = _spindleImage!;
+            float imgAspect = (float)img.Width / img.Height;
+
+            // Target height matches the projected spindle length (tip→shaftTop).
+            // Width preserves the image aspect ratio.
+            float targetHeight = Math.Clamp(totalScreenLen, 20f, 500f);
+            float targetWidth = targetHeight * imgAspect;
+
+            // Angle from tip to shaft-top in screen space.
+            // The image's natural orientation has the shaft pointing in the -Y direction
+            // (upward on screen), which corresponds to an angle of -PI/2.
+            float angleDx = shaftTopScreen.X - tipScreen.X;
+            float angleDy = shaftTopScreen.Y - tipScreen.Y;
+            float angleRad = MathF.Atan2(angleDy, angleDx);
+
+            // Rotation needed to align the image's natural "up" (-Y, angle=-PI/2)
+            // with the actual tip→shaftTop direction: angleRad - (-PI/2) = angleRad + PI/2
+            float rotation = angleRad + MathF.PI / 2f;
+
+            canvas.Save();
+
+            // Translate to the tip position (=crosshair), then rotate around it.
+            canvas.Translate(tipScreen.X, tipScreen.Y);
+            canvas.RotateRadians(rotation);
+
+            // Position the image so its BOTTOM edge sits at (0,0) = the crosshair/tip.
+            // The image extends upward (-Y) from the tip, just like the real spindle
+            // extends above the bit tip. This puts the bit tip on the crosshair.
+            var destRect = new SKRect(
+                -targetWidth / 2f,
+                -targetHeight,
+                targetWidth / 2f,
+                0f);
+
+            using var paint = new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.Medium };
+            canvas.DrawBitmap(img, destRect, paint);
+
+            canvas.Restore();
+        }
+
+        /// <summary>
+        /// Original procedural spindle drawing (cone + shaft + crosshair).
+        /// Used as fallback when no spindle image is loaded.
+        /// </summary>
+        private static void DrawSpindleProcedural(SKCanvas canvas, SKPoint tipScreen,
+            SKPoint bitTopScreen, SKPoint shaftTopScreen, float scaleRef, float bitLength)
+        {
+            float bitRadius = scaleRef * 0.008f;
+            float shaftRadius = scaleRef * 0.015f;
+
+            float dx = bitTopScreen.X - tipScreen.X;
+            float dy = bitTopScreen.Y - tipScreen.Y;
             float len = MathF.Sqrt(dx * dx + dy * dy);
 
-            // If the bit projects too small (e.g. looking straight down), use a fixed screen-space size
             if (len < 3f)
             {
-                // Draw a simple marker when viewed from directly above
-                DrawSpindleTopView(canvas, tipScreen.Value);
+                DrawSpindleTopView(canvas, tipScreen);
                 return;
             }
 
@@ -517,28 +596,24 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
             // Scale radius based on projection
             float scale = len / bitLength;
-            float screenBitRadius = bitRadius * scale;
-            float screenShaftRadius = shaftRadius * scale;
-
-            // Clamp radius to reasonable screen sizes
-            screenBitRadius = Math.Clamp(screenBitRadius, 3f, 40f);
-            screenShaftRadius = Math.Clamp(screenShaftRadius, 5f, 60f);
+            float screenBitRadius = Math.Clamp(bitRadius * scale, 3f, 40f);
+            float screenShaftRadius = Math.Clamp(shaftRadius * scale, 5f, 60f);
 
             // Draw the cone (bit) as a triangle: tip → two base corners
             using var bitPath = new SKPath();
-            bitPath.MoveTo(tipScreen.Value);
-            bitPath.LineTo(bitTopScreen.Value.X + perpX * screenBitRadius,
-                          bitTopScreen.Value.Y + perpY * screenBitRadius);
-            bitPath.LineTo(bitTopScreen.Value.X - perpX * screenBitRadius,
-                          bitTopScreen.Value.Y - perpY * screenBitRadius);
+            bitPath.MoveTo(tipScreen);
+            bitPath.LineTo(bitTopScreen.X + perpX * screenBitRadius,
+                          bitTopScreen.Y + perpY * screenBitRadius);
+            bitPath.LineTo(bitTopScreen.X - perpX * screenBitRadius,
+                          bitTopScreen.Y - perpY * screenBitRadius);
             bitPath.Close();
 
             canvas.DrawPath(bitPath, SpindleBitPaint);
             canvas.DrawPath(bitPath, SpindleOutlinePaint);
 
             // Draw the shaft as a rectangle from bitTop to shaftTop
-            float sdx = shaftTopScreen.Value.X - bitTopScreen.Value.X;
-            float sdy = shaftTopScreen.Value.Y - bitTopScreen.Value.Y;
+            float sdx = shaftTopScreen.X - bitTopScreen.X;
+            float sdy = shaftTopScreen.Y - bitTopScreen.Y;
             float slen = MathF.Sqrt(sdx * sdx + sdy * sdy);
             if (slen >= 1f)
             {
@@ -546,14 +621,14 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 float sPerpY = sdx / slen;
 
                 using var shaftPath = new SKPath();
-                shaftPath.MoveTo(bitTopScreen.Value.X + sPerpX * screenShaftRadius,
-                                bitTopScreen.Value.Y + sPerpY * screenShaftRadius);
-                shaftPath.LineTo(shaftTopScreen.Value.X + sPerpX * screenShaftRadius,
-                                shaftTopScreen.Value.Y + sPerpY * screenShaftRadius);
-                shaftPath.LineTo(shaftTopScreen.Value.X - sPerpX * screenShaftRadius,
-                                shaftTopScreen.Value.Y - sPerpY * screenShaftRadius);
-                shaftPath.LineTo(bitTopScreen.Value.X - sPerpX * screenShaftRadius,
-                                bitTopScreen.Value.Y - sPerpY * screenShaftRadius);
+                shaftPath.MoveTo(bitTopScreen.X + sPerpX * screenShaftRadius,
+                                bitTopScreen.Y + sPerpY * screenShaftRadius);
+                shaftPath.LineTo(shaftTopScreen.X + sPerpX * screenShaftRadius,
+                                shaftTopScreen.Y + sPerpY * screenShaftRadius);
+                shaftPath.LineTo(shaftTopScreen.X - sPerpX * screenShaftRadius,
+                                shaftTopScreen.Y - sPerpY * screenShaftRadius);
+                shaftPath.LineTo(bitTopScreen.X - sPerpX * screenShaftRadius,
+                                bitTopScreen.Y - sPerpY * screenShaftRadius);
                 shaftPath.Close();
 
                 canvas.DrawPath(shaftPath, SpindleShaftPaint);
@@ -561,7 +636,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             }
 
             // Draw a small crosshair at the tip for precision
-            DrawCrosshair(canvas, tipScreen.Value);
+            DrawCrosshair(canvas, tipScreen);
         }
 
         private static void DrawSpindleTopView(SKCanvas canvas, SKPoint tipScreen)

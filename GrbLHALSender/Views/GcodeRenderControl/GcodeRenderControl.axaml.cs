@@ -32,6 +32,9 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         public static readonly StyledProperty<string> SelectedLineInfoProperty =
             AvaloniaProperty.Register<GcodeRenderControl, string>(nameof(SelectedLineInfo), defaultValue: "");
 
+        public static readonly StyledProperty<string?> SpindleImagePathProperty =
+            AvaloniaProperty.Register<GcodeRenderControl, string?>(nameof(SpindleImagePath), defaultValue: "spindle.png");
+
         public ToolpathData? Toolpath
         {
             get => GetValue(ToolpathProperty);
@@ -74,8 +77,15 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             set => SetValue(SelectedLineInfoProperty, value);
         }
 
+        public string? SpindleImagePath
+        {
+            get => GetValue(SpindleImagePathProperty);
+            set => SetValue(SpindleImagePathProperty, value);
+        }
+
         private readonly Camera3D _camera = new();
         private readonly ToolpathSceneCache _sceneCache = new();
+        private readonly SpindleImageProvider _spindleImageProvider = new();
         private Point? _lastPointerPos;
         private Point? _pressStartPos;
         private bool _isLeftDragging;
@@ -88,6 +98,9 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             InitializeComponent();
             Background = Brushes.Transparent; // Required for hit testing
             ClipToBounds = true;
+
+            // Load the spindle image from Config folder on startup
+            _spindleImageProvider.TryLoad(SpindleImagePath);
         }
 
         static GcodeRenderControl()
@@ -114,6 +127,11 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                     SelectedSegmentIndex = -1;
                     SelectedLineInfo = "";
                 }
+                InvalidateVisual();
+            }
+            else if (change.Property == SpindleImagePathProperty)
+            {
+                _spindleImageProvider.TryLoad(SpindleImagePath);
                 InvalidateVisual();
             }
             else if (change.Property == SpindlePositionProperty ||
@@ -164,7 +182,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 machine,
                 WorkCoordinateOffset,
                 CompletedSegmentIndex,
-                SelectedSegmentIndex);
+                SelectedSegmentIndex,
+                _spindleImageProvider.Bitmap);
 
             context.Custom(op);
         }

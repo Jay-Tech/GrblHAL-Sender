@@ -4,7 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
 			 x:DataType="vm:AppConfigViewModel"
-			 mc:Ignorable="d" d:DesignWidth="525" d:DesignHeight="550"
+			 mc:Ignorable="d" d:DesignWidth="525" d:DesignHeight="600"
 			 x:Class="GrbLHALSender.Views.AppConfigView">
 
 	<Design.DataContext>
@@ -26,7 +26,7 @@
 
 			<!-- App Height Tab -->
 			<TabItem Header="APP" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto" Margin="10">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="10">
 					<Grid Row="0" ColumnDefinitions="*,*">
 						<CheckBox Grid.Column="0"
 								  Content="Use Metric"
@@ -42,11 +42,50 @@
 								  VerticalContentAlignment="Center"
 								  HorizontalAlignment="Center"
 								  VerticalAlignment="Center"
-                                  ToolTip.Tip="Show cut progress on the 3D toolpath during job execution. 
+                                  ToolTip.Tip="Show cut progress on the 3D toolpath during job execution.
 								  Disable to save resources on lower-power devices."
 								  IsChecked="{Binding EnableCutLines}"/>
 					</Grid>
-					<Grid Grid.Row="1" ColumnDefinitions="*,*"  >
+					<Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+						<Label Grid.Column="0"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Center"
+							   HorizontalContentAlignment="Right"
+							   VerticalContentAlignment="Center"
+							   FontSize="18"
+							   Content="Spindle Image:"/>
+						<TextBox Grid.Column="1"
+								 Width="200"
+								 HorizontalAlignment="Left"
+								 VerticalAlignment="Center"
+								 HorizontalContentAlignment="Left"
+								 VerticalContentAlignment="Center"
+								 Margin="10,0,0,0"
+								 FontSize="18"
+								 ToolTip.Tip="PNG image filename in Config folder (e.g. spindle.png). Leave empty for default procedural drawing."
+								 Text="{Binding SpindleImagePath}"/>
+					</Grid>
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+                        <Label Grid.Column="0"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center"
+                               HorizontalContentAlignment="Right"
+                               VerticalContentAlignment="Center"
+                               FontSize="18"
+                               Content="Poll Rate:"/>
+                        <TextBox Grid.Column="1"
+                                 Width="200"
+                                 HorizontalAlignment="Left"
+                                 VerticalAlignment="Center"
+                                 HorizontalContentAlignment="Left"
+                                 VerticalContentAlignment="Center"
+                                 Margin="50,0,0,0"
+                                 FontSize="18"
+                                 ToolTip.Tip="Enter Poll Rate for real time report.  
+								 Recommend to stay above 100mm"
+                                 Text="{Binding PollRate}"/>
+                    </Grid>
+					<Grid Grid.Row="3" ColumnDefinitions="*,*"  >
 						<Border Grid.Column="0" Padding="5,10"
 								Margin="0,10,0,0"
 								BorderBrush="AntiqueWhite"
@@ -157,7 +196,7 @@
 						</Border>
 					</Grid>
 
-					<Grid Grid.Row="2" ColumnDefinitions="*,*"  >
+					<Grid Grid.Row="4" ColumnDefinitions="*,*"  >
 						<Border Grid.Column="0" Padding="5,10"
 								Margin="0,10,0,0"
 								BorderBrush="AntiqueWhite"

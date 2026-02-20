@@ -372,7 +372,8 @@
 																	   MachineSettings="{Binding MachineSettings}"
 																	   WorkCoordinateOffset="{Binding WorkCoordinateOffset}"
 																	   CompletedSegmentIndex="{Binding JobViewModel.CompletedSegmentIndex}"
-																	   SelectedLineInfo="{Binding JobViewModel.SelectedLineInfo, Mode=TwoWay}"/>
+																	   SelectedLineInfo="{Binding JobViewModel.SelectedLineInfo, Mode=TwoWay}"
+																	   SpindleImagePath="{Binding SpindleImagePath}"/>
 								<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
 										HorizontalAlignment="Stretch"
 										IsVisible="{Binding #HomeTab.IsSelected}"

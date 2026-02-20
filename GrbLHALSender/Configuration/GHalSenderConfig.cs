@@ -27,6 +27,8 @@ public class GHalSenderConfig : ObservableObject
     } = true;
 
     public bool AutoConnect { get; set; } = false;
+
+    public double PollRate { get; set; } = 200;
     public bool ShowToolpathProgress { get; set; } = true;
     public SerialSettings SerialSettings { get; set; } = new("COM1");
     public TcpSettings TcpSettings { get; set; } = new(23, "192.168.5.1");
@@ -35,6 +37,7 @@ public class GHalSenderConfig : ObservableObject
     public GamepadConfig GamepadConfig { get; set; } = new();
     public WebServerConfig WebServerConfig { get; set; } = new();
     public ProbeConfig ProbeConfig { get; set; } = new();
+    public string SpindleImagePath { get; set; } = "spindle.png";
     public ToolList ToolList { get; set; } = new();
     public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new();
     public double[] JogDistanceMetric { get; set; } =

@@ -12,6 +12,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using GrbLHALSender.Configuration;
+using Hexa.NET.SDL3;
 using Timer = System.Timers.Timer;
 
 
@@ -19,6 +21,7 @@ namespace GrbLHALSender.Communication
 {
     public class CommunicationManager
     {
+        private readonly ConfigManager _configManager;
         private const string StateString = "Idle|Run|Hold|Jog|Alarm:|Door|Check|Home|Sleep|Tool";
 
         public event EventHandler<string> OnConsoleLogReceived;
@@ -38,18 +41,41 @@ namespace GrbLHALSender.Communication
         private GrblHALSettings _grblHalSettings;
         private GrblHALOptions grblHalOptions = new();
         private readonly ProbeState _probe;
+        private double _pollInterval;
 
 
         public ICommsAdapter Adapter { get; set; }
         public MachineSettings MachineData => _machineData;
         public GrblHALOptions Options => grblHalOptions;
-        public CommunicationManager()
+        public CommunicationManager(ConfigManager configManager)
         {
+            _configManager = configManager;
             _dispatcher = Dispatcher.UIThread;
             _grblHalSettings = new GrblHALSettings();
             _pollTimer = new Timer();
             _pollTimer.Elapsed += _pollTimer_Elapsed;
             _probe = new ProbeState();
+            _configManager.OnConfigLoaded += _configManger_OnConfigLoaded;
+        }
+
+        private void _configManger_OnConfigLoaded(object? sender, GHalSenderConfig e)
+        {
+            if (_configManager.GHalSenderConfig == null) return;
+            _pollInterval = _configManager.GHalSenderConfig.PollRate;
+            _configManager?.GHalSenderConfig?.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(GHalSenderConfig.PollRate))
+                {
+                    UpdateRealTimePoll();
+                }
+            };
+
+        }
+
+        private void UpdateRealTimePoll()
+        {
+            StopPoll();
+            SetupPoll();
         }
 
         public void ShutDown()
@@ -92,13 +118,14 @@ namespace GrbLHALSender.Communication
                 }
                 await SendAsyncCommand(GrblHalConstants.Alarmcodes, timeOutMs: 1000);
                 await SendAsyncCommand(GrblHalConstants.Errorcodes, timeOutMs: 1000);
-                SetupPoll(200);
+                SetupPoll();
             });
         }
-        public void SetupPoll(int rate)
+        public void SetupPoll()
         {
-            _pollTimer.Interval = rate;
-            _pollTimer.Start();
+            _pollTimer?.Stop();
+            _pollTimer?.Interval = _pollTimer.Interval == 0 ? 200: _pollInterval;
+            _pollTimer?.Start();
         }
         public void StopPoll()
         {

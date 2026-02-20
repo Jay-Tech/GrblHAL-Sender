@@ -23,6 +23,8 @@ namespace GrbLHALSender.ViewModels
         private bool _isGamePadEnabled;
         private bool _isWebServerEnabled;
         private int _webServerPort;
+        private string _spindleImagePath = "spindle.png";
+        private double _pollRate;
 
 
         public bool EnableCutLines
@@ -102,6 +104,17 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _webServerPort, value);
         }
 
+        public string SpindleImagePath
+        {
+            get => _spindleImagePath;
+            set => this.RaiseAndSetIfChanged(ref _spindleImagePath, value);
+        }
+        public double PollRate
+        {
+            get => _pollRate;   
+            set => this.RaiseAndSetIfChanged(ref _pollRate, value);
+        }
+
         public Action? CloseAction { get; set; }
         public ICommand SaveConfigCommand { get; }
         public ICommand CloseCommand { get; }
@@ -130,6 +143,8 @@ namespace GrbLHALSender.ViewModels
             IsGamePadEnabled = _appConfig.GamepadConfig.Enabled;
             IsWebServerEnabled = _appConfig.WebServerConfig.Enabled;
             WebServerPort = _appConfig.WebServerConfig.Port;
+            SpindleImagePath = _appConfig.SpindleImagePath;
+            PollRate = _appConfig.PollRate;
         }
 
         public void SaveConfig()
@@ -147,6 +162,8 @@ namespace GrbLHALSender.ViewModels
             _appConfig.GamepadConfig.Enabled = IsGamePadEnabled;
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
+            _appConfig.SpindleImagePath = SpindleImagePath;
+            _appConfig.PollRate = PollRate;
             _configManager.SaveConfig();
         }
     }

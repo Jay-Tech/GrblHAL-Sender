@@ -42,6 +42,7 @@ public class MainViewModel : ViewModelBase
     private Point3D? _spindlePosition;
     private Point3D? _workCoordinateOffset;
     private MachineSettings? _machineSettings;
+    private string _spindleImagePath = "spindle.png";
     private bool _showConsole;
     private bool _isJobRunning;
     private int _spindleRpm;
@@ -230,6 +231,11 @@ public class MainViewModel : ViewModelBase
     {
         get => _machineSettings;
         set => this.RaiseAndSetIfChanged(ref _machineSettings, value);
+    }
+    public string SpindleImagePath
+    {
+        get => _spindleImagePath;
+        set => this.RaiseAndSetIfChanged(ref _spindleImagePath, value);
     }
     public int FeedRate
     {
@@ -596,6 +602,7 @@ public class MainViewModel : ViewModelBase
         UnitText = UseMetric ? "mm" : "in";
         UnitSystem = UseMetric ? "G21" : "G20";
         AutoConnect = _config.AutoConnect;
+        SpindleImagePath = _config.SpindleImagePath;
         JogRateList = new ObservableCollection<double>(UseMetric ? _config.JogSpeedMetric : _config.JogSpeedImperial);
         JogStepList = new ObservableCollection<double>(UseMetric ? _config.JogDistanceMetric : _config.JogDistanceImperial);
         JogStep = JogStepList[^1];
