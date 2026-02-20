@@ -7,9 +7,9 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="GrbLHALSender.Views.JobButtonView"
 			 x:DataType="viewModels1:JobViewModel">
-	<Design.DataContext>
+	<!--<Design.DataContext>
 		<viewModels1:JobViewModel/>
-	</Design.DataContext>
+	</Design.DataContext>-->
 	<UserControl.Resources>
 		<converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
 	</UserControl.Resources>
@@ -51,37 +51,37 @@
                 Content="G-code"
                 Command="{Binding OpenGCodePanel}"
                 IsEnabled="{Binding FileLoaded}"/>
+		<Grid Grid.Row="1" Grid.Column="0" ColumnSpan="6" ColumnDefinitions="2*,*,1*">
 		<TextBlock x:Name="FileTextBlock"
-                   Margin="15"
+                   Margin="15,15"
 				   FontSize="{DynamicResource BaseFontSize}"
-				   Grid.Row="1"
 				   Grid.Column="0"
-				   Grid.ColumnSpan="2"
-				   HorizontalAlignment="Center"
+				   HorizontalAlignment="Left"
 				   VerticalAlignment="Center"
 				   Text="{Binding FileName}"/>
 		<TextBlock x:Name="EstimatedTextBlock"
-                   Margin="15"
+                   Margin="0,15"
                    FontSize="{DynamicResource BaseFontSize}"
-				   Grid.Row="1"
-				   Grid.Column="2"
-				   Grid.ColumnSpan="2"
-                   HorizontalAlignment="Center"
+				   Grid.Column="1"
+                   HorizontalAlignment="Left"
                    VerticalAlignment="Center"
 				   Text ="{Binding EstimatedTime}"/>
-		<TextBlock x:Name="TimeTextBlock"
-                   Margin="15"
+        <TextBlock x:Name="RunTimeTextBlock"
+                   Margin="0,15"
                    FontSize="{DynamicResource BaseFontSize}"
-				   Grid.Row="1"
-				   Grid.Column="4"
-				   Grid.ColumnSpan="2"
-                   HorizontalAlignment="Center"
+                   Grid.Column="2"
+				   IsVisible="{Binding FileLoaded}"
+                   HorizontalAlignment="Left"
                    VerticalAlignment="Center"
-                   Text ="{Binding RunTime}"/>
-		<TextBlock Grid.Row="2" Grid.ColumnSpan="6"
-				   HorizontalAlignment="Center" VerticalAlignment="Center"
-				   Margin="15,0" FontSize="{DynamicResource BaseFontSize}"
+                   Text ="{Binding RunTime, StringFormat=RunTime:{0}, FallbackValue=00:00:00}"/>
+        </Grid>
+		<TextBlock Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="6"
+				   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+				   Margin="15,0" 
+                   FontSize="{DynamicResource BaseFontSize}"
 				   Text="{Binding SelectedLineInfo}"
-				   IsVisible="{Binding SelectedLineInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+				   IsVisible="{Binding SelectedLineInfo, 
+				   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 	</Grid>
 </UserControl>

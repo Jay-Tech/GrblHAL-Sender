@@ -33,6 +33,8 @@ namespace GrbLHALSender.ViewModels
         private string _runTime;
         private bool _jobRunning;
         private CancellationTokenSource? _cancelToken;
+        private readonly DispatcherTimer _jobTimer;
+        private DateTime _startTime;
 
         // Character-counting streaming protocol:
         // grblHAL reports its serial RX buffer size via $I+ (OPT line).
@@ -134,6 +136,7 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selectedLineInfo, value);
         }
 
+       
         public JobViewModel(CommunicationManager manager)
         {
             _commsManager = manager;
@@ -144,6 +147,12 @@ namespace GrbLHALSender.ViewModels
             CloseFilesCommand = ReactiveCommand.Create(CloseFile);
             PauseJobCommand = ReactiveCommand.Create(TogglePause);
             StopJobCommand = ReactiveCommand.Create(StopJob);
+            RunTime = "00:00:00";
+            _jobTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (sender, args) =>
+            {
+                RunTime = (DateTime.Now - _startTime).ToString(@"hh\:mm\:ss");
+            });
+            _jobTimer.Stop();
         }
 
         [RelayCommand]
@@ -196,7 +205,8 @@ namespace GrbLHALSender.ViewModels
             }
             if (JobRunning) return;
             if (GCodeOutPut.Count == 0) return;
-
+            _startTime = DateTime.Now;
+            _jobTimer.Start();
             _index = 0;
             _pendingLine = 0;
             _latestPendingLine = 0;
@@ -257,7 +267,6 @@ namespace GrbLHALSender.ViewModels
             // then refill the buffer in case acks arrived while paused
 
         }
-
         private void TogglePause()
         {
             if (JobState == JobState.Hold) return;
@@ -266,6 +275,7 @@ namespace GrbLHALSender.ViewModels
 
         private void CloseFile()
         {
+            RunTime = "00:00:00";
             if (JobRunning) StopJob();
             GCodeOutPut.Clear();
             FileLoaded = false;
@@ -414,6 +424,7 @@ namespace GrbLHALSender.ViewModels
         {
             // Unsubscribe FIRST to prevent any more ack events from firing FillBuffer
             ListenToState(false);
+            _jobTimer.Stop();
             _fileIndexTimer?.Stop();
             _fileIndexTimer = null;
             _cancelToken?.Cancel();
