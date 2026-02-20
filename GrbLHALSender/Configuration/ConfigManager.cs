@@ -36,8 +36,9 @@ public class ConfigManager
         }
         var readData = File.ReadAllText(fullPath);
         var gHalSenderConfig = JsonSerializer.Deserialize<GHalSenderConfig>(readData);
-        OnConfigLoaded?.Invoke(this, gHalSenderConfig);
-        return GHalSenderConfig = gHalSenderConfig ?? new GHalSenderConfig();
+        GHalSenderConfig = gHalSenderConfig ?? new GHalSenderConfig();
+        OnConfigLoaded?.Invoke(this, GHalSenderConfig);
+        return GHalSenderConfig;
 
     }
 }

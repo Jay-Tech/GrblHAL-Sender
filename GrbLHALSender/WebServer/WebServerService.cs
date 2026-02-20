@@ -1,6 +1,7 @@
 using Avalonia.Threading;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gcode;
+using GrbLHALSender.States;
 using GrbLHALSender.ViewModels;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +19,7 @@ public class WebServerService : IDisposable
 {
     private readonly FileUploadService _fileUploadService;
     private readonly ConfigManager _configManager;
+    private readonly MachineStateService _machineStateService;
     private WebServerConfig _config = new();
     private WebApplication? _app;
     private CancellationTokenSource? _cts;
@@ -25,10 +27,12 @@ public class WebServerService : IDisposable
 
     public event EventHandler<string>? StatusMessage;
 
-    public WebServerService(FileUploadService fileUploadService, ConfigManager configManager)
+    public WebServerService(FileUploadService fileUploadService, ConfigManager configManager,
+        MachineStateService machineStateService)
     {
         _fileUploadService = fileUploadService;
         _configManager = configManager;
+        _machineStateService = machineStateService;
     }
 
     public void SetViewModel(MainViewModel vm)
@@ -168,30 +172,26 @@ public class WebServerService : IDisposable
     }
 
     /// <summary>
-    /// Reads current machine status from the ViewModel into a DTO for the API.
+    /// Reads current machine status from MachineStateService and ViewModel into a DTO for the API.
     /// Safe for cross-thread reads (simple value properties backed by RaiseAndSetIfChanged).
     /// </summary>
     public MachineStatusDto GetMachineStatus()
     {
-        if (_mainViewModel == null)
-            return new MachineStatusDto();
+        var svc = _machineStateService;
 
-        var vm = _mainViewModel;
-        var axes = vm.AxisCollection;
+        // Build position string from service work positions
         string position = "--";
-        if (axes != null && axes.Count > 0)
+        var workPos = svc.WorkPositions;
+        if (workPos.Length > 0)
         {
-            var parts = new string[Math.Min(axes.Count, 6)];
+            var parts = new string[Math.Min(workPos.Length, 6)];
             for (int i = 0; i < parts.Length; i++)
-            {
-                var pos = axes[i].Position;
-                var wpos = pos.MPos - pos.Wco;
-                parts[i] = wpos.ToString("F3");
-            }
+                parts[i] = workPos[i].ToString("F3");
             position = string.Join(" / ", parts);
         }
 
-        var jobVm = vm.JobViewModel;
+        // Job info still comes from the ViewModel
+        var jobVm = _mainViewModel?.JobViewModel;
         string jobProgress = "--";
         if (jobVm != null && jobVm.FileLoaded)
         {
@@ -205,13 +205,13 @@ public class WebServerService : IDisposable
 
         return new MachineStatusDto
         {
-            State = vm.GrblHalState,
+            State = svc.GrblStateString,
             Position = position,
-            FeedRate = vm.FeedRate,
-            SpindleRpm = vm.ActualRpm,
+            FeedRate = svc.FeedRate,
+            SpindleRpm = svc.ActualRpm,
             FileName = jobVm?.FileName ?? "",
             JobProgress = jobProgress,
-            Connected = vm.Connected
+            Connected = svc.Connected
         };
     }
 
