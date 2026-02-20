@@ -28,12 +28,15 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             if (hasMachine)
             {
                 FitToMachine(machineSettings!, viewportWidth, viewportHeight, wco);
+                // Center camera vertically at the midpoint between work surface (Z=0)
+                // and the floor (MinBounds.Z = deepest cut), so model fills the view.
+                CenterZ = toolpath.MinBounds.Z / 2f;
             }
             else
             {
                 CenterX = toolpath.Center.X;
                 CenterY = toolpath.Center.Y;
-                CenterZ = 0f;
+                CenterZ = toolpath.MinBounds.Z / 2f;
                 float dim = toolpath.MaxDimension;
                 if (dim < 0.001f) dim = 1f;
                 Distance = dim * 1.5f;
@@ -45,7 +48,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             Point3D? wco = null)
         {
             // Center camera on the machine work area, converted to work coordinates
-            // Machine grid in machine coords: X=[0,XSize], Y=[-YSize,0], Z=-ZSize (work surface)
+            // Machine grid in machine coords: X=[0,XSize], Y=[-YSize,0]
             // Work coords = Machine coords - WCO
             float wcoX = wco?.X ?? 0f;
             float wcoY = wco?.Y ?? 0f;
@@ -53,8 +56,11 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
             CenterX = (float)machineSettings.DisplayXSize / 2f - wcoX;
             CenterY = -(float)machineSettings.DisplayYSize / 2f - wcoY;
-            float gridZ = machineSettings.DisplayZSize > 0 ? -(float)machineSettings.DisplayZSize - wcoZ : -wcoZ;
-            CenterZ = gridZ;
+            // No file loaded: center vertically at the midpoint of Z travel in work coords.
+            // Machine Z goes from 0 (home/top) to -DisplayZSize (table/bottom).
+            // In work coords: 0 - wcoZ (top) to -DisplayZSize - wcoZ (table).
+            float tableZ = machineSettings.DisplayZSize > 0 ? -(float)machineSettings.DisplayZSize - wcoZ : -wcoZ;
+            CenterZ = tableZ / 2f;
             float dim = MathF.Max((float)machineSettings.DisplayXSize, (float)machineSettings.DisplayYSize);
             // Account for viewport aspect ratio so the grid fits nicely
             float aspect = viewportWidth / viewportHeight;

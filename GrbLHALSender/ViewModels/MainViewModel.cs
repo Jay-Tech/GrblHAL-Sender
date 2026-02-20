@@ -78,7 +78,9 @@ public class MainViewModel : ViewModelBase
     private bool _useMetric;
     private bool _machineInMetric;
     private string _unitText;
-  
+    private int _spindleOverRide;
+    private int _consoleOutputIndex;
+
     public ObservableCollection<Signal> SignalList
     {
         get => _signalList;
@@ -284,7 +286,7 @@ public class MainViewModel : ViewModelBase
         get => _unloadToolCommandEnabled;
         set => this.RaiseAndSetIfChanged(ref _unloadToolCommandEnabled, value);
     }
-  
+
     public ICommand ConnectCommand { get; set; }
     public ICommand ZeroAxis { get; set; }
     public ICommand ZeroAllCommand { get; set; }
@@ -487,19 +489,28 @@ public class MainViewModel : ViewModelBase
     }
     private void ToolSelected(int tool)
     {
-        var command = _isJobRunning ? $"T{tool}M6" : $"M61Q{tool}";
+        string command;
+        if (_atcEnabled)
+        {
+            command = $"T{tool}M6";
+        }
+        else
+        {
+            command = _isJobRunning ? $"T{tool}M6" : $"M61Q{tool}";
+        }
+
         SendCommand(command);
     }
     private void UnloadTool()
     {
         if (!AtcEnabled || !UnloadToolCommandEnabled) return;
-        _commManager.SendCommand($"G65{_tlrMacro}");
+        _commManager.SendCommand($"G65{_unloadToolMacro}");
     }
 
     private void SetTlr()
     {
         if (!AtcEnabled || !TlrCommandEnabled) return;
-        _commManager.SendCommand($"G65{_unloadToolMacro}");
+        _commManager.SendCommand($"G65{_tlrMacro}");
     }
 
     private void RapidReset()
@@ -554,11 +565,11 @@ public class MainViewModel : ViewModelBase
     }
     private void SpindleCcw(string rpm)
     {
-        SendCommand($"{GrblHalConstants.SpindleCCw}{rpm}");
+        SendCommand($"{GrblHalConstants.SpindleCCw}S{rpm}");
     }
     private void SpindleCw(string rpm)
     {
-        SendCommand($"{GrblHalConstants.SpindleCw}{rpm}");
+        SendCommand($"{GrblHalConstants.SpindleCw}S{rpm}");
     }
     private void SetSpindleSpeed(string speed)
     {
@@ -627,6 +638,7 @@ public class MainViewModel : ViewModelBase
     {
         Dispatcher.UIThread.Invoke(() =>
         {
+            ConsoleOutputIndex = -1;
             ConsoleOutput.Clear();
         });
     }
@@ -709,12 +721,12 @@ public class MainViewModel : ViewModelBase
         SpindleRpm = svc.SpindleRpm;
         ActualRpm = svc.ActualRpm;
         Tool = svc.ToolDisplay;
+        SpindleOverRide = svc.RpmOverride;
 
         GrblHalState = svc.GrblStateString;
         WcsDisplay = svc.WcsDisplay;
         ToolDisplay = svc.ToolDisplay;
         SubState = svc.SubState;
-
         SpindlePosition = svc.SpindlePosition;
         WorkCoordinateOffset = svc.WorkCoordinateOffset;
         AlarmActive = svc.AlarmActive;
@@ -735,6 +747,7 @@ public class MainViewModel : ViewModelBase
 
             if (ConsoleOutput.Count > 200)
                 ConsoleOutput.Clear();
+            ConsoleOutputIndex = ConsoleOutput.Count - 1;
         }
         else
         {
@@ -747,6 +760,19 @@ public class MainViewModel : ViewModelBase
 
         ProcessSignals(svc.SignalStatus);
     }
+
+    public int SpindleOverRide
+    {
+        get => _spindleOverRide;
+        set => this.RaiseAndSetIfChanged(ref _spindleOverRide, value);
+    }
+
+    public int ConsoleOutputIndex
+    {
+        get => _consoleOutputIndex;
+        set => this.RaiseAndSetIfChanged(ref _consoleOutputIndex, value);
+    }
+
     private void ProcessSignals(List<char> signals)
     {
         // Single pass: set each signal's Triggered state only if it actually changed.

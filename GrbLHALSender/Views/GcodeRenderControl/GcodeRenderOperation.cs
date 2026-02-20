@@ -364,8 +364,12 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 gridMaxX = (float)machineSettings!.DisplayXSize - wcoX;
                 gridMinY = -(float)machineSettings.DisplayYSize - wcoY;
                 gridMaxY = 0f - wcoY;
-                // Grid Z: work surface is at machine Z=-ZSize, in work coords: -ZSize - wcoZ
-                gridZ = machineSettings.DisplayZSize > 0 ? -(float)machineSettings.DisplayZSize - wcoZ : -wcoZ;
+                // Grid Z:
+                //   File loaded   → bottom of toolpath (MinBounds.Z) so the model sits on the surface.
+                //   No file       → machine table = -DisplayZSize in machine coords → work coords: -DisplayZSize - wcoZ
+                gridZ = toolpath != null
+                    ? toolpath.MinBounds.Z
+                    : (machineSettings!.DisplayZSize > 0 ? -(float)machineSettings!.DisplayZSize - wcoZ : -wcoZ);
                 float maxDim = MathF.Max((float)machineSettings.DisplayXSize, (float)machineSettings.DisplayYSize);
                 spacing = CalculateGridSpacing(maxDim * 0.7f);
             }
@@ -377,6 +381,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 gridMaxX = MathF.Ceiling((toolpath.MaxBounds.X + spacing) / spacing) * spacing;
                 gridMinY = MathF.Floor((toolpath.MinBounds.Y - spacing) / spacing) * spacing;
                 gridMaxY = MathF.Ceiling((toolpath.MaxBounds.Y + spacing) / spacing) * spacing;
+                gridZ = toolpath.MinBounds.Z;
             }
             else
             {
@@ -426,13 +431,15 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             float originY = -wcoY;
             float originZ = -wcoZ;
 
-            // CNC Z convention: Z=0 is home (top), work surface is at Z=-ZSize
-            // Work surface in work coords: -ZSize - wcoZ
-            float gridZ = (machineSettings != null && machineSettings.DisplayZSize > 0)
-                ? -(float)machineSettings.DisplayZSize - wcoZ
-                : originZ;
+            // Axes sit on the floor:
+            //   File loaded   → bottom of toolpath (MinBounds.Z)
+            //   No file       → machine table = -DisplayZSize - wcoZ
+            float gridZ = toolpath?.MinBounds.Z
+                ?? ((machineSettings != null && machineSettings.DisplayZSize > 0)
+                    ? -(float)machineSettings.DisplayZSize - wcoZ
+                    : -wcoZ);
 
-            // X/Y axes originate at back-left corner on the work surface
+            // X/Y axes originate at machine origin corner on the work surface (Z=0 work coords)
             var xyOrigin = ProjectToScreen(new Point3D(originX, originY, gridZ), viewProj, width, height);
             if (!xyOrigin.HasValue) return;
 
@@ -456,8 +463,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                     new SKFont(SKTypeface.Default, 14), yPaint);
             }
 
-            // Z axis - Blue (extends from work surface up to machine home Z=0)
-            // Machine home Z=0 in work coords = -wcoZ
+            // Z axis - Blue (extends from work surface Z=0 up to machine home at originZ=-wcoZ)
             var zBottom = xyOrigin; // starts at grid/work surface
             var zTop = ProjectToScreen(new Point3D(originX, originY, originZ), viewProj, width, height);
             if (zTop.HasValue)

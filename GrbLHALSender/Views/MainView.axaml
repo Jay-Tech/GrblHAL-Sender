@@ -863,7 +863,7 @@
 									Margin="5,10,0,0"
 									Command="{Binding SpindleResetCommand }" />
 							<TextBlock Grid.Column="1"
-									   Text="{Binding ActualRpm, StringFormat={}%{0}}"
+									   Text="{Binding SpindleOverRide, StringFormat={}%{0}}"
 									   Margin="5,10,5,0"
 									   TextAlignment="Left"
 									   FontSize="{DynamicResource DetailFontSizeLarge}"

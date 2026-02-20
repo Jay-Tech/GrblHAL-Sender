@@ -17,10 +17,11 @@
             <ListBox Grid.Row="0" x:Name="ConsoleListBox" ItemsSource="{Binding ConsoleOutput}"
                      Background="{StaticResource DarkReduceBrushAlpha}"
                      Foreground="White"
+                     SelectedIndex="{Binding ConsoleOutputIndex}"
                      FontSize="18">
-                <Interaction.Behaviors>
+                <!--<Interaction.Behaviors>
                     <behaviors:ScrollToEndBehavior />
-                </Interaction.Behaviors>
+                </Interaction.Behaviors>-->
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Foreground="GhostWhite" Margin="0,1"
