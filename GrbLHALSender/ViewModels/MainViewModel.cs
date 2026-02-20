@@ -78,6 +78,7 @@ public class MainViewModel : ViewModelBase
     private bool _machineInMetric;
     private string _unitText;
     private int _spindleOverRide;
+    private int _consoleOutputIndex;
 
     public ObservableCollection<Signal> SignalList
     {
@@ -630,6 +631,7 @@ public class MainViewModel : ViewModelBase
     {
         Dispatcher.UIThread.Invoke(() =>
         {
+            ConsoleOutputIndex = -1;
             ConsoleOutput.Clear();
         });
     }
@@ -738,6 +740,7 @@ public class MainViewModel : ViewModelBase
 
             if (ConsoleOutput.Count > 200)
                 ConsoleOutput.Clear();
+            ConsoleOutputIndex = ConsoleOutput.Count - 1;
         }
         else
         {
@@ -755,6 +758,12 @@ public class MainViewModel : ViewModelBase
     {
         get => _spindleOverRide;
         set => this.RaiseAndSetIfChanged(ref _spindleOverRide, value);
+    }
+
+    public int ConsoleOutputIndex
+    {
+        get => _consoleOutputIndex;
+        set => this.RaiseAndSetIfChanged(ref _consoleOutputIndex, value);
     }
 
     private void ProcessSignals(List<char> signals)
