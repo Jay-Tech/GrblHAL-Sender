@@ -362,8 +362,12 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 gridMaxX = (float)machineSettings!.DisplayXSize - wcoX;
                 gridMinY = -(float)machineSettings.DisplayYSize - wcoY;
                 gridMaxY = 0f - wcoY;
-                // Grid Z: work surface is Z=0 in work coordinates (this is where the user set their Z zero)
-                gridZ = 0f;
+                // Grid Z:
+                //   File loaded   → bottom of toolpath (MinBounds.Z) so the model sits on the surface.
+                //   No file       → machine table = -DisplayZSize in machine coords → work coords: -DisplayZSize - wcoZ
+                gridZ = toolpath != null
+                    ? toolpath.MinBounds.Z
+                    : (machineSettings!.DisplayZSize > 0 ? -(float)machineSettings!.DisplayZSize - wcoZ : -wcoZ);
                 float maxDim = MathF.Max((float)machineSettings.DisplayXSize, (float)machineSettings.DisplayYSize);
                 spacing = CalculateGridSpacing(maxDim * 0.7f);
             }
@@ -375,6 +379,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 gridMaxX = MathF.Ceiling((toolpath.MaxBounds.X + spacing) / spacing) * spacing;
                 gridMinY = MathF.Floor((toolpath.MinBounds.Y - spacing) / spacing) * spacing;
                 gridMaxY = MathF.Ceiling((toolpath.MaxBounds.Y + spacing) / spacing) * spacing;
+                gridZ = toolpath.MinBounds.Z;
             }
             else
             {
@@ -424,8 +429,13 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             float originY = -wcoY;
             float originZ = -wcoZ;
 
-            // Work surface is Z=0 in work coordinates (the user's Z zero plane)
-            float gridZ = 0f;
+            // Axes sit on the floor:
+            //   File loaded   → bottom of toolpath (MinBounds.Z)
+            //   No file       → machine table = -DisplayZSize - wcoZ
+            float gridZ = toolpath?.MinBounds.Z
+                ?? ((machineSettings != null && machineSettings.DisplayZSize > 0)
+                    ? -(float)machineSettings.DisplayZSize - wcoZ
+                    : -wcoZ);
 
             // X/Y axes originate at machine origin corner on the work surface (Z=0 work coords)
             var xyOrigin = ProjectToScreen(new Point3D(originX, originY, gridZ), viewProj, width, height);
