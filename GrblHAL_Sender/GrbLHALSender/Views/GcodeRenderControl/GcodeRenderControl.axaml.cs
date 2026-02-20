@@ -93,9 +93,11 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         static GcodeRenderControl()
         {
             // Only properties that require a full scene cache rebuild are in AffectsRender.
-            // CompletedSegmentIndex and SelectedSegmentIndex are NOT here — they use
-            // pre-projected coordinates and only need a lightweight InvalidateVisual().
-            AffectsRender<GcodeRenderControl>(ToolpathProperty, SpindlePositionProperty,
+            // SpindlePosition, CompletedSegmentIndex, and SelectedSegmentIndex are NOT here —
+            // they are dynamic overlays drawn on top of the cached static scene (no cache rebuild).
+            // This keeps the render control from flooding the compositor with invalidations
+            // during job execution (~10 Hz spindle + ~5 Hz progress = too many renders).
+            AffectsRender<GcodeRenderControl>(ToolpathProperty,
                 MachineSettingsProperty, WorkCoordinateOffsetProperty);
         }
 
@@ -114,10 +116,14 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 }
                 InvalidateVisual();
             }
-            else if (change.Property == CompletedSegmentIndexProperty ||
+            else if (change.Property == SpindlePositionProperty ||
+                     change.Property == CompletedSegmentIndexProperty ||
                      change.Property == SelectedSegmentIndexProperty)
             {
-                // Lightweight repaint — uses pre-projected coordinates, no cache rebuild
+                // Lightweight repaint — spindle + overlays use pre-projected coordinates,
+                // no cache rebuild needed. Avalonia coalesces multiple InvalidateVisual()
+                // calls within the same frame, so spindle + progress arriving close together
+                // result in a single render pass.
                 InvalidateVisual();
             }
         }
