@@ -50,8 +50,9 @@ public class WebServerService : IDisposable
         if (_app != null) return;
 
         _cts = new CancellationTokenSource();
+        var token = _cts.Token;
 
-        Task.Run(() =>
+        Task.Run(async () =>
         {
             try
             {
@@ -65,20 +66,20 @@ public class WebServerService : IDisposable
                 // Suppress ASP.NET Core startup logging noise
                 builder.Logging.ClearProviders();
 
-                _app = builder.Build();
+                var app = builder.Build();
 
                 // Serve embedded index.html as static file at root
                 var assembly = Assembly.GetExecutingAssembly();
                 var embeddedProvider = new EmbeddedFileProvider(assembly, "GrbLHALSender.WebServer.wwwroot");
 
-                _app.UseStaticFiles(new StaticFileOptions
+                app.UseStaticFiles(new StaticFileOptions
                 {
                     FileProvider = embeddedProvider,
                     RequestPath = ""
                 });
 
                 // Map / to serve index.html
-                _app.MapGet("/", async (Microsoft.AspNetCore.Http.HttpContext context) =>
+                app.MapGet("/", async (Microsoft.AspNetCore.Http.HttpContext context) =>
                 {
                     var fileInfo = embeddedProvider.GetFileInfo("index.html");
                     if (fileInfo.Exists)
@@ -95,10 +96,23 @@ public class WebServerService : IDisposable
                 });
 
                 // Map API endpoints
-                _app.MapEndpoints(this, _fileUploadService);
+                app.MapEndpoints(this, _fileUploadService);
+
+                // Store reference so Stop() can reach it
+                _app = app;
 
                 StatusMessage?.Invoke(this, $"Web server starting on port {_config.Port}...");
-                _app.Run($"http://{_config.BindAddress}:{_config.Port}");
+
+                // Start the server (non-blocking), then wait until cancellation is requested.
+                await app.StartAsync(token);
+
+                // Block here until Stop() cancels the token
+                try { await Task.Delay(Timeout.Infinite, token); }
+                catch (OperationCanceledException) { }
+
+                // Gracefully shut down Kestrel
+                await app.StopAsync(CancellationToken.None);
+                await app.DisposeAsync();
             }
             catch (OperationCanceledException)
             {
@@ -108,21 +122,19 @@ public class WebServerService : IDisposable
             {
                 StatusMessage?.Invoke(this, $"Web server error: {ex.Message}");
             }
-        }, _cts.Token);
+        }, token);
     }
 
     public void Stop()
     {
         try
         {
+            // Signal the RunAsync cancellation token — this triggers Kestrel's graceful shutdown
             _cts?.Cancel();
-            using var stopCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-            _app?.StopAsync(stopCts.Token).GetAwaiter().GetResult();
-            _app?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
         catch
         {
-            // Best-effort shutdown
+            // Best-effort
         }
         finally
         {
