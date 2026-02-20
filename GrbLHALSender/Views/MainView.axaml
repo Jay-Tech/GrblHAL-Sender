@@ -57,7 +57,7 @@
 							 Content="Connect" x:Name="ConnectButton"
 							 Command="{Binding ConnectCommand}"/>
 
-					<Label Classes.active="{Binding Connected}"
+					<Label Classes.active="{Binding Connected, FallbackValue=false}"
 						   Classes.inactive="{Binding !Connected, FallbackValue=true}"
 						   HorizontalContentAlignment="Center"
 						   VerticalContentAlignment="Center"
@@ -126,6 +126,7 @@
 				</Label>
 
 				<ItemsRepeater Grid.Column="8"
+							   IsVisible="{Binding Connected}"
 							   ClipToBounds="True"
 							   HorizontalAlignment="Stretch"
 							   Margin="50,0,50,0"

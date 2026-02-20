@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace GrbLHALSender.Communication
 {
-    public class WebSocket : ICommsAdapter
+    public class WebSocket : ObservableObject, ICommsAdapter
     {
         public event EventHandler<string>? OnDataReceived;
 
@@ -20,7 +21,17 @@ namespace GrbLHALSender.Communication
         private static readonly object _syncLock = new();
         private static readonly char[] Split = { '\r', '\n' };
 
-        public bool IsConnected { get; set; }
+        public bool IsConnected
+        {
+            get;
+            set
+            {
+                if (value == field) return;
+                field = value;
+                OnPropertyChanged();
+            }
+        }
+
         private volatile bool _userClosed = false;
         private int _reconnecting = 0;
 

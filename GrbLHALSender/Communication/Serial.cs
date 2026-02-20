@@ -4,10 +4,11 @@ using System.IO.Ports;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace GrbLHALSender.Communication
 {
-    public class Serial : ICommsAdapter
+    public class Serial : ObservableObject, ICommsAdapter
     {
 
         public event EventHandler<string>? OnDataReceived;
@@ -24,7 +25,18 @@ namespace GrbLHALSender.Communication
         private static readonly object _sncLock = new();
         private CancellationTokenSource _tokenSource;
         private string _receiveBuffer = string.Empty;
-        public bool IsConnected { get; set; }
+
+        public bool IsConnected
+        {
+            get;
+            set
+            {
+                if (value == field) return;
+                field = value;
+                OnPropertyChanged();
+            }
+        }
+
         private volatile bool _userClosed = false;
         private int _reconnecting = 0;
 

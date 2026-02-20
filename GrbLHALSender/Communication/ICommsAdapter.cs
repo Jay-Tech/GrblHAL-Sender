@@ -1,8 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace GrbLHALSender.Communication
 {
-    public interface ICommsAdapter
+    public interface ICommsAdapter: INotifyPropertyChanged
     {
         event EventHandler<string> OnDataReceived;
         void WriteByte(byte data);

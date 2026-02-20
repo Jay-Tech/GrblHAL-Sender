@@ -22,7 +22,7 @@ namespace GrbLHALSender.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private bool _fine;
-    private readonly CommunicationManager _commManager;
+    
     private readonly ConfigManager _configManager;
     private readonly MachineStateService _machineStateService;
     private JobViewModel _jobViewModel;
@@ -123,6 +123,7 @@ public class MainViewModel : ViewModelBase
     public DialogViewModel DialogViewModel { get; set; }
     public MdiViewModel MdiViewModel { get; set; }
     public AppConfigViewModel AppConfigViewModel { get; set; }
+    public CommunicationManager CommManager { get; set; }
     public string UnitSystem { get; set; } = "G21";
 
     public bool UseMetric
@@ -340,10 +341,10 @@ public class MainViewModel : ViewModelBase
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
         WebServerService webServerService, MachineStateService machineStateService)
     {
+        CommManager = commManager;
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
         _needsSetup = true;
-        _commManager = commManager;
         _configManager = configManager;
         JobViewModel = jobViewModel;
         MacroViewModel = macroViewModel;
@@ -360,9 +361,9 @@ public class MainViewModel : ViewModelBase
         Dispatcher.UIThread.ShutdownStarted += UIThread_ShutdownStarted;
         _machineStateService = machineStateService;
         _machineStateService.PropertyChanged += OnMachineStateChanged;
-        _commManager.onOptionsUpdated += _commManager_onOptionsUpdated;
-        _commManager.onSettingUpdated += _commManager_onSettingUpdated;
-        _commManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
+        CommManager.onOptionsUpdated += _commManager_onOptionsUpdated;
+        CommManager.onSettingUpdated += _commManager_onSettingUpdated;
+        CommManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
 
 
         _configManager?.GHalSenderConfig?.PropertyChanged += (_, e) =>
@@ -504,13 +505,13 @@ public class MainViewModel : ViewModelBase
     private void UnloadTool()
     {
         if (!AtcEnabled || !UnloadToolCommandEnabled) return;
-        _commManager.SendCommand($"G65{_unloadToolMacro}");
+        CommManager.SendCommand($"G65{_unloadToolMacro}");
     }
 
     private void SetTlr()
     {
         if (!AtcEnabled || !TlrCommandEnabled) return;
-        _commManager.SendCommand($"G65{_tlrMacro}");
+        CommManager.SendCommand($"G65{_tlrMacro}");
     }
 
     private void RapidReset()
@@ -540,7 +541,7 @@ public class MainViewModel : ViewModelBase
     }
     public void SendByteCommand(byte command)
     {
-        _commManager.Adapter.WriteByte(command);
+        CommManager.Adapter.WriteByte(command);
     }
     private void FeedPlus()
     {
@@ -627,7 +628,7 @@ public class MainViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(command)) return;
         ConsoleOutput.Add(command);
-        _commManager.SendCommand(command);
+        CommManager.SendCommand(command);
     }
 
     private void ToggleConsoleRt()
@@ -663,7 +664,7 @@ public class MainViewModel : ViewModelBase
     }
     private void Unlock()
     {
-        _commManager?.Adapter?.WriteByte(GrblHalConstants.GrblReset);
+        CommManager?.Adapter?.WriteByte(GrblHalConstants.GrblReset);
     }
     private void OpenProbe()
     {
@@ -677,7 +678,7 @@ public class MainViewModel : ViewModelBase
         _configManager.SaveConfig();
         _webServerService?.Stop();
         _gamepadService?.Stop();
-        _commManager.ShutDown();
+        CommManager.ShutDown();
     }
     private void _commManager_OnConsoleLogReceived(object? sender, string e)
     {
@@ -698,7 +699,7 @@ public class MainViewModel : ViewModelBase
         var svc = _machineStateService;
         if (!svc.Connected) return;
 
-        Connected = true;
+       // Connected = true;
 
         // Map service positions to AxisCollection (UI concern: Axis objects have commands)
         int axisCount = Math.Min(svc.MachinePositions.Length, AxisCollection.Count);
@@ -787,9 +788,9 @@ public class MainViewModel : ViewModelBase
     }
     private void _commManager_onSettingUpdated(object? sender, List<GrblHalSetting> e)
     {
-        MachineSettings = _commManager.MachineData;
+        MachineSettings = CommManager.MachineData;
 
-        MachineInMetric = _commManager.MachineData.ReportInMetric;
+        MachineInMetric = CommManager.MachineData.ReportInMetric;
         if (UseMetric != MachineInMetric)
         {
             SetUpUiUnit();
@@ -864,18 +865,27 @@ public class MainViewModel : ViewModelBase
 
         if (_config.Connection == GHalSenderConfig.ConnectionType.Tcp)
         {
-            _commManager.NewTcpConnection(_config.TcpSettings);
+            CommManager.NewTcpConnection(_config.TcpSettings);
         }
         else if (_config.Connection == GHalSenderConfig.ConnectionType.Serial)
         {
-            _commManager.NewSerialConnection(_config.SerialSettings);
+            CommManager.NewSerialConnection(_config.SerialSettings);
         }
         else
         {
-            _commManager.WebSocketConnection(_config.WebSocketSettings);
+            CommManager.WebSocketConnection(_config.WebSocketSettings);
         }
-
-        _commManager.GetSettings();
+        
+        Connected = CommManager.Adapter.IsConnected;
+        CommManager.Adapter.PropertyChanged+= (s, e) =>
+        {
+            if (e.PropertyName == nameof(ICommsAdapter.IsConnected))
+            {
+                Connected = CommManager.Adapter.IsConnected;
+            }
+        };
+        
+        CommManager.GetSettings();
     }
 }
 public class Axis : ViewModelBase

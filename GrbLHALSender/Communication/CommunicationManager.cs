@@ -1,6 +1,7 @@
 ﻿using Avalonia.Threading;
 using DynamicData;
 using DynamicData.Binding;
+using GrbLHALSender.Configuration;
 using GrbLHALSender.Probe;
 using GrbLHALSender.Settings;
 using GrbLHALSender.States;
@@ -12,8 +13,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using GrbLHALSender.Configuration;
-using Hexa.NET.SDL3;
 using Timer = System.Timers.Timer;
 
 
