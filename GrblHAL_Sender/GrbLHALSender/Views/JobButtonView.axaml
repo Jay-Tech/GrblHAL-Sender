@@ -3,15 +3,16 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:converters="clr-namespace:Avalonia.Controls.Converters;assembly=Avalonia.Controls"
-			 xmlns:viewModels1="clr-namespace:GrbLHALSender.ViewModels"
+			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+			 xmlns:convertors="clr-namespace:GrbLHALSender.Convertors"
+			 xmlns:utility="clr-namespace:GrbLHALSender.Utility"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="GrbLHALSender.Views.JobButtonView"
-			 x:DataType="viewModels1:JobViewModel">
+			 x:DataType="viewModels:JobViewModel">
 	<Design.DataContext>
-		<viewModels1:JobViewModel/>
+		<viewModels:JobViewModel/>
 	</Design.DataContext>
 	<UserControl.Resources>
-		<converters:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
 	</UserControl.Resources>
 	<UserControl.Styles>
 		<Style Selector="Button">
@@ -33,6 +34,7 @@
 		   HorizontalAlignment="Center">
 		<Button Grid.Row="0" Grid.Column="0" BorderBrush="{Binding }"
 				Command="{Binding  SelectFilesCommand}"
+				IsEnabled="{Binding !FileLoaded}"
 				Content="File"/>
 		<Button Grid.Row="0"  Grid.Column="1"
                 Command="{Binding  CloseFilesCommand}"
@@ -40,12 +42,15 @@
                 Content="Close"/>
 		<Button Grid.Row="0"  Grid.Column="2"
                 Content="Stop"
+				IsEnabled="{Binding JobRunning}"
                 Command="{Binding StopJobCommand}"/>
 		<Button Grid.Row="0" Grid.Column="3"
                 Content="Hold"
+                IsEnabled="{Binding CanHoldJob}"
                 Command="{Binding PauseJobCommand}"/>
 		<Button Grid.Row="0" Grid.Column="4"
                 Content="Start"
+                IsEnabled="{Binding CanStartJob}"
                 Command="{Binding StartJobCommand}"/>
 		<Button Grid.Row="0" Grid.Column="5"
                 Content="G-code"

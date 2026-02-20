@@ -81,7 +81,7 @@ public class MainViewModel : ViewModelBase
     private bool _useMetric;
     private bool _machineInMetric;
     private string _unitText;
-
+  
     public ObservableCollection<Signal> SignalList
     {
         get => _signalList;
@@ -282,7 +282,7 @@ public class MainViewModel : ViewModelBase
         get => _unloadToolCommandEnabled;
         set => this.RaiseAndSetIfChanged(ref _unloadToolCommandEnabled, value);
     }
-
+  
     public ICommand ConnectCommand { get; set; }
     public ICommand ZeroAxis { get; set; }
     public ICommand ZeroAllCommand { get; set; }
@@ -747,6 +747,19 @@ public class MainViewModel : ViewModelBase
         ToolDisplay = state.Tool ?? "";
         SubState = state.SubState ?? "";
 
+        // Push connected state and machine state to JobViewModel for button enable/disable
+        JobViewModel.Connected = true;
+        if (!JobViewModel.JobRunning)
+        {
+            JobViewModel.JobState = state.GrblHalState switch
+            {
+                "Idle" => JobState.Idle,
+                "Alarm" => JobState.Alarm,
+                "Hold" => JobState.Hold,
+                "Tool" => JobState.Tool,
+                _ => JobViewModel.JobState
+            };
+        }
         // Update spindle position for 3D visualizer using already-parsed values.
         // G-code toolpath is in work coordinates: WPos = MPos - WCO
         if (axisCount >= 3)
@@ -800,6 +813,7 @@ public class MainViewModel : ViewModelBase
         ProcessSignals(state.SignalStatus);
     }
 
+    
     private void SetFeedAndSpeeds(RealTImeState rt)
     {
         if (int.TryParse(rt.FeedRate, out var feedRate))

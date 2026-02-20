@@ -64,9 +64,30 @@ namespace GrbLHALSender.ViewModels
         // Set by MainViewModel — references config object so changes take effect immediately
         internal GHalSenderConfig? Config;
 
+        private JobState _jobState;
+        private bool _connected;
+
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
-        public JobState JobState { get; set; }
+        public JobState JobState
+        {
+            get => _jobState;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _jobState, value);
+                UpdateButtonStates();
+            }
+        }
+
+        public bool Connected
+        {
+            get => _connected;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _connected, value);
+                UpdateButtonStates();
+            }
+        }
         public ICommand StartJobCommand { get; }
         public ICommand CloseGCodeConsole { get; }
         public ICommand OpenGCodePanel { get; }
@@ -79,7 +100,11 @@ namespace GrbLHALSender.ViewModels
         public bool FileLoaded
         {
             get => _fileLoaded;
-            set => this.RaiseAndSetIfChanged(ref _fileLoaded, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _fileLoaded, value);
+                UpdateButtonStates();
+            }
         }
 
         public bool ShowGCodeConsole
@@ -121,7 +146,11 @@ namespace GrbLHALSender.ViewModels
         public bool JobRunning
         {
             get => _jobRunning;
-            set => this.RaiseAndSetIfChanged(ref _jobRunning, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _jobRunning, value);
+                UpdateButtonStates();
+            }
         }
 
         public int CompletedSegmentIndex
@@ -136,7 +165,34 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selectedLineInfo, value);
         }
 
-       
+        private bool _canHoldJob;
+        public bool CanHoldJob
+        {
+            get => _canHoldJob;
+            set => this.RaiseAndSetIfChanged(ref _canHoldJob, value);
+        }
+
+        private bool _canStartJob;
+        public bool CanStartJob
+        {
+            get => _canStartJob;
+            set => this.RaiseAndSetIfChanged(ref _canStartJob, value);
+        }
+
+        private void UpdateButtonStates()
+        {
+            // Hold: enabled when connected, disabled when already in Hold state
+            CanHoldJob = Connected &&
+                         JobState is not JobState.Hold;
+
+            // Start: enabled when:
+            //   - Machine is in Hold or Tool state (resume, no file required)
+            //   - File loaded and no job running (idle, program complete, or stopped)
+            CanStartJob = JobState is JobState.Hold or JobState.Tool ||
+                          (FileLoaded && !JobRunning &&
+                           JobState is (JobState.Idle or JobState.ProgramComplete or JobState.Stop));
+        }
+
         public JobViewModel(CommunicationManager manager)
         {
             _commsManager = manager;
@@ -198,6 +254,11 @@ namespace GrbLHALSender.ViewModels
 
         public void StartJob()
         {
+            if (JobState == JobState.Hold && !JobRunning )
+            {
+                _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
+                return;
+            }
             if (JobRunning && JobState == JobState.Hold || JobState == JobState.Tool)
             {
                 ResumeJob();
@@ -251,7 +312,7 @@ namespace GrbLHALSender.ViewModels
 
         private void PauseJob()
         {
-            if (!JobRunning) return;
+           // if (!JobRunning) return;
             _commsManager.Adapter?.WriteByte(GrblHalConstants.FeedHold);
             // Don't set JobState here — let _commsManager_OnStateReceived
             // update it to Hold when grblHAL actually confirms the hold
@@ -557,8 +618,7 @@ namespace GrbLHALSender.ViewModels
         Tool,
         Stop,
         Alarm,
-        ProgramComplete,
-        SendNextLine
+        ProgramComplete
     }
 
 }
