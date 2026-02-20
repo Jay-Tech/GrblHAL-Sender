@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="225"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="100"
              x:Class="GrbLHALSender.Views.DialogButtonView"
              x:DataType="viewModels:DialogViewModel">
 
