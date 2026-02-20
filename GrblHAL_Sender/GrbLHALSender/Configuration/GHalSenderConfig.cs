@@ -10,6 +10,8 @@ namespace GrbLHALSender.Configuration;
 
 public class GHalSenderConfig : ObservableObject
 {
+    private bool _useMetric;
+
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ConnectionType
     {
@@ -22,9 +24,10 @@ public class GHalSenderConfig : ObservableObject
 
     public bool UseMetric
     {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+        get => _useMetric;
+        set => SetProperty(ref _useMetric, value);
+    }
+
 
     public bool AutoConnect { get; set; } = false;
     public bool ShowToolpathProgress { get; set; } = true;
