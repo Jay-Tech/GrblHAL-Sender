@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrblHAL Sender - Remote File Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1e1e1e; color: #e0e0e0; min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+        h1 { font-size: 1.4em; color: #007ACC; margin-bottom: 16px; text-align: center; }
+        h2 { font-size: 1.1em; color: #999; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 6px; }
+
+        /* Status Panel */
+        .status-panel {
+            background: #282828; border: 1px solid #333; border-radius: 8px;
+            padding: 14px; margin-bottom: 16px;
+        }
+        .status-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px; margin-top: 8px;
+        }
+        .status-item { background: #1e1e1e; border-radius: 6px; padding: 8px 10px; }
+        .status-label { font-size: 0.75em; color: #888; text-transform: uppercase; }
+        .status-value { font-size: 1.1em; font-weight: 600; margin-top: 2px; }
+        .state-indicator {
+            display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+            margin-right: 6px; vertical-align: middle;
+        }
+        .state-idle { background: #4CAF50; }
+        .state-run { background: #FF9800; animation: pulse 1s infinite; }
+        .state-hold { background: #f44336; }
+        .state-alarm { background: #f44336; animation: pulse 0.5s infinite; }
+        .state-unknown { background: #666; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* Upload Zone */
+        .upload-zone {
+            background: #282828; border: 2px dashed #555; border-radius: 8px;
+            padding: 30px; text-align: center; margin-bottom: 16px;
+            transition: border-color 0.2s, background 0.2s; cursor: pointer;
+        }
+        .upload-zone.drag-over { border-color: #007ACC; background: #1a2e3e; }
+        .upload-zone p { color: #aaa; margin-bottom: 10px; }
+        .upload-icon { font-size: 2em; margin-bottom: 8px; }
+        .btn {
+            display: inline-block; padding: 8px 20px; border: none; border-radius: 6px;
+            font-size: 0.95em; cursor: pointer; transition: background 0.2s;
+            font-weight: 500; color: #fff;
+        }
+        .btn-primary { background: #007ACC; }
+        .btn-primary:hover { background: #005f9e; }
+        .btn-secondary { background: #505050; }
+        .btn-secondary:hover { background: #666; }
+        .btn-danger { background: #a03030; }
+        .btn-danger:hover { background: #c04040; }
+        .btn-success { background: #2e7d32; }
+        .btn-success:hover { background: #388e3c; }
+        .btn-sm { padding: 5px 12px; font-size: 0.85em; }
+        .upload-actions { margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        #fileInput { display: none; }
+
+        /* Progress */
+        .progress-bar {
+            width: 100%; height: 6px; background: #333; border-radius: 3px;
+            margin-top: 10px; display: none; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: #007ACC; border-radius: 3px;
+            transition: width 0.2s; width: 0%;
+        }
+        .upload-status { margin-top: 8px; font-size: 0.9em; color: #aaa; min-height: 1.2em; }
+
+        /* File List */
+        .file-panel {
+            background: #282828; border: 1px solid #333; border-radius: 8px;
+            padding: 14px;
+        }
+        .file-table { width: 100%; border-collapse: collapse; }
+        .file-table th {
+            text-align: left; padding: 8px 10px; font-size: 0.8em;
+            color: #888; text-transform: uppercase; border-bottom: 1px solid #444;
+        }
+        .file-table td { padding: 8px 10px; border-bottom: 1px solid #333; font-size: 0.9em; }
+        .file-table tr:last-child td { border-bottom: none; }
+        .file-table tr:hover td { background: #333; }
+        .file-name { color: #e0e0e0; word-break: break-all; }
+        .file-size { color: #888; white-space: nowrap; }
+        .file-date { color: #888; white-space: nowrap; }
+        .file-actions { white-space: nowrap; }
+        .file-actions .btn { margin-left: 4px; }
+        .empty-msg { text-align: center; color: #666; padding: 20px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; right: 20px; padding: 12px 20px;
+            border-radius: 8px; font-size: 0.9em; opacity: 0; transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s; z-index: 100; max-width: 350px;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background: #2e7d32; color: #fff; }
+        .toast-error { background: #c62828; color: #fff; }
+
+        @media (max-width: 600px) {
+            .container { padding: 10px; }
+            .status-grid { grid-template-columns: repeat(2, 1fr); }
+            .file-table th:nth-child(3), .file-table td:nth-child(3) { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GrblHAL Sender</h1>
+
+        <!-- Status Panel -->
+        <div class="status-panel">
+            <h2>Machine Status</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">State</div>
+                    <div class="status-value" id="machineState">
+                        <span class="state-indicator state-unknown"></span><span>--</span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Position (WPos)</div>
+                    <div class="status-value" id="position">--</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Feed Rate</div>
+                    <div class="status-value" id="feedRate">--</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Spindle RPM</div>
+                    <div class="status-value" id="spindleRpm">--</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Loaded File</div>
+                    <div class="status-value" id="loadedFile">None</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Job Progress</div>
+                    <div class="status-value" id="jobProgress">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="dropZone">
+            <div class="upload-icon">&#128194;</div>
+            <p>Drag &amp; drop G-code files here, or click to browse</p>
+            <input type="file" id="fileInput" accept=".nc,.gcode,.ngc,.tap,.gc" multiple>
+            <div class="upload-actions">
+                <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+                <label style="display:flex;align-items:center;gap:6px;color:#aaa;font-size:0.9em;cursor:pointer;">
+                    <input type="checkbox" id="autoLoad" checked> Load after upload
+                </label>
+            </div>
+            <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="upload-status" id="uploadStatus"></div>
+        </div>
+
+        <!-- File List -->
+        <div class="file-panel">
+            <h2>Uploaded Files</h2>
+            <div id="fileListContainer">
+                <div class="empty-msg">No files uploaded yet</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '';
+
+        // Toast notifications
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast toast-' + type + ' show';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // Status polling
+        async function pollStatus() {
+            try {
+                const r = await fetch(API + '/api/status');
+                if (!r.ok) return;
+                const s = await r.json();
+                const stateEl = document.getElementById('machineState');
+                const state = s.state || '--';
+                const cls = state.toLowerCase().includes('idle') ? 'idle'
+                    : state.toLowerCase().includes('run') ? 'run'
+                    : state.toLowerCase().includes('hold') ? 'hold'
+                    : state.toLowerCase().includes('alarm') ? 'alarm' : 'unknown';
+                stateEl.innerHTML = '<span class="state-indicator state-' + cls + '"></span><span>' + state + '</span>';
+
+                document.getElementById('position').textContent = s.position || '--';
+                document.getElementById('feedRate').textContent = s.feedRate != null ? s.feedRate + ' mm/min' : '--';
+                document.getElementById('spindleRpm').textContent = s.spindleRpm != null ? s.spindleRpm : '--';
+                document.getElementById('loadedFile').textContent = s.fileName || 'None';
+                document.getElementById('jobProgress').textContent = s.jobProgress || '--';
+            } catch (e) { /* silent */ }
+        }
+        setInterval(pollStatus, 2000);
+        pollStatus();
+
+        // File list
+        async function loadFileList() {
+            try {
+                const r = await fetch(API + '/api/files');
+                if (!r.ok) return;
+                const files = await r.json();
+                const container = document.getElementById('fileListContainer');
+                if (files.length === 0) {
+                    container.innerHTML = '<div class="empty-msg">No files uploaded yet</div>';
+                    return;
+                }
+                let html = '<table class="file-table"><thead><tr><th>Name</th><th>Size</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+                files.forEach(f => {
+                    const size = f.size < 1024 ? f.size + ' B'
+                        : f.size < 1048576 ? (f.size / 1024).toFixed(1) + ' KB'
+                        : (f.size / 1048576).toFixed(1) + ' MB';
+                    const date = new Date(f.lastModified).toLocaleString();
+                    html += '<tr>'
+                        + '<td class="file-name">' + escHtml(f.name) + '</td>'
+                        + '<td class="file-size">' + size + '</td>'
+                        + '<td class="file-date">' + date + '</td>'
+                        + '<td class="file-actions">'
+                        + '<button class="btn btn-success btn-sm" onclick="loadFile(\'' + escAttr(f.name) + '\')">Load</button>'
+                        + '<button class="btn btn-danger btn-sm" onclick="deleteFile(\'' + escAttr(f.name) + '\')">Delete</button>'
+                        + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (e) { /* silent */ }
+        }
+        loadFileList();
+
+        function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function escAttr(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+        // Upload
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files);
+        });
+        dropZone.addEventListener('click', e => {
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL')
+                fileInput.click();
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) uploadFiles(fileInput.files);
+            fileInput.value = '';
+        });
+
+        async function uploadFiles(files) {
+            const autoLoad = document.getElementById('autoLoad').checked;
+            const bar = document.getElementById('progressBar');
+            const fill = document.getElementById('progressFill');
+            const status = document.getElementById('uploadStatus');
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                status.textContent = 'Uploading ' + file.name + '...';
+                bar.style.display = 'block';
+                fill.style.width = '0%';
+
+                const form = new FormData();
+                form.append('file', file);
+
+                const endpoint = autoLoad ? '/api/files/upload-and-load' : '/api/files/upload';
+
+                try {
+                    const xhr = new XMLHttpRequest();
+                    await new Promise((resolve, reject) => {
+                        xhr.upload.onprogress = e => {
+                            if (e.lengthComputable) fill.style.width = (e.loaded / e.total * 100) + '%';
+                        };
+                        xhr.onload = () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                showToast(file.name + ' uploaded' + (autoLoad ? ' & loaded' : ''), 'success');
+                                resolve();
+                            } else {
+                                let msg = file.name + ' failed';
+                                try { msg = JSON.parse(xhr.responseText).error || msg; } catch(e) {}
+                                showToast(msg, 'error');
+                                reject(new Error(msg));
+                            }
+                        };
+                        xhr.onerror = () => { showToast('Upload failed', 'error'); reject(new Error('Network error')); };
+                        xhr.open('POST', API + endpoint);
+                        xhr.send(form);
+                    });
+                } catch (e) { /* continue with next file */ }
+            }
+
+            bar.style.display = 'none';
+            status.textContent = '';
+            loadFileList();
+        }
+
+        // Load file into sender
+        async function loadFile(name) {
+            try {
+                const r = await fetch(API + '/api/files/load', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName: name })
+                });
+                if (r.ok) {
+                    showToast(name + ' loaded into sender', 'success');
+                    pollStatus();
+                } else {
+                    const d = await r.json().catch(() => ({}));
+                    showToast(d.error || 'Load failed', 'error');
+                }
+            } catch (e) { showToast('Load failed', 'error'); }
+        }
+
+        // Delete file
+        async function deleteFile(name) {
+            if (!confirm('Delete ' + name + '?')) return;
+            try {
+                const r = await fetch(API + '/api/files/' + encodeURIComponent(name), { method: 'DELETE' });
+                if (r.ok) {
+                    showToast(name + ' deleted', 'success');
+                    loadFileList();
+                } else {
+                    showToast('Delete failed', 'error');
+                }
+            } catch (e) { showToast('Delete failed', 'error'); }
+        }
+    </script>
+</body>
+</html>
