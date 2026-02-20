@@ -73,13 +73,13 @@
 					   Margin="10,0,0,0"
 					   HorizontalAlignment="Left"
 					   VerticalAlignment="Center"
-					   Content="{Binding State.GrblHalState}" />
+					   Content="{Binding GrblHalState}" />
 				<Label Grid.Column="2"
 					   FontSize="{DynamicResource BaseFontSize}"
 					   Margin="0,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
-					   Content="{Binding State.WCS,
+					   Content="{Binding WcsDisplay,
 					   StringFormat={}WCS:{0}}"
 					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="3"
@@ -87,7 +87,7 @@
 					   Margin="0,0,0,0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
-					   Content="{Binding State.Tool, StringFormat={} Tool:{0}}"
+					   Content="{Binding ToolDisplay, StringFormat={} Tool:{0}}"
 					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="4"
 					   x:Name="JogStepLabel"
@@ -160,7 +160,7 @@
 						x:Name="AlButton"
 						IsVisible="{Binding AlarmActive}"
 						Height="40"
-						Content="{Binding State.SubState,StringFormat={} Alarm{0}}"
+						Content="{Binding SubState,StringFormat={} Alarm{0}}"
 						FontSize="18"
 						VerticalAlignment="Center"
 						HorizontalAlignment="Right"

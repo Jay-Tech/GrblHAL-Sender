@@ -34,6 +34,10 @@ public class MainViewModel : ViewModelBase
     private ObservableCollection<double> _jogRateList;
     private readonly GHalSenderConfig _config;
     private RealTImeState _state;
+    private string _grblHalState = "";
+    private string _wcs = "";
+    private string _toolDisplay = "";
+    private string _subState = "";
     private Point3D? _spindlePosition;
     private Point3D? _workCoordinateOffset;
     private MachineSettings? _machineSettings;
@@ -188,6 +192,32 @@ public class MainViewModel : ViewModelBase
         get => _state;
         set => this.RaiseAndSetIfChanged(ref _state, value);
     }
+
+    // Dedicated properties for commonly-bound state fields.
+    // These use RaiseAndSetIfChanged with string equality, so labels only
+    // re-render when the displayed value actually changes — unlike binding
+    // to State.X which re-evaluates every tick because State is a new reference.
+    public string GrblHalState
+    {
+        get => _grblHalState;
+        set => this.RaiseAndSetIfChanged(ref _grblHalState, value);
+    }
+    public string WcsDisplay
+    {
+        get => _wcs;
+        set => this.RaiseAndSetIfChanged(ref _wcs, value);
+    }
+    public string ToolDisplay
+    {
+        get => _toolDisplay;
+        set => this.RaiseAndSetIfChanged(ref _toolDisplay, value);
+    }
+    public string SubState
+    {
+        get => _subState;
+        set => this.RaiseAndSetIfChanged(ref _subState, value);
+    }
+
     public Point3D? SpindlePosition
     {
         get => _spindlePosition;
@@ -656,26 +686,35 @@ public class MainViewModel : ViewModelBase
         if (state == null) return;
 
         Connected = true;
-        for (int i = 0; i < state.MPos.Length; i++)
+
+        // Parse machine positions and WCO once, reuse for axis display and spindle.
+        // Avoids redundant double.Parse / float.TryParse calls (was 9+ parses per tick).
+        int axisCount = state.MPos.Length;
+        Span<double> mpos = stackalloc double[axisCount];
+        Span<double> wcoVals = stackalloc double[axisCount];
+        bool hasWco = state.Wco.Length > 0;
+
+        for (int i = 0; i < axisCount; i++)
         {
-            //var pos = new Position
-            //{
-            //    MPos = double.Parse(state.MPos[i])
+            if (!double.TryParse(state.MPos[i], out mpos[i])) mpos[i] = 0;
+            if (hasWco && i < state.Wco.Length)
+            {
+                if (!double.TryParse(state.Wco[i], out wcoVals[i])) wcoVals[i] = 0;
+            }
+        }
 
-
-            //};
+        for (int i = 0; i < axisCount; i++)
+        {
             var pos = new Position();
-            var machinePos = double.Parse(state.MPos[i]);
             pos.MPos = UseMetric switch
             {
-                false when MachineInMetric => machinePos / 25.4,
-                true when !MachineInMetric => machinePos * 25.4,
-                _ => machinePos
+                false when MachineInMetric => mpos[i] / 25.4,
+                true when !MachineInMetric => mpos[i] * 25.4,
+                _ => mpos[i]
             };
-            if (state.Wco.Length > 0)
+            if (hasWco)
             {
-                var wco = double.Parse(state.MPos[i]) - double.Parse(state?.Wco[i] ?? "0.0");
-
+                var wco = mpos[i] - wcoVals[i];
                 pos.Wco = UseMetric switch
                 {
                     false when MachineInMetric => wco / 25.4,
@@ -692,23 +731,24 @@ public class MainViewModel : ViewModelBase
         SetFeedAndSpeeds(State);
         Tool = state.Tool;
 
-        // Update spindle position for 3D visualizer
-        // G-code toolpath is in work coordinates, so we must convert MPos to WPos
-        // WPos = MPos - WCO (Work Coordinate Offset)
-        if (state.MPos.Length >= 3 &&
-            float.TryParse(state.MPos[0], out float mx) &&
-            float.TryParse(state.MPos[1], out float my) &&
-            float.TryParse(state.MPos[2], out float mz))
+        // Update dedicated display properties — RaiseAndSetIfChanged uses string
+        // equality, so labels only re-render when the text actually changes.
+        GrblHalState = state.GrblHalState ?? "";
+        WcsDisplay = state.WCS ?? "";
+        ToolDisplay = state.Tool ?? "";
+        SubState = state.SubState ?? "";
+
+        // Update spindle position for 3D visualizer using already-parsed values.
+        // G-code toolpath is in work coordinates: WPos = MPos - WCO
+        if (axisCount >= 3)
         {
-            float wx = mx, wy = my, wz = mz;
-            if (state.Wco.Length >= 3 &&
-                float.TryParse(state.Wco[0], out float wcoX) &&
-                float.TryParse(state.Wco[1], out float wcoY) &&
-                float.TryParse(state.Wco[2], out float wcoZ))
+            float wx = (float)mpos[0], wy = (float)mpos[1], wz = (float)mpos[2];
+            if (hasWco && state.Wco.Length >= 3)
             {
-                wx = mx - wcoX;
-                wy = my - wcoY;
-                wz = mz - wcoZ;
+                float wcoX = (float)wcoVals[0], wcoY = (float)wcoVals[1], wcoZ = (float)wcoVals[2];
+                wx -= wcoX;
+                wy -= wcoY;
+                wz -= wcoZ;
                 var newWco = new Point3D(wcoX, wcoY, wcoZ);
                 if (_workCoordinateOffset == null || !_workCoordinateOffset.Value.Equals(newWco))
                     WorkCoordinateOffset = newWco;
