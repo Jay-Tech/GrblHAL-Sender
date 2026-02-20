@@ -31,7 +31,7 @@
 		     The default ~200ms color interpolation competes for UI thread time
 		     during job execution, causing sluggish hover feedback. -->
 		<Style Selector="Button /template/ ContentPresenter">
-			<Setter Property="Transitions">
+			<Setter Property="Transitions" >
 				<Transitions/>
 			</Setter>
 		</Style>

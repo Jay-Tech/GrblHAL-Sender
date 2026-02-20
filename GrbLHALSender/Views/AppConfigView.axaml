@@ -343,13 +343,51 @@
 			</TabItem>
 			<TabItem Header="Game Pad" FontSize="16" Padding="15,5">
 				<Grid RowDefinitions="Auto,*" Margin="0,10,0,0">
-					<CheckBox Grid.Row="0" 
+					<CheckBox Grid.Row="0"
                               Content="Enable Game pad"
 							  HorizontalAlignment="Center"
 							  VerticalAlignment="Center"
 							  HorizontalContentAlignment="Center"
 							  VerticalContentAlignment="Center"
                               IsChecked="{Binding IsGamePadEnabled}"/>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Web Server" FontSize="16" Padding="15,5">
+				<Grid RowDefinitions="Auto,Auto,Auto" Margin="10,10,10,0">
+					<CheckBox Grid.Row="0"
+							  Content="Enable Web Server"
+							  HorizontalAlignment="Center"
+							  VerticalAlignment="Center"
+							  HorizontalContentAlignment="Center"
+							  VerticalContentAlignment="Center"
+							  Margin="0,10,0,10"
+							  IsChecked="{Binding IsWebServerEnabled}"/>
+					<Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+						<Label Grid.Column="0"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Center"
+							   HorizontalContentAlignment="Right"
+							   VerticalContentAlignment="Center"
+							   FontSize="20"
+							   Content="Port:"/>
+						<TextBox Grid.Column="1"
+								 Width="120"
+								 HorizontalAlignment="Left"
+								 VerticalAlignment="Center"
+								 HorizontalContentAlignment="Left"
+								 VerticalContentAlignment="Center"
+								 Margin="10,0,0,0"
+								 FontSize="20"
+								 IsEnabled="{Binding IsWebServerEnabled}"
+								 Text="{Binding WebServerPort}"/>
+					</Grid>
+					<TextBlock Grid.Row="2"
+							   Text="Changes require app restart. Access from LAN: http://&lt;this-pc-ip&gt;:port"
+							   Foreground="#888"
+							   FontSize="14"
+							   TextWrapping="Wrap"
+							   HorizontalAlignment="Center"
+							   Margin="0,20,0,0"/>
 				</Grid>
 			</TabItem>
 		</TabControl>

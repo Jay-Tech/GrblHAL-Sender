@@ -5,6 +5,7 @@ using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.Gcode;
+using GrbLHALSender.WebServer;
 using GrbLHALSender.Settings;
 using GrbLHALSender.States;
 using GrbLHALSender.Utility;
@@ -68,6 +69,7 @@ public class MainViewModel : ViewModelBase
     private string _unloadToolMacro;
     private string _tlrMacro;
     private readonly GamepadService _gamepadService;
+    private readonly WebServerService _webServerService;
 
     // UI throttling: store latest state off-thread, push to UI on a timer
     private volatile RealTImeState? _latestState;
@@ -331,7 +333,8 @@ public class MainViewModel : ViewModelBase
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
-        MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel)
+        MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
+        WebServerService webServerService)
     {
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
@@ -437,6 +440,11 @@ public class MainViewModel : ViewModelBase
         _gamepadService.SetViewModel(this);
         _gamepadService.GamepadStatusMessage += (_, msg) => ConsoleOutput.Add($"[Gamepad] {msg}");
         _gamepadService.Initialize(_config.GamepadConfig);
+
+        _webServerService = webServerService;
+        _webServerService.SetViewModel(this);
+        _webServerService.StatusMessage += (_, msg) => ConsoleOutput.Add($"[WebServer] {msg}");
+        _webServerService.Initialize(_config.WebServerConfig);
 
         if (!_config.AutoConnect) return;
         try
@@ -656,6 +664,7 @@ public class MainViewModel : ViewModelBase
     {
         ProbeViewModel.SaveToConfig(_config);
         _configManager.SaveConfig();
+        _webServerService?.Stop();
         _gamepadService?.Stop();
         _commManager.ShutDown();
     }

@@ -21,6 +21,8 @@ namespace GrbLHALSender.ViewModels
         private string _tlrMacro;
         private string _unloadMacro;
         private bool _isGamePadEnabled;
+        private bool _isWebServerEnabled;
+        private int _webServerPort;
 
 
         public bool EnableCutLines
@@ -87,6 +89,19 @@ namespace GrbLHALSender.ViewModels
             get => _isGamePadEnabled;
             set => this.RaiseAndSetIfChanged(ref _isGamePadEnabled, value);
         }
+
+        public bool IsWebServerEnabled
+        {
+            get => _isWebServerEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isWebServerEnabled, value);
+        }
+
+        public int WebServerPort
+        {
+            get => _webServerPort;
+            set => this.RaiseAndSetIfChanged(ref _webServerPort, value);
+        }
+
         public Action? CloseAction { get; set; }
         public ICommand SaveConfigCommand { get; }
         public ICommand CloseCommand { get; }
@@ -113,6 +128,8 @@ namespace GrbLHALSender.ViewModels
             TlrMacro = _appConfig.AtcConfig.TlrMacroName;
             UnloadMacro = _appConfig.AtcConfig.UnloadToolMacroName;
             IsGamePadEnabled = _appConfig.GamepadConfig.Enabled;
+            IsWebServerEnabled = _appConfig.WebServerConfig.Enabled;
+            WebServerPort = _appConfig.WebServerConfig.Port;
         }
 
         public void SaveConfig()
@@ -128,6 +145,8 @@ namespace GrbLHALSender.ViewModels
             _appConfig.AtcConfig.TlrMacroName = TlrMacro ?? "";
             _appConfig.AtcConfig.UnloadToolMacroName = UnloadMacro ?? "";
             _appConfig.GamepadConfig.Enabled = IsGamePadEnabled;
+            _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
+            _appConfig.WebServerConfig.Port = WebServerPort;
             _configManager.SaveConfig();
         }
     }

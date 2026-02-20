@@ -6,6 +6,7 @@ using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.ViewModels;
 using GrbLHALSender.Views;
+using GrbLHALSender.WebServer;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GrbLHALSender;
@@ -55,6 +56,8 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<ConfigManager>();
         collection.AddSingleton<CommunicationManager>();
         collection.AddSingleton<GamepadService>();
+        collection.AddSingleton<FileUploadService>();
+        collection.AddSingleton<WebServerService>();
         collection.AddTransient<SettingsViewModel>();
         collection.AddTransient<JobViewModel>();
         collection.AddTransient<MainViewModel>();
