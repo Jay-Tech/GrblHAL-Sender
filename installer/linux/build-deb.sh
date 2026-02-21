@@ -67,6 +67,5 @@ EOF
 
 # Build the .deb
 dpkg-deb --build --root-owner-group "$PKG_DIR"
-mv "$PKG_DIR.deb" "$ARTIFACTS_DIR/grblhal-sender_${VERSION}_${ARCH}.deb"
 
-echo "Created: $ARTIFACTS_DIR/grblhal-sender_${VERSION}_${ARCH}.deb"
+echo "Created: $PKG_DIR.deb"

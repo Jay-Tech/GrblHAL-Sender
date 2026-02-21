@@ -30,8 +30,13 @@ SetupIconFile=..\..\icons\GHalSender.ico
 UninstallDisplayIcon={app}\GrbLHALSender.Desktop.exe
 WizardStyle=modern
 PrivilegesRequired=admin
-ArchitecturesAllowed={#Arch}compatible
-ArchitecturesInstallIn64BitMode={#Arch}
+#if Arch == "arm64"
+ArchitecturesAllowed=arm64
+ArchitecturesInstallIn64BitMode=arm64
+#else
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64
+#endif
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
