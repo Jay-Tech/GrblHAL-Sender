@@ -1,6 +1,6 @@
 # Project is back Active
 
-## GrblHal Sender a cross platform sender application  for grblHAL
+## GrblHal Sender a cross platform sender application  built using Avalonia UI and .Net
 
 Goal was to create a application that will run on a cheap mini PC with a UI design that is touch monitor friendly, and will not require a mouse or keyboard to use.
 </br>
@@ -17,20 +17,20 @@ Goal was to create a application that will run on a cheap mini PC with a UI desi
 ## Supports Wireless Controller
 ![Wireless Controller](Media/DefaultGamePad.png)
 </br>
-## Settings Overview
-# App
+# Settings Overview
+## App
 ![AppSetting](Media/SettingApp.png)
 </br>
-# Rapid-ATC
+## Rapid-ATC
 ![AppSetting](Media/SettingR-Atc.png)
 </br>
-# WireLess Gamepad(Setting work in progress)
+## Wireess Gamepad(Setting work in progress)
 ![Gamepad](Media/GamePad.png)
 </br>
-# Web Server
+## Web Server
 ![WebServer](Media/SettingWebServer.png)
 </br>
-# Macro Download and Upload Suppoer
+## Macro Download and Upload Suppoer
 ![SDCard](Media/settingSdcard.png)
 
 ### Priority  V1.0.1
