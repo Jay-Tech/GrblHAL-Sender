@@ -8,12 +8,29 @@ Goal was to create a application that will run on a cheap mini PC with a UI desi
 
 ![Home Screen](Media/HomeScreen.png)
 
-Double clicking Text Fields in Utility -> Macro tab brings up virtual keyboard
-![Utility](Media/Utility_macro.png)
+## Double clicking any Text Fields brings up virtual keyboard
+![Keyboard](Media/KeyBoard.png)
+</br>
+## Host local Web Server for remote file upload 
+![WebServer](Media/WebServer.png)
+</br>
+## Supports Wireless Controller
+![Wireless Controller](Media/DefaultGamePad.png)
+</br>
+## Settings Overview
+# App
+![AppSetting](Media/SettingApp.png)
+</br>
+# Rapid-ATC
+![AppSetting](Media/SettingR-Atc.png)
+</br>
+# WireLess Gamepad(Setting work in progress)
+![Gamepad](Media/GamePad.png)
+</br>
+# Web Server
+![WebServer](Media/SettingWebServer.png)
+</br>
+# Macro Download and Upload Suppoer
+![SDCard](Media/settingSdcard.png)
 
-
-Controller  Layout Front
-![Wireless Controller](Media/GameControllerFront.jpg)
-
-
-### Priority issues and work V1.0.1
+### Priority  V1.0.1
