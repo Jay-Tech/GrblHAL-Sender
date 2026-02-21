@@ -23,6 +23,12 @@ public class GHalSenderConfig : ObservableObject
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public ConnectionType Connection { get; set; } = ConnectionType.Tcp;
 
+    public bool Borderless
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
     public bool UseMetric
     {
         get => _useMetric;

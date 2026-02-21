@@ -171,15 +171,32 @@
 						Margin="2,0"
 						Background ="Red" Width="100">
 				</Button>
-				<Button Grid.Column="10"
+				<Grid Grid.Column="10" ColumnDefinitions="*,Auto">
+				<Button Grid.Column="0"
 						Height="40"
 						Content="Unlock"
 						FontSize="{DynamicResource BaseFontSize}"
 						Margin="5,0"
 						VerticalAlignment="Center"
 						HorizontalAlignment="Right"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"
 						Command="{Binding UnLockCommand}"
 						Width="100" />
+                <Button Grid.Column="1"
+                        Height="40"
+                        Content="Close"
+						IsVisible="{Binding IsFullScreen}"
+                        FontSize="{DynamicResource BaseFontSize}"
+						Padding="5,2"
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+						VerticalContentAlignment="Center"
+						HorizontalContentAlignment="Center"
+                        Command="{Binding CloseCommand}"
+                        Width="100" />
+                </Grid>
 			</Grid>
 		</Border>
 		<!-- End Header-->

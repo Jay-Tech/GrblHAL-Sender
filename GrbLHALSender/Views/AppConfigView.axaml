@@ -28,16 +28,24 @@
 			<!-- App Height Tab -->
 			<TabItem Header="APP" FontSize="16" Padding="15,5">
 				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="10">
-					<Grid Grid.Row="0" ColumnDefinitions="*,*">
-						<CheckBox Grid.Column="0"
-								  Content="Use Metric"
-								  HorizontalContentAlignment="Center"
-								  VerticalContentAlignment="Center"
-								  HorizontalAlignment="Center"
-								  VerticalAlignment="Center"
+					<Grid Grid.Row="0" ColumnDefinitions="*,*,*">
+                        <CheckBox Grid.Column="0"
+                                  Content="Full Screen"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  ToolTip.Tip="Check to enable Borderless Window"
+                                  IsChecked="{Binding BorderlessWindow}"/>
+                        <CheckBox Grid.Column="1"
+                                  Content="Use Metric"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
                                   ToolTip.Tip="Check to enable Metric uncheck for imperial"
-								  IsChecked="{Binding UseMetric}"/>
-						<CheckBox Grid.Column="1"
+                                  IsChecked="{Binding UseMetric}"/>
+						<CheckBox Grid.Column="2"
 								  Content="Tool Path Progress"
 								  HorizontalContentAlignment="Center"
 								  VerticalContentAlignment="Center"

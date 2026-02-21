@@ -1,18 +1,23 @@
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:views="clr-namespace:GrbLHALSender.Views"
-        mc:Ignorable="d"  d:DesignWidth="1920" d:DesignHeight="1080"
-        x:Class="GrbLHALSender.Views.MainWindow"
-        Icon="/Assets/GHalSender.ico"
-        Title="GrblHAL Sender">
-  <LayoutTransformControl HorizontalAlignment="Stretch" 
-                          VerticalAlignment="Stretch"  
-                          UseLayoutRounding="True" 
-                          ClipToBounds="True"
-                          SizeChanged="Control_OnSizeChanged" x:Name="TransformControl" >
-      <views:MainView />
-  </LayoutTransformControl>
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:views="clr-namespace:GrbLHALSender.Views"
+		xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
+		mc:Ignorable="d"  
+        d:DesignWidth="1920" d:DesignHeight="1080"
+		x:Class="GrbLHALSender.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        WindowState="{Binding FullScreenMode, FallbackValue=Maximized}"
+		Icon="/Assets/GHalSender.ico"
+		Title="GrblHAL Sender">
+	<LayoutTransformControl x:Name="TransformControl"
+							HorizontalAlignment="Stretch"
+							VerticalAlignment="Stretch"
+							UseLayoutRounding="True"
+							ClipToBounds="True"
+							SizeChanged="Control_OnSizeChanged"  >
+		<views:MainView />
+	</LayoutTransformControl>
 </Window>
 

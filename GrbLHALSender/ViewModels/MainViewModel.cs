@@ -16,6 +16,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
 
 namespace GrbLHALSender.ViewModels;
 
@@ -80,6 +82,7 @@ public class MainViewModel : ViewModelBase
     private string _unitText;
     private int _spindleOverRide;
     private int _consoleOutputIndex;
+    private WindowState _fullScreenMode;
 
     public ObservableCollection<Signal> SignalList
     {
@@ -288,7 +291,31 @@ public class MainViewModel : ViewModelBase
         get => _unloadToolCommandEnabled;
         set => this.RaiseAndSetIfChanged(ref _unloadToolCommandEnabled, value);
     }
+    public int SpindleOverRide
+    {
+        get => _spindleOverRide;
+        set => this.RaiseAndSetIfChanged(ref _spindleOverRide, value);
+    }
 
+    public int ConsoleOutputIndex
+    {
+        get => _consoleOutputIndex;
+        set => this.RaiseAndSetIfChanged(ref _consoleOutputIndex, value);
+    }
+
+    public WindowState FullScreenMode
+    {
+        get => _fullScreenMode;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _fullScreenMode, value);
+            this.RaisePropertyChanged(nameof(IsFullScreen));
+        }
+        
+    }
+    public bool IsFullScreen => FullScreenMode == WindowState.FullScreen;
+
+    public ICommand CloseCommand { get; }
     public ICommand ConnectCommand { get; set; }
     public ICommand ZeroAxis { get; set; }
     public ICommand ZeroAllCommand { get; set; }
@@ -352,6 +379,7 @@ public class MainViewModel : ViewModelBase
         JobViewModel = jobViewModel;
         MacroViewModel = macroViewModel;
         _config = _configManager.LoadConfig();
+        FullScreenMode = _config.Borderless ? WindowState.FullScreen : WindowState.Maximized;
         ConnectionViewModel = connectionViewModel;
         DialogViewModel = dialogViewModel;
         MdiViewModel = mdiViewModel;
@@ -374,6 +402,10 @@ public class MainViewModel : ViewModelBase
             if (e.PropertyName == nameof(GHalSenderConfig.UseMetric))
             {
                 SetUpUiUnit();
+            }
+            if (e.PropertyName == nameof(GHalSenderConfig.Borderless))
+            {
+                FullScreenMode = _config.Borderless ? WindowState.FullScreen : WindowState.Maximized;
             }
         };
 
@@ -411,6 +443,7 @@ public class MainViewModel : ViewModelBase
         UnloadToolCommand = ReactiveCommand.Create(UnloadTool);
         OpenProbeCommand = ReactiveCommand.Create(OpenProbe);
         CloseConsoleCommand = ReactiveCommand.Create(() => CloseConsoleAction?.Invoke());
+        CloseCommand = ReactiveCommand.Create(CloseApplication);
 
         //TODO just temp will use the setting grblhal returns from $I and $I+ to build the axis count values
         _axis =
@@ -459,6 +492,14 @@ public class MainViewModel : ViewModelBase
         {
             // Handle connection exceptions (e.g., show a message to the user)
             ConsoleOutput.Add($"Connection failed: {e.Message}");
+        }
+    }
+
+    private void CloseApplication()
+    {
+        if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.Shutdown();
         }
     }
 
@@ -764,18 +805,6 @@ public class MainViewModel : ViewModelBase
         }
 
         ProcessSignals(svc.SignalStatus);
-    }
-
-    public int SpindleOverRide
-    {
-        get => _spindleOverRide;
-        set => this.RaiseAndSetIfChanged(ref _spindleOverRide, value);
-    }
-
-    public int ConsoleOutputIndex
-    {
-        get => _consoleOutputIndex;
-        set => this.RaiseAndSetIfChanged(ref _consoleOutputIndex, value);
     }
 
     private void ProcessSignals(List<char> signals)

@@ -51,6 +51,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AvaloniaResource Update="Assets\Spindle.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AvaloniaResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Views\AppConfigView.axaml.cs">
       <DependentUpon>AppConfigView.axaml</DependentUpon>
     </Compile>

@@ -25,6 +25,7 @@ namespace GrbLHALSender.ViewModels
         private int _webServerPort;
         private string _spindleImagePath = "spindle.png";
         private double _pollRate;
+        private bool _borderlessWindow;
 
 
         public bool EnableCutLines
@@ -109,14 +110,23 @@ namespace GrbLHALSender.ViewModels
             get => _spindleImagePath;
             set => this.RaiseAndSetIfChanged(ref _spindleImagePath, value);
         }
+
         public double PollRate
         {
             get => _pollRate;   
             set => this.RaiseAndSetIfChanged(ref _pollRate, value);
         }
 
+        public bool BorderlessWindow
+        {
+            get => _borderlessWindow;
+            set => this.RaiseAndSetIfChanged(ref _borderlessWindow, value);
+        }
+
         public Action? CloseAction { get; set; }
+
         public ICommand SaveConfigCommand { get; }
+
         public ICommand CloseCommand { get; }
 
         public AppConfigViewModel(ConfigManager configManager)
@@ -145,6 +155,7 @@ namespace GrbLHALSender.ViewModels
             WebServerPort = _appConfig.WebServerConfig.Port;
             SpindleImagePath = _appConfig.SpindleImagePath;
             PollRate = _appConfig.PollRate;
+            BorderlessWindow = _appConfig.Borderless;
         }
 
         public void SaveConfig()
@@ -164,6 +175,7 @@ namespace GrbLHALSender.ViewModels
             _appConfig.WebServerConfig.Port = WebServerPort;
             _appConfig.SpindleImagePath = SpindleImagePath;
             _appConfig.PollRate = PollRate;
+            _appConfig.Borderless = BorderlessWindow;
             _configManager.SaveConfig();
         }
     }
