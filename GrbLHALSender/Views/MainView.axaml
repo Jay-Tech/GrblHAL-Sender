@@ -46,7 +46,7 @@
 	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="Transparent" >
 		<Border x:Name="HeaderBorder" Grid.Row="0"  Grid.ColumnSpan="3" Height="45" BorderThickness="1"  >
 			<!--Connect, WCS, Tool-->
-			<Grid ColumnDefinitions="125,105,150,125,125,150,200,200,*,200,110">
+			<Grid ColumnDefinitions="125,105,150,125,125,150,200,200,*,200,Auto">
 				<StackPanel  Grid.Column="0" Orientation="Horizontal" >
 					<Button  Margin="3,0,0,0"
 							 HorizontalAlignment="Left"
@@ -172,31 +172,31 @@
 						Background ="Red" Width="100">
 				</Button>
 				<Grid Grid.Column="10" ColumnDefinitions="*,Auto">
-				<Button Grid.Column="0"
-						Height="40"
-						Content="Unlock"
-						FontSize="{DynamicResource BaseFontSize}"
-						Margin="5,0"
-						VerticalAlignment="Center"
-						HorizontalAlignment="Right"
-                        VerticalContentAlignment="Center"
-                        HorizontalContentAlignment="Center"
-						Command="{Binding UnLockCommand}"
-						Width="100" />
-                <Button Grid.Column="1"
-                        Height="40"
-                        Content="Close"
-						IsVisible="{Binding IsFullScreen}"
-                        FontSize="{DynamicResource BaseFontSize}"
-						Padding="5,2"
-                        Margin="5,0"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center"
-						VerticalContentAlignment="Center"
-						HorizontalContentAlignment="Center"
-                        Command="{Binding CloseCommand}"
-                        Width="100" />
-                </Grid>
+					<Button Grid.Column="0"
+							Height="40"
+							Content="Unlock"
+							FontSize="{DynamicResource BaseFontSize}"
+							Margin="5,0"
+							VerticalAlignment="Center"
+							HorizontalAlignment="Right"
+							VerticalContentAlignment="Center"
+							HorizontalContentAlignment="Center"
+							Command="{Binding UnLockCommand}"
+							Width="100" />
+					<Button Grid.Column="1"
+							Height="40"
+							Content="Close"
+							IsVisible="{Binding IsFullScreen}"
+							FontSize="{DynamicResource BaseFontSize}"
+							Padding="5,2"
+							Margin="5,0"
+							VerticalAlignment="Center"
+							HorizontalAlignment="Center"
+							VerticalContentAlignment="Center"
+							HorizontalContentAlignment="Center"
+							Command="{Binding CloseCommand}"
+							Width="100" />
+				</Grid>
 			</Grid>
 		</Border>
 		<!-- End Header-->
@@ -677,7 +677,7 @@
 					<!-- START Tool Control-->
 					<Grid Grid.Row="3"
 						  Name="ToolGrid"
-						  Margin="0,10,0,0"
+						  Margin="0,5,0,0"
 						  ColumnDefinitions="*,*"
 						  RowDefinitions="Auto,*,*" >
 						<Label Grid.Row="0" Grid.ColumnSpan="2"
@@ -727,6 +727,7 @@
 								</Flyout>
 							</Button.Flyout>
 						</Button>
+						<!--Tool Change Section-->
 						<Button Grid.Row="1" Grid.Column="1"
 								Height="45"
 								CornerRadius="6"
@@ -739,42 +740,54 @@
 								Command="{Binding ToolSelectedCommand }"
 								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
-						<Grid Grid.Column="0" Grid.Row="2" ColumnDefinitions="*,Auto">
-							<Button Grid.Column="0"
+						<!--R-ATC Section-->
+						<Grid Row="2" Grid.RowDefinitions="Auto,*" Grid.Column="0"
+							  Grid.ColumnDefinitions="*,*" Grid.ColumnSpan="2" IsEnabled="{Binding }">
+							<Label Grid.Row="0" Grid.ColumnSpan="2"
+								   Margin="0,5,0,0"
+								   Content="R-ATC"
+								   HorizontalContentAlignment="Center"
+								   FontSize="{DynamicResource DetailFontSize}"
+								   VerticalContentAlignment="Center"
+								   HorizontalAlignment ="Stretch"
+								   VerticalAlignment="Stretch" ></Label>
+							<Grid Grid.Row="1" Grid.Column="0"  ColumnDefinitions="*,Auto">
+								<Button Grid.Column="0"
+										Height="45"
+										CornerRadius="6,0,0,6"
+										IsEnabled="{Binding TlrCommandEnabled}"
+										Content="TLR"
+										Margin="5,5,0,0"
+										HorizontalContentAlignment="Center"
+										VerticalContentAlignment="Center"
+										FontSize="{DynamicResource BaseFontSize}"
+										HorizontalAlignment="Stretch"
+										Command="{Binding SetTlrCommand }"
+										VerticalAlignment="Stretch"/>
+								<Label Grid.Column="1" Classes.active="{Binding TLR}"
+									   Classes.inactive="{Binding !TLR, FallbackValue=true}"
+									   Margin="0,5,5,0"
+									   HorizontalContentAlignment="Stretch"
+									   VerticalContentAlignment="Stretch"
+									   HorizontalAlignment="Stretch"
+									   CornerRadius="0,3,3,0"
+									   VerticalAlignment="Stretch"
+									   Width="10"
+									   Height="45"/>
+							</Grid>
+							<Button Grid.Column="1" Grid.Row="1"
 									Height="45"
-									CornerRadius="6,0,0,6"
-									IsEnabled="{Binding TlrCommandEnabled}"
-									Content="TLR"
-									Margin="5,10,0,0"
+									IsEnabled="{Binding UnloadToolCommandEnabled}"
+									CornerRadius="6"
+									Content="Unload"
 									HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"
+									Margin="5,5,5,0"
 									FontSize="{DynamicResource BaseFontSize}"
 									HorizontalAlignment="Stretch"
-									Command="{Binding SetTlrCommand }"
+									Command="{Binding UnloadToolCommand }"
 									VerticalAlignment="Stretch"/>
-							<Label Grid.Column="1" Classes.active="{Binding TLR}"
-								   Classes.inactive="{Binding !TLR, FallbackValue=true}"
-								   Margin="0,10,5,0"
-								   HorizontalContentAlignment="Stretch"
-								   VerticalContentAlignment="Stretch"
-								   HorizontalAlignment="Stretch"
-								   CornerRadius="0,3,3,0"
-								   VerticalAlignment="Stretch"
-								   Width="10"
-								   Height="45"/>
 						</Grid>
-						<Button Grid.Column="1" Grid.Row="2"
-								Height="45"
-								IsEnabled="{Binding UnloadToolCommandEnabled}"
-								CornerRadius="6"
-								Content="Unload"
-								HorizontalContentAlignment="Center"
-								VerticalContentAlignment="Center"
-								Margin="5,10,5,0"
-								FontSize="{DynamicResource BaseFontSize}"
-								HorizontalAlignment="Stretch"
-								Command="{Binding UnloadToolCommand }"
-								VerticalAlignment="Stretch"/>
 
 					</Grid>
 					<!--END Tool Control-->
@@ -783,7 +796,7 @@
 					<Grid Grid.Row="4" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" Grid.ColumnDefinitions="*,*">
 						<Label Grid.Row="0" Grid.Column="0"
 							   Content="Spindle"
-							   Margin="0,10,0,0"
+							   Margin="0,5,0,0"
 							   Grid.ColumnSpan="2"
 							   HorizontalContentAlignment="Center"
 							   VerticalContentAlignment="Center"
@@ -794,14 +807,14 @@
 													 Content="CW"
 													 CornerRadius="6,6,6,6"
 													 Height="45"
-													 Margin="5,0,5,0"
+													 Margin="5,5,5,0"
 													 CommandParameter="{Binding #SpindleRpm.Text}"
 													 Command="{Binding SpindleCWCommand}"></controls1:RadioToggleButton>
 						<controls1:RadioToggleButton Grid.Column="1" Grid.Row="1"
 													 HorizontalAlignment="Stretch"
 													 CornerRadius="6,6,6,6"
 													 Height="45"
-													 Margin="5,0,5,0"
+													 Margin="5,5,5,0"
 													 FontSize="{DynamicResource BaseFontSize}"
 													 Content="CCW"
 													 Command="{Binding SpindleCCWCommand}"
@@ -899,19 +912,19 @@
 							   HorizontalContentAlignment="Center"
 							   VerticalContentAlignment="Center"
 							   FontSize="{DynamicResource DetailFontSize}"
-							   Margin="0,10,0,0"/>
+							   Margin="0,5,0,0"/>
 						<Grid Grid.Row="1" ColumnDefinitions="*,*"  >
 							<TextBlock Grid.Column="0"
 									   Text="{Binding FeedRate,StringFormat={}Feed: {0}, FallbackValue=0}"
 									   TextAlignment="Left"
 									   Margin="5,0,0,5"
 									   FontSize="{DynamicResource DetailFontSizeLarge}"/>
-							<TextBlock  Grid.Column="1" TextAlignment="Left"
+							<TextBlock  Grid.Column="1" TextAlignment="Left" 
 										Text="{Binding FeedOverRide, StringFormat={}%: {0},FallbackValue=0}"
 										Margin="5,0,0,0"
 										FontSize="{DynamicResource DetailFontSizeLarge}" />
 						</Grid>
-						<Grid Grid.Row="2" Margin="0,10,0,0" ColumnDefinitions="*,*,*">
+						<Grid Grid.Row="2" Margin="0,5,0,0" ColumnDefinitions="*,*,*">
 							<Button Grid.Column="0"
 									Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
@@ -940,7 +953,7 @@
 									Height="45"
 									Command="{Binding FeedOrReset}" />
 						</Grid>
-						<Grid Grid.Row="3" Margin="0,10,0,0" ColumnDefinitions="*,*,*">
+						<Grid Grid.Row="3" Margin="0,5,0,0" ColumnDefinitions="*,*,*">
 							<Button Grid.Column="0"
 									Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
