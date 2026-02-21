@@ -16,8 +16,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = $PSScriptRoot
-$ProjectPath = Join-Path $RepoRoot "GrbLHALSender.Desktop" "GrbLHALSender.Desktop.csproj"
-$PublishDir = Join-Path $RepoRoot "publish" $Runtime
+$ProjectPath = Join-Path (Join-Path $RepoRoot "GrbLHALSender.Desktop") "GrbLHALSender.Desktop.csproj"
+$PublishDir = Join-Path (Join-Path $RepoRoot "publish") $Runtime
 $ArtifactsDir = Join-Path $RepoRoot "artifacts"
 
 # Ensure artifacts directory exists
@@ -48,7 +48,7 @@ switch ($platform) {
         if (Test-Path $iscc) {
             Write-Host "Building Windows installer..." -ForegroundColor Cyan
             & $iscc /DAppVersion=$Version /DArch=$arch /DPublishDir=$PublishDir `
-                (Join-Path $RepoRoot "installer" "windows" "GrblHALSender.iss")
+                (Join-Path (Join-Path (Join-Path $RepoRoot "installer") "windows") "GrblHALSender.iss")
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         } else {
             Write-Host "Inno Setup not found at $iscc - skipping installer creation" -ForegroundColor Yellow
@@ -57,7 +57,7 @@ switch ($platform) {
     }
     "linux" {
         $debArch = if ($Runtime -eq "linux-x64") { "amd64" } else { "arm64" }
-        $script = Join-Path $RepoRoot "installer" "linux" "build-deb.sh"
+        $script = Join-Path (Join-Path (Join-Path $RepoRoot "installer") "linux") "build-deb.sh"
         if (Test-Path $script) {
             Write-Host "Building .deb package..." -ForegroundColor Cyan
             chmod +x $script
@@ -67,7 +67,7 @@ switch ($platform) {
     }
     "osx" {
         $arch = $Runtime.Replace("osx-", "")
-        $script = Join-Path $RepoRoot "installer" "macos" "build-dmg.sh"
+        $script = Join-Path (Join-Path (Join-Path $RepoRoot "installer") "macos") "build-dmg.sh"
         if (Test-Path $script) {
             Write-Host "Building .dmg package..." -ForegroundColor Cyan
             chmod +x $script
