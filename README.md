@@ -5,9 +5,11 @@
 Goal was to create a application that will run on a cheap mini PC with a UI design that is touch monitor friendly, and will not require a mouse or keyboard to use.
 </br>
 ---
-
 ![Home Screen](Media/HomeScreen.png)
-
+</br>
+## GrblHAL Setting supports export and import 
+![Settings Screen](Media/Setting.png)
+</br>
 ## Double clicking any Text Fields brings up virtual keyboard
 ![Keyboard](Media/KeyBoard.png)
 </br>
