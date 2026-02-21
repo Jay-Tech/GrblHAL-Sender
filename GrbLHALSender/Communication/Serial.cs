@@ -12,6 +12,8 @@ namespace GrbLHALSender.Communication
     {
 
         public event EventHandler<string>? OnDataReceived;
+        public event EventHandler<byte[]>? OnRawDataReceived;
+
         private SerialSettings _serialSettings;
         private SerialPort _serialPort;
         private ConcurrentQueue<byte[]> _sendQue = new();
@@ -25,6 +27,7 @@ namespace GrbLHALSender.Communication
         private static readonly object _sncLock = new();
         private CancellationTokenSource _tokenSource;
         private string _receiveBuffer = string.Empty;
+        private volatile bool _rawMode = false;
 
         public bool IsConnected
         {
@@ -107,12 +110,58 @@ namespace GrbLHALSender.Communication
             }
         }
 
+        public void EnterRawMode()
+        {
+            _rawMode = true;
+            if (_serialPort != null)
+            {
+                _serialPort.DataReceived -= SerialPort_DataReceived;
+                _serialPort.DiscardInBuffer();
+                _receiveBuffer = string.Empty;
+                _serialPort.DataReceived += SerialPort_RawDataReceived;
+            }
+        }
+
+        public void ExitRawMode()
+        {
+            _rawMode = false;
+            if (_serialPort != null)
+            {
+                _serialPort.DataReceived -= SerialPort_RawDataReceived;
+                _serialPort.DiscardInBuffer();
+                _receiveBuffer = string.Empty;
+                _serialPort.DataReceived += SerialPort_DataReceived;
+            }
+        }
+
+        public void WriteBytes(byte[] data, int offset, int count)
+        {
+            if (!_serialPort.IsOpen) return;
+            _serialPort.BaseStream.Write(data, offset, count);
+            _serialPort.BaseStream.Flush();
+        }
+
+        private void SerialPort_RawDataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            int bytesToRead = _serialPort.BytesToRead;
+            if (bytesToRead <= 0) return;
+            var buffer = new byte[bytesToRead];
+            int read = _serialPort.Read(buffer, 0, bytesToRead);
+            if (read > 0)
+            {
+                var data = new byte[read];
+                Array.Copy(buffer, data, read);
+                OnRawDataReceived?.Invoke(this, data);
+            }
+        }
+
         public void Close()
         {
             _userClosed = true;
             if (_serialPort != null)
             {
                 _serialPort.DataReceived -= SerialPort_DataReceived;
+                _serialPort.DataReceived -= SerialPort_RawDataReceived;
                 _serialPort.ErrorReceived -= SerialPort_ErrorReceived;
             }
             _tokenSource?.Cancel();
@@ -162,6 +211,11 @@ namespace GrbLHALSender.Communication
                     {
                         if (_serialPort.IsOpen)
                             _serialPort.BaseStream.Write(command, 0, command.Length);
+                        else
+                        {
+                            IsConnected = false;
+                            TriggerReconnect();
+                        }
                     }
                     catch (Exception)
                     {

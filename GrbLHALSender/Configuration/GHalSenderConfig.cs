@@ -2,6 +2,7 @@
 using GrbLHALSender.Communication;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.Probe;
+using GrbLHALSender.SdCard;
 using GrbLHALSender.WebServer;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
@@ -40,6 +41,7 @@ public class GHalSenderConfig : ObservableObject
     public GamepadConfig GamepadConfig { get; set; } = new();
     public WebServerConfig WebServerConfig { get; set; } = new();
     public ProbeConfig ProbeConfig { get; set; } = new();
+    public SdCardConfig SdCardConfig { get; set; } = new();
     public string SpindleImagePath { get; set; } = "spindle.png";
     public ToolList ToolList { get; set; } = new();
     public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new();

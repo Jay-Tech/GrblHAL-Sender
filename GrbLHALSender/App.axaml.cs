@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
+using GrbLHALSender.SdCard;
 using GrbLHALSender.States;
 using GrbLHALSender.ViewModels;
 using GrbLHALSender.Views;
@@ -60,6 +61,7 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<GamepadService>();
         collection.AddSingleton<FileUploadService>();
         collection.AddSingleton<WebServerService>();
+        collection.AddSingleton<SdCardService>();
         collection.AddTransient<SettingsViewModel>();
         collection.AddTransient<JobViewModel>();
         collection.AddTransient<MainViewModel>();
@@ -69,6 +71,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<DialogViewModel>();
         collection.AddTransient<MdiViewModel>();
         collection.AddTransient<AppConfigViewModel>();
+        collection.AddTransient<SdCardViewModel>();
     }
 
 }

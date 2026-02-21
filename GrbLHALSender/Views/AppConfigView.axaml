@@ -3,8 +3,9 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
+			 xmlns:views="clr-namespace:GrbLHALSender.Views"
 			 x:DataType="vm:AppConfigViewModel"
-			 mc:Ignorable="d" d:DesignWidth="525" d:DesignHeight="600"
+			 mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="650"
 			 x:Class="GrbLHALSender.Views.AppConfigView">
 
 	<Design.DataContext>
@@ -27,7 +28,7 @@
 			<!-- App Height Tab -->
 			<TabItem Header="APP" FontSize="16" Padding="15,5">
 				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="10">
-					<Grid Row="0" ColumnDefinitions="*,*">
+					<Grid Grid.Row="0" ColumnDefinitions="*,*">
 						<CheckBox Grid.Column="0"
 								  Content="Use Metric"
 								  HorizontalContentAlignment="Center"
@@ -221,7 +222,7 @@
 										 VerticalAlignment="Center"
 										 HorizontalContentAlignment="Left"
 										 VerticalContentAlignment="Center"
-										 Text="{Binding MetricJogSpeed[0]}"/>
+										 Text="{Binding Path=MetricJogSpeed[0]}"/>
 								<Label Grid.Row="2" Grid.Column="0"
 									   HorizontalContentAlignment="Right"
 									   VerticalContentAlignment="Center"
@@ -429,6 +430,9 @@
 							   Margin="0,20,0,0"/>
 				</Grid>
 			</TabItem>
+			<TabItem Header="SD Card" x:Name="SdTabItem" FontSize="16" Padding="15,5">
+				<views:SdCardView x:Name="SdCardViewControl" />
+			</TabItem>
 		</TabControl>
 		<StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Orientation="Horizontal">
 			<Button Content="Save"
@@ -439,6 +443,7 @@
 					CornerRadius="6"
 					HorizontalContentAlignment="Center"
 					VerticalContentAlignment="Center"
+					IsEnabled="{Binding !#SdTabItem.IsSelected}"
 					HorizontalAlignment="Center"
 					Command="{Binding SaveConfigCommand }"/>
 			<Button Content="Close"
@@ -450,6 +455,7 @@
 					HorizontalContentAlignment="Center"
 					VerticalContentAlignment="Center"
 					HorizontalAlignment="Center"
+                    IsEnabled="{Binding !#SdTabItem.IsSelected}"
 					Command="{Binding CloseCommand }"/>
 		</StackPanel>
 	</Grid>

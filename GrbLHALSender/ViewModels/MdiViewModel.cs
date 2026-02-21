@@ -67,6 +67,7 @@ namespace GrbLHALSender.ViewModels
         private void CommitMdiText(string command)
         {
             MidiTextCommitted?.Invoke(command);
+            MdiText = string.Empty;
         }
 
     }

@@ -19,7 +19,7 @@
                     FontSize="{DynamicResource BaseFontSize}"  
                     Height="50"
                     CaretIndex="{Binding CaretIndex}"
-					TextWrapping="Wrap"
+					TextWrapping="NoWrap"
 					VerticalContentAlignment="Bottom"
 					HorizontalContentAlignment="Left"
 					HorizontalAlignment ="Stretch"

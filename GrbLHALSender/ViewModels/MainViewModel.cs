@@ -123,6 +123,7 @@ public class MainViewModel : ViewModelBase
     public DialogViewModel DialogViewModel { get; set; }
     public MdiViewModel MdiViewModel { get; set; }
     public AppConfigViewModel AppConfigViewModel { get; set; }
+    public SdCardViewModel SdCardViewModel { get; set; }
     public CommunicationManager CommManager { get; set; }
     public string UnitSystem { get; set; } = "G21";
 
@@ -339,11 +340,13 @@ public class MainViewModel : ViewModelBase
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
-        WebServerService webServerService, MachineStateService machineStateService)
+        WebServerService webServerService, MachineStateService machineStateService,
+        SdCardViewModel sdCardViewModel)
     {
         CommManager = commManager;
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
+        SdCardViewModel = sdCardViewModel;
         _needsSetup = true;
         _configManager = configManager;
         JobViewModel = jobViewModel;
@@ -462,6 +465,7 @@ public class MainViewModel : ViewModelBase
     private void MainViewModel_MidiTextCommitted(string command)
     {
         SendCommand(command);
+
     }
 
     private void SetSelectedTool(int tool)

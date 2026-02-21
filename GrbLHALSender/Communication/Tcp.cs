@@ -11,6 +11,7 @@ namespace GrbLHALSender.Communication
     public class Tcp : ObservableObject, ICommsAdapter
     {
         public event EventHandler<string>? OnDataReceived;
+        public event EventHandler<byte[]>? OnRawDataReceived;
 
         private TcpSettings _tcpSettings;
         private TcpClient? _tcpClient;
@@ -101,6 +102,10 @@ namespace GrbLHALSender.Communication
                 return false;
             }
         }
+
+        public void EnterRawMode() => throw new NotSupportedException("YModem raw mode is not supported over TCP. Use FTP instead.");
+        public void ExitRawMode() => throw new NotSupportedException("YModem raw mode is not supported over TCP. Use FTP instead.");
+        public void WriteBytes(byte[] data, int offset, int count) => throw new NotSupportedException("YModem raw mode is not supported over TCP. Use FTP instead.");
 
         public void Close()
         {

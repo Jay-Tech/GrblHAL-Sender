@@ -11,6 +11,7 @@ namespace GrbLHALSender.Communication
     public class WebSocket : ObservableObject, ICommsAdapter
     {
         public event EventHandler<string>? OnDataReceived;
+        public event EventHandler<byte[]>? OnRawDataReceived;
 
         private WebSocketSettings _settings;
         private ClientWebSocket? _client;
@@ -104,6 +105,10 @@ namespace GrbLHALSender.Communication
                 return false;
             }
         }
+
+        public void EnterRawMode() => throw new NotSupportedException("YModem raw mode is not supported over WebSocket. Use FTP instead.");
+        public void ExitRawMode() => throw new NotSupportedException("YModem raw mode is not supported over WebSocket. Use FTP instead.");
+        public void WriteBytes(byte[] data, int offset, int count) => throw new NotSupportedException("YModem raw mode is not supported over WebSocket. Use FTP instead.");
 
         public void Close()
         {

@@ -46,6 +46,7 @@ namespace GrbLHALSender.Communication
         public ICommsAdapter Adapter { get; set; }
         public MachineSettings MachineData => _machineData;
         public GrblHALOptions Options => grblHalOptions;
+        public Type? ActiveAdapterType => Adapter?.GetType();
         public CommunicationManager(ConfigManager configManager)
         {
             _configManager = configManager;
@@ -200,6 +201,72 @@ namespace GrbLHALSender.Communication
             Adapter = new WebSocket(settings);
             Adapter.OnDataReceived += Adapter_OnDataReceived;
         }
+        /// <summary>
+        /// Stops the poll timer so binary transfers (YModem) are not disrupted
+        /// by the 0x87 status query byte.
+        /// </summary>
+        public void SuspendForTransfer()
+        {
+            StopPoll();
+        }
+
+        /// <summary>
+        /// Restarts the poll timer after a binary transfer completes or fails.
+        /// </summary>
+        public void ResumeAfterTransfer()
+        {
+            SetupPoll();
+        }
+
+        /// <summary>
+        /// Sends a command and collects all response lines until the end marker
+        /// (default "ok") is received or the timeout expires.
+        /// Used for commands like $F+ that return multiple lines before "ok".
+        /// Automatically filters out real-time status messages (&lt;...&gt;) that arrive
+        /// from the poll timer during collection.
+        /// </summary>
+        public async Task<List<string>> SendCommandCollectResponsesAsync(
+            string command, string endMarker = "ok", int timeOutMs = 5000)
+        {
+            var lines = new List<string>();
+            var tcs = new TaskCompletionSource<List<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            void Handler(object? sender, string data)
+            {
+                var trimmed = data.Trim();
+
+                // Skip real-time status messages (<Idle|MPos:...>) that arrive from
+                // the poll timer (0x87) — these are not responses to our command.
+                if (trimmed.Length > 0 && trimmed[0] == '<' && trimmed[^1] == '>')
+                    return;
+
+                // Terminate on "ok" or "error:XX" — both signal command completion
+                if (trimmed.Equals(endMarker, StringComparison.OrdinalIgnoreCase) ||
+                    trimmed.StartsWith("error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    Adapter.OnDataReceived -= Handler;
+                    tcs.TrySetResult(lines);
+                }
+                else
+                {
+                    lines.Add(data);
+                }
+            }
+
+            Adapter.OnDataReceived += Handler;
+            SendCommand(command);
+
+            try
+            {
+                return await tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(timeOutMs));
+            }
+            catch (TimeoutException)
+            {
+                Adapter.OnDataReceived -= Handler;
+                return lines; // return whatever we collected
+            }
+        }
+
         private void Adapter_OnDataReceived(object? sender, string e)
         {
             var data = e.Trim();
@@ -507,20 +574,6 @@ namespace GrbLHALSender.Communication
         }
         public async Task<bool> SendAsyncCommand(string command, string resultMatch = "ok", int timeOutMs = 300)
         {
-            try
-            {
-                var result = await FetchDataAsync(command, resultMatch)
-                    .WaitAsync(TimeSpan.FromMilliseconds(timeOutMs));
-                return result;
-            }
-            catch (TimeoutException)
-            {
-                return false;
-            }
-        }
-
-        private Task<bool> FetchDataAsync(string command, string resultMatch)
-        {
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             void Handler(object? sender, string data)
@@ -531,11 +584,20 @@ namespace GrbLHALSender.Communication
                     tcs.TrySetResult(true);
                 }
             }
-            Adapter.OnDataReceived -= Handler;
+
             Adapter.OnDataReceived += Handler;
             SendCommand(command);
 
-            return tcs.Task;
+            try
+            {
+                return await tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(timeOutMs));
+            }
+            catch (TimeoutException)
+            {
+                // Always clean up the handler on timeout to prevent leaking subscriptions
+                Adapter.OnDataReceived -= Handler;
+                return false;
+            }
         }
 
     }
