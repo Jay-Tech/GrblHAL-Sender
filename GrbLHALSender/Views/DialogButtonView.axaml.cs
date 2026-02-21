@@ -6,12 +6,14 @@ using Avalonia.Layout;
 using Avalonia.VisualTree;
 using GrbLHALSender.ViewModels;
 using System;
+using System.Collections.Generic;
 
 namespace GrbLHALSender.Views;
 
 public partial class DialogButtonView : UserControl
 {
     private DialogViewModel? _viewModel;
+    private readonly Dictionary<DialogType, Window> _openWindows = new();
 
     public DialogButtonView()
     {
@@ -22,15 +24,31 @@ public partial class DialogButtonView : UserControl
     {
         // Unsubscribe from previous ViewModel
         if (_viewModel != null)
+        {
             _viewModel.OpenDialogRequested -= OnOpenDialogRequested;
+            _viewModel.BringDialogFrontRequested -= BringDialogFrontRequested;
+        }
+        
 
         if (DataContext is DialogViewModel vm)
         {
             _viewModel = vm;
             _viewModel.OpenDialogRequested += OnOpenDialogRequested;
+            _viewModel.BringDialogFrontRequested += BringDialogFrontRequested;
         }
 
         base.OnDataContextChanged(e);
+    }
+
+    private void BringDialogFrontRequested(DialogType dialog)
+    {
+        if (_openWindows.TryGetValue(dialog, out var window))
+        {
+            if (window.WindowState == WindowState.Minimized)
+                window.WindowState = WindowState.Normal;
+
+            window.Activate();
+        }
     }
 
     /// <summary>
@@ -131,9 +149,11 @@ public partial class DialogButtonView : UserControl
         }
 
         // Track open/close state
+        _openWindows[dialogType] = dialogWindow;
         _viewModel?.MarkDialogOpened(dialogType);
         dialogWindow.Closed += (_, _) =>
         {
+            _openWindows.Remove(dialogType);
             _viewModel?.MarkDialogClosed(dialogType);
 
             // Clean up state when dialogs close

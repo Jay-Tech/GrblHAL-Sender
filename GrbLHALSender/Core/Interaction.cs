@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -8,9 +8,9 @@ namespace GrbLHALSender.Core
     /// Simple implementation of Interaction pattern from ReactiveUI framework.
     /// https://www.reactiveui.net/docs/handbook/interactions/
     /// </summary>
-    public sealed class Interaction<TInput, TOutput> : IDisposable, ICommand
+    public sealed class Interaction<TInput, TOutput> : ICommand
     {
-        // this is a reference to the registered interaction handler. 
+        // this is a reference to the registered interaction handler.
         private Func<TInput, Task<TOutput>>? _handler;
 
         /// <summary>
@@ -34,22 +34,21 @@ namespace GrbLHALSender.Core
         /// </summary>
         /// <param name="handler">the handler to register</param>
         /// <returns>a disposable object to clean up memory if not in use anymore/></returns>
-        /// <exception cref="InvalidOperationException"></exception>
         public IDisposable RegisterHandler(Func<TInput, Task<TOutput>> handler)
         {
-            if (_handler is not null)
-            {
-                throw new InvalidOperationException("Handler was already registered");
-            }
-
             _handler = handler;
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-            return this;
-        }
 
-        public void Dispose()
-        {
-            _handler = null;
+            // Return a token that only clears _handler if it's still the one we set
+            var capturedHandler = handler;
+            return new HandlerDisposable(() =>
+            {
+                if (_handler == capturedHandler)
+                {
+                    _handler = null;
+                    CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+                }
+            });
         }
 
         public bool CanExecute(object? parameter) => _handler is not null;
@@ -57,5 +56,16 @@ namespace GrbLHALSender.Core
         public void Execute(object? parameter) => HandleAsync((TInput?)parameter!);
 
         public event EventHandler? CanExecuteChanged;
+
+        private sealed class HandlerDisposable(Action onDispose) : IDisposable
+        {
+            private Action? _onDispose = onDispose;
+
+            public void Dispose()
+            {
+                _onDispose?.Invoke();
+                _onDispose = null;
+            }
+        }
     }
 }

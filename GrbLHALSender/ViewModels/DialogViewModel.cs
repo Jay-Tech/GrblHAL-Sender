@@ -21,6 +21,9 @@ public class DialogViewModel : ViewModelBase
     /// </summary>
     public event Action<DialogType>? OpenDialogRequested;
 
+    public event Action<DialogType>? BringDialogFrontRequested;
+
+
     // Track open dialogs to prevent duplicates
     private readonly HashSet<DialogType> _openDialogs = new();
 
@@ -40,8 +43,10 @@ public class DialogViewModel : ViewModelBase
     private void RequestOpenDialog(DialogType dialogType)
     {
         if (_openDialogs.Contains(dialogType))
-            return; // Already open
-
+        {
+            BringDialogFrontRequested?.Invoke(dialogType);
+            return;
+        }
         OpenDialogRequested?.Invoke(dialogType);
     }
 
