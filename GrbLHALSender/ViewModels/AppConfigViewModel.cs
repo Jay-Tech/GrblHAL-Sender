@@ -33,6 +33,7 @@ namespace GrbLHALSender.ViewModels
         private int _gamePadTriggerThreshold = 16000;
         private bool _isWebServerEnabled;
         private int _webServerPort;
+        private bool _useAntiAlias = true;
         private string _spindleImagePath = "spindle.png";
         private double _pollRate;
         private bool _borderlessWindow;
@@ -169,6 +170,12 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _webServerPort, value);
         }
 
+        public bool UseAntiAlias
+        {
+            get => _useAntiAlias;
+            set => this.RaiseAndSetIfChanged(ref _useAntiAlias, value);
+        }
+
         public string SpindleImagePath
         {
             get => _spindleImagePath;
@@ -225,6 +232,7 @@ namespace GrbLHALSender.ViewModels
             LoadGamepadMappings(_appConfig.GamepadConfig);
             IsWebServerEnabled = _appConfig.WebServerConfig.Enabled;
             WebServerPort = _appConfig.WebServerConfig.Port;
+            UseAntiAlias = _appConfig.UseAntiAlias;
             SpindleImagePath = _appConfig.SpindleImagePath;
             PollRate = _appConfig.PollRate;
             BorderlessWindow = _appConfig.Borderless;
@@ -253,6 +261,7 @@ namespace GrbLHALSender.ViewModels
             SaveGamepadMappings(_appConfig.GamepadConfig);
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
+            _appConfig.UseAntiAlias = UseAntiAlias;
             _appConfig.SpindleImagePath = SpindleImagePath;
             _appConfig.PollRate = PollRate;
             _appConfig.Borderless = BorderlessWindow;

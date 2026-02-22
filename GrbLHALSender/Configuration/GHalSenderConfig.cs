@@ -48,6 +48,7 @@ public class GHalSenderConfig : ObservableObject
     public WebServerConfig WebServerConfig { get; set; } = new();
     public ProbeConfig ProbeConfig { get; set; } = new();
     public SdCardConfig SdCardConfig { get; set; } = new();
+    public bool UseAntiAlias { get; set; } = true;
     public string SpindleImagePath { get; set; } = "spindle.png";
     public ToolList ToolList { get; set; } = new();
     public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new();

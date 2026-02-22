@@ -13,17 +13,18 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 {
     /// <summary>
     /// Two-layer cache for the toolpath scene:
-    /// 1. Static layer (grid + axes + all toolpath segments in normal colors) — only invalidated
-    ///    when camera, toolpath, machine settings, WCO, or control size change.
+    /// 1. Static layer (grid + axes + all toolpath segments in normal colors) — rasterized to
+    ///    an SKBitmap so that dynamic frames only perform a single DrawBitmap (constant-time).
+    ///    Only invalidated when camera, toolpath, machine settings, WCO, or control size change.
     /// 2. Projected screen coordinates — cached alongside the static layer so the progress
     ///    overlay and selection highlight can be drawn cheaply without re-projecting.
     ///
-    /// When only CompletedSegmentIndex or SpindlePosition change, the static SKPicture is
-    /// simply replayed and only the overlay segments are redrawn using pre-projected coordinates.
+    /// When only CompletedSegmentIndex or SpindlePosition change, the cached bitmap is blitted
+    /// and only the overlay segments are redrawn using pre-projected coordinates.
     /// </summary>
     public class ToolpathSceneCache
     {
-        private SKPicture? _cachedScene;
+        private SKBitmap? _cachedBitmap;
         private Matrix4x4 _cachedViewProj;
         private float _cachedWidth;
         private float _cachedHeight;
@@ -36,39 +37,56 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private SKPoint?[]? _projectedStarts;
         private SKPoint?[]? _projectedEnds;
 
-        public SKPicture? GetOrCreate(
+        // Reusable paint for blitting the cached bitmap (no per-frame allocation).
+        private static readonly SKPaint BitmapPaint = new()
+        {
+            FilterQuality = SKFilterQuality.None,
+            IsAntialias = false
+        };
+
+        public SKBitmap? GetOrCreate(
             ToolpathData? toolpath, Camera3D camera, MachineSettings? machineSettings,
-            Point3D? wco, float width, float height)
+            Point3D? wco, float width, float height, bool useAntiAlias)
         {
             var view = camera.GetViewMatrix();
             var proj = camera.GetProjectionMatrix(width, height);
             var viewProj = view * proj;
 
+            int pixelW = (int)MathF.Ceiling(width);
+            int pixelH = (int)MathF.Ceiling(height);
+            if (pixelW <= 0 || pixelH <= 0) return null;
+
             // Check if cache is still valid
-            if (_cachedScene != null &&
+            if (_cachedBitmap != null &&
                 _cachedViewProj == viewProj &&
-                Math.Abs(_cachedWidth - width) < 0.5f &&
-                Math.Abs(_cachedHeight - height) < 0.5f &&
+                _cachedBitmap.Width == pixelW &&
+                _cachedBitmap.Height == pixelH &&
                 ReferenceEquals(_cachedToolpath, toolpath) &&
                 ReferenceEquals(_cachedMachineSettings, machineSettings) &&
                 Equals(_cachedWco, wco))
             {
-                return _cachedScene;
+                return _cachedBitmap;
             }
 
-            // Rebuild the cached scene
-            _cachedScene?.Dispose();
+            // Rebuild: dispose old bitmap if size changed, otherwise reuse allocation
+            if (_cachedBitmap == null || _cachedBitmap.Width != pixelW || _cachedBitmap.Height != pixelH)
+            {
+                _cachedBitmap?.Dispose();
+                _cachedBitmap = new SKBitmap(pixelW, pixelH, SKColorType.Rgba8888, SKAlphaType.Premul);
+            }
 
             // Pre-project all segment screen coordinates
             ProjectAllSegments(toolpath, viewProj, width, height);
 
-            using var recorder = new SKPictureRecorder();
-            var canvas = recorder.BeginRecording(new SKRect(0, 0, width, height));
+            // Render the static scene into the bitmap
+            using var canvas = new SKCanvas(_cachedBitmap);
+            canvas.Clear(SKColors.Transparent);
 
             GcodeRenderOperation.DrawStaticScene(canvas, viewProj, width, height,
-                toolpath, machineSettings, wco, _projectedStarts, _projectedEnds);
+                toolpath, machineSettings, wco, _projectedStarts, _projectedEnds, useAntiAlias);
 
-            _cachedScene = recorder.EndRecording();
+            canvas.Flush();
+
             _cachedViewProj = viewProj;
             _cachedWidth = width;
             _cachedHeight = height;
@@ -76,17 +94,26 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             _cachedMachineSettings = machineSettings;
             _cachedWco = wco;
 
-            return _cachedScene;
+            return _cachedBitmap;
         }
 
         public Matrix4x4 CachedViewProj => _cachedViewProj;
         public SKPoint?[]? ProjectedStarts => _projectedStarts;
         public SKPoint?[]? ProjectedEnds => _projectedEnds;
 
+        /// <summary>
+        /// Draws the cached bitmap onto the target canvas. Constant-time regardless of segment count.
+        /// </summary>
+        public void DrawCached(SKCanvas canvas)
+        {
+            if (_cachedBitmap != null)
+                canvas.DrawBitmap(_cachedBitmap, 0, 0, BitmapPaint);
+        }
+
         public void Invalidate()
         {
-            _cachedScene?.Dispose();
-            _cachedScene = null;
+            _cachedBitmap?.Dispose();
+            _cachedBitmap = null;
         }
 
         private void ProjectAllSegments(ToolpathData? toolpath, Matrix4x4 viewProj, float width, float height)
@@ -125,47 +152,11 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private readonly int _completedSegmentIndex;
         private readonly int _selectedSegmentIndex;
         private readonly SKBitmap? _spindleImage;
+        private readonly bool _useAntiAlias;
 
-        private static readonly SKPaint RapidPaint = new()
-        {
-            Color = new SKColor(0, 200, 0),
-            StrokeWidth = 1f,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
 
-        private static readonly SKPaint CutPaint = new()
-        {
-            Color = new SKColor(230, 40, 40),
-            StrokeWidth = 1.5f,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
-
-        private static readonly SKPaint TraversePaint = new()
-        {
-            Color = new SKColor(60, 120, 255),
-            StrokeWidth = 1f,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
-
-        private static readonly SKPaint CompletedPaint = new()
-        {
-            Color = new SKColor(203, 203, 212),
-            StrokeWidth = 3f,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
-
-        private static readonly SKPaint SelectedPaint = new()
-        {
-            Color = new SKColor(255, 255, 0),
-            StrokeWidth = 3f,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
-
+        //Grid paint always drawn AA off for crisp lines, since it's a thin stroke and the grid is dense enough that aliasing isn't a big issue.
+        //This also ensures the grid looks consistent regardless of the AA setting for the rest of the scene.
         private static readonly SKPaint GridPaint = new()
         {
             Color = new SKColor(60, 60, 60),
@@ -174,38 +165,41 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             Style = SKPaintStyle.Stroke
         };
 
+
+        // AA-aware paint sets: [0] = AA off, [1] = AA on
+        private static readonly SKPaint[] RapidPaints = CreatePaintPair(new SKColor(0, 200, 0), 1f, SKPaintStyle.Stroke);
+        private static readonly SKPaint[] CutPaints = CreatePaintPair(new SKColor(230, 40, 40), 1.2f, SKPaintStyle.Stroke);
+        private static readonly SKPaint[] TraversePaints = CreatePaintPair(new SKColor(60, 120, 255), 1f, SKPaintStyle.Stroke);
+        private static readonly SKPaint[] CompletedPaints = CreatePaintPair(new SKColor(203, 203, 212), 2.4f, SKPaintStyle.Stroke);
+        private static readonly SKPaint[] SelectedPaints = CreatePaintPair(new SKColor(255, 255, 0), 3f, SKPaintStyle.Stroke);
+      
+
         private static readonly SKPaint BackgroundPaint = new()
         {
             Color = new SKColor(25, 25, 30)
         };
 
-        private static readonly SKPaint SpindleShaftPaint = new()
-        {
-            Color = new SKColor(180, 180, 190),
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        };
+        private static readonly SKPaint[] SpindleShaftPaints = CreatePaintPair(new SKColor(180, 180, 190), 0f, SKPaintStyle.Fill);
+        private static readonly SKPaint[] SpindleBitPaints = CreatePaintPair(new SKColor(220, 180, 50), 0f, SKPaintStyle.Fill);
+        private static readonly SKPaint[] SpindleOutlinePaints = CreatePaintPair(new SKColor(100, 100, 110), 1.5f, SKPaintStyle.Stroke);
 
-        private static readonly SKPaint SpindleBitPaint = new()
+        private static SKPaint[] CreatePaintPair(SKColor color, float strokeWidth, SKPaintStyle style)
         {
-            Color = new SKColor(220, 180, 50),
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        };
+            return
+            [
+                new SKPaint { Color = color, StrokeWidth = strokeWidth, IsAntialias = false, Style = style },
+                new SKPaint { Color = color, StrokeWidth = strokeWidth, IsAntialias = true, Style = style }
+            ];
+        }
 
-        private static readonly SKPaint SpindleOutlinePaint = new()
-        {
-            Color = new SKColor(100, 100, 110),
-            StrokeWidth = 1.5f,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
+        private static SKPaint Pick(SKPaint[] pair, bool aa) => pair[aa ? 1 : 0];
 
         public GcodeRenderOperation(Rect bounds, ToolpathData? toolpath, Camera3D camera,
             ToolpathSceneCache sceneCache,
             Point3D? spindlePosition = null, MachineSettings? machineSettings = null,
             Point3D? workCoordinateOffset = null, int completedSegmentIndex = -1,
-            int selectedSegmentIndex = -1, SKBitmap? spindleImage = null)
+            int selectedSegmentIndex = -1, SKBitmap? spindleImage = null,
+            bool useAntiAlias = true)
         {
             Bounds = bounds;
             _toolpath = toolpath;
@@ -217,6 +211,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             _completedSegmentIndex = completedSegmentIndex;
             _selectedSegmentIndex = selectedSegmentIndex;
             _spindleImage = spindleImage;
+            _useAntiAlias = useAntiAlias;
         }
 
         public Rect Bounds { get; }
@@ -243,16 +238,13 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // Background
             canvas.DrawRect(0, 0, width, height, BackgroundPaint);
 
-            // Get or create the cached static scene (grid + axes + all toolpath in normal colors).
+            // Get or create the cached static scene bitmap (grid + axes + all toolpath in normal colors).
             // This does NOT include completed/selected overlays — those are drawn dynamically below
             // using pre-projected coordinates, so changing CompletedSegmentIndex never busts this cache.
-            var cachedScene = _sceneCache.GetOrCreate(
-                _toolpath, _camera, _machineSettings, _wco, width, height);
-
-            if (cachedScene != null)
-            {
-                canvas.DrawPicture(cachedScene);
-            }
+            // The bitmap is blitted in constant-time regardless of segment count.
+            _sceneCache.GetOrCreate(
+                _toolpath, _camera, _machineSettings, _wco, width, height, _useAntiAlias);
+            _sceneCache.DrawCached(canvas);
 
             // Draw progress overlay using pre-projected screen coordinates (no re-projection needed)
             DrawProgressOverlay(canvas);
@@ -279,15 +271,17 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             if (starts == null || ends == null || _toolpath == null) return;
 
             int segCount = _toolpath.Segments.Count;
+            bool aa = _useAntiAlias;
 
             // Draw completed segments (overdraws on top of the static scene)
             if (_completedSegmentIndex > 0)
             {
+                var completedPaint = Pick(CompletedPaints, aa);
                 int limit = Math.Min(_completedSegmentIndex, segCount);
                 for (int i = 0; i < limit; i++)
                 {
                     if (starts[i].HasValue && ends[i].HasValue)
-                        canvas.DrawLine(starts[i]!.Value, ends[i]!.Value, CompletedPaint);
+                        canvas.DrawLine(starts[i]!.Value, ends[i]!.Value, completedPaint);
                 }
             }
 
@@ -297,7 +291,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 var p1 = starts[_selectedSegmentIndex];
                 var p2 = ends[_selectedSegmentIndex];
                 if (p1.HasValue && p2.HasValue)
-                    canvas.DrawLine(p1.Value, p2.Value, SelectedPaint);
+                    canvas.DrawLine(p1.Value, p2.Value, Pick(SelectedPaints, aa));
             }
         }
 
@@ -310,14 +304,18 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         internal static void DrawStaticScene(SKCanvas canvas, Matrix4x4 viewProj,
             float width, float height, ToolpathData? toolpath,
             MachineSettings? machineSettings, Point3D? wco,
-            SKPoint?[]? projectedStarts, SKPoint?[]? projectedEnds)
+            SKPoint?[]? projectedStarts, SKPoint?[]? projectedEnds, bool useAntiAlias)
         {
-            DrawGrid(canvas, viewProj, width, height, machineSettings, toolpath, wco);
-            DrawAxes(canvas, viewProj, width, height, machineSettings, toolpath, wco);
+            DrawGrid(canvas, viewProj, width, height, machineSettings, toolpath, wco, useAntiAlias);
+            DrawAxes(canvas, viewProj, width, height, machineSettings, toolpath, wco, useAntiAlias);
 
             // Draw toolpath segments using pre-projected screen coordinates
             if (toolpath != null && projectedStarts != null && projectedEnds != null)
             {
+                var rapidPaint = Pick(RapidPaints, useAntiAlias);
+                var cutPaint = Pick(CutPaints, useAntiAlias);
+                var traversePaint = Pick(TraversePaints, useAntiAlias);
+
                 for (int i = 0; i < toolpath.Segments.Count; i++)
                 {
                     var p1 = projectedStarts[i];
@@ -326,10 +324,10 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
                     var paint = toolpath.Segments[i].Type switch
                     {
-                        MoveType.Rapid => RapidPaint,
-                        MoveType.Cut => CutPaint,
-                        MoveType.Traverse => TraversePaint,
-                        _ => RapidPaint
+                        MoveType.Rapid => rapidPaint,
+                        MoveType.Cut => cutPaint,
+                        MoveType.Traverse => traversePaint,
+                        _ => rapidPaint
                     };
 
                     canvas.DrawLine(p1.Value, p2.Value, paint);
@@ -338,7 +336,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         }
 
         private static void DrawGrid(SKCanvas canvas, Matrix4x4 viewProj, float width, float height,
-            MachineSettings? machineSettings, ToolpathData? toolpath, Point3D? wco)
+            MachineSettings? machineSettings, ToolpathData? toolpath, Point3D? wco, bool useAntiAlias)
         {
             float gridMinX, gridMaxX, gridMinY, gridMaxY, spacing;
             float gridZ = 0f;
@@ -393,6 +391,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 gridMaxY = 600f;
             }
 
+            
             for (float x = gridMinX; x <= gridMaxX; x += spacing)
             {
                 var p1 = ProjectToScreen(new Point3D(x, gridMinY, gridZ), viewProj, width, height);
@@ -411,7 +410,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         }
 
         private static void DrawAxes(SKCanvas canvas, Matrix4x4 viewProj, float width, float height,
-            MachineSettings? machineSettings, ToolpathData? toolpath, Point3D? wco)
+            MachineSettings? machineSettings, ToolpathData? toolpath, Point3D? wco, bool useAntiAlias)
         {
             float axisLen;
             if (machineSettings != null && machineSettings.DisplayXSize > 0)
@@ -447,7 +446,10 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             var xEnd = ProjectToScreen(new Point3D(originX + axisLen, originY, gridZ), viewProj, width, height);
             if (xEnd.HasValue)
             {
-                using var xPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 2.5f, IsAntialias = true };
+                using var xPaint = new SKPaint();
+                xPaint.Color = SKColors.Red;
+                xPaint.StrokeWidth = 2.5f;
+                xPaint.IsAntialias = true;
                 canvas.DrawLine(xyOrigin.Value, xEnd.Value, xPaint);
                 canvas.DrawText("X", xEnd.Value.X + 4, xEnd.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), xPaint);
@@ -457,7 +459,10 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             var yEnd = ProjectToScreen(new Point3D(originX, originY - axisLen, gridZ), viewProj, width, height);
             if (yEnd.HasValue)
             {
-                using var yPaint = new SKPaint { Color = SKColors.Lime, StrokeWidth = 2.5f, IsAntialias = true };
+                using var yPaint = new SKPaint();
+                yPaint.Color = SKColors.Lime;
+                yPaint.StrokeWidth = 2.5f;
+                yPaint.IsAntialias = true;
                 canvas.DrawLine(xyOrigin.Value, yEnd.Value, yPaint);
                 canvas.DrawText("Y", yEnd.Value.X + 4, yEnd.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), yPaint);
@@ -468,7 +473,10 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             var zTop = ProjectToScreen(new Point3D(originX, originY, originZ), viewProj, width, height);
             if (zTop.HasValue)
             {
-                using var zPaint = new SKPaint { Color = new SKColor(80, 150, 255), StrokeWidth = 2.5f, IsAntialias = true };
+                using var zPaint = new SKPaint();
+                zPaint.Color = new SKColor(80, 150, 255);
+                zPaint.StrokeWidth = 2.5f;
+                zPaint.IsAntialias = true;
                 canvas.DrawLine(zBottom.Value, zTop.Value, zPaint);
                 canvas.DrawText("Z", zTop.Value.X + 4, zTop.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), zPaint);
@@ -512,7 +520,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // If the spindle projects too small (e.g. looking straight down), use a fixed marker
             if (totalScreenLen < 5f)
             {
-                DrawSpindleTopView(canvas, tipScreen.Value);
+                DrawSpindleTopView(canvas, tipScreen.Value, _useAntiAlias);
                 return;
             }
 
@@ -520,13 +528,13 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             if (_spindleImage != null)
             {
                 DrawSpindleImage(canvas, tipScreen.Value, shaftTopScreen.Value, totalScreenLen);
-                DrawCrosshair(canvas, tipScreen.Value);
+                DrawCrosshair(canvas, tipScreen.Value, _useAntiAlias);
                 return;
             }
 
             // Fallback: procedural drawing
             DrawSpindleProcedural(canvas, tipScreen.Value, bitTopScreen.Value, shaftTopScreen.Value,
-                scaleRef, bitLength);
+                scaleRef, bitLength, _useAntiAlias);
         }
 
         /// <summary>
@@ -570,7 +578,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 targetWidth / 2f,
                 0f);
 
-            using var paint = new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.Medium };
+            using var paint = new SKPaint { IsAntialias = _useAntiAlias, FilterQuality = _useAntiAlias ? SKFilterQuality.Medium : SKFilterQuality.Low };
             canvas.DrawBitmap(img, destRect, paint);
 
             canvas.Restore();
@@ -581,7 +589,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         /// Used as fallback when no spindle image is loaded.
         /// </summary>
         private static void DrawSpindleProcedural(SKCanvas canvas, SKPoint tipScreen,
-            SKPoint bitTopScreen, SKPoint shaftTopScreen, float scaleRef, float bitLength)
+            SKPoint bitTopScreen, SKPoint shaftTopScreen, float scaleRef, float bitLength, bool aa)
         {
             float bitRadius = scaleRef * 0.008f;
             float shaftRadius = scaleRef * 0.015f;
@@ -592,7 +600,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
             if (len < 3f)
             {
-                DrawSpindleTopView(canvas, tipScreen);
+                DrawSpindleTopView(canvas, tipScreen, aa);
                 return;
             }
 
@@ -614,8 +622,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                           bitTopScreen.Y - perpY * screenBitRadius);
             bitPath.Close();
 
-            canvas.DrawPath(bitPath, SpindleBitPaint);
-            canvas.DrawPath(bitPath, SpindleOutlinePaint);
+            canvas.DrawPath(bitPath, Pick(SpindleBitPaints, aa));
+            canvas.DrawPath(bitPath, Pick(SpindleOutlinePaints, aa));
 
             // Draw the shaft as a rectangle from bitTop to shaftTop
             float sdx = shaftTopScreen.X - bitTopScreen.X;
@@ -637,15 +645,15 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                                 bitTopScreen.Y - sPerpY * screenShaftRadius);
                 shaftPath.Close();
 
-                canvas.DrawPath(shaftPath, SpindleShaftPaint);
-                canvas.DrawPath(shaftPath, SpindleOutlinePaint);
+                canvas.DrawPath(shaftPath, Pick(SpindleShaftPaints, aa));
+                canvas.DrawPath(shaftPath, Pick(SpindleOutlinePaints, aa));
             }
 
             // Draw a small crosshair at the tip for precision
-            DrawCrosshair(canvas, tipScreen);
+            DrawCrosshair(canvas, tipScreen, aa);
         }
 
-        private static void DrawSpindleTopView(SKCanvas canvas, SKPoint tipScreen)
+        private static void DrawSpindleTopView(SKCanvas canvas, SKPoint tipScreen, bool aa)
         {
             // When looking straight down, draw a circular indicator with crosshair
             float outerRadius = 12f;
@@ -654,30 +662,30 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             using var outerPaint = new SKPaint
             {
                 Color = new SKColor(220, 180, 50, 180),
-                IsAntialias = true,
+                IsAntialias = aa,
                 Style = SKPaintStyle.Stroke,
                 StrokeWidth = 2f
             };
             using var innerPaint = new SKPaint
             {
                 Color = new SKColor(220, 180, 50),
-                IsAntialias = true,
+                IsAntialias = aa,
                 Style = SKPaintStyle.Fill
             };
 
             canvas.DrawCircle(tipScreen.X, tipScreen.Y, outerRadius, outerPaint);
             canvas.DrawCircle(tipScreen.X, tipScreen.Y, innerRadius, innerPaint);
-            DrawCrosshair(canvas, tipScreen);
+            DrawCrosshair(canvas, tipScreen, aa);
         }
 
-        private static void DrawCrosshair(SKCanvas canvas, SKPoint position)
+        private static void DrawCrosshair(SKCanvas canvas, SKPoint position, bool aa)
         {
             float crossSize = 8f;
             using var crossPaint = new SKPaint
             {
                 Color = new SKColor(255, 255, 0),
                 StrokeWidth = 1.5f,
-                IsAntialias = true,
+                IsAntialias = aa,
                 Style = SKPaintStyle.Stroke
             };
             canvas.DrawLine(position.X - crossSize, position.Y,

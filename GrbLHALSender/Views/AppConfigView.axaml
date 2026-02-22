@@ -27,35 +27,50 @@
 
 			<!-- App Height Tab -->
 			<TabItem Header="APP" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="10">
-					<Grid Grid.Row="0" ColumnDefinitions="*,*,*">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="10">
+					<Grid Grid.Row="0" ColumnDefinitions="*,*">
                         <CheckBox Grid.Column="0"
                                   Content="Full Screen"
+								  Margin="20,0,0,0"
                                   HorizontalContentAlignment="Center"
                                   VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Center"
+                                  HorizontalAlignment="Left"
                                   VerticalAlignment="Center"
                                   ToolTip.Tip="Check to enable Borderless Window"
                                   IsChecked="{Binding BorderlessWindow}"/>
                         <CheckBox Grid.Column="1"
                                   Content="Use Metric"
+                                  Margin="20,0,0,0"
                                   HorizontalContentAlignment="Center"
                                   VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Center"
+                                  HorizontalAlignment="Left"
                                   VerticalAlignment="Center"
                                   ToolTip.Tip="Check to enable Metric uncheck for imperial"
                                   IsChecked="{Binding UseMetric}"/>
-						<CheckBox Grid.Column="2"
-								  Content="Tool Path Progress"
-								  HorizontalContentAlignment="Center"
-								  VerticalContentAlignment="Center"
-								  HorizontalAlignment="Center"
-								  VerticalAlignment="Center"
-                                  ToolTip.Tip="Show cut progress on the 3D toolpath during job execution.
-								  Disable to save resources on lower-power devices."
-								  IsChecked="{Binding EnableCutLines}"/>
+						
 					</Grid>
-					<Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*">
+                        <CheckBox Grid.Column="0"
+                                  Content="Turn Off AntiAlias"
+                                  Margin="20,0,0,0"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  ToolTip.Tip="Turn off AntiAlias for 3d model. Image quality will decrease to save resources on lower-power devices."
+                                  IsChecked="{Binding UseAntiAlias}"/>
+                        <CheckBox Grid.Column="1"
+                                  Content="Tool Path Progress"
+                                  Margin="20,0,0,0"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  ToolTip.Tip="Show cut progress on the 3D toolpath during job execution. Disable to save resources on lower-power devices."
+                                  IsChecked="{Binding EnableCutLines}"/>
+                    </Grid>
+                        <Grid Grid.Row="2" ColumnDefinitions="Auto,*"
+                              Margin="0,10,0,0">
 						<Label Grid.Column="0"
 							   HorizontalAlignment="Right"
 							   VerticalAlignment="Center"
@@ -74,7 +89,7 @@
 								 ToolTip.Tip="PNG image filename in Config folder (e.g. spindle.png). Leave empty for default procedural drawing."
 								 Text="{Binding SpindleImagePath}"/>
 					</Grid>
-                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+                    <Grid Grid.Row="3" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
                         <Label Grid.Column="0"
                                HorizontalAlignment="Right"
                                VerticalAlignment="Center"
@@ -94,7 +109,7 @@
 								 Recommend to stay above 100mm"
                                  Text="{Binding PollRate}"/>
                     </Grid>
-					<Grid Grid.Row="3" ColumnDefinitions="*,*"  >
+					<Grid Grid.Row="4" ColumnDefinitions="*,*"  >
 						<Border Grid.Column="0" Padding="5,10"
 								Margin="0,10,0,0"
 								BorderBrush="AntiqueWhite"
@@ -205,7 +220,7 @@
 						</Border>
 					</Grid>
 
-					<Grid Grid.Row="4" ColumnDefinitions="*,*"  >
+					<Grid Grid.Row="5" ColumnDefinitions="*,*"  >
 						<Border Grid.Column="0" Padding="5,10"
 								Margin="0,10,0,0"
 								BorderBrush="AntiqueWhite"
