@@ -21,6 +21,7 @@ public class RealTImeState
     public string ProgramRPM { get; set; }
     public string ActualRpm { get; set; }
     public List<char> SignalStatus { get; set; } = [];
+    public string AccessoryState { get; set; } = "";
 
     public RealTImeState()
     {

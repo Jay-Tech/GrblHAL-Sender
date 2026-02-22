@@ -4,6 +4,7 @@ using GrbLHALSender.Gamepad;
 using GrbLHALSender.Probe;
 using GrbLHALSender.SdCard;
 using GrbLHALSender.WebServer;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
@@ -52,6 +53,7 @@ public class GHalSenderConfig : ObservableObject
     public string SpindleImagePath { get; set; } = "spindle.png";
     public ToolList ToolList { get; set; } = new();
     public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new();
+    public List<AuxOutputConfig> AuxOutputs { get; set; } = new();
     public double[] JogDistanceMetric { get; set; } =
     [
         .01,

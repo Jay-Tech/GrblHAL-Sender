@@ -129,6 +129,7 @@ public class MainViewModel : ViewModelBase
     public SdCardViewModel SdCardViewModel { get; set; }
     public CommunicationManager CommManager { get; set; }
     public ProbeViewModel ProbeViewModel { get; set; }
+  
 
     public string UnitSystem { get; set; } = "G21";
     public bool UseMetric
@@ -400,6 +401,8 @@ public class MainViewModel : ViewModelBase
         CommManager.onOptionsUpdated += _commManager_onOptionsUpdated;
         CommManager.onSettingUpdated += _commManager_onSettingUpdated;
         CommManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
+        // Discovered aux pins are added as presets in AppConfigViewModel only —
+        // they don't auto-appear as buttons until the user adds them through config.
 
 
         _configManager?.GHalSenderConfig?.PropertyChanged += (_, e) =>

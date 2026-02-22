@@ -15,6 +15,7 @@
 
 	<UserControl.Resources>
 		<convertors:LedBackGround x:Key="LedBackGround"></convertors:LedBackGround>
+		<convertors:ActiveBorderBrush x:Key="ActiveBorderBrush"></convertors:ActiveBorderBrush>
 	</UserControl.Resources>
 	<UserControl.Styles>
 		<Style Selector="Label.inactive">
@@ -413,6 +414,33 @@
 										HorizontalAlignment="Center">
 									<views:DialogButtonView DataContext="{Binding DialogViewModel}" />
 								</Border>
+
+								<Border Grid.Row="0" Grid.RowSpan="2"  Grid.Column="0"
+										VerticalAlignment="Bottom" IsEnabled="{Binding Connected}"
+										HorizontalAlignment="Left"
+										Margin="10,0,0,10">
+										<ItemsRepeater ItemsSource="{Binding AppConfigViewModel.AuxOutputViewModel.AuxOutputItems}"
+													   x:Name="AuxOutputRepeater" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+											<ItemsRepeater.Layout>
+												<UniformGridLayout   ItemsJustification="End" Orientation="Vertical"/>
+											</ItemsRepeater.Layout>
+											<ItemsRepeater.ItemTemplate>
+												<DataTemplate>
+													<Button Height="40" Width="100"
+															Content="{Binding Name}"
+															FontSize="{DynamicResource BaseFontSize}"
+															HorizontalContentAlignment="Center"
+															VerticalContentAlignment="Center"
+															VerticalAlignment="Bottom"
+															HorizontalAlignment="Left"
+															Margin="2"
+															BorderBrush="{Binding IsActive, Converter={StaticResource ActiveBorderBrush}}"
+															BorderThickness="2"
+															Command="{Binding ToggleCommand}"/>
+												</DataTemplate>
+											</ItemsRepeater.ItemTemplate>
+										</ItemsRepeater>
+								</Border>
 							</Grid>
 						</TabItem>
 						<TabItem Padding="8,0"
@@ -479,9 +507,9 @@
 			<!-- START Jog Control-->
 			<Border IsEnabled ="{Binding Connected}" x:Name="JogBorder"  Grid.Column="2" >
 				<Grid  x:Name="Grid" Margin="0,45,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+					   HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 					<Grid  x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
-						  VerticalAlignment="Stretch" ColumnDefinitions="80,80,80,80">
+						   VerticalAlignment="Stretch" ColumnDefinitions="80,80,80,80">
 						<Label Grid.Column="0"
 							   FontSize="24"
 							   Content="Feed"
@@ -922,7 +950,7 @@
 									   TextAlignment="Left"
 									   Margin="5,0,0,5"
 									   FontSize="{DynamicResource DetailFontSizeLarge}"/>
-							<TextBlock  Grid.Column="1" TextAlignment="Left" 
+							<TextBlock  Grid.Column="1" TextAlignment="Left"
 										Text="{Binding FeedOverRide, StringFormat={}%: {0},FallbackValue=0}"
 										Margin="5,0,0,0"
 										FontSize="{DynamicResource DetailFontSizeLarge}" />

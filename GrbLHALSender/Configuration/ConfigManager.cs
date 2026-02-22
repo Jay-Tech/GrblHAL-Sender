@@ -8,6 +8,7 @@ namespace GrbLHALSender.Configuration;
 public class ConfigManager
 {
     public event EventHandler<GHalSenderConfig> OnConfigLoaded;
+    public event EventHandler<GHalSenderConfig> OnConfigSaved;
 
     private readonly string _path = AppDomain.CurrentDomain.BaseDirectory;
     private readonly string _fileName = "GHalSender_Config.json";
@@ -26,6 +27,7 @@ public class ConfigManager
         var options = new JsonSerializerOptions { WriteIndented = true };
         var jsonString = JsonSerializer.Serialize(GHalSenderConfig, options);
         File.WriteAllText(fullPath, jsonString);
+        OnConfigSaved?.Invoke(this, GHalSenderConfig);
     }
     public GHalSenderConfig LoadConfig()
     {

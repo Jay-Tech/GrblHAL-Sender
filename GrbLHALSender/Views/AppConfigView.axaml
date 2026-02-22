@@ -652,6 +652,106 @@
 							   Margin="0,20,0,0"/>
 				</Grid>
 			</TabItem>
+			<TabItem Header="Aux Outputs" FontSize="16" Padding="15,5">
+				<Grid RowDefinitions="Auto,*" Margin="10">
+					<!-- Add from available presets -->
+					<Border Grid.Row="0" BorderBrush="AntiqueWhite" BorderThickness="1" Padding="10" Margin="0,5,0,10">
+						<Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
+							<Label Grid.Row="0" Grid.ColumnSpan="2"
+								   Content="AVAILABLE OUTPUTS"
+								   HorizontalContentAlignment="Center"
+								   VerticalContentAlignment="Center"
+								   HorizontalAlignment="Center"
+								   VerticalAlignment="Center"
+								   Margin="0,0,0,8"/>
+							<Label Grid.Row="1" Grid.Column="0"
+								   Content="Select:"
+								   HorizontalAlignment="Right" VerticalAlignment="Center"
+								   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+							<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="10,2,0,2">
+								<ComboBox ItemsSource="{Binding AuxOutputViewModel.AuxOutputPresets}"
+										  SelectedItem="{Binding AuxOutputViewModel.SelectedAuxPreset}"
+										  DisplayMemberBinding="{Binding Name}"
+										  Width="200"
+										  FontSize="16"
+										  HorizontalAlignment="Left" VerticalAlignment="Center"
+										  ToolTip.Tip="Mist, Flood and discovered Aux Out pins from the controller"/>
+								<Button Content="Add"
+										FontSize="16"
+										Height="35"
+										Width="80"
+										Margin="10,0,0,0"
+										Command="{Binding AuxOutputViewModel.AddPresetCommand}"
+										ToolTip.Tip="Add the selected output to the configured list"/>
+							</StackPanel>
+						</Grid>
+					</Border>
+					<!-- Current configured outputs list -->
+					<Border Grid.Row="1" BorderBrush="AntiqueWhite" BorderThickness="1" Padding="10">
+						<Grid RowDefinitions="Auto,Auto,*">
+							<Label Grid.Row="0"
+								   Content="CONFIGURED OUTPUTS"
+								   HorizontalContentAlignment="Center"
+								   VerticalContentAlignment="Center"
+								   HorizontalAlignment="Center"
+								   Margin="0,0,0,5"/>
+							<!-- Column headers -->
+							<Grid Grid.Row="1" ColumnDefinitions="120,120,120,80,Auto" Margin="0,0,0,3">
+								<Label Grid.Column="0" Content="Name" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
+								<Label Grid.Column="1" Content="On Cmd" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
+								<Label Grid.Column="2" Content="Off Cmd" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
+								<Label Grid.Column="3" Content="State" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
+							</Grid>
+							<ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+								<ItemsControl ItemsSource="{Binding AuxOutputViewModel.AuxOutputItems}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<Grid ColumnDefinitions="120,120,120,80,Auto" Margin="0,3">
+												<TextBox Grid.Column="0"
+														 Text="{Binding Name}"
+														 FontSize="16"
+														 VerticalAlignment="Center"
+														 HorizontalAlignment="Stretch"
+														 ToolTip.Tip="Edit to rename this button"/>
+												<Label Grid.Column="1"
+													   Content="{Binding OnCommand}"
+													   FontSize="14"
+													   Foreground="#888"
+													   VerticalAlignment="Center"
+													   HorizontalContentAlignment="Left"/>
+												<Label Grid.Column="2"
+													   Content="{Binding OffCommand}"
+													   FontSize="14"
+													   Foreground="#888"
+													   VerticalAlignment="Center"
+													   HorizontalContentAlignment="Left"/>
+												<Label Grid.Column="3"
+													   Content="{Binding StateKey}"
+													   FontSize="14"
+													   Foreground="#888"
+													   VerticalAlignment="Center"
+													   HorizontalContentAlignment="Left"/>
+												<Button Grid.Column="4"
+														Content="Remove"
+														FontSize="14"
+														Height="30"
+														Margin="5,0,0,0"
+														VerticalAlignment="Center"
+														Command="{Binding $parent[UserControl].((vm:AppConfigViewModel)DataContext).AuxOutputViewModel.RemoveAuxOutputCommand}"
+														CommandParameter="{Binding}"/>
+											</Grid>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</ScrollViewer>
+						</Grid>
+					</Border>
+				</Grid>
+			</TabItem>
 			<TabItem Header="SD Card" x:Name="SdTabItem" FontSize="16" Padding="15,5">
 				<views:SdCardView x:Name="SdCardViewControl" />
 			</TabItem>

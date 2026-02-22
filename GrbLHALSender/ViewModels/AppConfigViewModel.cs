@@ -1,4 +1,5 @@
-﻿using GrbLHALSender.Configuration;
+﻿using GrbLHALSender.Communication;
+using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
 using ReactiveUI;
 using System;
@@ -9,9 +10,11 @@ using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels
 {
-    public class AppConfigViewModel : ViewModelBase, IDialogCloseable
+    public class AppConfigViewModel : ViewModelBase, IDialogCloseable, ISavableViewModel
     {
+       
         private readonly ConfigManager _configManager;
+       // private readonly CommunicationManager _commManager;
         private GHalSenderConfig _appConfig;
         private bool _enableCutLines;
         private bool _useMetric;
@@ -38,7 +41,7 @@ namespace GrbLHALSender.ViewModels
         private double _pollRate;
         private bool _borderlessWindow;
 
-
+        public AuxOutputViewModel AuxOutputViewModel { get; }
         public bool EnableCutLines
         {
             get => _enableCutLines;
@@ -158,6 +161,7 @@ namespace GrbLHALSender.ViewModels
 
         public ObservableCollection<TriggerMappingItem> GamePadTriggerMappings { get; } = [];
 
+      
         public bool IsWebServerEnabled
         {
             get => _isWebServerEnabled;
@@ -200,12 +204,15 @@ namespace GrbLHALSender.ViewModels
 
         public ICommand CloseCommand { get; }
 
-        public AppConfigViewModel(ConfigManager configManager)
+        public AppConfigViewModel(ConfigManager configManager, 
+            AuxOutputViewModel  auxOutputViewModel)
         {
+            AuxOutputViewModel = auxOutputViewModel;
             _configManager = configManager;
-            SaveConfigCommand = ReactiveCommand.Create(SaveConfig);
+            SaveConfigCommand = ReactiveCommand.Create(Save);
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
             _configManager.OnConfigLoaded += _configManager_OnConfigLoaded;
+         
         }
 
         private void _configManager_OnConfigLoaded(object? sender, GHalSenderConfig e)
@@ -238,7 +245,7 @@ namespace GrbLHALSender.ViewModels
             BorderlessWindow = _appConfig.Borderless;
         }
 
-        public void SaveConfig()
+        public void Save()
         {
             _appConfig.ShowToolpathProgress = EnableCutLines;
             _appConfig.UseMetric = UseMetric;
@@ -261,6 +268,7 @@ namespace GrbLHALSender.ViewModels
             SaveGamepadMappings(_appConfig.GamepadConfig);
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
+             AuxOutputViewModel.Save();
             _appConfig.UseAntiAlias = UseAntiAlias;
             _appConfig.SpindleImagePath = SpindleImagePath;
             _appConfig.PollRate = PollRate;
@@ -367,5 +375,6 @@ namespace GrbLHALSender.ViewModels
                     cfg.TriggerMapping[item.TriggerName] = item.SelectedAction;
             }
         }
+        
     }
 }
