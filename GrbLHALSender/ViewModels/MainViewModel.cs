@@ -909,18 +909,18 @@ public class MainViewModel : ViewModelBase
     }
     public void Connect()
     {
-
-        if (_config.Connection == GHalSenderConfig.ConnectionType.Tcp)
+        if(Connected) return;
+        switch (_config.Connection)
         {
-            CommManager.NewTcpConnection(_config.TcpSettings);
-        }
-        else if (_config.Connection == GHalSenderConfig.ConnectionType.Serial)
-        {
-            CommManager.NewSerialConnection(_config.SerialSettings);
-        }
-        else
-        {
-            CommManager.WebSocketConnection(_config.WebSocketSettings);
+            case GHalSenderConfig.ConnectionType.Tcp:
+                CommManager.NewTcpConnection(_config.TcpSettings);
+                break;
+            case GHalSenderConfig.ConnectionType.Serial:
+                CommManager.NewSerialConnection(_config.SerialSettings);
+                break;
+            default:
+                CommManager.WebSocketConnection(_config.WebSocketSettings);
+                break;
         }
         
         Connected = CommManager.Adapter.IsConnected;
