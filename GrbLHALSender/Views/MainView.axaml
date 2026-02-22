@@ -415,16 +415,14 @@
 									<views:DialogButtonView DataContext="{Binding DialogViewModel}" />
 								</Border>
 
-								<Border Grid.Row="1"  Grid.Column="0"
-										VerticalAlignment="Bottom"
+								<Border Grid.Row="0" Grid.RowSpan="2"  Grid.Column="0"
+										VerticalAlignment="Bottom" IsEnabled="{Binding Connected}"
 										HorizontalAlignment="Left"
 										Margin="10,0,0,10">
-									<ScrollViewer VerticalScrollBarVisibility="Auto"
-												  MaxHeight="300">
-										<ItemsRepeater ItemsSource="{Binding AuxOutputViewModel.Buttons}"
-													   x:Name="AuxOutputRepeater">
+										<ItemsRepeater ItemsSource="{Binding AppConfigViewModel.AuxOutputViewModel.AuxOutputItems}"
+													   x:Name="AuxOutputRepeater" HorizontalAlignment="Left" VerticalAlignment="Bottom">
 											<ItemsRepeater.Layout>
-												<StackLayout Orientation="Vertical" Spacing="10"/>
+												<UniformGridLayout   ItemsJustification="End" Orientation="Vertical"/>
 											</ItemsRepeater.Layout>
 											<ItemsRepeater.ItemTemplate>
 												<DataTemplate>
@@ -433,13 +431,15 @@
 															FontSize="{DynamicResource BaseFontSize}"
 															HorizontalContentAlignment="Center"
 															VerticalContentAlignment="Center"
+															VerticalAlignment="Bottom"
+															HorizontalAlignment="Left"
+															Margin="2"
 															BorderBrush="{Binding IsActive, Converter={StaticResource ActiveBorderBrush}}"
 															BorderThickness="2"
 															Command="{Binding ToggleCommand}"/>
 												</DataTemplate>
 											</ItemsRepeater.ItemTemplate>
 										</ItemsRepeater>
-									</ScrollViewer>
 								</Border>
 							</Grid>
 						</TabItem>

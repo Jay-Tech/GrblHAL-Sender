@@ -1,8 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using GrbLHALSender.Communication;
+﻿using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
-using GrbLHALSender.Utility;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -12,11 +10,11 @@ using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels
 {
-    public class AppConfigViewModel : ViewModelBase, IDialogCloseable
+    public class AppConfigViewModel : ViewModelBase, IDialogCloseable, ISavableViewModel
     {
-        public AuxOutputViewModel AuxOutputViewModel { get; }
+       
         private readonly ConfigManager _configManager;
-        private readonly CommunicationManager _commManager;
+       // private readonly CommunicationManager _commManager;
         private GHalSenderConfig _appConfig;
         private bool _enableCutLines;
         private bool _useMetric;
@@ -43,7 +41,7 @@ namespace GrbLHALSender.ViewModels
         private double _pollRate;
         private bool _borderlessWindow;
 
-
+        public AuxOutputViewModel AuxOutputViewModel { get; }
         public bool EnableCutLines
         {
             get => _enableCutLines;
@@ -163,25 +161,7 @@ namespace GrbLHALSender.ViewModels
 
         public ObservableCollection<TriggerMappingItem> GamePadTriggerMappings { get; } = [];
 
-        // Aux Outputs
-        public ObservableCollection<AuxOutputItem> AuxOutputItems { get; } = [];
-
-        /// <summary>
-        /// Available presets: static Mist/Flood + dynamically discovered aux pins from $PINS.
-        /// </summary>
-        public ObservableCollection<AuxOutputConfig> AuxOutputPresets { get; } =
-            new(AuxOutputConfig.Presets);
-
-        private AuxOutputConfig? _selectedAuxPreset;
-        public AuxOutputConfig? SelectedAuxPreset
-        {
-            get => _selectedAuxPreset;
-            set => this.RaiseAndSetIfChanged(ref _selectedAuxPreset, value);
-        }
-
-        public ICommand AddPresetCommand { get; }
-        public ICommand RemoveAuxOutputCommand { get; }
-
+      
         public bool IsWebServerEnabled
         {
             get => _isWebServerEnabled;
@@ -224,17 +204,15 @@ namespace GrbLHALSender.ViewModels
 
         public ICommand CloseCommand { get; }
 
-        public AppConfigViewModel(ConfigManager configManager, CommunicationManager commManager, AuxOutputViewModel  auxOutputViewModel)
+        public AppConfigViewModel(ConfigManager configManager, 
+            AuxOutputViewModel  auxOutputViewModel)
         {
             AuxOutputViewModel = auxOutputViewModel;
             _configManager = configManager;
-            _commManager = commManager;
-            SaveConfigCommand = ReactiveCommand.Create(SaveConfig);
+            SaveConfigCommand = ReactiveCommand.Create(Save);
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
-            AddPresetCommand = ReactiveCommand.Create(AddSelectedPreset);
-            RemoveAuxOutputCommand = ReactiveCommand.Create<AuxOutputItem>(RemoveAuxOutput);
             _configManager.OnConfigLoaded += _configManager_OnConfigLoaded;
-            _commManager.OnAuxPinsDiscovered += OnAuxPinsDiscovered;
+         
         }
 
         private void _configManager_OnConfigLoaded(object? sender, GHalSenderConfig e)
@@ -261,14 +239,13 @@ namespace GrbLHALSender.ViewModels
             LoadGamepadMappings(_appConfig.GamepadConfig);
             IsWebServerEnabled = _appConfig.WebServerConfig.Enabled;
             WebServerPort = _appConfig.WebServerConfig.Port;
-            LoadAuxOutputs(_appConfig.AuxOutputs);
             UseAntiAlias = _appConfig.UseAntiAlias;
             SpindleImagePath = _appConfig.SpindleImagePath;
             PollRate = _appConfig.PollRate;
             BorderlessWindow = _appConfig.Borderless;
         }
 
-        public void SaveConfig()
+        public void Save()
         {
             _appConfig.ShowToolpathProgress = EnableCutLines;
             _appConfig.UseMetric = UseMetric;
@@ -291,7 +268,7 @@ namespace GrbLHALSender.ViewModels
             SaveGamepadMappings(_appConfig.GamepadConfig);
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
-            SaveAuxOutputs();
+             AuxOutputViewModel.Save();
             _appConfig.UseAntiAlias = UseAntiAlias;
             _appConfig.SpindleImagePath = SpindleImagePath;
             _appConfig.PollRate = PollRate;
@@ -398,75 +375,6 @@ namespace GrbLHALSender.ViewModels
                     cfg.TriggerMapping[item.TriggerName] = item.SelectedAction;
             }
         }
-
-        private void LoadAuxOutputs(List<AuxOutputConfig> configs)
-        {
-            AuxOutputItems.Clear();
-            foreach (var cfg in configs)
-            {
-                AuxOutputItems.Add(new AuxOutputItem
-                {
-                    Name = cfg.Name,
-                    OnCommand = cfg.OnCommand,
-                    OffCommand = cfg.OffCommand,
-                    StateKey = cfg.StateKey
-                });
-            }
-        }
-
-        private void SaveAuxOutputs()
-        {
-            _appConfig.AuxOutputs = AuxOutputItems.Select(item => new AuxOutputConfig
-            {
-                Name = item.Name,
-                OnCommand = item.OnCommand,
-                OffCommand = item.OffCommand,
-                StateKey = item.StateKey
-            }).ToList();
-        }
-
-        private void AddSelectedPreset()
-        {
-            if (SelectedAuxPreset == null) return;
-            // Don't add duplicates (check by StateKey since Name is editable)
-            if (AuxOutputItems.Any(i => i.StateKey == SelectedAuxPreset.StateKey)) return;
-            AuxOutputItems.Add(new AuxOutputItem
-            {
-                Name = SelectedAuxPreset.Name,
-                OnCommand = SelectedAuxPreset.OnCommand,
-                OffCommand = SelectedAuxPreset.OffCommand,
-                StateKey = SelectedAuxPreset.StateKey
-            });
-        }
-
-        private void RemoveAuxOutput(AuxOutputItem item)
-        {
-            AuxOutputItems.Remove(item);
-        }
-
-        private void OnAuxPinsDiscovered(object? sender, List<AuxPinInfo> pins)
-        {
-            foreach (var pin in pins)
-            {
-                var stateKey = $"DOUT:{pin.PortNumber}";
-                // Skip if this pin is already in the preset list
-                if (AuxOutputPresets.Any(p => p.StateKey == stateKey)) continue;
-                AuxOutputPresets.Add(new AuxOutputConfig
-                {
-                    Name = $"Aux {pin.PortNumber}",
-                    OnCommand = $"{GrblHalConstants.AuxOutOn} P{pin.PortNumber}",
-                    OffCommand = $"{GrblHalConstants.AuxOutOff} P{pin.PortNumber}",
-                    StateKey = stateKey
-                });
-            }
-        }
-    }
-
-    public partial class AuxOutputItem : ObservableObject
-    {
-        [ObservableProperty] private string _name = "";
-        [ObservableProperty] private string _onCommand = "";
-        [ObservableProperty] private string _offCommand = "";
-        [ObservableProperty] private string _stateKey = "";
+        
     }
 }

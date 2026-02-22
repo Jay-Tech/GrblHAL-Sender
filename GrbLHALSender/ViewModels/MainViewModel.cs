@@ -129,7 +129,7 @@ public class MainViewModel : ViewModelBase
     public SdCardViewModel SdCardViewModel { get; set; }
     public CommunicationManager CommManager { get; set; }
     public ProbeViewModel ProbeViewModel { get; set; }
-    public AuxOutputViewModel AuxOutputViewModel { get; set; }
+  
 
     public string UnitSystem { get; set; } = "G21";
     public bool UseMetric
@@ -374,13 +374,12 @@ public class MainViewModel : ViewModelBase
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
         WebServerService webServerService, MachineStateService machineStateService,
-        SdCardViewModel sdCardViewModel, AuxOutputViewModel auxOutputViewModel)
+        SdCardViewModel sdCardViewModel)
     {
         CommManager = commManager;
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
         SdCardViewModel = sdCardViewModel;
-        AuxOutputViewModel = auxOutputViewModel;
         _needsSetup = true;
         _configManager = configManager;
         JobViewModel = jobViewModel;

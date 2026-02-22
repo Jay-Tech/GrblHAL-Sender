@@ -669,8 +669,8 @@
 								   HorizontalAlignment="Right" VerticalAlignment="Center"
 								   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
 							<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="10,2,0,2">
-								<ComboBox ItemsSource="{Binding AuxOutputPresets}"
-										  SelectedItem="{Binding SelectedAuxPreset}"
+								<ComboBox ItemsSource="{Binding AuxOutputViewModel.AuxOutputPresets}"
+										  SelectedItem="{Binding AuxOutputViewModel.SelectedAuxPreset}"
 										  DisplayMemberBinding="{Binding Name}"
 										  Width="200"
 										  FontSize="16"
@@ -681,7 +681,7 @@
 										Height="35"
 										Width="80"
 										Margin="10,0,0,0"
-										Command="{Binding AddPresetCommand}"
+										Command="{Binding AuxOutputViewModel.AddPresetCommand}"
 										ToolTip.Tip="Add the selected output to the configured list"/>
 							</StackPanel>
 						</Grid>
@@ -707,7 +707,7 @@
 									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
 							</Grid>
 							<ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-								<ItemsControl ItemsSource="{Binding AuxOutputItems}">
+								<ItemsControl ItemsSource="{Binding AuxOutputViewModel.AuxOutputItems}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate>
 											<Grid ColumnDefinitions="120,120,120,80,Auto" Margin="0,3">
@@ -741,7 +741,7 @@
 														Height="30"
 														Margin="5,0,0,0"
 														VerticalAlignment="Center"
-														Command="{Binding $parent[UserControl].((vm:AppConfigViewModel)DataContext).RemoveAuxOutputCommand}"
+														Command="{Binding $parent[UserControl].((vm:AppConfigViewModel)DataContext).AuxOutputViewModel.RemoveAuxOutputCommand}"
 														CommandParameter="{Binding}"/>
 											</Grid>
 										</DataTemplate>
