@@ -10,6 +10,9 @@ Goal was to create a application that will run on a cheap mini PC with a UI desi
 ## GrblHAL Setting supports export and import 
 ![Settings Screen](Media/Setting.png)
 </br>
+## Supports Serial, TCP, or WebSocket connection protocols.  Push and hold "Connect" to setup connection type and Auto Connect on app launch if desired 
+![Settings Screen](Media/ConnectionOptions.png)
+</br>
 ## Double clicking any Text Fields brings up virtual keyboard
 ![Keyboard](Media/KeyBoard.png)
 </br>
