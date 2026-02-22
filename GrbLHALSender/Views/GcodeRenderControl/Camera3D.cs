@@ -7,9 +7,9 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 {
     public class Camera3D
     {
-        public float RotationX { get; private set; } = 45f;
+        public float RotationX { get; private set; } = 30f;
         public float RotationY { get; private set; } = 0f;
-        public float Distance { get; private set; } = 1900f;
+        public float Distance { get; private set; } = 1500f;
         public float PanX { get; private set; }
         public float PanY { get; private set; }
 
@@ -65,7 +65,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // Account for viewport aspect ratio so the grid fits nicely
             float aspect = viewportWidth / viewportHeight;
             float fitDim = aspect > 1f ? dim : dim / aspect;
-            Distance = fitDim * 1.8f;
+            Distance = fitDim * 1.2f;
             ResetOrientation();
         }
 
@@ -75,7 +75,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             PanX = 0f;
             PanY = 0f;
             // Slight overhead angle — more top-down to see the full work surface
-            RotationX = 60f;
+            RotationX = 30f;
             RotationY = 0f;
         }
 

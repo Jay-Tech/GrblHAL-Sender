@@ -32,6 +32,9 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         public static readonly StyledProperty<string> SelectedLineInfoProperty =
             AvaloniaProperty.Register<GcodeRenderControl, string>(nameof(SelectedLineInfo), defaultValue: "");
 
+        public static readonly StyledProperty<bool> UseAntiAliasProperty =
+            AvaloniaProperty.Register<GcodeRenderControl, bool>(nameof(UseAntiAlias), defaultValue: true);
+
         public static readonly StyledProperty<string?> SpindleImagePathProperty =
             AvaloniaProperty.Register<GcodeRenderControl, string?>(nameof(SpindleImagePath), defaultValue: "spindle.png");
 
@@ -75,6 +78,12 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         {
             get => GetValue(SelectedLineInfoProperty);
             set => SetValue(SelectedLineInfoProperty, value);
+        }
+
+        public bool UseAntiAlias
+        {
+            get => GetValue(UseAntiAliasProperty);
+            set => SetValue(UseAntiAliasProperty, value);
         }
 
         public string? SpindleImagePath
@@ -127,6 +136,11 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                     SelectedSegmentIndex = -1;
                     SelectedLineInfo = "";
                 }
+                InvalidateVisual();
+            }
+            else if (change.Property == UseAntiAliasProperty)
+            {
+                _sceneCache.Invalidate();
                 InvalidateVisual();
             }
             else if (change.Property == SpindleImagePathProperty)
@@ -183,7 +197,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 WorkCoordinateOffset,
                 CompletedSegmentIndex,
                 SelectedSegmentIndex,
-                _spindleImageProvider.Bitmap);
+                _spindleImageProvider.Bitmap,
+                UseAntiAlias);
 
             context.Custom(op);
         }

@@ -391,7 +391,8 @@
 																	   WorkCoordinateOffset="{Binding JobViewModel.WorkCoordinateOffset}"
 																	   CompletedSegmentIndex="{Binding JobViewModel.CompletedSegmentIndex}"
 																	   SelectedLineInfo="{Binding JobViewModel.SelectedLineInfo, Mode=TwoWay}"
-																	   SpindleImagePath="{Binding SpindleImagePath}"/>
+																	   SpindleImagePath="{Binding SpindleImagePath}"
+																	   UseAntiAlias="{Binding UseAntiAlias}"/>
 								<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
 										HorizontalAlignment="Stretch"
 										IsVisible="{Binding #HomeTab.IsSelected}"

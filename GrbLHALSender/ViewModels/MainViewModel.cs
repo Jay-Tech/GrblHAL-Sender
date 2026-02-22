@@ -42,6 +42,7 @@ public class MainViewModel : ViewModelBase
     private string _subState = "";
     private MachineSettings? _machineSettings;
     private string _spindleImagePath = "spindle.png";
+    private bool _useAntiAlias = true;
     private bool _showConsole;
     private bool _isJobRunning;
     private int _spindleRpm;
@@ -228,6 +229,12 @@ public class MainViewModel : ViewModelBase
     {
         get => _spindleImagePath;
         set => this.RaiseAndSetIfChanged(ref _spindleImagePath, value);
+    }
+
+    public bool UseAntiAlias
+    {
+        get => _useAntiAlias;
+        set => this.RaiseAndSetIfChanged(ref _useAntiAlias, value);
     }
     public int FeedRate
     {
@@ -674,6 +681,7 @@ public class MainViewModel : ViewModelBase
         UnitSystem = UseMetric ? "G21" : "G20";
         AutoConnect = _config.AutoConnect;
         SpindleImagePath = _config.SpindleImagePath;
+        UseAntiAlias = _config.UseAntiAlias;
         JogRateList = new ObservableCollection<double>(UseMetric ? _config.JogSpeedMetric : _config.JogSpeedImperial);
         JogStepList = new ObservableCollection<double>(UseMetric ? _config.JogDistanceMetric : _config.JogDistanceImperial);
         JogStep = JogStepList[^1];
