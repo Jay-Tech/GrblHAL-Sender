@@ -129,6 +129,7 @@ public class MainViewModel : ViewModelBase
     public SdCardViewModel SdCardViewModel { get; set; }
     public CommunicationManager CommManager { get; set; }
     public ProbeViewModel ProbeViewModel { get; set; }
+    public AuxOutputViewModel AuxOutputViewModel { get; set; }
 
     public string UnitSystem { get; set; } = "G21";
     public bool UseMetric
@@ -373,12 +374,13 @@ public class MainViewModel : ViewModelBase
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
         WebServerService webServerService, MachineStateService machineStateService,
-        SdCardViewModel sdCardViewModel)
+        SdCardViewModel sdCardViewModel, AuxOutputViewModel auxOutputViewModel)
     {
         CommManager = commManager;
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
         SdCardViewModel = sdCardViewModel;
+        AuxOutputViewModel = auxOutputViewModel;
         _needsSetup = true;
         _configManager = configManager;
         JobViewModel = jobViewModel;
@@ -400,6 +402,8 @@ public class MainViewModel : ViewModelBase
         CommManager.onOptionsUpdated += _commManager_onOptionsUpdated;
         CommManager.onSettingUpdated += _commManager_onSettingUpdated;
         CommManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
+        // Discovered aux pins are added as presets in AppConfigViewModel only —
+        // they don't auto-appear as buttons until the user adds them through config.
 
 
         _configManager?.GHalSenderConfig?.PropertyChanged += (_, e) =>

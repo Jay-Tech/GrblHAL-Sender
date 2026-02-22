@@ -171,6 +171,13 @@ public class MachineStateService : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref _signalStatus, value);
     }
 
+    private string _accessoryState = "";
+    public string AccessoryState
+    {
+        get => _accessoryState;
+        private set => this.RaiseAndSetIfChanged(ref _accessoryState, value);
+    }
+
     // Raw state for consumers that need the full object (e.g., console RT display)
     private RealTImeState? _rawState;
     private int _rpmOverride;
@@ -318,6 +325,9 @@ public class MachineStateService : ReactiveObject, IDisposable
 
         // --- Signals ---
         SignalStatus = state.SignalStatus;
+
+        // --- Accessory state (A: field) ---
+        AccessoryState = state.AccessoryState ?? "";
     }
 
     

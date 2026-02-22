@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -18,6 +19,8 @@ using Timer = System.Timers.Timer;
 
 namespace GrbLHALSender.Communication
 {
+    public record AuxPinInfo(string Description, int PortNumber);
+
     public class CommunicationManager
     {
         private readonly ConfigManager _configManager;
@@ -29,6 +32,7 @@ namespace GrbLHALSender.Communication
         public event EventHandler<GrblHALOptions> onOptionsUpdated;
         public event EventHandler<ProbeState> OnProbeResults;
         public event EventHandler OnCommandAck;
+        public event EventHandler<List<AuxPinInfo>> OnAuxPinsDiscovered;
 
 
         private Dictionary<int, string> _errorCodes = new Dictionary<int, string>();
@@ -116,8 +120,11 @@ namespace GrbLHALSender.Communication
                 {
                     SendSettings();
                 }
+                var pinLines = await SendCommandCollectResponsesAsync(GrblHalConstants.GetPins, timeOutMs: 2000);
+                ParseAllPins(pinLines);
                 await SendAsyncCommand(GrblHalConstants.Alarmcodes, timeOutMs: 1000);
                 await SendAsyncCommand(GrblHalConstants.Errorcodes, timeOutMs: 1000);
+               
                 SetupPoll();
             });
         }
@@ -322,6 +329,12 @@ namespace GrbLHALSender.Communication
                     var substring = trimmed.Split(':');
                     ParseProbe(substring.AsSpan());
                 }
+                else if (inner.StartsWith("PIN"))
+                {
+                    var trimmed = data.Trim('[', ']');
+                    var substring = trimmed.Split(':');
+                    ParsePins(substring.AsSpan());
+                }
                 else
                 {
                     // Generic bracketed data (OPT, NEWOPT, AXS, SIGNALS, etc.)
@@ -380,6 +393,77 @@ namespace GrbLHALSender.Communication
 
             Debug.WriteLine($"***Warning Data Not Parsed: {data}***");
         }
+
+        private void ParsePins(Span<string> asSpan)
+        {
+            var pins = asSpan[1].Split(',');
+            if (pins.Length <= 2) return;
+            if (pins[1].StartsWith("Aux out", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var pinDescription = pins[1];
+                var pinNumber = pins[2];
+                Debug.WriteLine($"Pin {pinNumber} triggered: {pinDescription}");
+            }
+        }
+
+        private void ParseAllPins(List<string> pinLines)
+        {
+            var auxPins = new List<AuxPinInfo>();
+            foreach (var line in pinLines)
+            {
+                var trimmed = line.Trim().Trim('[', ']');
+                if (!trimmed.StartsWith("PIN:", StringComparison.OrdinalIgnoreCase)) continue;
+
+                // Format: PIN:<port>,<description>,<pinNumber>
+                var afterPrefix = trimmed.Substring(4); // skip "PIN:"
+                var parts = afterPrefix.Split(',');
+                if (parts.Length < 3) continue;
+
+                var description = parts[1].Trim();
+                if (!description.StartsWith("Aux out", StringComparison.OrdinalIgnoreCase)) continue;
+
+                if (int.TryParse(parts[2].Trim().TrimStart('P'), out var portNumber))
+                {
+                    auxPins.Add(new AuxPinInfo(description, portNumber));
+                }
+            }
+
+            if (auxPins.Count > 0)
+            {
+                OnAuxPinsDiscovered?.Invoke(this, auxPins);
+            }
+        }
+
+        /// <summary>
+        /// Queries the controller for current aux pin states via $pinstate.
+        /// Returns a dictionary mapping port number to on/off state.
+        /// </summary>
+        public async Task<Dictionary<int, bool>> QueryPinStatesAsync()
+        {
+            var result = new Dictionary<int, bool>();
+            var lines = await SendCommandCollectResponsesAsync(GrblHalConstants.GetPinState, timeOutMs: 2000);
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim().Trim('[', ']');
+                if (!trimmed.StartsWith("PINSTATE:", StringComparison.OrdinalIgnoreCase)) continue;
+
+                // Format: PINSTATE:DOUT|P<n>|<physPin>|<mode>|<caps>|<state>
+                // Example: PINSTATE:DOUT|P0|13|N|I|1
+                var parts = trimmed.Substring(9).Split('|');
+                if (parts.Length < 6) continue;
+                if (!parts[0].Equals("DOUT", StringComparison.OrdinalIgnoreCase)) continue;
+
+                // Port number is in parts[1] as "P0", "P1", etc.
+                var portStr = parts[1].Trim().TrimStart('P');
+                if (int.TryParse(portStr, out var portId))
+                {
+                    var stateStr = parts[5].Trim();
+                    result[portId] = stateStr == "1" || stateStr.Equals("on", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            return result;
+        }
+
 
         private void ParseProbe(Span<string> span)
         {
@@ -530,7 +614,7 @@ namespace GrbLHALSender.Communication
                             rtState.Wco = value.Split(",");
                             break;
                         case "A":
-                            var a = value;
+                            rtState.AccessoryState = value;
                             break;
                         case "Ov":
                             var overRides = value.Split(",");

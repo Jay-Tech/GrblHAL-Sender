@@ -45,6 +45,7 @@
         public const string Getstartuplines = "$N";
         public const string Getsettingsdetails = "$ES";
         public const string Getsettingsgroups = "$EG";
+        public const string GetPins = "$PINS";
         //Alarm
         public const string Alarmcodes = "$EA";
         public const string Errorcodes = "$EE";
@@ -57,6 +58,14 @@
         public const string SdcardRun = "$F=";
         public const string SdcardUnlink = "$FD=";
         public const string SdcardDump = "$F<=";
+        //Coolant
+        public const string MistOn = "M7";
+        public const string FloodOn = "M8";
+        public const string CoolantOff = "M9";
+        //Aux Output
+        public const string AuxOutOn = "M64";
+        public const string AuxOutOff = "M65";
+        public const string GetPinState = "$pinstate";
         //  Settings
         public const int ReportUnits = 13;
         public const int XRapid = 110;

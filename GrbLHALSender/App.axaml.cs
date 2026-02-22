@@ -72,6 +72,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<MdiViewModel>();
         collection.AddTransient<AppConfigViewModel>();
         collection.AddTransient<SdCardViewModel>();
+        collection.AddTransient<AuxOutputViewModel>();
     }
 
 }

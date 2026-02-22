@@ -133,6 +133,27 @@ namespace GrbLHALSender.Convertors
         }
     }
 
+    public class ActiveBorderBrush : IValueConverter
+    {
+        public static readonly ActiveBorderBrush Instance = new();
+        private static readonly SolidColorBrush ActiveBrush = new(Color.FromRgb(30, 144, 255)); // DodgerBlue
+        private static readonly SolidColorBrush InactiveBrush = new(Colors.Transparent);
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is bool isActive)
+            {
+                return isActive ? ActiveBrush : InactiveBrush;
+            }
+            return InactiveBrush;
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
     public class HorizontalAlignmentConvertor : IMultiValueConverter
     {
         public static readonly HorizontalAlignmentConvertor Instance = new();
