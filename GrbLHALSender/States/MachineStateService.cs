@@ -304,7 +304,7 @@ public class MachineStateService : ReactiveObject, IDisposable
         AlarmActive = GrblState == GrblState.Alarm;
 
         // --- Feed & speed ---
-        if (int.TryParse(state.FeedRate, out var feedRate)) FeedRate = feedRate;
+        if (int.TryParse(state.FeedRate, out var feedRate)) FeedRate =(int) ConvertUnit(feedRate);
         if (int.TryParse(state.FeedOverRide, out var fo)) FeedOverride = fo;
         if (int.TryParse(state.ProgramRPM, out var ps)) SpindleRpm = ps;
         if (int.TryParse(state.ActualRpm, out var rpm)) ActualRpm = rpm;

@@ -56,6 +56,7 @@ namespace GrbLHALSender.ViewModels
         private string _holdButtonText;
         private JobState _jobState;
         private bool _connected;
+        private int _bufferPercentage = 60;
 
         // Throttled GcodeFileIndex: store latest value, push to UI on a timer
         private volatile int _latestFileIndex;
@@ -311,7 +312,7 @@ namespace GrbLHALSender.ViewModels
                 _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
                 return;
             }
-            if (JobRunning && JobState == JobState.Hold || JobState == JobState.Tool)
+            if (JobRunning && JobState is JobState.Hold or JobState.Tool)
             {
                 ResumeJob();
                 return;
@@ -329,8 +330,9 @@ namespace GrbLHALSender.ViewModels
             lock (_bufferLock) { _lineLengths.Clear(); }
 
             // Use the real RX buffer size from the controller if available
-            var reportedRxSize = _commsManager.Options?.RxBufferSize ?? 0;
-            _rxBufferSize = reportedRxSize > 0 ? reportedRxSize : DefaultRxBufferSize;
+            var reportedRxSize = _commsManager.Options?.RxBufferSize ?? DefaultRxBufferSize;
+            var precentBuffer = reportedRxSize * _bufferPercentage / 100;
+            _rxBufferSize =  Math.Max(precentBuffer, DefaultRxBufferSize);
 
             JobState = JobState.Start;
 
@@ -364,21 +366,17 @@ namespace GrbLHALSender.ViewModels
 
         private void PauseJob()
         {
-           // if (!JobRunning) return;
-            _commsManager.Adapter?.WriteByte(GrblHalConstants.FeedHold);
             // Don't set JobState here — let _commsManager_OnStateReceived
             // update it to Hold when grblHAL actually confirms the hold
+            _commsManager.Adapter?.WriteByte(GrblHalConstants.FeedHold);
         }
 
         private void ResumeJob()
         {
-            if (!JobRunning && JobState != JobState.Hold && JobState != JobState.Tool) return;
-            _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
-            FillBuffer();
-
             // Let _commsManager_OnStateReceived update to Running,
             // then refill the buffer in case acks arrived while paused
-
+            _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
+            FillBuffer();
         }
         private void TogglePause()
         {
