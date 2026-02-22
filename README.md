@@ -27,7 +27,7 @@ Goal was to create a application that will run on a cheap mini PC with a UI desi
 ![AppSetting](Media/SettingApp.png)
 </br>
 ## Rapid-ATC
-![AppSetting](Media/SettingR-Atc.png)
+![AppSetting](Media/SettingRAtc.png)
 </br>
 ## Wireess Gamepad(Setting work in progress)
 ![Gamepad](Media/GamePad.png)
