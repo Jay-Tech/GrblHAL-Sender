@@ -20,7 +20,7 @@ Goal was to create a application that will run on a cheap mini PC with a UI desi
 ![WebServer](Media/WebServer.png)
 </br>
 ## Supports Wireless Controller
-![Wireless Controller](Media/DefaultGamePad.png)
+![Setting](Media/GamePad.png) ![Setting Button](Media/GamePadButtons.png) ![Setting Trigger](Media/GamePadTrigger.png)
 </br>
 # Settings Overview
 ## App
