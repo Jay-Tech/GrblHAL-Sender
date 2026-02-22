@@ -154,13 +154,25 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private readonly SKBitmap? _spindleImage;
         private readonly bool _useAntiAlias;
 
+
+        //Grid paint always drawn AA off for crisp lines, since it's a thin stroke and the grid is dense enough that aliasing isn't a big issue.
+        //This also ensures the grid looks consistent regardless of the AA setting for the rest of the scene.
+        private static readonly SKPaint GridPaint = new()
+        {
+            Color = new SKColor(60, 60, 60),
+            StrokeWidth = 0.5f,
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke
+        };
+
+
         // AA-aware paint sets: [0] = AA off, [1] = AA on
         private static readonly SKPaint[] RapidPaints = CreatePaintPair(new SKColor(0, 200, 0), 1f, SKPaintStyle.Stroke);
         private static readonly SKPaint[] CutPaints = CreatePaintPair(new SKColor(230, 40, 40), 1.2f, SKPaintStyle.Stroke);
         private static readonly SKPaint[] TraversePaints = CreatePaintPair(new SKColor(60, 120, 255), 1f, SKPaintStyle.Stroke);
         private static readonly SKPaint[] CompletedPaints = CreatePaintPair(new SKColor(203, 203, 212), 2.4f, SKPaintStyle.Stroke);
         private static readonly SKPaint[] SelectedPaints = CreatePaintPair(new SKColor(255, 255, 0), 3f, SKPaintStyle.Stroke);
-        private static readonly SKPaint[] GridPaints = CreatePaintPair(new SKColor(60, 60, 60), 0.5f, SKPaintStyle.Stroke);
+      
 
         private static readonly SKPaint BackgroundPaint = new()
         {
@@ -379,14 +391,13 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 gridMaxY = 600f;
             }
 
-            var gridPaint = Pick(GridPaints, useAntiAlias);
-
+            
             for (float x = gridMinX; x <= gridMaxX; x += spacing)
             {
                 var p1 = ProjectToScreen(new Point3D(x, gridMinY, gridZ), viewProj, width, height);
                 var p2 = ProjectToScreen(new Point3D(x, gridMaxY, gridZ), viewProj, width, height);
                 if (p1.HasValue && p2.HasValue)
-                    canvas.DrawLine(p1.Value, p2.Value, gridPaint);
+                    canvas.DrawLine(p1.Value, p2.Value, GridPaint);
             }
 
             for (float y = gridMinY; y <= gridMaxY; y += spacing)
@@ -394,7 +405,7 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 var p1 = ProjectToScreen(new Point3D(gridMinX, y, gridZ), viewProj, width, height);
                 var p2 = ProjectToScreen(new Point3D(gridMaxX, y, gridZ), viewProj, width, height);
                 if (p1.HasValue && p2.HasValue)
-                    canvas.DrawLine(p1.Value, p2.Value, gridPaint);
+                    canvas.DrawLine(p1.Value, p2.Value, GridPaint);
             }
         }
 
@@ -435,7 +446,10 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             var xEnd = ProjectToScreen(new Point3D(originX + axisLen, originY, gridZ), viewProj, width, height);
             if (xEnd.HasValue)
             {
-                using var xPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 2.5f, IsAntialias = useAntiAlias };
+                using var xPaint = new SKPaint();
+                xPaint.Color = SKColors.Red;
+                xPaint.StrokeWidth = 2.5f;
+                xPaint.IsAntialias = true;
                 canvas.DrawLine(xyOrigin.Value, xEnd.Value, xPaint);
                 canvas.DrawText("X", xEnd.Value.X + 4, xEnd.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), xPaint);
@@ -445,7 +459,10 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             var yEnd = ProjectToScreen(new Point3D(originX, originY - axisLen, gridZ), viewProj, width, height);
             if (yEnd.HasValue)
             {
-                using var yPaint = new SKPaint { Color = SKColors.Lime, StrokeWidth = 2.5f, IsAntialias = useAntiAlias };
+                using var yPaint = new SKPaint();
+                yPaint.Color = SKColors.Lime;
+                yPaint.StrokeWidth = 2.5f;
+                yPaint.IsAntialias = true;
                 canvas.DrawLine(xyOrigin.Value, yEnd.Value, yPaint);
                 canvas.DrawText("Y", yEnd.Value.X + 4, yEnd.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), yPaint);
@@ -456,7 +473,10 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             var zTop = ProjectToScreen(new Point3D(originX, originY, originZ), viewProj, width, height);
             if (zTop.HasValue)
             {
-                using var zPaint = new SKPaint { Color = new SKColor(80, 150, 255), StrokeWidth = 2.5f, IsAntialias = useAntiAlias };
+                using var zPaint = new SKPaint();
+                zPaint.Color = new SKColor(80, 150, 255);
+                zPaint.StrokeWidth = 2.5f;
+                zPaint.IsAntialias = true;
                 canvas.DrawLine(zBottom.Value, zTop.Value, zPaint);
                 canvas.DrawText("Z", zTop.Value.X + 4, zTop.Value.Y - 4,
                     new SKFont(SKTypeface.Default, 14), zPaint);
