@@ -15,7 +15,6 @@
 
 	<UserControl.Resources>
 		<convertors:LedBackGround x:Key="LedBackGround"></convertors:LedBackGround>
-		<convertors:AlignmentConvertor x:Key="AlignmentConvertor" />
 	</UserControl.Resources>
 	<UserControl.Styles>
 		<Style Selector="Label.inactive">
@@ -205,6 +204,7 @@
 		<Grid Grid.Row="1" x:Name="ContentGrid" ColumnDefinitions="Auto,*,Auto">
 			<!-- START Left Controls-->
 			<Border  Grid.Column="0"
+					 IsEnabled="{Binding Connected}"
 					 Name="DroBorder"
 					 Margin="0,50,0,0"
 					 MaxWidth="265"
@@ -386,9 +386,9 @@
 																	   HorizontalAlignment="Stretch"
 																	   VerticalAlignment="Stretch"
 																	   Toolpath="{Binding JobViewModel.ToolpathData}"
-																	   SpindlePosition="{Binding SpindlePosition}"
+																	   SpindlePosition="{Binding JobViewModel.CurrentSpindlePosition}"
 																	   MachineSettings="{Binding MachineSettings}"
-																	   WorkCoordinateOffset="{Binding WorkCoordinateOffset}"
+																	   WorkCoordinateOffset="{Binding JobViewModel.WorkCoordinateOffset}"
 																	   CompletedSegmentIndex="{Binding JobViewModel.CompletedSegmentIndex}"
 																	   SelectedLineInfo="{Binding JobViewModel.SelectedLineInfo, Mode=TwoWay}"
 																	   SpindleImagePath="{Binding SpindleImagePath}"/>
@@ -416,6 +416,7 @@
 						</TabItem>
 						<TabItem Padding="8,0"
 								 FontWeight="DemiBold"
+								 IsEnabled="{Binding Connected}"
 								 HorizontalContentAlignment="Center"
 								 VerticalContentAlignment="Center"
 								 FontSize="{DynamicResource BaseFontSize}" x:Name="SettingTab"
@@ -475,10 +476,10 @@
 
 			<!--START Right Control-->
 			<!-- START Jog Control-->
-			<Border x:Name="JogBorder"  Grid.Column="2" >
-				<Grid x:Name="Grid" Margin="0,45,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-					  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-					<Grid x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
+			<Border IsEnabled ="{Binding Connected}" x:Name="JogBorder"  Grid.Column="2" >
+				<Grid  x:Name="Grid" Margin="0,45,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+					<Grid  x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
 						  VerticalAlignment="Stretch" ColumnDefinitions="80,80,80,80">
 						<Label Grid.Column="0"
 							   FontSize="24"
@@ -546,7 +547,7 @@
 							</Interaction.Behaviors>
 						</controls1:RadioToggleButton>
 					</Grid>
-					<Grid Grid.Row="1"  ColumnDefinitions="*,*,*,*"  Grid.RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,20,0,0">
+					<Grid Grid.Row="1" IsEnabled="{Binding CanJog}"  ColumnDefinitions="*,*,*,*"  Grid.RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,20,0,0">
 						<Button Grid.Row="1" Grid.Column="0"
 								CornerRadius="10"
 								Name="XDown"
@@ -677,6 +678,7 @@
 					<!-- START Tool Control-->
 					<Grid Grid.Row="3"
 						  Name="ToolGrid"
+						  IsEnabled ="{Binding CanSetTool}"
 						  Margin="0,5,0,0"
 						  ColumnDefinitions="*,*"
 						  RowDefinitions="Auto,*,*" >

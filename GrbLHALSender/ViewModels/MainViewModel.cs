@@ -28,7 +28,6 @@ public class MainViewModel : ViewModelBase
     private readonly ConfigManager _configManager;
     private readonly MachineStateService _machineStateService;
     private JobViewModel _jobViewModel;
-    private ProbeViewModel _probeViewModel;
     private ObservableCollection<Axis> _axis;
     private ObservableCollection<string> _consoleOutput = new();
     private ObservableCollection<int> _toolList = new();
@@ -41,8 +40,6 @@ public class MainViewModel : ViewModelBase
     private string _wcs = "";
     private string _toolDisplay = "";
     private string _subState = "";
-    private Point3D? _spindlePosition;
-    private Point3D? _workCoordinateOffset;
     private MachineSettings? _machineSettings;
     private string _spindleImagePath = "spindle.png";
     private bool _showConsole;
@@ -64,7 +61,6 @@ public class MainViewModel : ViewModelBase
     private string _callBackText;
     private string _tool;
     private bool _homeState;
-    private ReactiveCommand<object, Unit> _doubleTapCommand;
     private ReactiveCommand<object, Unit> _hideBoxCommand;
     private bool _tlrCommandEnabled;
     private bool _unloadToolCommandEnabled;
@@ -83,6 +79,9 @@ public class MainViewModel : ViewModelBase
     private int _spindleOverRide;
     private int _consoleOutputIndex;
     private WindowState _fullScreenMode;
+    private bool _uiActiveState;
+    private bool _canSetTool;
+    private bool _canJog;
 
     public ObservableCollection<Signal> SignalList
     {
@@ -117,7 +116,7 @@ public class MainViewModel : ViewModelBase
     }
 
     public bool ShowConsole { get; set; }
-    public bool ShowRTCommands { get; set; }
+    public bool ShowRtCommands { get; set; }
     public bool AutoConnect { get; set; }
     public JobViewModel JobViewModel { get; set; }
     public MacroViewModel MacroViewModel { get; set; }
@@ -128,8 +127,9 @@ public class MainViewModel : ViewModelBase
     public AppConfigViewModel AppConfigViewModel { get; set; }
     public SdCardViewModel SdCardViewModel { get; set; }
     public CommunicationManager CommManager { get; set; }
-    public string UnitSystem { get; set; } = "G21";
+    public ProbeViewModel ProbeViewModel { get; set; }
 
+    public string UnitSystem { get; set; } = "G21";
     public bool UseMetric
     {
         get => _useMetric;
@@ -148,11 +148,6 @@ public class MainViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _unitText, value);
     }
 
-    public ProbeViewModel ProbeViewModel
-    {
-        get => _probeViewModel;
-        set => _probeViewModel = value;
-    }
     public double JogStep
     {
         get => _jogStep;
@@ -224,16 +219,6 @@ public class MainViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _subState, value);
     }
 
-    public Point3D? SpindlePosition
-    {
-        get => _spindlePosition;
-        set => this.RaiseAndSetIfChanged(ref _spindlePosition, value);
-    }
-    public Point3D? WorkCoordinateOffset
-    {
-        get => _workCoordinateOffset;
-        set => this.RaiseAndSetIfChanged(ref _workCoordinateOffset, value);
-    }
     public MachineSettings? MachineSettings
     {
         get => _machineSettings;
@@ -267,7 +252,12 @@ public class MainViewModel : ViewModelBase
     public bool HomeState
     {
         get => _homeState;
-        set => this.RaiseAndSetIfChanged(ref _homeState, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _homeState, value);
+            UpdateButtonStates();
+        } 
+        
     }
     public bool TLR
     {
@@ -314,6 +304,20 @@ public class MainViewModel : ViewModelBase
         
     }
     public bool IsFullScreen => FullScreenMode == WindowState.FullScreen;
+    public GrblState CurrentGrblState => _machineStateService.GrblState;
+
+    public bool CanJog
+    {
+        get => _canJog;
+        set => this.RaiseAndSetIfChanged(ref _canJog, value);
+    }
+
+    public bool CanSetTool
+    {
+        get => _canSetTool;
+        set => this.RaiseAndSetIfChanged(ref _canSetTool, value);
+    }
+   
 
     public ICommand CloseCommand { get; }
     public ICommand ConnectCommand { get; set; }
@@ -350,12 +354,6 @@ public class MainViewModel : ViewModelBase
     public ICommand OpenProbeCommand { get; }
     public Action? CloseConsoleAction { get; set; }
     public ICommand CloseConsoleCommand { get; }
-
-    public ReactiveCommand<object, Unit> DoubleTapCommand
-    {
-        get => _doubleTapCommand;
-        set => _doubleTapCommand = value;
-    }
 
     public ReactiveCommand<object, Unit> HideBoxCommand
     {
@@ -406,6 +404,13 @@ public class MainViewModel : ViewModelBase
             if (e.PropertyName == nameof(GHalSenderConfig.Borderless))
             {
                 FullScreenMode = _config.Borderless ? WindowState.FullScreen : WindowState.Maximized;
+            }
+        };
+        _machineStateService.PropertyChanged+= (_, e) =>
+        {
+            if (e.PropertyName == nameof(MachineStateService.GrblState))
+            {
+                UpdateButtonStates();
             }
         };
 
@@ -494,7 +499,16 @@ public class MainViewModel : ViewModelBase
             ConsoleOutput.Add($"Connection failed: {e.Message}");
         }
     }
+   
 
+    private void UpdateButtonStates()
+    {
+        
+        CanJog = Connected &&
+                 CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
+
+        CanSetTool = Connected && HomeState && CurrentGrblState is  GrblState.Idle or GrblState.Tool;
+    }
     private void CloseApplication()
     {
         if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
@@ -678,7 +692,7 @@ public class MainViewModel : ViewModelBase
 
     private void ToggleConsoleRt()
     {
-        ShowRTCommands = !ShowRTCommands;
+        ShowRtCommands = !ShowRtCommands;
     }
     private void ClearConsole()
     {
@@ -773,8 +787,8 @@ public class MainViewModel : ViewModelBase
         WcsDisplay = svc.WcsDisplay;
         ToolDisplay = svc.ToolDisplay;
         SubState = svc.SubState;
-        SpindlePosition = svc.SpindlePosition;
-        WorkCoordinateOffset = svc.WorkCoordinateOffset;
+        //SpindlePosition = svc.SpindlePosition;
+        //WorkCoordinateOffset = svc.WorkCoordinateOffset;
         AlarmActive = svc.AlarmActive;
 
         // Drain buffered console log messages (from data thread) to UI.
@@ -788,7 +802,7 @@ public class MainViewModel : ViewModelBase
                     ConsoleOutput.Add(_consoleLogBuffer.Dequeue());
             }
             var rawState = svc.RawState;
-            if (ShowRTCommands && rawState != null)
+            if (ShowRtCommands && rawState != null)
                 ConsoleOutput.Add(rawState.RawRt);
 
             if (ConsoleOutput.Count > 200)

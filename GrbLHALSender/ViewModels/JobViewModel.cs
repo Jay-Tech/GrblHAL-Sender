@@ -5,6 +5,7 @@ using DynamicData;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gcode;
+using GrbLHALSender.Settings;
 using GrbLHALSender.States;
 using GrbLHALSender.Utility;
 using ReactiveUI;
@@ -36,6 +37,8 @@ namespace GrbLHALSender.ViewModels
         private CancellationTokenSource? _cancelToken;
         private readonly DispatcherTimer _jobTimer;
         private DateTime _startTime;
+        private bool _canHoldJob;
+
 
         // Character-counting streaming protocol:
         // grblHAL reports its serial RX buffer size via $I+ (OPT line).
@@ -51,6 +54,8 @@ namespace GrbLHALSender.ViewModels
         private readonly Queue<int> _lineLengths = new(); // byte length of each in-flight line
         private readonly object _bufferLock = new();
         private string _holdButtonText;
+        private JobState _jobState;
+        private bool _connected;
 
         // Throttled GcodeFileIndex: store latest value, push to UI on a timer
         private volatile int _latestFileIndex;
@@ -59,16 +64,18 @@ namespace GrbLHALSender.ViewModels
         private int _completedSegmentIndex = -1;
         private string _selectedLineInfo = "";
 
-        // Fed from MachineStateService via PropertyChanged subscription
-        private Point3D? CurrentSpindlePosition;
 
+
+        // Fed from MachineStateService via PropertyChanged subscription
+        private bool _canStartJob;
+        private Point3D? _workCoordinateOffset;
+        private Point3D? _currentSpindlePosition;
         // Set by MainViewModel — references config object so changes take effect immediately
         internal GHalSenderConfig? Config;
 
-        private JobState _jobState;
-        private bool _connected;
-
+        
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
+        public ObservableCollection<GCodeLine> GCodeOutPut { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
         public JobState JobState
         {
@@ -89,15 +96,7 @@ namespace GrbLHALSender.ViewModels
                 UpdateButtonStates();
             }
         }
-        public ICommand StartJobCommand { get; }
-        public ICommand CloseGCodeConsole { get; }
-        public ICommand OpenGCodePanel { get; }
-        public ICommand CloseFilesCommand { get; }
-        public ICommand PauseJobCommand { get; }
-        public ICommand StopJobCommand { get; }
-
-        public ObservableCollection<GCodeLine> GCodeOutPut { get; set; }
-
+        
         public bool FileLoaded
         {
             get => _fileLoaded;
@@ -166,49 +165,41 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selectedLineInfo, value);
         }
 
-        private bool _canHoldJob;
         public bool CanHoldJob
         {
             get => _canHoldJob;
             set => this.RaiseAndSetIfChanged(ref _canHoldJob, value);
         }
 
-        private bool _canStartJob;
         public bool CanStartJob
         {
             get => _canStartJob;
             set => this.RaiseAndSetIfChanged(ref _canStartJob, value);
         }
 
+        public Point3D? WorkCoordinateOffset
+        {
+            get => _workCoordinateOffset;
+            set => this.RaiseAndSetIfChanged(ref _workCoordinateOffset, value);
+        }
+
+        public Point3D? CurrentSpindlePosition
+        {
+            get => _currentSpindlePosition;
+            set => this.RaiseAndSetIfChanged(ref _currentSpindlePosition, value);
+        }
+     
+        public ICommand StartJobCommand { get; }
+        public ICommand CloseGCodeConsole { get; }
+        public ICommand OpenGCodePanel { get; }
+        public ICommand CloseFilesCommand { get; }
+        public ICommand PauseJobCommand { get; }
+        public ICommand StopJobCommand { get; }
         /// <summary>
         /// Reacts to MachineStateService property changes (fires on UI thread at ~10 Hz).
         /// Feeds Connected, GrblState, and SpindlePosition from the centralized service.
         /// </summary>
-        private void OnMachineStateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(MachineStateService.Connected):
-                    Connected = _machineStateService.Connected;
-                    break;
-                case nameof(MachineStateService.GrblState):
-                    if (!JobRunning)
-                    {
-                        JobState = _machineStateService.GrblState switch
-                        {
-                            GrblState.Idle => JobState.Idle,
-                            GrblState.Alarm => JobState.Alarm,
-                            GrblState.Hold => JobState.Hold,
-                            GrblState.Tool => JobState.Tool,
-                            _ => JobState
-                        };
-                    }
-                    break;
-                case nameof(MachineStateService.SpindlePosition):
-                    CurrentSpindlePosition = _machineStateService.SpindlePosition;
-                    break;
-            }
-        }
+        
 
         private void UpdateButtonStates()
         {
@@ -285,6 +276,34 @@ namespace GrbLHALSender.ViewModels
             }));
         }
 
+        private void OnMachineStateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(MachineStateService.Connected):
+                    Connected = _machineStateService.Connected;
+                    break;
+                case nameof(MachineStateService.GrblState):
+                    if (!JobRunning)
+                    {
+                        JobState = _machineStateService.GrblState switch
+                        {
+                            GrblState.Idle => JobState.Idle,
+                            GrblState.Alarm => JobState.Alarm,
+                            GrblState.Hold => JobState.Hold,
+                            GrblState.Tool => JobState.Tool,
+                            _ => JobState
+                        };
+                    }
+                    break;
+                case nameof(MachineStateService.SpindlePosition):
+                    CurrentSpindlePosition = _machineStateService.SpindlePosition;
+                    break;
+                case nameof(MachineStateService.WorkCoordinateOffset):
+                    WorkCoordinateOffset = _machineStateService.WorkCoordinateOffset;
+                    break;
+            }
+        }
         public void StartJob()
         {
             if (JobState == JobState.Hold && !JobRunning )
