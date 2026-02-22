@@ -197,7 +197,7 @@ public partial class DialogButtonView : UserControl
                     var parentPos = parentWindow.Position;
                     dialogWindow.Position = new PixelPoint(
                         parentPos.X + 270,
-                        parentPos.Y + 375
+                        parentPos.Y + 400
                     );
                     break;
                 }
@@ -206,11 +206,30 @@ public partial class DialogButtonView : UserControl
                     dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
                     var parentPos = parentWindow.Position;
                     dialogWindow.Position = new PixelPoint(
-                        parentPos.X + 270,
-                        parentPos.Y + 375
-                    );
+                        parentPos.X + 700,
+                        parentPos.Y + 475);
                     break;
                 }
+            case DialogType.Probe when parentWindow != null:
+            {
+                dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                var parentPos = parentWindow.Position;
+                dialogWindow.Position = new PixelPoint(
+                    parentPos.X + 275,
+                    parentPos.Y + 405
+                );
+                break;
+            }
+            case DialogType.AppConfig when parentWindow != null:
+            {
+                dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                var parentPos = parentWindow.Position;
+                dialogWindow.Position = new PixelPoint(
+                    parentPos.X + 950,
+                    parentPos.Y + 350
+                );
+                break;
+            }
             default:
                 break;
                 //throw new ArgumentOutOfRangeException(nameof(dialogType), dialogType, null);

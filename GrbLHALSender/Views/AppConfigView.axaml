@@ -391,13 +391,212 @@
 			</TabItem>
 			<TabItem Header="Game Pad" FontSize="16" Padding="15,5">
 				<Grid RowDefinitions="Auto,*" Margin="0,10,0,0">
+					<!-- Enable checkbox always visible -->
 					<CheckBox Grid.Row="0"
-                              Content="Enable Game pad"
+							  Content="Enable Game pad"
 							  HorizontalAlignment="Center"
 							  VerticalAlignment="Center"
 							  HorizontalContentAlignment="Center"
 							  VerticalContentAlignment="Center"
-                              IsChecked="{Binding IsGamePadEnabled}"/>
+							  IsChecked="{Binding IsGamePadEnabled}"/>
+
+					<!-- Sub-tabs for gamepad settings -->
+					<TabControl Grid.Row="1" TabStripPlacement="Top"
+								IsEnabled="{Binding IsGamePadEnabled}"
+								Margin="0,5,0,0">
+
+						<!-- General Settings Sub-Tab -->
+						<TabItem Header="General" FontSize="14" Padding="10,3">
+							<ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+								<Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+									<Label Grid.Row="0" Grid.Column="0"
+										   Content="Dead Zone:"
+										   FontSize="16"
+										   HorizontalAlignment="Right" VerticalAlignment="Center"
+										   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+									<TextBox Grid.Row="0" Grid.Column="1"
+											 Width="120" Margin="10,2,0,2"
+											 FontSize="16"
+											 HorizontalAlignment="Left" VerticalAlignment="Center"
+											 ToolTip.Tip="Thumbstick dead zone threshold (0-32767)"
+											 Text="{Binding GamePadDeadZone}"/>
+
+									<Label Grid.Row="1" Grid.Column="0"
+										   Content="Poll Interval (ms):"
+										   FontSize="16"
+										   HorizontalAlignment="Right" VerticalAlignment="Center"
+										   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+									<TextBox Grid.Row="1" Grid.Column="1"
+											 Width="120" Margin="10,2,0,2"
+											 FontSize="16"
+											 HorizontalAlignment="Left" VerticalAlignment="Center"
+											 ToolTip.Tip="SDL event poll interval in milliseconds"
+											 Text="{Binding GamePadPollIntervalMs}"/>
+
+									<Label Grid.Row="2" Grid.Column="0"
+										   Content="Jog Cmd Interval (ms):"
+										   FontSize="16"
+										   HorizontalAlignment="Right" VerticalAlignment="Center"
+										   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+									<TextBox Grid.Row="2" Grid.Column="1"
+											 Width="120" Margin="10,2,0,2"
+											 FontSize="16"
+											 HorizontalAlignment="Left" VerticalAlignment="Center"
+											 ToolTip.Tip="Interval between proportional jog commands in milliseconds"
+											 Text="{Binding GamePadJogCommandIntervalMs}"/>
+
+									<Label Grid.Row="3" Grid.Column="0"
+										   Content="Jog Increment (mm):"
+										   FontSize="16"
+										   HorizontalAlignment="Right" VerticalAlignment="Center"
+										   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+									<TextBox Grid.Row="3" Grid.Column="1"
+											 Width="120" Margin="10,2,0,2"
+											 FontSize="16"
+											 HorizontalAlignment="Left" VerticalAlignment="Center"
+											 ToolTip.Tip="Base jog distance (mm) per tick at full stick deflection"
+											 Text="{Binding GamePadJogIncrementMm}"/>
+
+									<Label Grid.Row="4" Grid.Column="0"
+										   Content="Jog Increment (inch):"
+										   FontSize="16"
+										   HorizontalAlignment="Right" VerticalAlignment="Center"
+										   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+									<TextBox Grid.Row="4" Grid.Column="1"
+											 Width="120" Margin="10,2,0,2"
+											 FontSize="16"
+											 HorizontalAlignment="Left" VerticalAlignment="Center"
+											 ToolTip.Tip="Base jog distance (inches) per tick at full stick deflection"
+											 Text="{Binding GamePadJogIncrementInch}"/>
+
+									<Label Grid.Row="5" Grid.Column="0"
+										   Content="Response Curve:"
+										   FontSize="16"
+										   HorizontalAlignment="Right" VerticalAlignment="Center"
+										   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+									<TextBox Grid.Row="5" Grid.Column="1"
+											 Width="120" Margin="10,2,0,2"
+											 FontSize="16"
+											 HorizontalAlignment="Left" VerticalAlignment="Center"
+											 ToolTip.Tip="Response curve exponent (1.0=linear, 2.0=quadratic, higher=finer control)"
+											 Text="{Binding GamePadResponseCurveExponent}"/>
+
+									<Label Grid.Row="6" Grid.Column="0"
+										   Content="Trigger Threshold:"
+										   FontSize="16"
+										   HorizontalAlignment="Right" VerticalAlignment="Center"
+										   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+									<TextBox Grid.Row="6" Grid.Column="1"
+											 Width="120" Margin="10,2,0,2"
+											 FontSize="16"
+											 HorizontalAlignment="Left" VerticalAlignment="Center"
+											 ToolTip.Tip="Threshold for triggers to fire their mapped action (0-32767)"
+											 Text="{Binding GamePadTriggerThreshold}"/>
+								</Grid>
+							</ScrollViewer>
+						</TabItem>
+
+						<!-- Button Mappings Sub-Tab -->
+						<TabItem Header="Buttons" FontSize="14" Padding="10,3">
+							<ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+								<ItemsControl ItemsSource="{Binding GamePadButtonMappings}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<Grid ColumnDefinitions="140,*" Margin="0,2">
+												<Label Grid.Column="0"
+													   Content="{Binding DisplayName}"
+													   FontSize="15"
+													   HorizontalAlignment="Right" VerticalAlignment="Center"
+													   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+													   Margin="0,0,8,0"/>
+												<ComboBox Grid.Column="1"
+														  ItemsSource="{Binding $parent[UserControl].((vm:AppConfigViewModel)DataContext).GamepadActionNames}"
+														  SelectedItem="{Binding SelectedAction}"
+														  FontSize="14"
+														  Width="200"
+														  HorizontalAlignment="Left" VerticalAlignment="Center"/>
+											</Grid>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</ScrollViewer>
+						</TabItem>
+
+						<!-- Axes & Triggers Sub-Tab -->
+						<TabItem Header="Axes &amp; Triggers" FontSize="14" Padding="10,3">
+							<ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+								<StackPanel Spacing="10">
+									<!-- Axis Mappings -->
+									<Border BorderBrush="AntiqueWhite" BorderThickness="1" Padding="8,5">
+										<StackPanel>
+											<Label Content="AXIS MAPPINGS"
+												   FontSize="16"
+												   HorizontalAlignment="Center" VerticalAlignment="Center"
+												   HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+												   Margin="0,0,0,4"/>
+											<ItemsControl ItemsSource="{Binding GamePadAxisMappings}">
+												<ItemsControl.ItemTemplate>
+													<DataTemplate>
+														<Grid ColumnDefinitions="120,Auto,Auto" Margin="0,2">
+															<Label Grid.Column="0"
+																   Content="{Binding DisplayName}"
+																   FontSize="15"
+																   HorizontalAlignment="Right" VerticalAlignment="Center"
+																   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+																   Margin="0,0,8,0"/>
+															<ComboBox Grid.Column="1"
+																	  ItemsSource="{Binding $parent[UserControl].((vm:AppConfigViewModel)DataContext).CncAxisOptions}"
+																	  SelectedItem="{Binding SelectedCncAxis}"
+																	  FontSize="14"
+																	  Width="90"
+																	  HorizontalAlignment="Left" VerticalAlignment="Center"/>
+															<CheckBox Grid.Column="2"
+																	  Content="Inverted"
+																	  FontSize="14"
+																	  IsChecked="{Binding IsInverted}"
+																	  Margin="10,0,0,0"
+																	  VerticalAlignment="Center"/>
+														</Grid>
+													</DataTemplate>
+												</ItemsControl.ItemTemplate>
+											</ItemsControl>
+										</StackPanel>
+									</Border>
+
+									<!-- Trigger Mappings -->
+									<Border BorderBrush="AntiqueWhite" BorderThickness="1" Padding="8,5">
+										<StackPanel>
+											<Label Content="TRIGGER MAPPINGS"
+												   FontSize="16"
+												   HorizontalAlignment="Center" VerticalAlignment="Center"
+												   HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+												   Margin="0,0,0,4"/>
+											<ItemsControl ItemsSource="{Binding GamePadTriggerMappings}">
+												<ItemsControl.ItemTemplate>
+													<DataTemplate>
+														<Grid ColumnDefinitions="140,*" Margin="0,2">
+															<Label Grid.Column="0"
+																   Content="{Binding DisplayName}"
+																   FontSize="15"
+																   HorizontalAlignment="Right" VerticalAlignment="Center"
+																   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+																   Margin="0,0,8,0"/>
+															<ComboBox Grid.Column="1"
+																	  ItemsSource="{Binding $parent[UserControl].((vm:AppConfigViewModel)DataContext).GamepadActionNames}"
+																	  SelectedItem="{Binding SelectedAction}"
+																	  FontSize="14"
+																	  Width="200"
+																	  HorizontalAlignment="Left" VerticalAlignment="Center"/>
+														</Grid>
+													</DataTemplate>
+												</ItemsControl.ItemTemplate>
+											</ItemsControl>
+										</StackPanel>
+									</Border>
+								</StackPanel>
+							</ScrollViewer>
+						</TabItem>
+					</TabControl>
 				</Grid>
 			</TabItem>
 			<TabItem Header="Web Server" FontSize="16" Padding="15,5">

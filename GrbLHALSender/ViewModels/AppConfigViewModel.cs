@@ -1,6 +1,9 @@
 ﻿using GrbLHALSender.Configuration;
+using GrbLHALSender.Gamepad;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 
@@ -21,6 +24,13 @@ namespace GrbLHALSender.ViewModels
         private string _tlrMacro;
         private string _unloadMacro;
         private bool _isGamePadEnabled;
+        private int _gamePadDeadZone = 8000;
+        private int _gamePadPollIntervalMs = 20;
+        private int _gamePadJogCommandIntervalMs = 75;
+        private double _gamePadJogIncrementMm = 2.0;
+        private double _gamePadJogIncrementInch = 0.08;
+        private double _gamePadResponseCurveExponent = 1.5;
+        private int _gamePadTriggerThreshold = 16000;
         private bool _isWebServerEnabled;
         private int _webServerPort;
         private string _spindleImagePath = "spindle.png";
@@ -93,6 +103,60 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isGamePadEnabled, value);
         }
 
+        public int GamePadDeadZone
+        {
+            get => _gamePadDeadZone;
+            set => this.RaiseAndSetIfChanged(ref _gamePadDeadZone, value);
+        }
+
+        public int GamePadPollIntervalMs
+        {
+            get => _gamePadPollIntervalMs;
+            set => this.RaiseAndSetIfChanged(ref _gamePadPollIntervalMs, value);
+        }
+
+        public int GamePadJogCommandIntervalMs
+        {
+            get => _gamePadJogCommandIntervalMs;
+            set => this.RaiseAndSetIfChanged(ref _gamePadJogCommandIntervalMs, value);
+        }
+
+        public double GamePadJogIncrementMm
+        {
+            get => _gamePadJogIncrementMm;
+            set => this.RaiseAndSetIfChanged(ref _gamePadJogIncrementMm, value);
+        }
+
+        public double GamePadJogIncrementInch
+        {
+            get => _gamePadJogIncrementInch;
+            set => this.RaiseAndSetIfChanged(ref _gamePadJogIncrementInch, value);
+        }
+
+        public double GamePadResponseCurveExponent
+        {
+            get => _gamePadResponseCurveExponent;
+            set => this.RaiseAndSetIfChanged(ref _gamePadResponseCurveExponent, value);
+        }
+
+        public int GamePadTriggerThreshold
+        {
+            get => _gamePadTriggerThreshold;
+            set => this.RaiseAndSetIfChanged(ref _gamePadTriggerThreshold, value);
+        }
+
+        public string[] GamepadActionNames { get; } =
+            Enum.GetNames(typeof(GamepadAction));
+
+        public string[] CncAxisOptions { get; } =
+            ["None", "X", "Y", "Z", "A", "B", "C"];
+
+        public ObservableCollection<ButtonMappingItem> GamePadButtonMappings { get; } = [];
+
+        public ObservableCollection<AxisMappingItem> GamePadAxisMappings { get; } = [];
+
+        public ObservableCollection<TriggerMappingItem> GamePadTriggerMappings { get; } = [];
+
         public bool IsWebServerEnabled
         {
             get => _isWebServerEnabled;
@@ -151,6 +215,14 @@ namespace GrbLHALSender.ViewModels
             TlrMacro = _appConfig.AtcConfig.TlrMacroName;
             UnloadMacro = _appConfig.AtcConfig.UnloadToolMacroName;
             IsGamePadEnabled = _appConfig.GamepadConfig.Enabled;
+            GamePadDeadZone = _appConfig.GamepadConfig.DeadZone;
+            GamePadPollIntervalMs = _appConfig.GamepadConfig.PollIntervalMs;
+            GamePadJogCommandIntervalMs = _appConfig.GamepadConfig.JogCommandIntervalMs;
+            GamePadJogIncrementMm = _appConfig.GamepadConfig.JogIncrementMm;
+            GamePadJogIncrementInch = _appConfig.GamepadConfig.JogIncrementInch;
+            GamePadResponseCurveExponent = _appConfig.GamepadConfig.ResponseCurveExponent;
+            GamePadTriggerThreshold = _appConfig.GamepadConfig.TriggerThreshold;
+            LoadGamepadMappings(_appConfig.GamepadConfig);
             IsWebServerEnabled = _appConfig.WebServerConfig.Enabled;
             WebServerPort = _appConfig.WebServerConfig.Port;
             SpindleImagePath = _appConfig.SpindleImagePath;
@@ -171,12 +243,120 @@ namespace GrbLHALSender.ViewModels
             _appConfig.AtcConfig.TlrMacroName = TlrMacro ?? "";
             _appConfig.AtcConfig.UnloadToolMacroName = UnloadMacro ?? "";
             _appConfig.GamepadConfig.Enabled = IsGamePadEnabled;
+            _appConfig.GamepadConfig.DeadZone = GamePadDeadZone;
+            _appConfig.GamepadConfig.PollIntervalMs = GamePadPollIntervalMs;
+            _appConfig.GamepadConfig.JogCommandIntervalMs = GamePadJogCommandIntervalMs;
+            _appConfig.GamepadConfig.JogIncrementMm = GamePadJogIncrementMm;
+            _appConfig.GamepadConfig.JogIncrementInch = GamePadJogIncrementInch;
+            _appConfig.GamepadConfig.ResponseCurveExponent = GamePadResponseCurveExponent;
+            _appConfig.GamepadConfig.TriggerThreshold = GamePadTriggerThreshold;
+            SaveGamepadMappings(_appConfig.GamepadConfig);
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
             _appConfig.SpindleImagePath = SpindleImagePath;
             _appConfig.PollRate = PollRate;
             _appConfig.Borderless = BorderlessWindow;
             _configManager.SaveConfig();
+        }
+        private static readonly (string Name, string Display)[] AllButtons =
+        [
+            ("South", "South (A)"),
+            ("East", "East (B)"),
+            ("West", "West (X)"),
+            ("North", "North (Y)"),
+            ("LeftShoulder", "LB"),
+            ("RightShoulder", "RB"),
+            ("DpadUp", "D-Pad Up"),
+            ("DpadDown", "D-Pad Down"),
+            ("DpadLeft", "D-Pad Left"),
+            ("DpadRight", "D-Pad Right"),
+            ("LeftStick", "Left Stick (L3)"),
+            ("RightStick", "Right Stick (R3)"),
+            ("Start", "Start"),
+            ("Back", "Back (Select)"),
+        ];
+
+        private static readonly (string Name, string Display)[] AllAxes =
+        [
+            ("LeftX", "Left Stick X"),
+            ("LeftY", "Left Stick Y"),
+            ("RightX", "Right Stick X"),
+            ("RightY", "Right Stick Y"),
+        ];
+
+        private static readonly (string Name, string Display)[] AllTriggers =
+        [
+            ("LeftTrigger", "Left Trigger (LT)"),
+            ("RightTrigger", "Right Trigger (RT)"),
+        ];
+
+        private void LoadGamepadMappings(GamepadConfig cfg)
+        {
+            GamePadButtonMappings.Clear();
+            foreach (var (name, display) in AllButtons)
+            {
+                cfg.ButtonMapping.TryGetValue(name, out var action);
+                GamePadButtonMappings.Add(new ButtonMappingItem
+                {
+                    ButtonName = name,
+                    DisplayName = display,
+                    SelectedAction = action ?? "None",
+                });
+            }
+
+            GamePadAxisMappings.Clear();
+            foreach (var (name, display) in AllAxes)
+            {
+                cfg.AxisMapping.TryGetValue(name, out var axis);
+                cfg.AxisInverted.TryGetValue(name, out var inverted);
+                GamePadAxisMappings.Add(new AxisMappingItem
+                {
+                    AxisName = name,
+                    DisplayName = display,
+                    SelectedCncAxis = axis ?? "None",
+                    IsInverted = inverted,
+                });
+            }
+
+            GamePadTriggerMappings.Clear();
+            foreach (var (name, display) in AllTriggers)
+            {
+                cfg.TriggerMapping.TryGetValue(name, out var action);
+                GamePadTriggerMappings.Add(new TriggerMappingItem
+                {
+                    TriggerName = name,
+                    DisplayName = display,
+                    SelectedAction = action ?? "None",
+                });
+            }
+        }
+
+        private void SaveGamepadMappings(GamepadConfig cfg)
+        {
+            cfg.ButtonMapping = new Dictionary<string, string>();
+            foreach (var item in GamePadButtonMappings)
+            {
+                if (item.SelectedAction is not (null or "None"))
+                    cfg.ButtonMapping[item.ButtonName] = item.SelectedAction;
+            }
+
+            cfg.AxisMapping = new Dictionary<string, string>();
+            cfg.AxisInverted = new Dictionary<string, bool>();
+            foreach (var item in GamePadAxisMappings)
+            {
+                if (item.SelectedCncAxis is not (null or "None"))
+                {
+                    cfg.AxisMapping[item.AxisName] = item.SelectedCncAxis;
+                    cfg.AxisInverted[item.AxisName] = item.IsInverted;
+                }
+            }
+
+            cfg.TriggerMapping = new Dictionary<string, string>();
+            foreach (var item in GamePadTriggerMappings)
+            {
+                if (item.SelectedAction is not (null or "None"))
+                    cfg.TriggerMapping[item.TriggerName] = item.SelectedAction;
+            }
         }
     }
 }
