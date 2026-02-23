@@ -57,7 +57,9 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
                 try
                 {
-                    var configDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config");
+                    var configDir = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "GrblHAL-Sender", "Config");
                     var fullPath = Path.GetFullPath(Path.Combine(configDir, relativePath));
 
                     // Security: ensure resolved path stays within Config folder

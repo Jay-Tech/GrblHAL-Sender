@@ -10,7 +10,9 @@ public class ConfigManager
     public event EventHandler<GHalSenderConfig> OnConfigLoaded;
     public event EventHandler<GHalSenderConfig> OnConfigSaved;
 
-    private readonly string _path = AppDomain.CurrentDomain.BaseDirectory;
+    private readonly string _path = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "GrblHAL-Sender");
     private readonly string _fileName = "GHalSender_Config.json";
     public GHalSenderConfig? GHalSenderConfig { get; set; }
 
