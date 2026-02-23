@@ -333,7 +333,6 @@ namespace GrbLHALSender.Communication
                 {
                     var trimmed = data.Trim('[', ']');
                     var substring = trimmed.Split(':');
-                    ParsePins(substring.AsSpan());
                 }
                 else
                 {
@@ -392,18 +391,6 @@ namespace GrbLHALSender.Communication
             }
 
             Debug.WriteLine($"***Warning Data Not Parsed: {data}***");
-        }
-
-        private void ParsePins(Span<string> asSpan)
-        {
-            var pins = asSpan[1].Split(',');
-            if (pins.Length <= 2) return;
-            if (pins[1].StartsWith("Aux out", StringComparison.InvariantCultureIgnoreCase))
-            {
-                var pinDescription = pins[1];
-                var pinNumber = pins[2];
-                Debug.WriteLine($"Pin {pinNumber} triggered: {pinDescription}");
-            }
         }
 
         private void ParseAllPins(List<string> pinLines)

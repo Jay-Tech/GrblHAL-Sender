@@ -179,7 +179,6 @@ namespace GrbLHALSender.Communication
                         return;
                     }
 
-                    //Thread.Sleep(10);
                 }
                 else
                 {
