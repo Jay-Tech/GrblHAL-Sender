@@ -15,7 +15,9 @@ public class FileUploadService
     {
         _config = config;
         _uploadDirectory = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, config.UploadDirectory));
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "GrblHAL-Sender", config.UploadDirectory));
 
         if (!Directory.Exists(_uploadDirectory))
         {

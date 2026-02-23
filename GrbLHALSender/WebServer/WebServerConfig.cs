@@ -19,7 +19,7 @@ public class WebServerConfig
     public string BindAddress { get; set; } = "0.0.0.0";
 
     /// <summary>
-    /// Directory for uploaded G-code files (relative to app directory).
+    /// Directory for uploaded G-code files (relative to user app data directory).
     /// </summary>
     public string UploadDirectory { get; set; } = "GCodeFiles";
 
