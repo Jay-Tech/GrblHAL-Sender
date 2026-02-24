@@ -64,9 +64,6 @@
             <Setter Property="Foreground" Value="{DynamicResource BorderBrushBlue}"/>
         </Style>
 		<FluentTheme>
-            <Style Selector=":is(TopLevel)">
-                <Setter Property="FontFamily" Value="Arial"/>
-            </Style>
             <FluentTheme.Palettes>
 				<ColorPaletteResources x:Key="Light" Accent="#ff0073cf" AltHigh="White" AltLow="White" AltMedium="White" AltMediumHigh="White" AltMediumLow="White" BaseHigh="Black" BaseLow="#ffcccccc" BaseMedium="#ff898989" BaseMediumHigh="#ff5d5d5d" BaseMediumLow="#ff737373" ChromeAltLow="#ff5d5d5d" ChromeBlackHigh="Black" ChromeBlackLow="#ffcccccc" ChromeBlackMedium="#ff5d5d5d" ChromeBlackMediumLow="#ff898989" ChromeDisabledHigh="#ffcccccc" ChromeDisabledLow="#ff898989" ChromeGray="#ff737373" ChromeHigh="#ffcccccc" ChromeLow="#ffececec" ChromeMedium="#ffe6e6e6" ChromeMediumLow="#ffececec" ChromeWhite="White" ListLow="#ffe6e6e6" ListMedium="#ffcccccc" RegionColor="White" />
 				<ColorPaletteResources x:Key="Dark" Accent="#ff0073cf" AltHigh="#FF2E2E2E" AltLow="#FF2E2E2E" AltMedium="#FF2E2E2E" AltMediumHigh="#FF2E2E2E" AltMediumLow="#FF2E2E2E" BaseHigh="White" BaseLow="#ff505050" BaseMedium="#ffa8a8a8" BaseMediumHigh="#ffbebebe" BaseMediumLow="#ff7c7c7c" ChromeAltLow="#ffbebebe" ChromeBlackHigh="Black" ChromeBlackLow="#ffbebebe" ChromeBlackMedium="Black" ChromeBlackMediumLow="Black" ChromeDisabledHigh="#ff505050" ChromeDisabledLow="#ffa8a8a8" ChromeGray="#ff929292" ChromeHigh="#ff929292" ChromeLow="#ff232323" ChromeMedium="#ff2e2e2e" ChromeMediumLow="#ff454545" ChromeWhite="White" ListLow="#ff2e2e2e" ListMedium="#ff505050" RegionColor="#ff282828" />
