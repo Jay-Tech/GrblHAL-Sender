@@ -517,7 +517,7 @@
 							   HorizontalAlignment="Stretch"
 							   VerticalContentAlignment="Center"
 							   VerticalAlignment="Stretch"/>
-						<controls1:RadioToggleButton Grid.Column="1"  x:Name="ToggleButton1"  Height="45" Width="75"
+						<RadioButton Grid.Column="1" Classes="ButtonStyle"  x:Name="ToggleButton1"  Height="45" Width="75"
 													 Content="{Binding JogRateList[0] }"
 													 Tag="{Binding }"
 													 VerticalAlignment="Stretch" FontSize="20"
@@ -535,8 +535,8 @@
 														  Value="true" />
 								</DataTriggerBehavior>
 							</Interaction.Behaviors>
-						</controls1:RadioToggleButton>
-						<controls1:RadioToggleButton Grid.Column="2"
+						</RadioButton>
+						<RadioButton Grid.Column="2" Classes="ButtonStyle"
 													 x:Name="ToggleButton2"
 													 Height="45"
 													 Width="75"
@@ -556,8 +556,8 @@
 														  Value="true" />
 								</DataTriggerBehavior>
 							</Interaction.Behaviors>
-						</controls1:RadioToggleButton>
-						<controls1:RadioToggleButton Grid.Column="3"  x:Name="ToggleButton3"
+						</RadioButton>
+						<RadioButton Grid.Column="3"  Classes="ButtonStyle" x:Name="ToggleButton3"
 													 Height="45"
 													 Width="75"
 													 Content="{Binding JogRateList[2]}" Tag="{Binding }"
@@ -574,7 +574,7 @@
 														  Value="true" />
 								</DataTriggerBehavior>
 							</Interaction.Behaviors>
-						</controls1:RadioToggleButton>
+						</RadioButton>
 					</Grid>
 					<Grid Grid.Row="1" IsEnabled="{Binding CanJog}"  ColumnDefinitions="*,*,*,*"  Grid.RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,20,0,0">
 						<Button Grid.Row="1" Grid.Column="0"
@@ -604,7 +604,6 @@
 						<Button Grid.Row="2" Grid.Column="1"
 								Name="YDown"
 								Classes="b2"
-								Foreground="{DynamicResource BorderBrushBlue}"
 								Margin="4"
 								Command="{Binding JogNegCommand}"
 								CommandParameter="Y"
@@ -628,7 +627,7 @@
 								Classes="b2"
 								Margin="5,4,4,4"
 								Command="{Binding JogNegCommand}"
-								CommandParameter="Z" Foreground="{DynamicResource BorderBrushBlue}"
+								CommandParameter="Z" 
 								Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline,  Size=90}"/>
 					</Grid>
 					<Grid x:Name="StepRatePanel" Grid.Row="2"
@@ -643,7 +642,7 @@
 							   HorizontalAlignment="Stretch"
 							   VerticalContentAlignment="Center"
 							   VerticalAlignment="Stretch"/>
-						<controls1:RadioToggleButton Grid.Column="1"  x:Name="StepToggleButton1"
+						<RadioButton Classes="ButtonStyle" Grid.Column="1"   x:Name="StepToggleButton1"
 													 Height="45"
 													 Width="75" Content="{Binding JogStepList[0] }"
 													 VerticalAlignment="Stretch"
@@ -660,17 +659,17 @@
 														  Value="true" />
 								</DataTriggerBehavior>
 							</Interaction.Behaviors>
-						</controls1:RadioToggleButton>
-						<controls1:RadioToggleButton Grid.Column="2"
-													 x:Name="StepToggleButton2"
-													 Height="45"
-													 Width="75"
-													 Content="{Binding JogStepList[1]}"
-													 VerticalAlignment="Stretch"
-													 FontSize="20"
-													 CommandParameter="{Binding #StepToggleButton2.Content }"
-													 HorizontalAlignment="Stretch"
-													 Command="{Binding StepRateChangeCommand}">
+						</RadioButton>
+						<RadioButton Classes="ButtonStyle" Grid.Column="2"
+                                     x:Name="StepToggleButton2"
+                                     Height="45"
+                                     Width="75"
+                                     Content="{Binding JogStepList[1]}"
+                                     VerticalAlignment="Stretch"
+                                     FontSize="20"
+                                     CommandParameter="{Binding #StepToggleButton2.Content }"
+                                     HorizontalAlignment="Stretch"
+                                     Command="{Binding StepRateChangeCommand}">
 							<Interaction.Behaviors>
 								<DataTriggerBehavior Binding="{Binding  #JogStepLabel.Content}"
 													 ComparisonCondition="Equal"
@@ -680,17 +679,17 @@
 														  Value="true" />
 								</DataTriggerBehavior>
 							</Interaction.Behaviors>
-						</controls1:RadioToggleButton>
-						<controls1:RadioToggleButton Grid.Column="3"
-													 x:Name="StepToggleButton3"
-													 Height="45"
-													 Width="75"
-													 Content="{Binding JogStepList[2]}"
-													 VerticalAlignment="Stretch"
-													 FontSize="20"
-													 CommandParameter="{Binding  #StepToggleButton3.Content}"
-													 HorizontalAlignment="Stretch"
-													 Command="{Binding StepRateChangeCommand}">
+						</RadioButton>
+						<RadioButton Classes="ButtonStyle" Grid.Column="3"
+                                     x:Name="StepToggleButton3"
+                                     Height="45"
+                                     Width="75"
+                                     Content="{Binding JogStepList[2]}"
+                                     VerticalAlignment="Stretch"
+                                     FontSize="20"
+                                     CommandParameter="{Binding  #StepToggleButton3.Content}"
+                                     HorizontalAlignment="Stretch"
+                                     Command="{Binding StepRateChangeCommand}">
 							<Interaction.Behaviors>
 								<DataTriggerBehavior Binding="{Binding  #JogStepLabel.Content}"
 													 ComparisonCondition="Equal"
@@ -700,7 +699,7 @@
 														  Value="true" />
 								</DataTriggerBehavior>
 							</Interaction.Behaviors>
-						</controls1:RadioToggleButton>
+						</RadioButton>
 					</Grid>
 					<!-- END Jog Control-->
 
@@ -832,33 +831,33 @@
 							   HorizontalContentAlignment="Center"
 							   VerticalContentAlignment="Center"
 							   FontSize="{DynamicResource DetailFontSize}" />
-						<controls1:RadioToggleButton Grid.Column="0" Grid.Row="1"
-													 FontSize="{DynamicResource BaseFontSize}"
-													 HorizontalAlignment="Stretch"
-													 Content="CW"
-													 CornerRadius="6,6,6,6"
-													 Height="45"
-													 Margin="5,5,5,0"
-													 CommandParameter="{Binding #SpindleRpm.Text}"
-													 Command="{Binding SpindleCWCommand}"></controls1:RadioToggleButton>
-						<controls1:RadioToggleButton Grid.Column="1" Grid.Row="1"
-													 HorizontalAlignment="Stretch"
-													 CornerRadius="6,6,6,6"
-													 Height="45"
-													 Margin="5,5,5,0"
-													 FontSize="{DynamicResource BaseFontSize}"
-													 Content="CCW"
-													 Command="{Binding SpindleCCWCommand}"
-													 CommandParameter="{Binding #SpindleRpm.Text}"/>
-						<controls1:RadioToggleButton Grid.Column="0"
-													 Grid.Row="2"
-													 Grid.ColumnSpan="2"
-													 CornerRadius="6,6,6,6"
-													 Height="45"
-													 Margin="5,10,5,0"
-													 HorizontalAlignment="Stretch"
-													 FontSize="{DynamicResource BaseFontSize}" Content ="Spindle Off"
-													 Command="{Binding SpindleOffCommand}" />
+						<RadioButton Classes="ButtonStyle" Grid.Column="0" Grid.Row="1"
+                                     FontSize="{DynamicResource BaseFontSize}"
+                                     HorizontalAlignment="Stretch"
+                                     Content="CW"
+                                     CornerRadius="6,6,6,6"
+                                     Height="45"
+                                     Margin="5,5,5,0"
+                                     CommandParameter="{Binding #SpindleRpm.Text}"
+                                     Command="{Binding SpindleCWCommand}"></RadioButton>
+						<RadioButton Classes="ButtonStyle" Grid.Column="1" Grid.Row="1"
+                                     HorizontalAlignment="Stretch"
+                                     CornerRadius="6,6,6,6"
+                                     Height="45"
+                                     Margin="5,5,5,0"
+                                     FontSize="{DynamicResource BaseFontSize}"
+                                     Content="CCW"
+                                     Command="{Binding SpindleCCWCommand}"
+                                     CommandParameter="{Binding #SpindleRpm.Text}"/>
+						<RadioButton Classes="ButtonStyle" Grid.Column="0"
+                                     Grid.Row="2"
+                                     Grid.ColumnSpan="2"
+                                     CornerRadius="6,6,6,6"
+                                     Height="45"
+                                     Margin="5,10,5,0"
+                                     HorizontalAlignment="Stretch"
+                                     FontSize="{DynamicResource BaseFontSize}" Content ="Spindle Off"
+                                     Command="{Binding SpindleOffCommand}" />
 
 						<NumericUpDown Grid.Row="3" Grid.Column="0" x:Name="SpindleRpm"
 									   FontSize="24"

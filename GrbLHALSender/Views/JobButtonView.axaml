@@ -6,7 +6,7 @@
 			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
 			 xmlns:convertors="clr-namespace:GrbLHALSender.Convertors"
 			 xmlns:utility="clr-namespace:GrbLHALSender.Utility"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 mc:Ignorable="d" d:DesignWidth="1500" d:DesignHeight="250"
 			 x:Class="GrbLHALSender.Views.JobButtonView"
 			 x:DataType="viewModels:JobViewModel">
 	<!--<Design.DataContext>
@@ -56,7 +56,7 @@
                 Content="G-code"
                 Command="{Binding OpenGCodePanel}"
                 IsEnabled="{Binding FileLoaded}"/>
-		<Grid Grid.Row="1" Grid.Column="0" ColumnSpan="6" ColumnDefinitions="2*,*,1*">
+		<Grid Grid.Row="1" Grid.Column="0" ColumnSpan="6" ColumnDefinitions="2*,*,*">
 		<TextBlock x:Name="FileTextBlock"
                    Margin="15,15"
 				   FontSize="{DynamicResource BaseFontSize}"
@@ -72,12 +72,14 @@
                    VerticalAlignment="Center"
 				   Text ="{Binding EstimatedTime}"/>
         <TextBlock x:Name="RunTimeTextBlock"
-                   Margin="0,15"
+                   Margin="25,15,0,15"
+				   Width="250"
                    FontSize="{DynamicResource BaseFontSize}"
                    Grid.Column="2"
 				   IsVisible="{Binding FileLoaded}"
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center"
+				   TextAlignment="Left"
                    Text ="{Binding RunTime, StringFormat=RunTime:{0}, FallbackValue=00:00:00}"/>
         </Grid>
 		<TextBlock Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="6"
