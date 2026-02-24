@@ -51,7 +51,7 @@
 					</Grid>
                     <Grid Grid.Row="1" ColumnDefinitions="*,*">
                         <CheckBox Grid.Column="0"
-                                  Content="Turn Off AntiAlias"
+                                  Content="Turn On AntiAlias"
                                   Margin="20,0,0,0"
                                   HorizontalContentAlignment="Center"
                                   VerticalContentAlignment="Center"
