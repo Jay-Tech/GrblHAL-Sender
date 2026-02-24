@@ -37,6 +37,12 @@ ArchitecturesInstallIn64BitMode=arm64
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64
 #endif
+CloseApplications=force
+RestartApplications=yes
+
+[InstallDelete]
+; Remove previous installation files to ensure clean upgrade
+Type: filesandordirs; Name: "{app}\*"
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
