@@ -9,9 +9,9 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="GrbLHALSender.Views.JobButtonView"
 			 x:DataType="viewModels:JobViewModel">
-	<Design.DataContext>
+	<!--<Design.DataContext>
 		<viewModels:JobViewModel/>
-	</Design.DataContext>
+	</Design.DataContext>-->
 	<UserControl.Resources>
 	</UserControl.Resources>
 	<UserControl.Styles>
@@ -23,7 +23,7 @@
 			<Setter Property="CornerRadius" Value="6,6,6,6"/>
 			<Setter Property="FontSize" Value="26"/>
 			<Setter Property="Height" Value="45"/>
-			<Setter Property="Width" Value="110"/>
+			<Setter Property="Width" Value="115"/>
 			<Setter Property="Margin" Value="15,5,15,0"/>
 			<Setter Property="BorderThickness" Value="3"/>
 		</Style>
