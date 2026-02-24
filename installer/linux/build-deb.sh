@@ -56,7 +56,7 @@ Version: $VERSION
 Section: electronics
 Priority: optional
 Architecture: $ARCH
-Depends: libx11-6, libfontconfig1, libfreetype6
+Depends: libx11-6
 Maintainer: Jay-Tech <jay-tech@users.noreply.github.com>
 Description: GrblHAL Sender - Cross-platform G-code sender
  A feature-rich G-code sender application for grblHAL CNC controllers.
