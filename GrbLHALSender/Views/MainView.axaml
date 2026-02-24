@@ -182,7 +182,7 @@
 							VerticalContentAlignment="Center"
 							HorizontalContentAlignment="Center"
 							Command="{Binding UnLockCommand}"
-							Width="100" />
+							Width="105" />
 					<Button Grid.Column="1"
 							Height="40"
 							Content="Close"
@@ -195,7 +195,7 @@
 							VerticalContentAlignment="Center"
 							HorizontalContentAlignment="Center"
 							Command="{Binding CloseCommand}"
-							Width="100" />
+							Width="105" />
 				</Grid>
 			</Grid>
 		</Border>
@@ -426,7 +426,7 @@
 											</ItemsRepeater.Layout>
 											<ItemsRepeater.ItemTemplate>
 												<DataTemplate>
-													<Button Height="40" Width="100"
+													<Button Height="45" Width="100"
 															Content="{Binding Name}"
 															FontSize="{DynamicResource BaseFontSize}"
 															HorizontalContentAlignment="Center"
