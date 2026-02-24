@@ -22,6 +22,7 @@ public class ConfigManager
         if (!Directory.Exists(path))
         {
             Directory.CreateDirectory(path);
+            CopyDefaultAssets(path);
         }
 
         var fullPath = Path.Combine(path, _fileName);
@@ -30,6 +31,30 @@ public class ConfigManager
         var jsonString = JsonSerializer.Serialize(GHalSenderConfig, options);
         File.WriteAllText(fullPath, jsonString);
         OnConfigSaved?.Invoke(this, GHalSenderConfig);
+    }
+
+    /// <summary>
+    /// Copies default asset files (e.g. Spindle.png) from the application
+    /// directory into the Config folder on first run.
+    /// </summary>
+    private static void CopyDefaultAssets(string configDir)
+    {
+        var assets = new[] { "Spindle.png" };
+        var appDir = AppContext.BaseDirectory;
+
+        foreach (var asset in assets)
+        {
+            var destPath = Path.Combine(configDir, asset.ToLowerInvariant());
+            if (File.Exists(destPath)) continue;
+
+            // Look in Assets subfolder first, then app root
+            var sourcePath = Path.Combine(appDir, "Assets", asset);
+            if (!File.Exists(sourcePath))
+                sourcePath = Path.Combine(appDir, asset);
+            if (!File.Exists(sourcePath)) continue;
+
+            File.Copy(sourcePath, destPath);
+        }
     }
     public GHalSenderConfig LoadConfig()
     {

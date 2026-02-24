@@ -57,9 +57,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Update="Assets\Spindle.png">
+    <None Include="Assets\Spindle.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AvaloniaResource>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
