@@ -92,6 +92,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Clean and Restore
+        run: |
+          dotnet clean ${{ env.PROJECT_PATH }} -c Release
+          dotnet restore ${{ env.PROJECT_PATH }} -r ${{ matrix.rid }}
+
       - name: Publish
         run: >
           dotnet publish ${{ env.PROJECT_PATH }}
@@ -102,6 +107,13 @@ jobs:
           -p:PublishTrimmed=false
           -p:Version=${{ needs.prepare.outputs.version }}
           -o publish/${{ matrix.rid }}
+
+      - name: Verify native libraries
+        run: |
+          echo "libSkiaSharp.so:"
+          ls -la publish/${{ matrix.rid }}/libSkiaSharp.so || echo "NOT FOUND"
+          echo "libHarfBuzzSharp.so:"
+          ls -la publish/${{ matrix.rid }}/libHarfBuzzSharp.so || echo "NOT FOUND"
 
       - name: Build .deb package
         run: |
