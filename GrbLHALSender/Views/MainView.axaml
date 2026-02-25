@@ -600,7 +600,6 @@
 						<Button Grid.Row="2" Grid.Column="1"
 								Name="YDown"
 								Classes="b2"
-								Foreground="{DynamicResource BorderBrushBlue}"
 								Margin="4"
 								Command="{Binding JogNegCommand}"
 								CommandParameter="Y"

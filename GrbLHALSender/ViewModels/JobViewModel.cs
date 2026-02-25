@@ -56,7 +56,7 @@ namespace GrbLHALSender.ViewModels
         private string _holdButtonText;
         private JobState _jobState;
         private bool _connected;
-        private int _bufferPercentage = 60;
+        private int _bufferPercentage = 40;
 
         // Throttled GcodeFileIndex: store latest value, push to UI on a timer
         private volatile int _latestFileIndex;

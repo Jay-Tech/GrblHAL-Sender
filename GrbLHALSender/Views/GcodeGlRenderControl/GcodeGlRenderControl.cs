@@ -203,11 +203,21 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
         {
             base.OnAttachedToVisualTree(e);
 
-            // Build default grid + axes so the control shows the grid immediately on startup,
-            // even before any machine connects or toolpath is loaded. OnPropertyChanged won't
-            // fire because all properties start at their default values (null).
+            // Rebuild all vertex data. On first attach this creates the default grid.
+            // On re-attach (tab switch back) this ensures the current toolpath/grid/axes
+            // are re-uploaded to the new GL context created by OnOpenGlInit.
+            PreBuildToolpathVertices(Toolpath);
             PreBuildGridAndAxesVertices(Toolpath, MachineSettings, WorkCoordinateOffset);
+            Interlocked.Exchange(ref _needsToolpathRebuild, 1);
             Interlocked.Exchange(ref _needsGridRebuild, 1);
+
+            // Flag spindle texture for re-upload (GL texture was destroyed in OnOpenGlDeinit,
+            // but the CPU-side bitmap in _spindleImageProvider is still valid).
+            _needsSpindleTextureUpload = true;
+
+            // Reset camera fit state so it auto-fits on first render
+            _fitted = false;
+
             PublishRenderState();
 
             // ~60 fps timer drives rendering. Only actually calls RequestNextFrameRendering
@@ -394,10 +404,17 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
         {
             _glInitialized = false;
             _toolpathRenderer?.Dispose();
+            _toolpathRenderer = null;
             _spindleRenderer?.Dispose();
+            _spindleRenderer = null;
             _spindleImageRenderer?.Dispose();
+            _spindleImageRenderer = null;
             _axisLabelRenderer?.Dispose();
-            _spindleImageProvider.Dispose();
+            _axisLabelRenderer = null;
+            // NOTE: Do NOT dispose _spindleImageProvider here — it holds the CPU-side
+            // bitmap which survives GL context teardowns (tab switches). The GL texture
+            // is already gone (GlSpindleImageRenderer.Dispose deleted it). We just need
+            // to re-upload the texture when OnOpenGlInit creates a new GL context.
 
             if (_gl != null)
             {
@@ -412,6 +429,10 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
                     _program = 0;
                 }
             }
+
+            // Reset MSAA size tracking so buffers are recreated on next init
+            _msaaWidth = 0;
+            _msaaHeight = 0;
 
             _gl?.Dispose();
             _gl = null;
