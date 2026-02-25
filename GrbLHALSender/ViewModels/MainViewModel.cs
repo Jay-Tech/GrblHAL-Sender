@@ -43,6 +43,8 @@ public class MainViewModel : ViewModelBase
     private MachineSettings? _machineSettings;
     private string _spindleImagePath = "spindle.png";
     private bool _useAntiAlias = true;
+    private bool _useHardwareRenderer;
+    private Control? _renderControl;
     private bool _showConsole;
     private bool _isJobRunning;
     private int _spindleRpm;
@@ -237,6 +239,31 @@ public class MainViewModel : ViewModelBase
         get => _useAntiAlias;
         set => this.RaiseAndSetIfChanged(ref _useAntiAlias, value);
     }
+
+    public bool UseHardwareRenderer
+    {
+        get => _useHardwareRenderer;
+        set
+        {
+            var old = _useHardwareRenderer;
+            this.RaiseAndSetIfChanged(ref _useHardwareRenderer, value);
+            if (old != value)
+                RebuildRenderControl();
+        }
+    }
+
+    public Control? RenderControl
+    {
+        get => _renderControl;
+        private set => this.RaiseAndSetIfChanged(ref _renderControl, value);
+    }
+
+    private void RebuildRenderControl()
+    {
+        RenderControl = _useHardwareRenderer
+            ? Views.RenderControlFactory.CreateHardwareRenderer()
+            : Views.RenderControlFactory.CreateSoftwareRenderer();
+    }
     public int FeedRate
     {
         get => _feedRate;
@@ -414,6 +441,10 @@ public class MainViewModel : ViewModelBase
             if (e.PropertyName == nameof(GHalSenderConfig.Borderless))
             {
                 FullScreenMode = _config.Borderless ? WindowState.FullScreen : WindowState.Maximized;
+            }
+            if (e.PropertyName == nameof(GHalSenderConfig.Renderer))
+            {
+                UseHardwareRenderer = _config.Renderer == GHalSenderConfig.RendererType.Hardware;
             }
         };
         _machineStateService.PropertyChanged+= (_, e) =>
@@ -685,6 +716,12 @@ public class MainViewModel : ViewModelBase
         AutoConnect = _config.AutoConnect;
         SpindleImagePath = _config.SpindleImagePath;
         UseAntiAlias = _config.UseAntiAlias;
+        UseHardwareRenderer = _config.Renderer == GHalSenderConfig.RendererType.Hardware;
+        // Always rebuild — the setter only rebuilds when the value changes,
+        // but on first init (or when toggling metric) we need to ensure
+        // a render control exists even if the value didn't change.
+        if (RenderControl == null)
+            RebuildRenderControl();
         JogRateList = new ObservableCollection<double>(UseMetric ? _config.JogSpeedMetric : _config.JogSpeedImperial);
         JogStepList = new ObservableCollection<double>(UseMetric ? _config.JogDistanceMetric : _config.JogDistanceImperial);
         JogStep = JogStepList[^1];

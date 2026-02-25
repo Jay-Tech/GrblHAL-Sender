@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using ReactiveUI.Avalonia;
+using ReactiveUI.Builder;
 using System;
 
 namespace GrbLHALSender.Desktop;
@@ -19,7 +20,10 @@ class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace()
-            .UseReactiveUI()
-            .With(new Win32PlatformOptions 
-                { RenderingMode = [Win32RenderingMode.Vulkan]});
+            .UseReactiveUI(WithReactiveUiBuilder);
+
+    private static void WithReactiveUiBuilder(ReactiveUIBuilder obj)
+    {
+        //throw new NotImplementedException();
+    }
 }

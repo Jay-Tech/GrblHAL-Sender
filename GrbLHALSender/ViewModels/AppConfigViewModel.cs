@@ -38,6 +38,7 @@ namespace GrbLHALSender.ViewModels
         private int _webServerPort;
         private bool _useAntiAlias = true;
         private string _spindleImagePath = "spindle.png";
+        private int _rendererIndex;
         private double _pollRate;
         private bool _borderlessWindow;
 
@@ -186,6 +187,14 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _spindleImagePath, value);
         }
 
+        public string[] RendererOptions { get; } = ["Software (Skia)", "Hardware (OpenGL)"];
+
+        public int RendererIndex
+        {
+            get => _rendererIndex;
+            set => this.RaiseAndSetIfChanged(ref _rendererIndex, value);
+        }
+
         public double PollRate
         {
             get => _pollRate;   
@@ -241,6 +250,7 @@ namespace GrbLHALSender.ViewModels
             WebServerPort = _appConfig.WebServerConfig.Port;
             UseAntiAlias = _appConfig.UseAntiAlias;
             SpindleImagePath = _appConfig.SpindleImagePath;
+            RendererIndex = (int)_appConfig.Renderer;
             PollRate = _appConfig.PollRate;
             BorderlessWindow = _appConfig.Borderless;
         }
@@ -271,6 +281,7 @@ namespace GrbLHALSender.ViewModels
              AuxOutputViewModel.Save();
             _appConfig.UseAntiAlias = UseAntiAlias;
             _appConfig.SpindleImagePath = SpindleImagePath;
+            _appConfig.Renderer = (GHalSenderConfig.RendererType)RendererIndex;
             _appConfig.PollRate = PollRate;
             _appConfig.Borderless = BorderlessWindow;
             _configManager.SaveConfig();
