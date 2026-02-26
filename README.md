@@ -20,7 +20,7 @@ Goal was to create a application that will run on a cheap mini PC with a UI desi
 ![WebServer](Media/WebServer.png)
 </br>
 ## Supports Wireless Controller
-![Setting](Media/GamePad.png) ![Setting Button](Media/GamePadButtons.png) ![Setting Trigger](Media/GamePadTrigger.png)
+![GamePad](Media/DefaultGamePad.png) 
 </br>
 # Settings Overview
 ## App
@@ -29,13 +29,17 @@ Goal was to create a application that will run on a cheap mini PC with a UI desi
 ## Rapid-ATC
 ![AppSetting](Media/SettingRAtc.png)
 </br>
-## Wireess Gamepad(Setting work in progress)
-![Gamepad](Media/GamePad.png)
+## Wireess Gamepad
+![Gamepad](Media/GamePad.png) ![Setting Button](Media/GamePadButtons.png) ![Setting Trigger](Media/GamePadTrigger.png)
 </br>
 ## Web Server
 ![WebServer](Media/SettingWebServer.png)
 </br>
-## Macro Download and Upload Suppoer
+## Macro Download and Upload Suppprted
 ![SDCard](Media/settingSdcard.png)
 
 ### Priority  V1.0.1
+Contuined Testing 
+- Tested on Linux including Pi5 
+- Tested on windows 
+- Probing needs testing 
