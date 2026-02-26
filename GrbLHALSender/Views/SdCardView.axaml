@@ -20,7 +20,7 @@
 							ToolTip.Tip="Mount SD card and refresh file list"
 							Padding="6,4">
 						<StackPanel Orientation="Horizontal" Spacing="4">
-							<ContentControl Content="{icons:MaterialIconExt Kind=Refresh, Size=16}" />
+							<ContentControl Content="{icons:MaterialIconExt Kind=Refresh, IconSize=16}" />
 							<TextBlock Text="Refresh" VerticalAlignment="Center"
 									   FontSize="{DynamicResource BaseFontSize}" />
 						</StackPanel>
@@ -31,7 +31,7 @@
 							ToolTip.Tip="Upload a file to the SD card"
 							Padding="6,4">
 						<StackPanel Orientation="Horizontal" Spacing="4">
-							<ContentControl Content="{icons:MaterialIconExt Kind=Upload, Size=16}" />
+							<ContentControl Content="{icons:MaterialIconExt Kind=Upload, IconSize=16}" />
 							<TextBlock Text="Up/L" VerticalAlignment="Center"
 									   FontSize="{DynamicResource BaseFontSize}" />
 						</StackPanel>
@@ -42,7 +42,7 @@
 							ToolTip.Tip="Download selected file from the SD card"
 							Padding="6,4">
 						<StackPanel Orientation="Horizontal" Spacing="4">
-							<ContentControl Content="{icons:MaterialIconExt Kind=Download, Size=16}" />
+							<ContentControl Content="{icons:MaterialIconExt Kind=Download, IconSize=16}" />
 							<TextBlock Text="Down/L" VerticalAlignment="Center"
 									   FontSize="{DynamicResource BaseFontSize}" />
 						</StackPanel>
@@ -53,7 +53,7 @@
 							ToolTip.Tip="Delete selected file from the SD card"
 							Padding="6,4">
 						<StackPanel Orientation="Horizontal" Spacing="4">
-							<ContentControl Content="{icons:MaterialIconExt Kind=Delete, Size=16}" />
+							<ContentControl Content="{icons:MaterialIconExt Kind=Delete, IconSize=16}" />
 							<TextBlock Text="Delete" VerticalAlignment="Center"
 									   FontSize="{DynamicResource BaseFontSize}" />
 						</StackPanel>
@@ -64,7 +64,7 @@
 							ToolTip.Tip="Run selected G-code file from the SD card"
 							Padding="6,4">
 						<StackPanel Orientation="Horizontal" Spacing="4">
-							<ContentControl Content="{icons:MaterialIconExt Kind=Play, Size=16}" />
+							<ContentControl Content="{icons:MaterialIconExt Kind=Play, IconSize=16}" />
 							<TextBlock Text="Run" VerticalAlignment="Center"
 									   FontSize="{DynamicResource BaseFontSize}" />
 						</StackPanel>
@@ -133,7 +133,7 @@
 						IsVisible="{Binding IsTransferring}"
 						ToolTip.Tip="Cancel transfer"
 						Padding="4">
-					<ContentControl Content="{icons:MaterialIconExt Kind=Close, Size=18}" />
+					<ContentControl Content="{icons:MaterialIconExt Kind=Close, IconSize=18}" />
 				</Button>
 			</Grid>
 		</Border>

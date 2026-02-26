@@ -27,7 +27,7 @@
 
 			<!-- App Height Tab -->
 			<TabItem Header="APP" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="10">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" Margin="10">
 					<Grid Grid.Row="0" ColumnDefinitions="*,*">
                         <CheckBox Grid.Column="0"
                                   Content="Full Screen"
@@ -69,7 +69,25 @@
                                   ToolTip.Tip="Show cut progress on the 3D toolpath during job execution. Disable to save resources on lower-power devices."
                                   IsChecked="{Binding EnableCutLines}"/>
                     </Grid>
-                        <Grid Grid.Row="2" ColumnDefinitions="Auto,*"
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+                        <Label Grid.Column="0"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center"
+                               HorizontalContentAlignment="Right"
+                               VerticalContentAlignment="Center"
+                               FontSize="18"
+                               Content="Renderer:"/>
+                        <ComboBox Grid.Column="1"
+                                  Width="250"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  Margin="10,0,0,0"
+                                  FontSize="18"
+                                  ToolTip.Tip="Software uses SkiaSharp (CPU). Hardware uses OpenGL (GPU). Requires save and takes effect immediately."
+                                  ItemsSource="{Binding RendererOptions}"
+                                  SelectedIndex="{Binding RendererIndex}"/>
+                    </Grid>
+                        <Grid Grid.Row="3" ColumnDefinitions="Auto,*"
                               Margin="0,10,0,0">
 						<Label Grid.Column="0"
 							   HorizontalAlignment="Right"
@@ -89,7 +107,7 @@
 								 ToolTip.Tip="PNG image filename in Config folder (e.g. spindle.png). Leave empty for default procedural drawing."
 								 Text="{Binding SpindleImagePath}"/>
 					</Grid>
-                    <Grid Grid.Row="3" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+                    <Grid Grid.Row="4" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
                         <Label Grid.Column="0"
                                HorizontalAlignment="Right"
                                VerticalAlignment="Center"
@@ -109,7 +127,7 @@
 								 Recommend to stay above 100mm"
                                  Text="{Binding PollRate}"/>
                     </Grid>
-					<Grid Grid.Row="4" ColumnDefinitions="*,*"  >
+					<Grid Grid.Row="5" ColumnDefinitions="*,*"  >
 						<Border Grid.Column="0" Padding="5,10"
 								Margin="0,10,0,0"
 								BorderBrush="AntiqueWhite"
@@ -220,7 +238,7 @@
 						</Border>
 					</Grid>
 
-					<Grid Grid.Row="5" ColumnDefinitions="*,*"  >
+					<Grid Grid.Row="6" ColumnDefinitions="*,*"  >
 						<Border Grid.Column="0" Padding="5,10"
 								Margin="0,10,0,0"
 								BorderBrush="AntiqueWhite"

@@ -49,6 +49,13 @@ public class GHalSenderConfig : ObservableObject
     public WebServerConfig WebServerConfig { get; set; } = new();
     public ProbeConfig ProbeConfig { get; set; } = new();
     public SdCardConfig SdCardConfig { get; set; } = new();
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum RendererType
+    {
+        Software,
+        Hardware
+    }
+    public RendererType Renderer { get; set; } = RendererType.Software;
     public bool UseAntiAlias { get; set; } = true;
     public string SpindleImagePath { get; set; } = "spindle.png";
     public ToolList ToolList { get; set; } = new();

@@ -8,7 +8,6 @@
 			 xmlns:views="clr-namespace:GrbLHALSender.Views"
 			 xmlns:controls1="clr-namespace:GrbLHALSender.Controls"
 			 xmlns:behaviors="clr-namespace:GrbLHALSender.Behaviors"
-			 xmlns:gcodeRenderControl="clr-namespace:GrbLHALSender.Views.GcodeRenderControl"
 			 d:DesignWidth="1920" d:DesignHeight="1080"
 			 x:Class="GrbLHALSender.Views.MainView"
 			 x:DataType="viewModels:MainViewModel">
@@ -383,17 +382,14 @@
 								 x:Name="HomeTab"
 								 Header="Home">
 							<Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*,Auto" >
-								<gcodeRenderControl:GcodeRenderControl Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
-																	   HorizontalAlignment="Stretch"
-																	   VerticalAlignment="Stretch"
-																	   Toolpath="{Binding JobViewModel.ToolpathData}"
-																	   SpindlePosition="{Binding JobViewModel.CurrentSpindlePosition}"
-																	   MachineSettings="{Binding MachineSettings}"
-																	   WorkCoordinateOffset="{Binding JobViewModel.WorkCoordinateOffset}"
-																	   CompletedSegmentIndex="{Binding JobViewModel.CompletedSegmentIndex}"
-																	   SelectedLineInfo="{Binding JobViewModel.SelectedLineInfo, Mode=TwoWay}"
-																	   SpindleImagePath="{Binding SpindleImagePath}"
-																	   UseAntiAlias="{Binding UseAntiAlias}"/>
+								<!-- Render control: created by MainViewModel based on Renderer config setting.
+									 Only the selected renderer is instantiated (Software=Skia or Hardware=OpenGL). -->
+								<ContentControl Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
+												Content="{Binding RenderControl}"
+												HorizontalAlignment="Stretch"
+												VerticalAlignment="Stretch"
+												HorizontalContentAlignment="Stretch"
+												VerticalContentAlignment="Stretch"/>
 								<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
 										HorizontalAlignment="Stretch"
 										IsVisible="{Binding #HomeTab.IsSelected}"
@@ -584,7 +580,7 @@
 								Margin="4"
 								Command="{Binding JogNegCommand}"
 								CommandParameter="X"
-								Content="{icons:MaterialIconExt Kind=ArrowLeftBoldBoxOutline, Size=90}"/>
+								Content="{icons:MaterialIconExt Kind=ArrowLeftBoldBoxOutline, IconSize=90}"/>
 						<Button Grid.Row="0"  Grid.Column="1"
 								Name="YUp"
 								Classes="b2"
@@ -592,7 +588,7 @@
 								Command="{Binding JogPosCommand }"
 								CommandParameter="Y"
 								CornerRadius="10"
-								Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, Size=90}"/>
+								Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, IconSize=90}"/>
 						<Button Grid.Row="1" Grid.Column="2"
 								Name="Xup"
 								Margin="4"
@@ -600,35 +596,35 @@
 								Classes="b2"
 								CommandParameter= "X"
 								CornerRadius="10"
-								Content="{icons:MaterialIconExt Kind=ArrowRightBoldBoxOutline, Size=90}" />
+								Content="{icons:MaterialIconExt Kind=ArrowRightBoldBoxOutline, IconSize=90}" />
 						<Button Grid.Row="2" Grid.Column="1"
 								Name="YDown"
 								Classes="b2"
 								Margin="4"
 								Command="{Binding JogNegCommand}"
 								CommandParameter="Y"
-								Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline, Size=90}" />
+								Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline, IconSize=90}" />
 						<Button Grid.Row="1" Grid.Column="1"
 								CornerRadius="20"
 								Name="StopAll"
 								Margin="4"
 								Classes="b2"
 								Command="{Binding JogCancelCommand}"
-								Content="{icons:MaterialIconExt Kind=StopCircleOutline, Size=86}"/>
+								Content="{icons:MaterialIconExt Kind=StopCircleOutline, IconSize=86}"/>
 						<Button Grid.Row="0" Grid.Column="3"
 								Name="ZUp"
 								Classes="b2"
 								Margin="4"
 								Command="{Binding JogPosCommand}"
 								CommandParameter="Z"
-								Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, Size=90}"/>
+								Content="{icons:MaterialIconExt Kind=ArrowUpBoldBoxOutline, IconSize=90}"/>
 						<Button Grid.Row="2" 	Grid.Column="3"
 								Name="ZDown"
 								Classes="b2"
 								Margin="5,4,4,4"
 								Command="{Binding JogNegCommand}"
 								CommandParameter="Z" 
-								Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline,  Size=90}"/>
+								Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline,  IconSize=90}"/>
 					</Grid>
 					<Grid x:Name="StepRatePanel" Grid.Row="2"
 						  Margin="0,20,0,0"
@@ -901,13 +897,13 @@
 							<Button Grid.Column="0"
 									CornerRadius="6,6,6,6"
 									Height="45"
-									Content="{icons:MaterialIconExt Kind=PlusThick,  Size=50}"
+									Content="{icons:MaterialIconExt Kind=PlusThick,  IconSize=50}"
 									Margin="5,10,5,0"
 									Command="{Binding SpindleIncreaseCommand}" />
 							<Button Grid.Column="1"
 									CornerRadius="6,6,6,6"
 									Height="45"
-									Content="{icons:MaterialIconExt Kind=MinusThick,  Size=45}"
+									Content="{icons:MaterialIconExt Kind=MinusThick,  IconSize=45}"
 									HorizontalContentAlignment="Center"
 									VerticalAlignment="Center"
 									Margin="5,10,5,0"
@@ -920,7 +916,7 @@
 							<Button Grid.Column="0"
 									CornerRadius="6,6,6,6"
 									Height="40"
-									Content="{icons:MaterialIconExt Kind=Cached,  Size=40}"
+									Content="{icons:MaterialIconExt Kind=Cached,  IconSize=40}"
 									Margin="5,10,0,0"
 									Command="{Binding SpindleResetCommand }" />
 							<TextBlock Grid.Column="1"
@@ -961,7 +957,7 @@
 									HorizontalAlignment="Stretch"
 									HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"
-									Content="{icons:MaterialIconExt Kind=PlusThick, Size=50}"
+									Content="{icons:MaterialIconExt Kind=PlusThick, IconSize=50}"
 									Height="45"
 									Command="{Binding FeedOrPlus }"/>
 							<Button Grid.Column="1"
@@ -970,7 +966,7 @@
 									HorizontalAlignment="Stretch"
 									HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"
-									Content="{icons:MaterialIconExt Kind=MinusThick, Size=45}"
+									Content="{icons:MaterialIconExt Kind=MinusThick, IconSize=45}"
 									Height="45"
 									Command="{Binding FeedOrMinus}" />
 							<Button Grid.Column="2"
@@ -979,7 +975,7 @@
 									HorizontalAlignment="Stretch"
 									HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"
-									Content="{icons:MaterialIconExt Kind=Cached, Size=45}"
+									Content="{icons:MaterialIconExt Kind=Cached, IconSize=45}"
 									Height="45"
 									Command="{Binding FeedOrReset}" />
 						</Grid>
@@ -990,7 +986,7 @@
 									HorizontalAlignment="Stretch"
 									HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"
-									Content="{icons:MaterialIconExt Kind=MinusThick, Size=50}"
+									Content="{icons:MaterialIconExt Kind=MinusThick, IconSize=50}"
 									Height="45"
 									Command="{Binding RapidOrMediumCommand}" />
 							<Button Grid.Column="1" Margin="5,0,5,0"
@@ -998,7 +994,7 @@
 									HorizontalAlignment="Stretch"
 									HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"
-									Content="{icons:MaterialIconExt Kind=MinusThick, Size=45}"
+									Content="{icons:MaterialIconExt Kind=MinusThick, IconSize=45}"
 									Height="45"
 									Command="{Binding RapidOrFineCommand}"/>
 							<Button Grid.Column="2" Margin="5,0,5,0"
@@ -1006,7 +1002,7 @@
 									HorizontalAlignment="Stretch"
 									HorizontalContentAlignment="Center"
 									VerticalContentAlignment="Center"
-									Content="{icons:MaterialIconExt Kind=Cached, Size=45}"
+									Content="{icons:MaterialIconExt Kind=Cached, IconSize=45}"
 									Height="45"
 									Command="{Binding ResetRapidCommand}" />
 						</Grid>
