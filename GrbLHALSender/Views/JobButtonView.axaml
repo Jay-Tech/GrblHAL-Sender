@@ -28,7 +28,7 @@
 			<Setter Property="BorderThickness" Value="3"/>
 		</Style>
 	</UserControl.Styles>
-	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*,*"  RowDefinitions="Auto,Auto,Auto"
+	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*,*"  RowDefinitions="Auto,Auto,Auto,Auto"
 		   Opacity=".6"
 		   VerticalAlignment="Stretch"
 		   HorizontalAlignment="Center">
@@ -90,5 +90,14 @@
 				   Text="{Binding SelectedLineInfo}"
 				   IsVisible="{Binding SelectedLineInfo, 
 				   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        <TextBlock Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="6"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+				   FontWeight="DemiBold"
+                   Margin="15,0" 
+				   Foreground="{DynamicResource AlertBrush}"
+                   FontSize="{DynamicResource XlFontSize}"
+                   Text="TOOL"
+                   IsVisible="{Binding ToolChangeVisible}"/>
 	</Grid>
 </UserControl>

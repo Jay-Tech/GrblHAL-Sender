@@ -11,10 +11,11 @@
 		<SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#59111111"> </SolidColorBrush>
 		<SolidColorBrush x:Key="SmokeWhiteText" Color="#FF111111"> </SolidColorBrush>
         <SolidColorBrush x:Key="BorderBrushBlue" Color="#007ACC"> </SolidColorBrush>
-       
+        <SolidColorBrush x:Key="AlertBrush" Color="Red" ></SolidColorBrush>
 		
 		<Color x:Key="ButtonMainBackGroundColor">#FF505050</Color>
 		<Color x:Key="BorderBrush">#007ACC</Color>
+        <Color x:Key="Alert">Red</Color>
 
 		<sys:Double x:Key="TinyFontSize">12</sys:Double>
 		<sys:Double x:Key="SmallFontSize">18</sys:Double>
@@ -22,6 +23,7 @@
 		<sys:Double x:Key="DetailFontSizeLarge">22</sys:Double>
 		<sys:Double x:Key="BaseFontSize">26</sys:Double>
 		<sys:Double x:Key="LargeFontSize">32</sys:Double>
+        <sys:Double x:Key="XlFontSize">64</sys:Double>
 
 	</Application.Resources>
 

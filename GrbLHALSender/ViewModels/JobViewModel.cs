@@ -73,8 +73,9 @@ namespace GrbLHALSender.ViewModels
         private Point3D? _currentSpindlePosition;
         // Set by MainViewModel — references config object so changes take effect immediately
         internal GHalSenderConfig? Config;
+        private bool _toolChangeVisible;
 
-        
+
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
         public ObservableCollection<GCodeLine> GCodeOutPut { get; set; }
         public Core.Interaction<string, IReadOnlyList<IStorageFile>?> SelectFilesInteraction { get; } = new();
@@ -214,6 +215,14 @@ namespace GrbLHALSender.ViewModels
             CanStartJob = JobState is JobState.Hold or JobState.Tool ||
                           (FileLoaded && !JobRunning &&
                            JobState is (JobState.Idle or JobState.ProgramComplete or JobState.Stop));
+
+            ToolChangeVisible = JobState == JobState.Tool;
+        }
+
+        public bool ToolChangeVisible
+        {
+            get => _toolChangeVisible;
+            set => this.RaiseAndSetIfChanged(ref _toolChangeVisible, value);
         }
 
         public JobViewModel(CommunicationManager manager, MachineStateService machineStateService)
