@@ -10,12 +10,12 @@
 
 		<SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#59111111"> </SolidColorBrush>
 		<SolidColorBrush x:Key="SmokeWhiteText" Color="#FF111111"> </SolidColorBrush>
-        <SolidColorBrush x:Key="BorderBrushBlue" Color="#007ACC"> </SolidColorBrush>
-        <SolidColorBrush x:Key="AlertBrush" Color="Red" ></SolidColorBrush>
-		
+		<SolidColorBrush x:Key="BorderBrushBlue" Color="#007ACC"> </SolidColorBrush>
+		<SolidColorBrush x:Key="AlertBrush" Color="Red" ></SolidColorBrush>
+
 		<Color x:Key="ButtonMainBackGroundColor">#FF505050</Color>
 		<Color x:Key="BorderBrush">#007ACC</Color>
-        <Color x:Key="Alert">Red</Color>
+		<Color x:Key="Alert">Red</Color>
 
 		<sys:Double x:Key="TinyFontSize">12</sys:Double>
 		<sys:Double x:Key="SmallFontSize">18</sys:Double>
@@ -23,7 +23,7 @@
 		<sys:Double x:Key="DetailFontSizeLarge">22</sys:Double>
 		<sys:Double x:Key="BaseFontSize">26</sys:Double>
 		<sys:Double x:Key="LargeFontSize">32</sys:Double>
-        <sys:Double x:Key="XlFontSize">64</sys:Double>
+		<sys:Double x:Key="XlFontSize">64</sys:Double>
 
 	</Application.Resources>
 
@@ -31,8 +31,8 @@
 		<materialIcons:MaterialIconStyles />
 
 		<!-- Disable FluentTheme animated transitions on buttons.
-		     The default ~200ms color interpolation competes for UI thread time
-		     during job execution, causing sluggish hover feedback. -->
+		The default ~200ms color interpolation competes for UI thread time
+		during job execution, causing sluggish hover feedback. -->
 		<Style Selector="Button /template/ ContentPresenter">
 			<Setter Property="Transitions" >
 				<Transitions/>
@@ -56,60 +56,66 @@
 			<Setter Property="Margin" Value="1,1"></Setter>
 		</Style>
 
-        <Style Selector="Button.b2">
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Height" Value="65"/>
-            <Setter Property="Width" Value="65"/>
-            <Setter Property="BorderThickness" Value="4" ></Setter>
-			<Setter Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}" ></Setter>
-            <Setter Property="Foreground" Value="{DynamicResource ThemeAccentBrush}"/>
-          
-        </Style>
-        <Style Selector="Button.b2:pointerover /template/ ContentPresenter">
-            <Setter Property="Foreground" Value="{DynamicResource BorderBrushBlue}"/>
-        </Style>
-		
-        <!-- Custom Radio Button styled like button-->
-        <Style Selector="RadioButton.ButtonStyle">
+		<Style Selector="Button.b2">
+			<Setter Property="CornerRadius" Value="10"/>
+			<Setter Property="Height" Value="65"/>
+			<Setter Property="Width" Value="65"/>
+			<Setter Property="BorderThickness" Value="4" ></Setter>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderBrushBlue}" ></Setter>
+			<Setter Property="Foreground" Value="{DynamicResource BorderBrushBlue}"/>
+
+		</Style>
+		<Style Selector="Button.b2:pointerover /template/ ContentPresenter">
+			<Setter Property="Foreground" Value="{DynamicResource BorderBrushBlue}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderBrushBlue}" ></Setter>
+		</Style>
+
+		<!-- Custom Radio Button styled like button-->
+		<Style Selector="RadioButton.ButtonStyle">
 			<Setter Property="FontSize" Value="{DynamicResource BaseFontSize}" ></Setter>
-            <Setter Property="Template">
-                <ControlTemplate TargetType="RadioButton">
-                    <Border 
-                        Name="ButtonBorder"
-                        Background="{DynamicResource ThemeControlMidBrush}"
-                        BorderBrush="{DynamicResource ThemeBorderLowBrush}"
-                        BorderThickness="1"
-                        CornerRadius="4"
-                        Padding="10,5">
-                        <ContentPresenter 
-                            Content="{TemplateBinding Content}"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"/>
-                    </Border>
-					
-                </ControlTemplate>
-            </Setter>
+			<Setter Property="Template">
+				<ControlTemplate TargetType="RadioButton">
+					<Border
+					Name="ButtonBorder"
+					Background="{DynamicResource ButtonBackground}"
+					BorderBrush="{DynamicResource ThemeAccentBrush}"
+					BorderThickness="4"
+					CornerRadius="4"
+					Padding="5,5">
+						<ContentPresenter
+						Content="{TemplateBinding Content}"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"/>
+					</Border>
+
+				</ControlTemplate>
+			</Setter>
+		</Style>
+
+		<Style Selector="RadioButton.ButtonStyle:pointerover /template/ Border#ButtonBorder">
+			<Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}"/>
+		</Style>
+
+		<Style Selector="RadioButton.ButtonStyle:checked /template/ Border#ButtonBorder">
+			<Setter Property="Background" Value="{DynamicResource ButtonBackgroundPressed}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderBrushBlue}"/>
+		</Style>
+
+        <Style Selector="RadioButton.ButtonStyle:disabled /template/ Border#ButtonBorder">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundDisabled}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushDisabled}"/>
         </Style>
 
-        <Style Selector="RadioButton.ButtonStyle:pointerover /template/ Border#ButtonBorder">
-            <Setter Property="Background" Value="{DynamicResource ThemeControlMidHighBrush}"/>
-        </Style>
-
-        <Style Selector="RadioButton.ButtonStyle:checked /template/ Border#ButtonBorder">
-            <Setter Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
-        </Style>
-
-		<!--<FluentTheme>
-            <FluentTheme.Palettes>
+		<FluentTheme>
+			<FluentTheme.Palettes>
 				<ColorPaletteResources x:Key="Light" Accent="#ff0073cf" AltHigh="White" AltLow="White" AltMedium="White" AltMediumHigh="White" AltMediumLow="White" BaseHigh="Black" BaseLow="#ffcccccc" BaseMedium="#ff898989" BaseMediumHigh="#ff5d5d5d" BaseMediumLow="#ff737373" ChromeAltLow="#ff5d5d5d" ChromeBlackHigh="Black" ChromeBlackLow="#ffcccccc" ChromeBlackMedium="#ff5d5d5d" ChromeBlackMediumLow="#ff898989" ChromeDisabledHigh="#ffcccccc" ChromeDisabledLow="#ff898989" ChromeGray="#ff737373" ChromeHigh="#ffcccccc" ChromeLow="#ffececec" ChromeMedium="#ffe6e6e6" ChromeMediumLow="#ffececec" ChromeWhite="White" ListLow="#ffe6e6e6" ListMedium="#ffcccccc" RegionColor="White" />
 				<ColorPaletteResources x:Key="Dark" Accent="#ff0073cf" AltHigh="#FF2E2E2E" AltLow="#FF2E2E2E" AltMedium="#FF2E2E2E" AltMediumHigh="#FF2E2E2E" AltMediumLow="#FF2E2E2E" BaseHigh="White" BaseLow="#ff505050" BaseMedium="#ffa8a8a8" BaseMediumHigh="#ffbebebe" BaseMediumLow="#ff7c7c7c" ChromeAltLow="#ffbebebe" ChromeBlackHigh="Black" ChromeBlackLow="#ffbebebe" ChromeBlackMedium="Black" ChromeBlackMediumLow="Black" ChromeDisabledHigh="#ff505050" ChromeDisabledLow="#ffa8a8a8" ChromeGray="#ff929292" ChromeHigh="#ff929292" ChromeLow="#ff232323" ChromeMedium="#ff2e2e2e" ChromeMediumLow="#ff454545" ChromeWhite="White" ListLow="#ff2e2e2e" ListMedium="#ff505050" RegionColor="#ff282828" />
 			</FluentTheme.Palettes>
-        </FluentTheme>-->
+		</FluentTheme>
 
 
-		<SimpleTheme ></SimpleTheme>
-		
+		<!--<SimpleTheme ></SimpleTheme>-->
+
 
 	</Application.Styles>
 </Application>

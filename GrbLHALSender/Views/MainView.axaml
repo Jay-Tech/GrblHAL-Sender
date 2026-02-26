@@ -45,7 +45,7 @@
 	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="Transparent" >
 		<Border x:Name="HeaderBorder" Grid.Row="0"  Grid.ColumnSpan="3" Height="45" BorderThickness="1"  >
 			<!--Connect, WCS, Tool-->
-			<Grid ColumnDefinitions="125,105,150,125,125,150,200,200,*,200,Auto">
+			<Grid ColumnDefinitions="125,105,150,125,150,150,200,200,*,Auto,Auto">
 				<StackPanel  Grid.Column="0" Orientation="Horizontal" >
 					<Button  Margin="3,0,0,0"
 							 HorizontalAlignment="Left"
