@@ -39,7 +39,7 @@
                                   ToolTip.Tip="Check to enable Borderless Window"
                                   IsChecked="{Binding BorderlessWindow}"/>
                         <CheckBox Grid.Column="1"
-                                  Content="Use  Metric"
+                                  Content="Use Metric"
                                   Margin="20,0,0,0"
                                   HorizontalContentAlignment="Center"
                                   VerticalContentAlignment="Center"
