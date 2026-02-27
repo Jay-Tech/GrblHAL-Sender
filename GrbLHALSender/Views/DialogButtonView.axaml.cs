@@ -108,7 +108,7 @@ public partial class DialogButtonView : UserControl
                     appConfigView.DataContext = appConfigViewVm.AppConfigViewModel;
                     appConfigView.SetSdCardViewModel(appConfigViewVm.SdCardViewModel);
                 }
-                return (appConfigView, 675, 650);
+                return (appConfigView, 675, 675);
             default:
                 var placeholder = new TextBlock
                 {

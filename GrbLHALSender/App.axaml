@@ -46,8 +46,8 @@
 
 		<Style Selector="Button.h1">
 			<Setter Property="FontSize" Value="20"/>
-			<Setter Property="Height" Value="58"/>
-			<Setter Property="Width" Value="51"/>
+			<!--<Setter Property="Height" Value="58"/>
+			<Setter Property="Width" Value="51"/>-->
 			<Setter Property="Focusable" Value="False"></Setter>
 			<Setter Property="HorizontalAlignment" Value="Stretch"/>
 			<Setter Property="VerticalAlignment" Value="Stretch"/>

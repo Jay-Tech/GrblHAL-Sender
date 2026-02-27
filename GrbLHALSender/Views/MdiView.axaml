@@ -5,11 +5,13 @@
 			 xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:DataType="vm:MdiViewModel"
+			 HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
 			 x:Class="GrbLHALSender.Views.MdiView">
 	<Design.DataContext>
 		<vm:MdiViewModel/>
 	</Design.DataContext>
-	<Grid  RowDefinitions="Auto,Auto,Auto,*">
+	<Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  RowDefinitions="Auto,Auto,Auto,*">
 		<Label Grid.Row="0"  Content="MDI"  Height="30"
                HorizontalContentAlignment="Center" 
                VerticalContentAlignment="Center"
@@ -40,8 +42,10 @@
                 VerticalAlignment="Stretch"></Button>
 
 		<UniformGrid Grid.Row="3" x:Name="MdiGrid" Columns="5" Rows="5" Margin="0,0,0,0"
-					 HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
-			<Button Classes="h1"  Content="7"
+					 HorizontalAlignment="Stretch" 
+                     VerticalAlignment="Stretch">
+			<Button Classes="h1"  
+                    Content="7"
 					CommandParameter="7"
 					Command="{Binding KeyPressCommand}"/>
 			<Button Classes="h1" Content="8"

@@ -202,16 +202,16 @@
 
 		<!-- START Content Grid-->
 		<Grid Grid.Row="1" x:Name="ContentGrid" ColumnDefinitions="Auto,*,Auto">
-			<!-- START Left Controls-->
+			<!-- START Left Controls DRO, MDI-->
 			<Border  Grid.Column="0"
 					 IsEnabled="{Binding Connected}"
 					 Name="DroBorder"
 					 Margin="0,50,0,0"
-					 MaxWidth="265"
+					 MaxWidth="300" MinWidth="295"
 					 VerticalAlignment="Stretch"
-					 BorderThickness="1" >
+					  >
 				<!--START Home Control -->
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*"  IsEnabled="{Binding !JobViewModel.JobRunning}">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,*"  IsEnabled="{Binding !JobViewModel.JobRunning}">
 					<Grid Grid.ColumnDefinitions="*,Auto" >
 						<Button Grid.Column="0"
 								FontSize="{DynamicResource BaseFontSize}"
@@ -238,59 +238,64 @@
 					<!--END Home Control -->
 
 					<!--START DRO Control -->
-					<ItemsControl Grid.Row="1" ItemsSource="{Binding AxisCollection}">
-						<ItemsControl.ItemTemplate>
+					<ItemsControl Grid.Row="1" 
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch" 
+                                  ItemsSource="{Binding AxisCollection}">
+						<ItemsControl.ItemTemplate> 
 							<DataTemplate>
-								<StackPanel HorizontalAlignment="Stretch"
-											VerticalAlignment="Stretch"
-											Orientation="Horizontal">
-									<TextBlock Text="{Binding Name}"
+								<Grid HorizontalAlignment="Stretch" ColumnDefinitions="Auto,*,Auto"
+											VerticalAlignment="Stretch">
+									<TextBlock Grid.Row="0" Text="{Binding Name}"
 											   HorizontalAlignment="Stretch"
 											   VerticalAlignment="Stretch"
 											   FontSize="35"
-											   Margin="2,0,0,0"></TextBlock>
-									<Border BorderThickness="1" >
+											   Margin="2,0,2,0"></TextBlock>
+									<Border Grid.Column="1" BorderThickness="1" >
 										<StackPanel>
-											<Grid ColumnDefinitions="Auto,Auto">
-												<Label Grid.Row="0"  Focusable="False"
+											<Grid ColumnDefinitions="*,Auto">
+												<Label Grid.Row="0"  x:Name="WcoLabel"
+                                                       Focusable="False"
 													   Content="{Binding Path=Position.Wco,StringFormat=N3}"
-													   FontSize="32" MinWidth="135" Height="45"
+													   FontSize="32" 
+                                                       MinWidth="175" 
+                                                       Height="45"
 													   VerticalContentAlignment="Center"
 													   HorizontalContentAlignment="Left"
 													   HorizontalAlignment ="Stretch"
-													   VerticalAlignment="Stretch"></Label>
+													   VerticalAlignment="Stretch"/>
 												<TextBlock Grid.Column="1"
 														   Text="{Binding $parent[ItemsControl].((viewModels:MainViewModel)DataContext).UnitText}"
 														   FontSize="18"
 														   VerticalAlignment="Center"
-														   HorizontalAlignment="Left"
+														   HorizontalAlignment="Right"
 														   Opacity="0.6" />
 											</Grid>
 											<Label  Focusable="False"
-
 													Content="{Binding Path=Position.MPos,StringFormat=N3}"
-													FontSize="16" MinWidth="175" Height="25"
+													FontSize="18" MinWidth="175" Height="25"
 													VerticalContentAlignment="Center"
 													HorizontalContentAlignment="Left"
 													HorizontalAlignment ="Stretch"
-													VerticalAlignment="Stretch"></Label>
+													Margin="5,0,0,0"
+													VerticalAlignment="Stretch"/>
 										</StackPanel>
 									</Border>
-									<Button  Name ="{Binding Name}"
+									<Button Grid.Column="2"  Name ="{Binding Name}"
 											 CornerRadius="6"
 											 Content="{Binding Name,
 											 StringFormat={}{0}0}"
 											 FontSize="{DynamicResource BaseFontSize}"
 											 Height="60"
-											 HorizontalAlignment="Stretch"
+											 HorizontalAlignment="Right"
 											 HorizontalContentAlignment="Center"
 											 VerticalAlignment="Stretch"
 											 VerticalContentAlignment="Center"
-											 Margin="2"
+											 Margin="2,2,0,2"
 											 Width="55" Focusable="False"
 											 Command="{Binding ZeroWcsCommand}"
 											 CommandParameter="{Binding Name}"></Button>
-								</StackPanel>
+								</Grid>
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
@@ -363,7 +368,7 @@
 					<!--END WCS Control -->
 
 					<!--START MDI Control-->
-					<views:MdiView Grid.Row="4"
+					<views:MdiView Grid.Row="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
 								   DataContext="{Binding MdiViewModel}"></views:MdiView>
 					<!--END MDI Control-->
 				</Grid>
