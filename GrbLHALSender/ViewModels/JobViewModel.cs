@@ -5,7 +5,6 @@ using DynamicData;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gcode;
-using GrbLHALSender.Settings;
 using GrbLHALSender.States;
 using GrbLHALSender.Utility;
 using ReactiveUI;
