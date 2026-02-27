@@ -5,6 +5,7 @@ using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.Gcode;
+using GrbLHALSender.Updates;
 using GrbLHALSender.WebServer;
 using GrbLHALSender.Settings;
 using GrbLHALSender.States;
@@ -401,7 +402,7 @@ public class MainViewModel : ViewModelBase
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
         WebServerService webServerService, MachineStateService machineStateService,
-        SdCardViewModel sdCardViewModel)
+        SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService)
     {
         CommManager = commManager;
         ProbeViewModel = probeViewModel;
@@ -528,6 +529,10 @@ public class MainViewModel : ViewModelBase
         _webServerService.SetViewModel(this);
         _webServerService.StatusMessage += (_, msg) => ConsoleOutput.Add($"[WebServer] {msg}");
         _webServerService.Initialize(_config.WebServerConfig);
+
+        updateCheckService.StatusMessage += (_, msg) =>
+            Dispatcher.UIThread.Post(() => ConsoleOutput.Add($"[Update] {msg}"));
+        _ = updateCheckService.CheckForUpdateAsync();
 
         if (!_config.AutoConnect) return;
         try

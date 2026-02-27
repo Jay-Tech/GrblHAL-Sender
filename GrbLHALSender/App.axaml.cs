@@ -8,6 +8,7 @@ using GrbLHALSender.SdCard;
 using GrbLHALSender.States;
 using GrbLHALSender.ViewModels;
 using GrbLHALSender.Views;
+using GrbLHALSender.Updates;
 using GrbLHALSender.WebServer;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,7 +20,7 @@ public partial class App : Application
     {
         AvaloniaXamlLoader.Load(this);
 #if DEBUG
-       // this.AttachDeveloperTools();
+        this.AttachDeveloperTools();
 #endif
     }
 
@@ -62,6 +63,7 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<FileUploadService>();
         collection.AddSingleton<WebServerService>();
         collection.AddSingleton<SdCardService>();
+        collection.AddSingleton<UpdateCheckService>();
         collection.AddTransient<SettingsViewModel>();
         collection.AddTransient<JobViewModel>();
         collection.AddTransient<MainViewModel>();
