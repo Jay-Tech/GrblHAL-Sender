@@ -36,9 +36,7 @@ public class GHalSenderConfig : ObservableObject
         set => SetProperty(ref _useMetric, value);
     }
 
-
     public bool AutoConnect { get; set; } = false;
-
     public double PollRate { get; set; } = 200;
     public bool ShowToolpathProgress { get; set; } = true;
     public SerialSettings SerialSettings { get; set; } = new("COM1");
@@ -55,7 +53,7 @@ public class GHalSenderConfig : ObservableObject
         Software,
         Hardware
     }
-    public RendererType Renderer { get; set; } = RendererType.Software;
+    public RendererType Renderer { get; set; } = RendererType.Hardware;
     public bool UseAntiAlias { get; set; } = true;
     public string SpindleImagePath { get; set; } = "spindle.png";
     public ToolList ToolList { get; set; } = new();
