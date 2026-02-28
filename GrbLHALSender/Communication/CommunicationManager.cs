@@ -114,8 +114,9 @@ namespace GrbLHALSender.Communication
                     SendOptions();
                 }
 
-                await SendAsyncCommand(GrblHalConstants.Getsettingsdetails, timeOutMs: 2000);
-                var settingResults = await SendAsyncCommand(GrblHalConstants.GetsettingsAll, timeOutMs: 1000);
+                var settings = await SendAsyncCommand(GrblHalConstants.Getsettingsdetails, timeOutMs: 2000);
+
+                var settingResults = await SendAsyncCommand(GrblHalConstants.GetsettingsAll, timeOutMs: 2000);
                 if (settingResults)
                 {
                     SendSettings();
@@ -124,14 +125,14 @@ namespace GrbLHALSender.Communication
                 ParseAllPins(pinLines);
                 await SendAsyncCommand(GrblHalConstants.Alarmcodes, timeOutMs: 1000);
                 await SendAsyncCommand(GrblHalConstants.Errorcodes, timeOutMs: 1000);
-               
+
                 SetupPoll();
             });
         }
         public void SetupPoll()
         {
             _pollTimer?.Stop();
-            _pollTimer?.Interval = _pollTimer.Interval == 0 ? 200: _pollInterval;
+            _pollTimer?.Interval = _pollTimer.Interval == 0 ? 200 : _pollInterval;
             _pollTimer?.Start();
         }
         public void StopPoll()
