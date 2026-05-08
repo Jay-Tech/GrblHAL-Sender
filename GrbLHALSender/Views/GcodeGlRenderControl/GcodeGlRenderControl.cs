@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
@@ -487,7 +488,7 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
 
             try
             {
-                var scaling = VisualRoot?.RenderScaling ?? 1.0;
+                var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
                 int pixelW = (int)(Bounds.Width * scaling);
                 int pixelH = (int)(Bounds.Height * scaling);
                 if (pixelW <= 0 || pixelH <= 0) return;
