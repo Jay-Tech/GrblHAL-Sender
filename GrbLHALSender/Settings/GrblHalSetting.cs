@@ -262,7 +262,7 @@ public partial class GrblHalSetting : ReactiveObject
         {
             var tb = new TextBox
             {
-                [!TextBlock.TextProperty] = new Binding("SettingValue", BindingMode.TwoWay),
+                [!TextBlock.TextProperty] = new Binding("SettingValue") { Mode = BindingMode.TwoWay },
                 Width = 200,
             };
             tb.KeyUp += (_, _) => NeedsSaving = true;
