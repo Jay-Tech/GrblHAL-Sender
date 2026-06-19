@@ -51,7 +51,6 @@ public class MainViewModel : ViewModelBase
     private int _spindleRpm;
     private bool _connected;
     private bool _alarmActive;
-    private bool _needsSetup;
     private int _selectedTool;
     private bool _hideToolChangeList;
     private double _jogStep;
@@ -408,7 +407,6 @@ public class MainViewModel : ViewModelBase
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
         SdCardViewModel = sdCardViewModel;
-        _needsSetup = true;
         _configManager = configManager;
         JobViewModel = jobViewModel;
         MacroViewModel = macroViewModel;
@@ -899,25 +897,30 @@ public class MainViewModel : ViewModelBase
     }
     private void _commManager_onOptionsUpdated(object? sender, GrblHALOptions e)
     {
-        if (_needsSetup)
+        // Always reconcile against the latest options — don't stop after the first event.
+        // The one-shot guard caused the UI to freeze on whatever (possibly empty) state the
+        // first event delivered, even when later events had complete data.
+        foreach (var axis in e.AxisLabels.Where(axis => _axis.All(x => x.Name != axis.ToString())))
         {
-            foreach (var axis in e.AxisLabels.Where(axis => _axis.All(x => x.Name != axis.ToString())))
+            _axis.Add(new Axis
             {
-                _axis.Add(new Axis
-                {
-                    Name = axis.ToString(),
-                    Order = e.AxisLabels.IndexOf(axis),
-                    ZeroWcsCommand = ZeroAxis
-                });
-            }
-            foreach (var signal in e.SignalLabels)
-            {
-                SignalList.Add(new Signal
-                {
-                    Id = signal
-                });
-            }
-            _needsSetup = false;
+                Name = axis.ToString(),
+                Order = e.AxisLabels.IndexOf(axis),
+                ZeroWcsCommand = ZeroAxis
+            });
+        }
+
+        // Rebuild SignalList to match e.SignalLabels exactly: add missing, remove stale.
+        // Preserves existing Signal instances (and their Triggered state) for IDs that stay.
+        for (int i = SignalList.Count - 1; i >= 0; i--)
+        {
+            if (!e.SignalLabels.Contains(SignalList[i].Id))
+                SignalList.RemoveAt(i);
+        }
+        foreach (var signal in e.SignalLabels)
+        {
+            if (SignalList.All(s => s.Id != signal))
+                SignalList.Add(new Signal { Id = signal });
         }
     }
     private void JogNeg(string axis)

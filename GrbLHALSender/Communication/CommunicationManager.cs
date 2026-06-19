@@ -101,6 +101,11 @@ namespace GrbLHALSender.Communication
         {
             var t = Task.Factory.StartNew(async () =>
             {
+                // Reset per-connection option state so stale data from a prior session
+                // doesn't leak into the new one, and so retries start from a clean slate.
+                grblHalOptions.AxisLabels.Clear();
+                grblHalOptions.SignalLabels.Clear();
+
                 var infoResults = await SendAsyncCommand(GrblHalConstants.GetinfoExtended, timeOutMs: 1000);
                 if (!infoResults)
                 {
@@ -109,10 +114,10 @@ namespace GrbLHALSender.Communication
                         Thread.Sleep(500);
                     }
                 }
-                else
-                {
-                    SendOptions();
-                }
+                // Always fire onOptionsUpdated after $I+ completes, regardless of which
+                // attempt succeeded. Previously this only ran on the fast path, which
+                // meant a timed-out first attempt left the UI with no signal/axis data.
+                SendOptions();
 
                 var settings = await SendAsyncCommand(GrblHalConstants.Getsettingsdetails, timeOutMs: 2000);
 
@@ -151,6 +156,14 @@ namespace GrbLHALSender.Communication
         }
         private void SendOptions()
         {
+            // Prepend axes to the signal list once, here, so the result is independent
+            // of whether AXS or SIGNALS arrived first in the firmware $I response.
+            for (int i = grblHalOptions.AxisLabels.Count - 1; i >= 0; i--)
+            {
+                var axis = grblHalOptions.AxisLabels[i];
+                grblHalOptions.SignalLabels.Remove(axis);
+                grblHalOptions.SignalLabels.Insert(0, axis);
+            }
             onOptionsUpdated?.Invoke(this, grblHalOptions);
         }
 
@@ -509,21 +522,46 @@ namespace GrbLHALSender.Communication
 
             if (asSpan[0].StartsWith("AXS"))
             {
-                GrblHalSettingsConst.AxisCount = grblHalOptions.AxesCount = int.Parse(asSpan[1]);
-                GrblHalSettingsConst.Axis = asSpan[2].ToCharArray();
-                grblHalOptions.AxisLabels = asSpan[2].ToCharArray().ToList();
-                grblHalOptions.SignalLabels = asSpan[2].ToCharArray().ToList();
-                grblHalOptions.SignalLabels.AddRange(GrblHalSettingsConst.DefaultSignals);
-                grblHalOptions.SignalLabels.Add("P");
+                // Two firmware formats seen in the wild:
+                //   [AXS:<count>:<labels>]  e.g. AXS:3:XYZ   -> asSpan = ["AXS","3","XYZ"]
+                //   [AXS:<labels>]          e.g. AXS:XYZ     -> asSpan = ["AXS","XYZ"]
+                string labels;
+                if (asSpan.Length >= 3 && int.TryParse(asSpan[1], out var declaredCount))
+                {
+                    labels = asSpan[2];
+                    GrblHalSettingsConst.AxisCount = grblHalOptions.AxesCount = declaredCount;
+                }
+                else
+                {
+                    labels = asSpan[1];
+                    GrblHalSettingsConst.AxisCount = grblHalOptions.AxesCount = labels.Length;
+                }
+
+                GrblHalSettingsConst.Axis = labels.ToCharArray();
+                grblHalOptions.AxisLabels = labels.ToCharArray().ToList();
+
+                // Seed the signal list: axes first, then defaults + probe. SIGNALS will union additional ones.
+                // Done inline (not just in SendOptions) so the result is correct even if SendOptions doesn't
+                // fire on a retry path.
+                for (int i = grblHalOptions.AxisLabels.Count - 1; i >= 0; i--)
+                {
+                    var axis = grblHalOptions.AxisLabels[i];
+                    grblHalOptions.SignalLabels.Remove(axis);
+                    grblHalOptions.SignalLabels.Insert(0, axis);
+                }
+                foreach (var ch in GrblHalSettingsConst.DefaultSignals)
+                    if (!grblHalOptions.SignalLabels.Contains(ch))
+                        grblHalOptions.SignalLabels.Add(ch);
+                if (!grblHalOptions.SignalLabels.Contains('P'))
+                    grblHalOptions.SignalLabels.Add('P');
             }
 
             if (asSpan[0].StartsWith("SIGNALS"))
             {
-                grblHalOptions.SignalLabels = asSpan[1].ToCharArray().ToList();
-                if (grblHalOptions.AxisLabels.Count > 0)
-                {
-                    grblHalOptions.SignalLabels.AddOrInsertRange(grblHalOptions.AxisLabels, 0);
-                }
+                // Union firmware-reported signals with whatever AXS already seeded — never drop entries.
+                foreach (var ch in asSpan[1])
+                    if (!grblHalOptions.SignalLabels.Contains(ch))
+                        grblHalOptions.SignalLabels.Add(ch);
             }
         }
 

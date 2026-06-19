@@ -1,8 +1,3 @@
-﻿using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.Data;
-using Avalonia.Threading;
-using GrbLHALSender.Convertors;
 using ReactiveUI;
 using System;
 using System.Globalization;
@@ -23,7 +18,6 @@ public partial class GrblHalSetting : ReactiveObject
     private bool _allowNull;
     private bool _rebootRequired;
     private bool _needsSaving;
-    private Control _control;
 
     public int Id
     {
@@ -97,12 +91,6 @@ public partial class GrblHalSetting : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _settingValue, value);
     }
 
-    public Control Control
-    {
-        get => _control;
-        set => this.RaiseAndSetIfChanged(ref _control, value);
-    }
-
     public GrblHalSetting(int id, string value)
     {
         Id = id;
@@ -135,176 +123,6 @@ public partial class GrblHalSetting : ReactiveObject
             RebootRequired = data[8] == "1";
         if (data.Length > 9)
             AllowNull = data[9] == "1";
-
-        BuildTemplateControl(DataType);
-    }
-
-    public void BuildTemplateControl(DataTypes dataType)
-    {
-        if (!Dispatcher.UIThread.CheckAccess())
-        {
-            Dispatcher.UIThread.Invoke(() => BuildTemplateControl(dataType));
-            return;
-        }
-
-        if (dataType is DataTypes.AXISMASK or DataTypes.BITFIELD or DataTypes.XBITFIELD)
-        {
-            var stackP = new StackPanel();
-
-            if (DataType == DataTypes.AXISMASK || Format == "axes")
-            {
-                var axisCount = GrblHalSettingsConst.AxisCount ?? 3;
-                var axisLabel = GrblHalSettingsConst.Axis ?? GrblHalSettingsConst.BackUpAxis[1..axisCount];
-
-                for (int i = 0; i < axisCount; i++)
-                {
-                    var bitValue = (1 << i).ToString();
-                    var checkBox = new CheckBox
-                    {
-                        [!CheckBox.IsCheckedProperty] = new Binding
-                        {
-                            Converter = new StringToBitMask(),
-                            ConverterParameter = bitValue,
-                            Mode = BindingMode.TwoWay,
-                            Path = SettingValue,
-                        },
-                        Command = ReactiveCommand.Create<bool>(_ => UpdateBitmaskFromPanel(stackP)),
-                        Name = $"_bitmask{i}",
-                        Content = $"{axisLabel[i]} axis",
-                        Tag = bitValue,
-                    };
-                    stackP.Children.Add(checkBox);
-                }
-
-                Control = stackP;
-            }
-            else
-            {
-                var format = Format.Split(',');
-                for (int i = 0; i < format.Length; i++)
-                {
-                    if (format[i] == "N/A") continue;
-
-                    var bitValue = (1 << i).ToString();
-                    var checkBox = new CheckBox
-                    {
-                        [!CheckBox.IsCheckedProperty] = new Binding
-                        {
-                            Converter = new StringToBitMask(),
-                            ConverterParameter = bitValue,
-                            Mode = BindingMode.TwoWay,
-                            Path = SettingValue,
-                        },
-                        Name = $"_bitmask{i}",
-                        Content = format[i].Trim(),
-                        IsEnabled = true,
-                        Command = ReactiveCommand.Create<bool>(_ => UpdateBitmaskFromPanel(stackP)),
-                        Tag = bitValue,
-                    };
-                    stackP.Children.Add(checkBox);
-                }
-
-                Control = stackP;
-            }
-        }
-        else if (dataType == DataTypes.BOOL)
-        {
-            Control = new CheckBox()
-            {
-                [!ToggleButton.IsCheckedProperty] = new Binding
-                {
-                    Converter = new StringToBool(),
-                    ConverterParameter = SettingValue,
-                    Mode = BindingMode.TwoWay,
-                    Path = SettingValue,
-                },
-                Width = 400,
-                Content = Name,
-                Command = ReactiveCommand.Create<bool>(CbChecked),
-            };
-
-            void CbChecked(bool b)
-            {
-                if (Control is CheckBox cb)
-                {
-                    SettingValue = cb.IsChecked == true ? "1" : "0";
-                    NeedsSaving = true;
-                }
-            }
-        }
-        else if (dataType == DataTypes.RADIOBUTTONS)
-        {
-            var stackP = new StackPanel();
-            string[] labels = Format.Split(',');
-            for (int i = 0; i < labels.Length; i++)
-            {
-                var tagValue = i.ToString();
-                var rb = new RadioButton
-                {
-                    [!ToggleButton.IsCheckedProperty] = new Binding
-                    {
-                        Converter = new StringToRadioButton(),
-                        ConverterParameter = tagValue,
-                        Mode = BindingMode.TwoWay,
-                        Path = SettingValue ?? string.Empty,
-                    },
-                    Tag = tagValue,
-                    Name = $"_radiobutton{i}",
-                    Content = labels[i].Trim(),
-                    Command = ReactiveCommand.Create<bool>(_ => UpdateRadioFromPanel(stackP)),
-                };
-                stackP.Children.Add(rb);
-            }
-
-            Control = stackP;
-        }
-        else
-        {
-            var tb = new TextBox
-            {
-                [!TextBlock.TextProperty] = new Binding("SettingValue") { Mode = BindingMode.TwoWay },
-                Width = 200,
-            };
-            tb.KeyUp += (_, _) => NeedsSaving = true;
-            Control = tb;
-        }
-    }
-
-    /// <summary>
-    /// Reads all CheckBoxes in a StackPanel to compute the combined bitmask value.
-    /// Shared by both axis-mask and bitfield checkbox panels.
-    /// </summary>
-    private void UpdateBitmaskFromPanel(StackPanel panel)
-    {
-        int mask = 0;
-        foreach (var child in panel.Children)
-        {
-            if (child is CheckBox cb && cb.IsChecked == true)
-            {
-                mask += Convert.ToInt32(cb.Tag);
-            }
-        }
-
-        SettingValue = mask.ToString();
-        NeedsSaving = true;
-    }
-
-    /// <summary>
-    /// Reads all RadioButtons in a StackPanel to find the selected value.
-    /// </summary>
-    private void UpdateRadioFromPanel(StackPanel panel)
-    {
-        int value = 0;
-        foreach (var child in panel.Children)
-        {
-            if (child is RadioButton rb && rb.IsChecked == true)
-            {
-                value += Convert.ToInt32(rb.Tag);
-            }
-        }
-
-        SettingValue = value.ToString();
-        NeedsSaving = true;
     }
 
     public enum PendingMessageSet

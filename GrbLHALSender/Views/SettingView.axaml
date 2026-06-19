@@ -3,9 +3,14 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+			 xmlns:views="clr-namespace:GrbLHALSender.Views"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="GrbLHALSender.Views.SettingView"
 			 x:DataType="viewModels:SettingsViewModel">
+
+	<UserControl.Resources>
+		<views:SettingEditorTemplate x:Key="SettingEditor" />
+	</UserControl.Resources>
 
 	<Grid RowDefinitions="*,60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 		<ScrollViewer Grid.Row="0"  Margin="5,10,10,5" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
@@ -20,7 +25,7 @@
 										VerticalContentAlignment="Top" HorizontalContentAlignment="Left" HorizontalAlignment ="Left" VerticalAlignment="Top"></Label>
 								<Label  Focusable="False" Content="{Binding Name}"  Margin="5,0,10,0"  FontSize="24" MinWidth="150"  Width="370"
 										VerticalContentAlignment="Top"    HorizontalContentAlignment="Left" HorizontalAlignment ="Center" VerticalAlignment="Top"></Label>
-								<ContentControl  Focusable="False" Content="{Binding Control}" Margin="0,0,10,0"  FontSize="24" MinWidth="75"
+								<ContentControl  Focusable="False" Content="{Binding}" ContentTemplate="{StaticResource SettingEditor}" Margin="0,0,10,0"  FontSize="24" MinWidth="75"
 												 VerticalContentAlignment="Center" HorizontalContentAlignment="Left" HorizontalAlignment ="Left" VerticalAlignment="Center"/>
 								<Label  Focusable="False" Content="{Binding Unit}" Margin="5,0,10,0"  FontSize="24" Width="150"/>
 							</StackPanel>
