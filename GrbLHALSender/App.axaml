@@ -30,6 +30,9 @@
 	<Application.Styles>
 		<materialIcons:MaterialIconStyles />
 
+		<!-- AvaloniaEdit control styles must be registered here for the TextEditor to render. -->
+		<StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+
 		<!-- Disable FluentTheme animated transitions on buttons.
 		The default ~200ms color interpolation competes for UI thread time
 		during job execution, causing sluggish hover feedback. -->

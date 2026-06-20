@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SyntaxDefinition name="GCode" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+
+	<Color name="Comment" foreground="#6A9955" />
+	<Color name="LineNumber" foreground="#858585" />
+	<Color name="GCommand" foreground="#569CD6" fontWeight="bold" />
+	<Color name="MCommand" foreground="#C586C0" fontWeight="bold" />
+	<Color name="AxisWord" foreground="#DCDCAA" />
+	<Color name="FeedRate" foreground="#FFB86C" />
+	<Color name="Spindle"  foreground="#FF79C6" />
+	<Color name="Tool"     foreground="#8BE9FD" />
+	<Color name="Number"   foreground="#B5CEA8" />
+
+	<RuleSet ignoreCase="true">
+		<!-- Comments: ;... to EOL, or (...) inline -->
+		<Span color="Comment" begin=";" />
+		<Span color="Comment" begin="\(" end="\)" />
+
+		<!-- Line numbers: N followed by digits -->
+		<Rule color="LineNumber">\bN\d+\b</Rule>
+
+		<!-- Motion / preparatory commands -->
+		<Rule color="GCommand">\bG\d+(\.\d+)?\b</Rule>
+
+		<!-- Miscellaneous / machine commands -->
+		<Rule color="MCommand">\bM\d+\b</Rule>
+
+		<!-- Feed rate -->
+		<Rule color="FeedRate">\bF-?\d+(\.\d+)?\b</Rule>
+
+		<!-- Spindle speed -->
+		<Rule color="Spindle">\bS-?\d+(\.\d+)?\b</Rule>
+
+		<!-- Tool selection -->
+		<Rule color="Tool">\bT\d+\b</Rule>
+
+		<!-- Axis words: X, Y, Z, A, B, C, U, V, W, I, J, K, P, Q, R followed by number -->
+		<Rule color="AxisWord">\b[XYZABCUVWIJKPQR]-?\d+(\.\d+)?\b</Rule>
+
+		<!-- Bare numbers (params, offsets etc.) -->
+		<Rule color="Number">\b-?\d+(\.\d+)?\b</Rule>
+	</RuleSet>
+</SyntaxDefinition>
