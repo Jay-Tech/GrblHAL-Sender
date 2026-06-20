@@ -772,7 +772,7 @@
 								CommandParameter="{Binding SelectedTool}"
 								VerticalAlignment="Stretch"/>
 						<!--R-ATC Section-->
-                        <Grid  Grid.Row="2" RowDefinitions="Auto,*" Grid.Column="0" ColumnDefinitions="*,*" >
+                        <Grid  Grid.Row="2" RowDefinitions="Auto,*" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,*" >
 							<Label Grid.Row="0" Grid.ColumnSpan="2"
 								   Margin="0,5,0,0"
 								   Content="R-ATC"
