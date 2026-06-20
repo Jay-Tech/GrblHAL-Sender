@@ -1,15 +1,16 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DynamicData;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
-using GrbLHALSender.Gcode;
-using GrbLHALSender.Updates;
-using GrbLHALSender.WebServer;
 using GrbLHALSender.Settings;
 using GrbLHALSender.States;
+using GrbLHALSender.Updates;
 using GrbLHALSender.Utility;
+using GrbLHALSender.WebServer;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -17,8 +18,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Windows.Input;
-using Avalonia;
-using Avalonia.Controls;
 
 namespace GrbLHALSender.ViewModels;
 

@@ -1,13 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
-			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
-			 xmlns:convertors="clr-namespace:GrbLHALSender.Convertors"
-			 xmlns:views="clr-namespace:GrbLHALSender.Views"
-			 xmlns:controls1="clr-namespace:GrbLHALSender.Controls"
-			 xmlns:behaviors="clr-namespace:GrbLHALSender.Behaviors"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:GrbLHALSender.Behaviors"
+             xmlns:convertors="clr-namespace:GrbLHALSender.Convertors"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             xmlns:views="clr-namespace:GrbLHALSender.Views"
 			 d:DesignWidth="1920" d:DesignHeight="1080"
 			 x:Class="GrbLHALSender.Views.MainView"
 			 x:DataType="viewModels:MainViewModel">
@@ -484,7 +482,7 @@
 							<ItemsRepeater.ItemTemplate>
 								<DataTemplate>
 									<Button Content="{Binding   Path=Id}"
-											Width="110" Height="40"
+											Width="115" Height="40"
 											HorizontalAlignment="Left"
 											VerticalAlignment="Bottom"
 											HorizontalContentAlignment="Center"
@@ -492,7 +490,7 @@
 											CornerRadius="6,6,6,6"
 											Margin="0,0,0,0"
 											CommandParameter="{Binding  Id}"
-											FontSize="{DynamicResource BaseFontSize}"
+											FontSize="{DynamicResource DetailFontSizeLarge}"
 											Command="{Binding #MacroRepeater.((viewModels:MainViewModel)DataContext).MacroViewModel.RunMacroCommand}">
 									</Button>
 								</DataTemplate>
@@ -610,12 +608,12 @@
 								CommandParameter="Y"
 								Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline, IconSize=90}" />
 						<Button Grid.Row="1" Grid.Column="1"
-								CornerRadius="20"
+								CornerRadius="15"
 								Name="StopAll"
 								Margin="4"
 								Classes="b2"
 								Command="{Binding JogCancelCommand}"
-								Content="{icons:MaterialIconExt Kind=StopCircleOutline, IconSize=86}"/>
+								Content="{icons:MaterialIconExt Kind=StopCircleOutline, IconSize=92}"/>
 						<Button Grid.Row="0" Grid.Column="3"
 								Name="ZUp"
 								Classes="b2"
