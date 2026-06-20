@@ -12,6 +12,12 @@ env:
   DOTNET_VERSION: '9.0.x'
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
+  # Skip NuGet certificate revocation lookups during restore. Linux runners
+  # enforce CRL checks strictly and fail (NU3012) when a package's signing
+  # certificate is reported revoked by the issuer — currently affecting
+  # ReactiveUI / Splat. Signatures are still validated; only revocation
+  # lookup is downgraded to "offline" (treat as unknown).
+  NUGET_CERT_REVOCATION_MODE: offline
   PROJECT_PATH: GrbLHALSender.Desktop/GrbLHALSender.Desktop.csproj
 
 jobs:
