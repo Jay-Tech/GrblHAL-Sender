@@ -41,12 +41,19 @@ namespace GrbLHALSender.ViewModels
         private int _rendererIndex;
         private double _pollRate;
         private bool _borderlessWindow;
+        private bool _streamBufferAhead = true;
 
         public AuxOutputViewModel AuxOutputViewModel { get; }
         public bool EnableCutLines
         {
             get => _enableCutLines;
             set => this.RaiseAndSetIfChanged(ref _enableCutLines, value);
+        }
+
+        public bool StreamBufferAhead
+        {
+            get => _streamBufferAhead;
+            set => this.RaiseAndSetIfChanged(ref _streamBufferAhead, value);
         }
 
         public bool UseMetric
@@ -228,6 +235,7 @@ namespace GrbLHALSender.ViewModels
         {
             _appConfig = e;
             EnableCutLines = _appConfig.ShowToolpathProgress;
+            StreamBufferAhead = _appConfig.StreamBufferAhead;
             UseMetric = _appConfig.UseMetric;
             MetricJogDistance = _appConfig.JogDistanceMetric;
             MetricJogSpeed = _appConfig.JogSpeedMetric;
@@ -258,6 +266,7 @@ namespace GrbLHALSender.ViewModels
         public void Save()
         {
             _appConfig.ShowToolpathProgress = EnableCutLines;
+            _appConfig.StreamBufferAhead = StreamBufferAhead;
             _appConfig.UseMetric = UseMetric;
             _appConfig.JogDistanceMetric = MetricJogDistance;
             _appConfig.JogSpeedMetric = MetricJogSpeed;

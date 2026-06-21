@@ -129,6 +129,49 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _ackedLineIndex, value);
         }
 
+        // Segment the user has selected (yellow highlight in 3D view).
+        // -1 = nothing selected. Two-way bound to both render controls.
+        private int _selectedSegmentIndex = -1;
+        public int SelectedSegmentIndex
+        {
+            get => _selectedSegmentIndex;
+            set => this.RaiseAndSetIfChanged(ref _selectedSegmentIndex, value);
+        }
+
+        /// <summary>
+        /// Selects the toolpath segment produced by the given 0-based gcode
+        /// line. Called from the gcode text view when the user clicks a line,
+        /// so the 3D model can highlight the matching segment in yellow.
+        /// </summary>
+        public void SelectGcodeLine(int lineIndex)
+        {
+            var toolpath = _toolpathData;
+            if (toolpath?.LineToFirstSegment == null
+                || lineIndex < 0
+                || lineIndex >= toolpath.LineToFirstSegment.Length)
+            {
+                SelectedSegmentIndex = -1;
+                SelectedLineInfo = "";
+                return;
+            }
+
+            int segIdx = toolpath.LineToFirstSegment[lineIndex];
+
+            // Lines that produce no segments share the next line's first segment.
+            // Only count it as a real match if the segment actually originated
+            // from this line.
+            if (segIdx < 0 || segIdx >= toolpath.Segments.Count ||
+                toolpath.Segments[segIdx].SourceLineIndex != lineIndex)
+            {
+                SelectedSegmentIndex = -1;
+                SelectedLineInfo = "";
+                return;
+            }
+
+            SelectedSegmentIndex = segIdx;
+            SelectedLineInfo = $"Line: {lineIndex + 1}";
+        }
+
         public string FileName
         {
             get => _fileName;
@@ -512,6 +555,13 @@ namespace GrbLHALSender.ViewModels
         /// </summary>
         private void FillBuffer()
         {
+            // Lock-step mode: only one line in flight at a time. Wait until the
+            // previous line is ack'd before sending the next. This keeps the
+            // displayed gcode line tightly aligned with actual machine motion.
+            bool bufferAhead = Config?.StreamBufferAhead ?? true;
+            if (!bufferAhead && _ackPending > 0)
+                return;
+
             while (_index < GCodeOutPut.Count)
             {
                 var line = GCodeOutPut[_index].Text;
@@ -537,6 +587,10 @@ namespace GrbLHALSender.ViewModels
 
                 _latestFileIndex = _index;
                 _index++;
+
+                // Lock-step mode: stop after the first line sent this call.
+                if (!bufferAhead)
+                    break;
             }
         }
 

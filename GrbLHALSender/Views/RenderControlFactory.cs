@@ -28,6 +28,7 @@ namespace GrbLHALSender.Views
                 GcodeRenderControl.GcodeRenderControl.WorkCoordinateOffsetProperty,
                 GcodeRenderControl.GcodeRenderControl.CompletedSegmentIndexProperty,
                 GcodeRenderControl.GcodeRenderControl.SelectedLineInfoProperty,
+                GcodeRenderControl.GcodeRenderControl.SelectedSegmentIndexProperty,
                 GcodeRenderControl.GcodeRenderControl.SpindleImagePathProperty,
                 GcodeRenderControl.GcodeRenderControl.UseAntiAliasProperty);
 
@@ -49,6 +50,7 @@ namespace GrbLHALSender.Views
                 GcodeGlRenderControl.GcodeGlRenderControl.WorkCoordinateOffsetProperty,
                 GcodeGlRenderControl.GcodeGlRenderControl.CompletedSegmentIndexProperty,
                 GcodeGlRenderControl.GcodeGlRenderControl.SelectedLineInfoProperty,
+                GcodeGlRenderControl.GcodeGlRenderControl.SelectedSegmentIndexProperty,
                 GcodeGlRenderControl.GcodeGlRenderControl.SpindleImagePathProperty,
                 GcodeGlRenderControl.GcodeGlRenderControl.UseAntiAliasProperty);
 
@@ -68,6 +70,7 @@ namespace GrbLHALSender.Views
             AvaloniaProperty wcoProp,
             AvaloniaProperty completedSegProp,
             AvaloniaProperty selectedLineInfoProp,
+            AvaloniaProperty selectedSegmentProp,
             AvaloniaProperty spindleImageProp,
             AvaloniaProperty useAntiAliasProp)
         {
@@ -78,6 +81,8 @@ namespace GrbLHALSender.Views
             control.Bind(completedSegProp, new Binding("JobViewModel.CompletedSegmentIndex"));
             control.Bind(selectedLineInfoProp,
                 new Binding("JobViewModel.SelectedLineInfo") { Mode = BindingMode.TwoWay });
+            control.Bind(selectedSegmentProp,
+                new Binding("JobViewModel.SelectedSegmentIndex") { Mode = BindingMode.TwoWay });
             control.Bind(spindleImageProp, new Binding("SpindleImagePath"));
             control.Bind(useAntiAliasProp, new Binding("UseAntiAlias"));
         }

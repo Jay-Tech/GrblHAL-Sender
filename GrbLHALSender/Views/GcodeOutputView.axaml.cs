@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using AvaloniaEdit.Highlighting;
@@ -27,6 +29,15 @@ public partial class GcodeOutputView : UserControl
 
         // Install custom line-number margin that colors acked lines white.
         GCodeEditor.TextArea.LeftMargins.Add(_ackLineNumberMargin);
+
+        // Click on a gcode line -> highlight the matching segment in the 3D view.
+        // AvaloniaEdit handles pointer events internally for caret positioning,
+        // so we must subscribe with handledEventsToo to still receive them.
+        GCodeEditor.TextArea.AddHandler(
+            InputElement.PointerReleasedEvent,
+            OnEditorPointerReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            handledEventsToo: true);
 
         DataContextChanged += OnDataContextChanged;
 
@@ -62,6 +73,17 @@ public partial class GcodeOutputView : UserControl
     private void ApplyAckedLineIndex(int index)
     {
         _ackLineNumberMargin.AckedLineIndex = index;
+    }
+
+    private void OnEditorPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (_subscribedVm == null) return;
+        if (e.InitialPressMouseButton != MouseButton.Left) return;
+
+        int caretLine = GCodeEditor.TextArea.Caret.Line; // 1-based
+        if (caretLine <= 0) return;
+
+        _subscribedVm.SelectGcodeLine(caretLine - 1);
     }
 
     private void LoadGcodeHighlighting()

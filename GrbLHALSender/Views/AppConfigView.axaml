@@ -5,7 +5,7 @@
 			 xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
 			 xmlns:views="clr-namespace:GrbLHALSender.Views"
 			 x:DataType="vm:AppConfigViewModel"
-			 mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="675"
+			 mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="725"
 			 x:Class="GrbLHALSender.Views.AppConfigView">
 
 	<Design.DataContext>
@@ -28,17 +28,17 @@
 			<!-- App Height Tab -->
 			<TabItem Header="APP" FontSize="16" Padding="15,5">
 				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="10">
-					<Grid Grid.Row="0" ColumnDefinitions="*,*,*,*">
-                        <CheckBox Grid.Column="0"
+					<Grid Grid.Row="0" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*,*,*">
+                        <CheckBox Grid.Row="0" Grid.Column="0"
                                   Content="Full Screen"
-								  Margin="20,0,0,0"
+                                  Margin="20,0,0,0"
                                   HorizontalContentAlignment="Center"
                                   VerticalContentAlignment="Center"
                                   HorizontalAlignment="Left"
                                   VerticalAlignment="Top"
                                   ToolTip.Tip="Check to enable Borderless Window"
                                   IsChecked="{Binding BorderlessWindow}"/>
-                        <CheckBox Grid.Column="1"
+                        <CheckBox Grid.Row="0" Grid.Column="1"
                                   Content="Use Metric"
                                   Margin="20,0,0,0"
                                   HorizontalContentAlignment="Center"
@@ -47,7 +47,7 @@
                                   VerticalAlignment="Top"
                                   ToolTip.Tip="Check to enable Metric uncheck for imperial"
                                   IsChecked="{Binding UseMetric}"/>
-                        <CheckBox Grid.Column="2"
+                        <CheckBox Grid.Row="0" Grid.Column="2"
                                   Content="Turn On AntiAlias"
                                   Margin="20,0,0,0"
                                   HorizontalContentAlignment="Center"
@@ -56,7 +56,7 @@
                                   VerticalAlignment="Top"
                                   ToolTip.Tip="Turn off AntiAlias for 3d model. Image quality will decrease to save resources on lower-power devices."
                                   IsChecked="{Binding UseAntiAlias}"/>
-                        <CheckBox Grid.Column="3"
+                        <CheckBox Grid.Row="0" Grid.Column="3"
                                   Content="Tool Path Progress"
                                   Margin="0,0,0,0"
                                   HorizontalContentAlignment="Center"
@@ -65,7 +65,16 @@
                                   VerticalAlignment="Top"
                                   ToolTip.Tip="Show cut progress on the 3D toolpath during job execution. Disable to save resources on lower-power devices."
                                   IsChecked="{Binding EnableCutLines}"/>
-						
+                        <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                  Content="Stream Buffer Ahead"
+                                  Margin="20,8,0,0"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Top"
+                                  ToolTip.Tip="On (default): pre-fill grblHAL's RX buffer for maximum throughput. Off: send one gcode line at a time and wait for ack — slower, but the highlighted gcode line tracks the machine position more closely."
+                                  IsChecked="{Binding StreamBufferAhead}"/>
+
 					</Grid>
                     <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
                         <Label Grid.Column="0"

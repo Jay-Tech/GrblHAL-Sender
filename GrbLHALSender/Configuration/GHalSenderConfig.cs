@@ -39,6 +39,14 @@ public class GHalSenderConfig : ObservableObject
     public bool AutoConnect { get; set; } = false;
     public double PollRate { get; set; } = 200;
     public bool ShowToolpathProgress { get; set; } = true;
+
+    // When true (default), the streamer pre-fills grblHAL's RX buffer
+    // (character-counting protocol) for maximum throughput. When false,
+    // only one line is in flight at a time — the next line is sent only
+    // after the previous one is ack'd. This trades throughput for a
+    // closer match between the highlighted gcode line and the actual
+    // machine position, useful for slow jobs or visual debugging.
+    public bool StreamBufferAhead { get; set; } = true;
     public SerialSettings SerialSettings { get; set; } = new("COM1");
     public TcpSettings TcpSettings { get; set; } = new(23, "192.168.5.1");
     public WebSocketSettings WebSocketSettings { get; set; } = new(81, "192.168.5.1");
