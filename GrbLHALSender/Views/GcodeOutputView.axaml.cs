@@ -5,6 +5,7 @@ using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
 using GrbLHALSender.ViewModels;
 using System;
+using System.ComponentModel;
 using System.Text;
 using System.Xml;
 
@@ -15,6 +16,8 @@ public partial class GcodeOutputView : UserControl
     private DispatcherTimer? _scrollTimer;
     private int _lastScrolledIndex = -1;
     private int _lastBuiltCount = -1;
+    private readonly AckLineNumberMargin _ackLineNumberMargin = new();
+    private JobViewModel? _subscribedVm;
 
     public GcodeOutputView()
     {
@@ -22,11 +25,43 @@ public partial class GcodeOutputView : UserControl
 
         LoadGcodeHighlighting();
 
+        // Install custom line-number margin that colors acked lines white.
+        GCodeEditor.TextArea.LeftMargins.Add(_ackLineNumberMargin);
+
+        DataContextChanged += OnDataContextChanged;
+
         // Throttled refresh/scroll timer — at ~4 Hz, rebuilds Document.Text whenever the
         // VM's GCodeOutPut count changes, then scrolls/highlights the current line.
         _scrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         _scrollTimer.Tick += ScrollTimerTick;
         _scrollTimer.Start();
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (_subscribedVm != null)
+            _subscribedVm.PropertyChanged -= OnVmPropertyChanged;
+
+        _subscribedVm = DataContext as JobViewModel;
+
+        if (_subscribedVm != null)
+        {
+            _subscribedVm.PropertyChanged += OnVmPropertyChanged;
+            ApplyAckedLineIndex(_subscribedVm.AckedLineIndex);
+        }
+    }
+
+    private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(JobViewModel.AckedLineIndex) && sender is JobViewModel vm)
+        {
+            ApplyAckedLineIndex(vm.AckedLineIndex);
+        }
+    }
+
+    private void ApplyAckedLineIndex(int index)
+    {
+        _ackLineNumberMargin.AckedLineIndex = index;
     }
 
     private void LoadGcodeHighlighting()

@@ -23,7 +23,7 @@
 			MaxWidth="420" MinWidth="350">
 		<ae:TextEditor x:Name="GCodeEditor"
 					   IsReadOnly="True"
-					   ShowLineNumbers="True"
+					   ShowLineNumbers="False"
 					   FontFamily="{StaticResource ConsoleFont}"
 					   FontSize="14"
 					   Background="Transparent"

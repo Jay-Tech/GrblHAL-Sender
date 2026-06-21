@@ -63,6 +63,7 @@ namespace GrbLHALSender.ViewModels
         private DispatcherTimer? _fileIndexTimer;
         private int _completedSegmentIndex = -1;
         private string _selectedLineInfo = "";
+        private int _ackedLineIndex;
 
 
 
@@ -118,6 +119,14 @@ namespace GrbLHALSender.ViewModels
         {
             get => _gCodeFileIndex;
             set => this.RaiseAndSetIfChanged(ref _gCodeFileIndex, value);
+        }
+
+        // Number of lines (1-based count) that have been ack'd by grblHAL.
+        // Lines with 1-based number <= AckedLineIndex are acknowledged.
+        public int AckedLineIndex
+        {
+            get => _ackedLineIndex;
+            set => this.RaiseAndSetIfChanged(ref _ackedLineIndex, value);
         }
 
         public string FileName
@@ -341,7 +350,6 @@ namespace GrbLHALSender.ViewModels
             var reportedRxSize = _commsManager.Options?.RxBufferSize ?? DefaultRxBufferSize;
             var precentBuffer = reportedRxSize * _bufferPercentage / 100;
             _rxBufferSize =  Math.Max(precentBuffer, DefaultRxBufferSize);
-
             JobState = JobState.Start;
 
             // Dispose previous token if any
@@ -403,6 +411,7 @@ namespace GrbLHALSender.ViewModels
             CompletedSegmentIndex = -1;
             SelectedLineInfo = "";
             EstimatedTime = string.Empty;
+            AckedLineIndex = 0;
             if (ShowGCodeConsole) ShowGCodeConsole = false;
         }
 
@@ -573,6 +582,10 @@ namespace GrbLHALSender.ViewModels
             var idx = _latestFileIndex;
             if (idx != _gCodeFileIndex)
                 GcodeFileIndex = idx;
+
+            var acked = _latestPendingLine;
+            if (acked != _ackedLineIndex)
+                AckedLineIndex = acked;
 
             UpdateCompletedSegmentIndex();
         }
