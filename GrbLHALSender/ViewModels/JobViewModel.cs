@@ -403,6 +403,7 @@ namespace GrbLHALSender.ViewModels
             CompletedSegmentIndex = -1;
             SelectedLineInfo = "";
             EstimatedTime = string.Empty;
+            if (ShowGCodeConsole) ShowGCodeConsole = false;
         }
 
         private void ListenToState(bool subscribe)

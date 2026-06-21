@@ -188,52 +188,31 @@ public partial class DialogButtonView : UserControl
                 handledEventsToo: true);
         }
 
-        switch (dialogType)
-        {
-            // Position Console dialog in the lower-left area
-            case DialogType.Console when parentWindow != null:
-                {
-                    dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                    var parentPos = parentWindow.Position;
-                    dialogWindow.Position = new PixelPoint(
-                        parentPos.X + 270,
-                        parentPos.Y + 400
-                    );
-                    break;
-                }
-            case DialogType.Macro when parentWindow != null:
-                {
-                    dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                    var parentPos = parentWindow.Position;
-                    dialogWindow.Position = new PixelPoint(
-                        parentPos.X + 700,
-                        parentPos.Y + 475);
-                    break;
-                }
-            case DialogType.Probe when parentWindow != null:
-            {
-                dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                var parentPos = parentWindow.Position;
-                dialogWindow.Position = new PixelPoint(
-                    parentPos.X + 275,
-                    parentPos.Y + 405
-                );
-                break;
-            }
-            case DialogType.AppConfig when parentWindow != null:
-            {
-                dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                var parentPos = parentWindow.Position;
-                dialogWindow.Position = new PixelPoint(
-                    parentPos.X + 950,
-                    parentPos.Y + 350
-                );
-                break;
-            }
-            default:
-                break;
-                //throw new ArgumentOutOfRangeException(nameof(dialogType), dialogType, null);
-        }
+        // Align every dialog's bottom edge with the main window's bottom edge,
+        // using a consistent X offset so all dialogs open at the same location.
+        // PixelPoint is in physical pixels; Bounds/height are in DIPs — multiply
+        // by DesktopScaling to convert. Also scale the X offset to screen width
+        // so the dialog sits in the same relative spot on different resolutions.
+        dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+        var parentPosition = parentWindow.Position;
+        var scaling = parentWindow.DesktopScaling;
+        var parentHeightPx = (int)(parentWindow.Bounds.Height * scaling);
+        var dialogHeightPx = (int)(height * scaling);
+
+        const double referenceScreenWidth = 1920.0;
+        const int baseXOffsetDip = 300;
+        const int bottomMarginDip = 60;
+
+        var screen = parentWindow.Screens?.ScreenFromWindow(parentWindow);
+        var screenWidthPx = screen?.Bounds.Width ?? (int)(referenceScreenWidth * scaling);
+        var widthRatio = screenWidthPx / (referenceScreenWidth * scaling);
+        var xOffsetPx = (int)(baseXOffsetDip * scaling * widthRatio);
+        var bottomMarginPx = (int)(bottomMarginDip * scaling);
+
+        dialogWindow.Position = new PixelPoint(
+            parentPosition.X + xOffsetPx,
+            parentPosition.Y + parentHeightPx - dialogHeightPx - bottomMarginPx
+        );
 
         // Show non-modal, owned by parent window
         dialogWindow.Show(parentWindow);
