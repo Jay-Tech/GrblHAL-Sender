@@ -107,6 +107,7 @@ public partial class DialogButtonView : UserControl
                 {
                     appConfigView.DataContext = appConfigViewVm.AppConfigViewModel;
                     appConfigView.SetSdCardViewModel(appConfigViewVm.SdCardViewModel);
+                    appConfigView.SetFirmwareViewModel(appConfigViewVm.FirmwareViewModel);
                 }
                 return (appConfigView, 675, 725);
             default:

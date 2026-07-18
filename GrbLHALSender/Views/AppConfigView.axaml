@@ -782,6 +782,9 @@
 			<TabItem Header="SD Card" x:Name="SdTabItem" FontSize="16" Padding="15,5">
 				<views:SdCardView x:Name="SdCardViewControl" />
 			</TabItem>
+			<TabItem Header="Firmware" x:Name="FirmwareTabItem" FontSize="16" Padding="15,5">
+				<views:FirmwareView x:Name="FirmwareViewControl" />
+			</TabItem>
 		</TabControl>
 		<StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Orientation="Horizontal">
 			<Button Content="Save"
@@ -792,9 +795,15 @@
 					CornerRadius="6"
 					HorizontalContentAlignment="Center"
 					VerticalContentAlignment="Center"
-					IsEnabled="{Binding !#SdTabItem.IsSelected}"
 					HorizontalAlignment="Center"
-					Command="{Binding SaveConfigCommand }"/>
+					Command="{Binding SaveConfigCommand }">
+				<Button.IsEnabled>
+					<MultiBinding Converter="{x:Static BoolConverters.And}">
+						<Binding Path="!IsSelected" ElementName="SdTabItem" />
+						<Binding Path="!IsSelected" ElementName="FirmwareTabItem" />
+					</MultiBinding>
+				</Button.IsEnabled>
+			</Button>
 			<Button Content="Close"
 					FontSize="20"
 					Height="55"
@@ -804,8 +813,14 @@
 					HorizontalContentAlignment="Center"
 					VerticalContentAlignment="Center"
 					HorizontalAlignment="Center"
-                    IsEnabled="{Binding !#SdTabItem.IsSelected}"
-					Command="{Binding CloseCommand }"/>
+					Command="{Binding CloseCommand }">
+				<Button.IsEnabled>
+					<MultiBinding Converter="{x:Static BoolConverters.And}">
+						<Binding Path="!IsSelected" ElementName="SdTabItem" />
+						<Binding Path="!IsSelected" ElementName="FirmwareTabItem" />
+					</MultiBinding>
+				</Button.IsEnabled>
+			</Button>
 		</StackPanel>
 	</Grid>
 </UserControl>

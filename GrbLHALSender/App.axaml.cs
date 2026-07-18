@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
+using GrbLHALSender.Firmware;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.SdCard;
 using GrbLHALSender.States;
@@ -63,6 +64,7 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<FileUploadService>();
         collection.AddSingleton<WebServerService>();
         collection.AddSingleton<SdCardService>();
+        collection.AddSingleton<FirmwareInstallService>();
         collection.AddSingleton<UpdateCheckService>();
         collection.AddTransient<SettingsViewModel>();
         collection.AddTransient<JobViewModel>();
@@ -74,6 +76,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<MdiViewModel>();
         collection.AddTransient<AppConfigViewModel>();
         collection.AddTransient<SdCardViewModel>();
+        collection.AddTransient<FirmwareViewModel>();
         collection.AddTransient<AuxOutputViewModel>();
     }
 

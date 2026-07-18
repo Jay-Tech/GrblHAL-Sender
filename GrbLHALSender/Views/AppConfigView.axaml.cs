@@ -18,4 +18,13 @@ public partial class AppConfigView : UserControl
     {
         SdCardViewControl.DataContext = sdCardViewModel;
     }
+
+    /// <summary>
+    /// Sets the DataContext of the embedded FirmwareView to the given FirmwareViewModel.
+    /// Called from DialogButtonView when creating the Utility dialog.
+    /// </summary>
+    public void SetFirmwareViewModel(FirmwareViewModel firmwareViewModel)
+    {
+        FirmwareViewControl.DataContext = firmwareViewModel;
+    }
 }

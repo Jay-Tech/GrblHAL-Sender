@@ -128,6 +128,7 @@ public class MainViewModel : ViewModelBase
     public MdiViewModel MdiViewModel { get; set; }
     public AppConfigViewModel AppConfigViewModel { get; set; }
     public SdCardViewModel SdCardViewModel { get; set; }
+    public FirmwareViewModel FirmwareViewModel { get; set; }
     public CommunicationManager CommManager { get; set; }
     public ProbeViewModel ProbeViewModel { get; set; }
   
@@ -400,12 +401,14 @@ public class MainViewModel : ViewModelBase
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
         WebServerService webServerService, MachineStateService machineStateService,
-        SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService)
+        SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService,
+        FirmwareViewModel firmwareViewModel)
     {
         CommManager = commManager;
         ProbeViewModel = probeViewModel;
         SettingsViewModel = settingsViewModel;
         SdCardViewModel = sdCardViewModel;
+        FirmwareViewModel = firmwareViewModel;
         _configManager = configManager;
         JobViewModel = jobViewModel;
         MacroViewModel = macroViewModel;

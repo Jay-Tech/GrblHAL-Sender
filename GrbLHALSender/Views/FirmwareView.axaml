@@ -1,0 +1,126 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+			 xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+			 x:Class="GrbLHALSender.Views.FirmwareView"
+			 x:DataType="viewModels:FirmwareViewModel"
+			 mc:Ignorable="d"
+			 d:DesignWidth="600" d:DesignHeight="500">
+
+	<Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="8">
+
+		<!-- Step 1: get firmware -->
+		<Border Grid.Row="0" Padding="10" Margin="0,0,0,8" CornerRadius="6"
+				Background="{DynamicResource MaterialPaperBrush}">
+			<StackPanel Spacing="8">
+				<TextBlock Text="1. Build firmware"
+						   FontWeight="DemiBold"
+						   FontSize="{DynamicResource BaseFontSize}" />
+				<TextBlock TextWrapping="Wrap"
+						   Opacity="0.8"
+						   FontSize="{DynamicResource BaseFontSize}"
+						   Text="Build a firmware image for your STM32F4 board with the grblHAL Web Builder and download the .hex file. Include the 'Bootloader entry' plugin so $DFU stays available for future updates." />
+				<Button Command="{Binding OpenWebBuilderCommand}"
+						Padding="6,4" HorizontalAlignment="Left">
+					<StackPanel Orientation="Horizontal" Spacing="4">
+						<ContentControl Content="{icons:MaterialIconExt Kind=OpenInNew, IconSize=16}" />
+						<TextBlock Text="Open Web Builder" VerticalAlignment="Center"
+								   FontSize="{DynamicResource BaseFontSize}" />
+					</StackPanel>
+				</Button>
+			</StackPanel>
+		</Border>
+
+		<!-- Step 2: select hex -->
+		<Border Grid.Row="1" Padding="10" Margin="0,0,0,8" CornerRadius="6"
+				Background="{DynamicResource MaterialPaperBrush}">
+			<StackPanel Spacing="8">
+				<TextBlock Text="2. Select the .hex file"
+						   FontWeight="DemiBold"
+						   FontSize="{DynamicResource BaseFontSize}" />
+				<Grid ColumnDefinitions="*,Auto">
+					<TextBox Grid.Column="0"
+							 Text="{Binding HexFilePath, Mode=OneWay}"
+							 IsReadOnly="True"
+							 PlaceholderText="No file selected"
+							 FontSize="{DynamicResource BaseFontSize}"
+							 VerticalAlignment="Center" />
+					<Button Grid.Column="1"
+							Command="{Binding BrowseCommand}"
+							IsEnabled="{Binding !IsInstalling}"
+							Margin="6,0,0,0" Padding="6,4">
+						<StackPanel Orientation="Horizontal" Spacing="4">
+							<ContentControl Content="{icons:MaterialIconExt Kind=FolderOpen, IconSize=16}" />
+							<TextBlock Text="Browse" VerticalAlignment="Center"
+									   FontSize="{DynamicResource BaseFontSize}" />
+						</StackPanel>
+					</Button>
+				</Grid>
+				<TextBlock Text="{Binding HexFileInfo}"
+						   IsVisible="{Binding HexFileInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+						   Opacity="0.7"
+						   FontSize="{DynamicResource BaseFontSize}" />
+			</StackPanel>
+		</Border>
+
+		<!-- Step 3: install -->
+		<Border Grid.Row="2" Padding="10" CornerRadius="6"
+				Background="{DynamicResource MaterialPaperBrush}">
+			<StackPanel Spacing="8">
+				<TextBlock Text="3. Install"
+						   FontWeight="DemiBold"
+						   FontSize="{DynamicResource BaseFontSize}" />
+				<TextBlock TextWrapping="Wrap"
+						   Opacity="0.8"
+						   FontSize="{DynamicResource BaseFontSize}"
+						   Text="When connected, the controller is rebooted into the bootloader automatically ($DFU). Otherwise hold BOOT0 while resetting the board first. Do not power off during installation." />
+				<StackPanel Orientation="Horizontal" Spacing="8">
+					<Button Command="{Binding InstallCommand}"
+							Padding="10,6"
+							Classes="accent">
+						<StackPanel Orientation="Horizontal" Spacing="4">
+							<ContentControl Content="{icons:MaterialIconExt Kind=Chip, IconSize=18}" />
+							<TextBlock Text="Install Firmware" VerticalAlignment="Center"
+									   FontSize="{DynamicResource BaseFontSize}" />
+						</StackPanel>
+					</Button>
+					<Button Command="{Binding CancelInstallCommand}"
+							IsVisible="{Binding IsInstalling}"
+							ToolTip.Tip="Cancel installation"
+							Padding="10,6">
+						<StackPanel Orientation="Horizontal" Spacing="4">
+							<ContentControl Content="{icons:MaterialIconExt Kind=Close, IconSize=18}" />
+							<TextBlock Text="Cancel" VerticalAlignment="Center"
+									   FontSize="{DynamicResource BaseFontSize}" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</StackPanel>
+		</Border>
+
+		<!-- Progress / status -->
+		<Border Grid.Row="4" Padding="8" Margin="0,8,0,0" CornerRadius="6"
+				Background="{DynamicResource MaterialPaperBrush}">
+			<StackPanel Spacing="6">
+				<Grid ColumnDefinitions="Auto,*" IsVisible="{Binding IsInstalling}">
+					<TextBlock Grid.Column="0"
+							   Text="{Binding Phase}"
+							   FontWeight="DemiBold"
+							   Margin="0,0,10,0"
+							   VerticalAlignment="Center"
+							   FontSize="{DynamicResource BaseFontSize}" />
+					<ProgressBar Grid.Column="1"
+								 Value="{Binding InstallProgress}"
+								 Minimum="0" Maximum="100"
+								 Height="16" />
+				</Grid>
+				<TextBlock Text="{Binding StatusMessage}"
+						   TextWrapping="Wrap"
+						   FontSize="{DynamicResource BaseFontSize}" />
+			</StackPanel>
+		</Border>
+
+	</Grid>
+</UserControl>

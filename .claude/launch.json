@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "grblhal-sender",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "GrbLHALSender.Desktop/GrbLHALSender.Desktop.csproj"],
+      "autoPort": true
+    },
+    {
+      "name": "guitar-trainer",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "serve", "C:/Repo/GuitarTrainer"],
+      "autoPort": true
+    }
+  ]
+}
