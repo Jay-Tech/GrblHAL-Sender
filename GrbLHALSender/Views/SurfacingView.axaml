@@ -1,0 +1,138 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="640"
+             x:Class="GrbLHALSender.Views.SurfacingView"
+             x:DataType="viewModels:SurfacingViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="TextBox.field">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Width" Value="80"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,4,2,4"/>
+        </Style>
+        <Style Selector="Label.field">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,4,6,4"/>
+        </Style>
+        <Style Selector="TextBlock.unit">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Opacity" Value="0.6"/>
+            <Setter Property="Margin" Value="0,4,12,4"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" Margin="10">
+
+        <!-- Stock -->
+        <Border Grid.Row="0" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
+            <StackPanel Orientation="Vertical">
+                <Label Content="Stock" FontSize="15" FontWeight="Bold" Margin="0,0,0,4"/>
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                    <Label Grid.Column="0" Classes="field" Content="Width:"/>
+                    <TextBox Grid.Column="1" Classes="field" Text="{Binding StockWidth}"/>
+                    <TextBlock Grid.Column="2" Classes="unit" Text="{Binding UnitLabel}"/>
+
+                    <Label Grid.Column="3" Classes="field" Content="Height:"/>
+                    <TextBox Grid.Column="4" Classes="field" Text="{Binding StockHeight}"/>
+                    <TextBlock Grid.Column="5" Classes="unit" Text="{Binding UnitLabel}"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Tool -->
+        <Border Grid.Row="1" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
+            <StackPanel Orientation="Vertical">
+                <Label Content="Tool" FontSize="15" FontWeight="Bold" Margin="0,0,0,4"/>
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                    <Label Grid.Column="0" Classes="field" Content="Diameter:"/>
+                    <TextBox Grid.Column="1" Classes="field" Text="{Binding ToolDiameter}"/>
+                    <TextBlock Grid.Column="2" Classes="unit" Text="{Binding UnitLabel}"/>
+
+                    <Label Grid.Column="3" Classes="field" Content="Stepover:"/>
+                    <TextBox Grid.Column="4" Classes="field" Text="{Binding StepoverPercent}"/>
+                    <TextBlock Grid.Column="5" Classes="unit" Text="%"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Cut params -->
+        <Border Grid.Row="2" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
+            <StackPanel Orientation="Vertical">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Content="Cut Parameters" FontSize="15" FontWeight="Bold" Margin="0,0,0,4"/>
+                    <CheckBox Grid.Column="1" Content="Metric (mm)" FontSize="13"
+                              IsChecked="{Binding UseMetric}"
+                              VerticalAlignment="Center" Margin="0,0,4,4"/>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+                    <Label Grid.Row="0" Grid.Column="0" Classes="field" Content="Depth/pass:"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Classes="field" Text="{Binding CutDepthPerPass}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Classes="unit" Text="{Binding UnitLabel}"/>
+                    <Label Grid.Row="0" Grid.Column="3" Classes="field" Content="Passes:"/>
+                    <TextBox Grid.Row="0" Grid.Column="4" Classes="field" Text="{Binding NumberOfPasses}"/>
+
+                    <Label Grid.Row="1" Grid.Column="0" Classes="field" Content="Feed:"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Classes="field" Text="{Binding FeedRate}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Classes="unit" Text="{Binding RateLabel}"/>
+                    <Label Grid.Row="1" Grid.Column="3" Classes="field" Content="RPM:"/>
+                    <TextBox Grid.Row="1" Grid.Column="4" Classes="field" Text="{Binding SpindleRpm}"/>
+
+                    <Label Grid.Row="2" Grid.Column="0" Classes="field" Content="Safe Z:"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Classes="field" Text="{Binding SafeZ}"/>
+                    <TextBlock Grid.Row="2" Grid.Column="2" Classes="unit" Text="{Binding UnitLabel}"/>
+                    <Label Grid.Row="2" Grid.Column="3" Classes="field" Content="Tool #:"/>
+                    <TextBox Grid.Row="2" Grid.Column="4" Classes="field" Text="{Binding ToolNumber}"/>
+
+                    <CheckBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3"
+                              Content="Spindle CW (M3)" FontSize="14"
+                              IsChecked="{Binding SpindleCw}"
+                              VerticalAlignment="Center" Margin="0,4,0,4"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Preview -->
+        <Border Grid.Row="3" BorderThickness="1" CornerRadius="4" Padding="6" Margin="0,0,0,6">
+            <TextBox Text="{Binding PreviewText}"
+                     IsReadOnly="True"
+                     AcceptsReturn="True"
+                     FontFamily="Consolas,Menlo,Courier New"
+                     FontSize="12"
+                     TextWrapping="NoWrap"
+                     VerticalContentAlignment="Top"
+                     HorizontalContentAlignment="Left"
+                     PlaceholderText="Click Generate to preview G-code..."
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+        </Border>
+
+        <!-- Status -->
+        <Label Grid.Row="4" Content="{Binding StatusMessage}" FontSize="15"
+               Margin="4,0,0,4"
+               Foreground="{DynamicResource SystemAccentColor}"/>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="5" ColumnDefinitions="*,*,*">
+            <Button Grid.Column="0" Content="Generate" FontSize="18" Height="45"
+                    CornerRadius="6" HorizontalAlignment="Stretch" Margin="4"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    Command="{Binding GenerateCommand}"/>
+            <Button Grid.Column="1" Content="Save .nc" FontSize="18" Height="45"
+                    CornerRadius="6" HorizontalAlignment="Stretch" Margin="4"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    Command="{Binding SaveCommand}"/>
+            <Button Grid.Column="2" Content="Close" FontSize="18" Height="45"
+                    CornerRadius="6" HorizontalAlignment="Stretch" Margin="4"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    Command="{Binding CloseCommand}"/>
+        </Grid>
+    </Grid>
+</UserControl>

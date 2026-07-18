@@ -99,6 +99,17 @@ public partial class DialogButtonView : UserControl
                 if (probeMainVm != null)
                     probeView.DataContext = probeMainVm.ProbeViewModel;
                 return (probeView, 480, 595);
+
+            case DialogType.Surfacing:
+                var surfacingView = new SurfacingView
+                {
+                    MinHeight = 640,
+                    MinWidth = 560
+                };
+                var surfacingMainVm = GetMainViewModel();
+                if (surfacingMainVm != null)
+                    surfacingView.DataContext = surfacingMainVm.SurfacingViewModel;
+                return (surfacingView, 560, 640);
            
             case DialogType.AppConfig:
                 var appConfigView = new AppConfigView();

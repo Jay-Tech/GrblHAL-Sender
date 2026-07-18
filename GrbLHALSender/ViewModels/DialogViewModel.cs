@@ -10,7 +10,8 @@ public enum DialogType
     Console,
     Probe,
     Macro,
-    AppConfig
+    AppConfig,
+    Surfacing
 }
 
 public class DialogViewModel : ViewModelBase
@@ -31,6 +32,7 @@ public class DialogViewModel : ViewModelBase
     public ICommand OpenProbeCommand { get; }
     public ICommand OpenMacroCommand { get; }
     public ICommand OpenUtilityCommand { get; }
+    public ICommand OpenSurfacingCommand { get; }
 
     public DialogViewModel()
     {
@@ -38,6 +40,7 @@ public class DialogViewModel : ViewModelBase
         OpenProbeCommand = ReactiveCommand.Create(() => RequestOpenDialog(DialogType.Probe));
         OpenMacroCommand = ReactiveCommand.Create(() => RequestOpenDialog(DialogType.Macro));
         OpenUtilityCommand = ReactiveCommand.Create(() => RequestOpenDialog(DialogType.AppConfig));
+        OpenSurfacingCommand = ReactiveCommand.Create(() => RequestOpenDialog(DialogType.Surfacing));
     }
 
     private void RequestOpenDialog(DialogType dialogType)

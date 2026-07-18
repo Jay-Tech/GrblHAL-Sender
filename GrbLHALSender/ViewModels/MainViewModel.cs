@@ -130,6 +130,7 @@ public class MainViewModel : ViewModelBase
     public SdCardViewModel SdCardViewModel { get; set; }
     public CommunicationManager CommManager { get; set; }
     public ProbeViewModel ProbeViewModel { get; set; }
+    public SurfacingViewModel SurfacingViewModel { get; set; }
   
 
     public string UnitSystem { get; set; } = "G21";
@@ -400,10 +401,12 @@ public class MainViewModel : ViewModelBase
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
         WebServerService webServerService, MachineStateService machineStateService,
-        SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService)
+        SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService,
+        SurfacingViewModel surfacingViewModel)
     {
         CommManager = commManager;
         ProbeViewModel = probeViewModel;
+        SurfacingViewModel = surfacingViewModel;
         SettingsViewModel = settingsViewModel;
         SdCardViewModel = sdCardViewModel;
         _configManager = configManager;
