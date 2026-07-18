@@ -1,10 +1,10 @@
-#To release a build GIT
-git tag v1.0.X
-git push origin v1.0.X
-
 #Delete a tag and release 
 git tag -d v1.0.X
 git push origin --delete v1.0.X
+
+#To release a build GIT
+git tag v1.0.X
+git push origin v1.0.X
 
 #Local Build 
 ./build.ps1 -Runtime win-x64 -Version 1.0.0
@@ -16,15 +16,11 @@ git push origin --delete v1.0.X
 rm -r GrblHAL-Sender
 
 #Install linux 
-wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.0.0/grblhal-sender_1.0.0_arm64.deb
-
-sudo apt install ./grblhal-sender_1.0.0_arm64.deb
-
+sudo wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.0.X/grblhal-sender_1.0.X_arm64.deb
+sudo apt install ./grblhal-sender_1.0.X_arm64.deb
 
 #Auto Start Linux 
-
 mkdir -p ~/.config/autostart
-
 cat > ~/.config/autostart/grblhal-sender.desktop << 'EOF'
 [Desktop Entry]
 Type=Application
@@ -36,20 +32,17 @@ X-GNOME-Autostart-enabled=true
 EOF
 
 #Auto Start Linux 2(PI)
-
-mkdir -p ~/.config/autostart
-
+sudo mkdir -p ~/.config/autostart
 cat > ~/.config/autostart/grblhal-sender.desktop << 'EOF'
 [Desktop Entry]
 Type=Application
 Name=GrblHAL Sender
 Comment=GrblHAL CNC Sender
-Exec=/path/to/GrbLHALSender.Desktop
-Icon=/path/to/GHalSender.ico
+Exec=/usr/bin/grblhal-sender
+Icon=grblhal-sender
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
-
 
 #Serial Ports Linux 
 sudo usermod -a -G dialout <username>
@@ -66,3 +59,5 @@ Finish and reboot.
 #SSH
 ssh-keygen -R <IpAdress>
 ssh <user>@<IpAdress>
+
+ssh PiHost@192.168.1.130
