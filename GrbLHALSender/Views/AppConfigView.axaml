@@ -408,6 +408,7 @@
                                  VerticalContentAlignment="Center" 
                                  Margin="0,10,0,0"
                                  FontSize="20"
+                                 ToolTip.Tip="Example: P231"
                                  Text="{Binding  TlrMacro}"/>
 
                         <Label Grid.Row="3" Grid.Column="0"
@@ -427,6 +428,7 @@
                                  VerticalContentAlignment="Center" 
 								 Margin="0,10,0,0"
                                  FontSize="20"
+                                 ToolTip.Tip="Example: P221"
                                  Text="{Binding UnloadMacro}"/>
                    
                 </Grid>
