@@ -1046,7 +1046,12 @@ public class MainViewModel : ViewModelBase
         {
             if (e.PropertyName == nameof(ICommsAdapter.IsConnected))
             {
-                Connected = CommManager.Adapter.IsConnected;
+                // IsConnected flips on the adapter's send/receive threads when
+                // the link drops. Connected drives Avalonia bindings, which
+                // must be touched from the UI thread — updating directly from
+                // the comm thread throws there, and an unhandled exception on
+                // a background thread kills the whole process.
+                Dispatcher.UIThread.Post(() => Connected = CommManager.Adapter.IsConnected);
             }
         };
 

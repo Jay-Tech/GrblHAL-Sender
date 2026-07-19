@@ -33,6 +33,10 @@ public class FtpTransferService : ISdCardTransferService
     public async Task<bool> UploadFileAsync(string localFilePath, string remoteFileName,
         IProgress<TransferProgress>? progress, CancellationToken ct)
     {
+        // Pause the 0x87 status poll during the transfer — the controller's
+        // network stack struggles to serve FTP data and telnet chatter at the
+        // same time (same reason YModem suspends it).
+        _commManager.SuspendForTransfer();
         try
         {
             using var client = await ConnectAsync(ct);
@@ -70,6 +74,10 @@ public class FtpTransferService : ISdCardTransferService
             });
             return false;
         }
+        finally
+        {
+            _commManager.ResumeAfterTransfer();
+        }
     }
 
     public async Task<bool> DownloadFileAsync(string remoteFileName, string localFilePath,
@@ -82,6 +90,10 @@ public class FtpTransferService : ISdCardTransferService
         // leaving a 0-byte file. A bare OpenRead/RETR matches the simplicity
         // of the upload path, which works.
         string lastFtpLine = "";
+        // Pause the 0x87 status poll during the transfer — the controller's
+        // network stack struggles to serve FTP data and telnet chatter at the
+        // same time (same reason YModem suspends it).
+        _commManager.SuspendForTransfer();
         try
         {
             using var client = await ConnectAsync(ct);
@@ -180,6 +192,10 @@ public class FtpTransferService : ISdCardTransferService
                 StatusMessage = $"FTP error: {ex.Message}"
             });
             return false;
+        }
+        finally
+        {
+            _commManager.ResumeAfterTransfer();
         }
     }
 

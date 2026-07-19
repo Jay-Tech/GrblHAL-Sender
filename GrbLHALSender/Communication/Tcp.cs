@@ -174,8 +174,11 @@ namespace GrbLHALSender.Communication
                     }
                     catch (Exception)
                     {
-                        IsConnected = false;
-                        TriggerReconnect();
+                        // Guard the state flip too: IsConnected raises
+                        // PropertyChanged into arbitrary subscribers on THIS
+                        // thread — if one throws, an unhandled exception here
+                        // would kill the process.
+                        try { IsConnected = false; TriggerReconnect(); } catch { }
                         return;
                     }
 
@@ -212,8 +215,7 @@ namespace GrbLHALSender.Communication
                     if (bytesRead == 0)
                     {
                         // Connection closed by remote host
-                        IsConnected = false;
-                        TriggerReconnect();
+                        try { IsConnected = false; TriggerReconnect(); } catch { }
                         return;
                     }
 
@@ -224,8 +226,9 @@ namespace GrbLHALSender.Communication
                 {
                     if (!token.IsCancellationRequested)
                     {
-                        IsConnected = false;
-                        TriggerReconnect();
+                        // Guarded: subscribers to IsConnected run on this
+                        // thread and must not be able to kill the process.
+                        try { IsConnected = false; TriggerReconnect(); } catch { }
                     }
                     return;
                 }
