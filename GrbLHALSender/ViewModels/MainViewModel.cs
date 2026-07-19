@@ -560,13 +560,7 @@ public class MainViewModel : ViewModelBase
 
     private void CloseApplication()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
-            (RuntimeInformation.OSArchitecture == Architecture.Arm ||
-             RuntimeInformation.OSArchitecture == Architecture.Arm64))
-        {
-            TryLinuxShutdown();
-        }
-
+        
         if (Application.Current?.ApplicationLifetime is
             Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -851,6 +845,13 @@ public class MainViewModel : ViewModelBase
         _webServerService?.Stop();
         _gamepadService?.Stop();
         CommManager.ShutDown();
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
+            (RuntimeInformation.OSArchitecture == Architecture.Arm ||
+             RuntimeInformation.OSArchitecture == Architecture.Arm64))
+        {
+            TryLinuxShutdown();
+        }
     }
     private void _commManager_OnConsoleLogReceived(object? sender, string e)
     {

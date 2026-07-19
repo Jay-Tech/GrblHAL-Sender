@@ -26,10 +26,26 @@ public class ConfigManager
         }
 
         var fullPath = Path.Combine(path, _fileName);
+        var tempPath = fullPath + ".tmp";
+
         GHalSenderConfig ??= new GHalSenderConfig();
         var options = new JsonSerializerOptions { WriteIndented = true };
         var jsonString = JsonSerializer.Serialize(GHalSenderConfig, options);
-        File.WriteAllText(fullPath, jsonString);
+
+        // Atomic write: temp file → fsync → rename. Guarantees the on-disk file
+        // is always either the previous complete version or the new complete
+        // version, never a truncated mix — even if the process is killed
+        // mid-save (systemd SIGTERM, power loss, OS shutdown race).
+        using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+        using (var writer = new StreamWriter(stream))
+        {
+            writer.Write(jsonString);
+            writer.Flush();
+            stream.Flush(flushToDisk: true);
+        }
+
+        File.Move(tempPath, fullPath, overwrite: true);
+
         OnConfigSaved?.Invoke(this, GHalSenderConfig);
     }
 

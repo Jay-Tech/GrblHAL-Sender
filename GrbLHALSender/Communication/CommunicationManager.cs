@@ -87,10 +87,18 @@ namespace GrbLHALSender.Communication
             _pollTimer?.Stop();
             if (Adapter != null)
             {
-                Adapter.OnDataReceived -= Adapter_OnDataReceived;
-                Adapter.Close();
+                try
+                {
+                    Adapter.WriteByte(0x18); // grblHAL soft-reset — flushes planner
+                    Thread.Sleep(50);
+                }
+                finally
+                {
+                    Adapter.OnDataReceived -= Adapter_OnDataReceived;
+                    Adapter.Close();
+                }
+               
             }
-            Environment.Exit(0);
         }
 
         public void SendCommand(string command)
