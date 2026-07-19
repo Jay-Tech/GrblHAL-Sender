@@ -10,20 +10,12 @@
 
 	<UserControl.Resources>
 		<views:SettingEditorTemplate x:Key="SettingEditor" />
-		<!-- Fluent theme scrollbars are 12px and only expand on hover, which
-		     doesn't exist on touch. Fatten them for this view. -->
-		<x:Double x:Key="ScrollBarSize">26</x:Double>
 	</UserControl.Resources>
 
-	<UserControl.Styles>
-		<!-- Keep the scrollbar permanently expanded — no hover on touch -->
-		<Style Selector="ScrollBar">
-			<Setter Property="AllowAutoHide" Value="False"/>
-		</Style>
-	</UserControl.Styles>
-
 	<Grid RowDefinitions="*,60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-		<ScrollViewer Grid.Row="0" x:Name="SettingScroll" Margin="5,10,10,5" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+		<ScrollViewer Grid.Row="0" x:Name="SettingScroll" Margin="5,10,10,5"
+					  VerticalScrollBarVisibility="Hidden"
+					  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 			<ItemsControl ItemsSource="{Binding SettingCollection}">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>

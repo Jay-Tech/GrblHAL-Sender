@@ -148,11 +148,26 @@ public partial class MainView : UserControl
 
         // If keyboard window already open, just retarget. Do NOT Activate()
         // the keyboard window — that steals focus from the main window and
-        // forces a double-touch to get it back.
+        // forces a double-touch to get it back. But DO make sure it is still
+        // actually on screen: the WM can hide/unmap it without our Closed
+        // handler firing, which used to leave a live-but-invisible window that
+        // blocked the keyboard from ever showing again until app restart.
         if (_keyboardWindow != null && _keyboardViewModel != null)
         {
-            _keyboardViewModel.SetTarget(targetTextBox);
-            return;
+            try
+            {
+                _keyboardViewModel.SetTarget(targetTextBox);
+                if (!_keyboardWindow.IsVisible)
+                    _keyboardWindow.Show(parentWindow);
+                return;
+            }
+            catch
+            {
+                // Window is in a broken state — drop it and build a fresh one below.
+                try { _keyboardWindow.Close(); } catch { /* already dead */ }
+                _keyboardWindow = null;
+                _keyboardViewModel = null;
+            }
         }
 
         // Create new keyboard instance

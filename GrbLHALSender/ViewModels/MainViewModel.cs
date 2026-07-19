@@ -1051,7 +1051,6 @@ public class MainViewModel : ViewModelBase
         };
 
         CommManager.GetSettings();
-        SendCommand("$X");
     }
 }
 public class Axis : ViewModelBase

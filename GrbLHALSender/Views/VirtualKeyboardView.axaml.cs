@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -22,13 +23,44 @@ public partial class VirtualKeyboardView : UserControl
         AddHandler(PointerCaptureLostEvent, OnAnyPointerCaptureLost, RoutingStrategies.Tunnel, handledEventsToo: true);
 
         // The keyboard window has no title bar — the grab strip at the top
-        // moves it instead, so it can be dragged clear of the field being edited.
+        // moves it instead, so it can be dragged clear of the field being
+        // edited. Manual position tracking rather than Window.BeginMoveDrag:
+        // BeginMoveDrag delegates to the window manager's move protocol, which
+        // ignores touch input on some Linux WMs (observed on the Pi).
         DragHandle.PointerPressed += (_, e) =>
         {
-            if (TopLevel.GetTopLevel(this) is Window window)
-                window.BeginMoveDrag(e);
+            if (TopLevel.GetTopLevel(this) is not Window) return;
+            _dragging = true;
+            _dragStart = e.GetPosition(this);
+            e.Pointer.Capture(DragHandle);
+            e.Handled = true;
         };
+
+        DragHandle.PointerMoved += (_, e) =>
+        {
+            if (!_dragging || TopLevel.GetTopLevel(this) is not Window window) return;
+
+            // Position is relative to the window, which moves with each update,
+            // so the reported point stays near the press point and the delta is
+            // the incremental movement since the last reposition.
+            var delta = e.GetPosition(this) - _dragStart;
+            var scale = window.DesktopScaling;
+            window.Position = new PixelPoint(
+                window.Position.X + (int)(delta.X * scale),
+                window.Position.Y + (int)(delta.Y * scale));
+            e.Handled = true;
+        };
+
+        DragHandle.PointerReleased += (_, e) =>
+        {
+            _dragging = false;
+            e.Pointer.Capture(null);
+        };
+        DragHandle.PointerCaptureLost += (_, _) => _dragging = false;
     }
+
+    private bool _dragging;
+    private Point _dragStart;
 
     private static void OnAnyPointerReleased(object? sender, PointerReleasedEventArgs e)
     {

@@ -21,6 +21,8 @@ namespace GrbLHALSender.Views
         private Point _panStartPoint;
         private Vector _panStartOffset;
         private const double PanThreshold = 12;
+        // Scroll multiplier: >1 means the list moves faster than the finger.
+        private const double PanSpeed = 1.8;
 
         public SettingView()
         {
@@ -64,7 +66,7 @@ namespace GrbLHALSender.Views
                 {
                     SettingScroll.Offset = new Vector(
                         _panStartOffset.X,
-                        Math.Max(0, _panStartOffset.Y - dy));
+                        Math.Max(0, _panStartOffset.Y - dy * PanSpeed));
                     e.Handled = true;
                 }
             }, RoutingStrategies.Tunnel, handledEventsToo: true);

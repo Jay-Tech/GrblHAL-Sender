@@ -92,12 +92,14 @@ namespace GrbLHALSender.Communication
                     Adapter.WriteByte(0x18); // grblHAL soft-reset — flushes planner
                     Thread.Sleep(50);
                 }
-                finally
+                catch
                 {
-                    Adapter.OnDataReceived -= Adapter_OnDataReceived;
-                    Adapter.Close();
+                    // A dead/disconnected adapter must not abort the shutdown
+                    // sequence — the caller still has cleanup (and possibly an
+                    // OS power-off) to run after this returns.
                 }
-               
+                Adapter.OnDataReceived -= Adapter_OnDataReceived;
+                Adapter.Close();
             }
         }
 
@@ -138,6 +140,16 @@ namespace GrbLHALSender.Communication
                 ParseAllPins(pinLines);
                 await SendAsyncCommand(GrblHalConstants.Alarmcodes, timeOutMs: 1000);
                 await SendAsyncCommand(GrblHalConstants.Errorcodes, timeOutMs: 1000);
+
+                // Re-broadcast options now that the whole query sequence is done.
+                // The first SendOptions can fire with EMPTY signal/axis labels:
+                // SendAsyncCommand matches any line containing "ok", so the "ok"
+                // from a command sent concurrently at connect (e.g. the $X unlock)
+                // can complete the $I+ await before the $I+ response has actually
+                // arrived and been parsed. By this point every earlier response is
+                // in, so this call carries the complete label set. The UI-side
+                // rebuild is add-missing/remove-stale, so firing twice is safe.
+                SendOptions();
 
                 SetupPoll();
             });
