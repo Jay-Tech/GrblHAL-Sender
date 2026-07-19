@@ -94,25 +94,30 @@ public class FtpTransferService : ISdCardTransferService
         // network stack struggles to serve FTP data and telnet chatter at the
         // same time (same reason YModem suspends it).
         _commManager.SuspendForTransfer();
+        AsyncFtpClient? client = null;
         try
         {
-            using var client = await ConnectAsync(ct);
+            // Fetch the file size on its own short-lived session. grblHAL's
+            // embedded FTP server reliably serves ONE data operation per
+            // session (LIST here, RETR below) — chaining LIST then RETR on the
+            // same session stalls the second operation. This also lets us pass
+            // the size to OpenRead so FluentFTP never issues SIZE (which the
+            // server doesn't implement).
+            long totalBytes = 0;
+            try
+            {
+                using var sizeClient = await ConnectAsync(ct);
+                var items = await sizeClient.GetListing("/", FtpListOption.Auto, ct);
+                totalBytes = items.FirstOrDefault(i => i.Name == remoteFileName)?.Size ?? 0;
+            }
+            catch { /* size is a nicety; proceed without it */ }
 
-            // Keep the server's side of the conversation for diagnostics —
-            // async FluentFTP calls hang (not time out) on unanswered
-            // commands, so when the watchdog trips this tells us where.
+            client = await ConnectAsync(ct);
             client.LegacyLogger = (_, msg) =>
             {
                 lastFtpLine = msg;
                 Debug.WriteLine($"FTP: {msg}");
             };
-
-            // Learn the file size from the directory listing. LIST is known
-            // good on grblHAL's embedded server; SIZE is not implemented, and
-            // OpenRead with fileLen 0 would issue SIZE internally and hang.
-            long totalBytes = 0;
-            var items = await client.GetListing("/", FtpListOption.Auto, ct);
-            totalBytes = items.FirstOrDefault(i => i.Name == remoteFileName)?.Size ?? 0;
 
             progress?.Report(new TransferProgress
             {
@@ -120,21 +125,32 @@ public class FtpTransferService : ISdCardTransferService
                 StatusMessage = "Opening data connection..."
             });
 
-            // Inactivity watchdog: async FluentFTP ignores ReadTimeout, so
-            // without this an unresponsive server stalls forever. Re-armed on
-            // every successful read — only 15 s of true silence trips it.
-            using var watchdog = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            watchdog.CancelAfter(15000);
+            // IMPORTANT: never pass FluentFTP a token we intend to cancel.
+            // Cancelling its socket read fires an internal cleanup continuation
+            // (CloseDataStream → wait for "226") that throws
+            // OperationCanceledException on a bare thread-pool thread — an
+            // unhandled exception that kills the entire process. Timeouts are
+            // enforced with Task.WhenAny; on timeout the client is disposed,
+            // which terminates the abandoned operation via socket closure.
+            var openTask = client.OpenRead("/" + remoteFileName, FtpDataType.Binary, 0, totalBytes, CancellationToken.None);
+            Observe(openTask);
+            if (await Task.WhenAny(openTask, Task.Delay(15000, ct)) != openTask)
+                return Fail("server did not start the transfer within 15 s");
 
+            var remote = await openTask;
             long transferred = 0;
-            await using (var remote = await client.OpenRead("/" + remoteFileName, FtpDataType.Binary, 0, totalBytes, watchdog.Token))
-            await using (var local = File.Create(localFilePath))
+            try
             {
+                await using var local = File.Create(localFilePath);
                 var buffer = new byte[8192];
                 while (true)
                 {
-                    watchdog.CancelAfter(15000);
-                    int read = await remote.ReadAsync(buffer.AsMemory(), watchdog.Token);
+                    var readTask = remote.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
+                    Observe(readTask);
+                    if (await Task.WhenAny(readTask, Task.Delay(15000, ct)) != readTask)
+                        return Fail("transfer stalled (no data for 15 s)");
+
+                    int read = await readTask;
                     if (read <= 0) break;
 
                     await local.WriteAsync(buffer.AsMemory(0, read), ct);
@@ -153,17 +169,22 @@ public class FtpTransferService : ISdCardTransferService
                     if (totalBytes > 0 && transferred >= totalBytes) break;
                 }
             }
-
-            // Drain the server's end-of-transfer reply (226) so the control
-            // connection is left in a clean state before disposal.
-            try { await client.GetReply(ct); } catch { /* best effort */ }
+            finally
+            {
+                // Graceful close reads the "226" end-of-transfer reply. Give
+                // it a bounded wait; the finally below hard-disposes the
+                // client if the server never sends it.
+                try
+                {
+                    var closeTask = remote.DisposeAsync().AsTask();
+                    Observe(closeTask);
+                    await Task.WhenAny(closeTask, Task.Delay(3000));
+                }
+                catch { /* best effort */ }
+            }
 
             if (transferred == 0)
-            {
-                TryDeleteEmptyFile(localFilePath);
-                progress?.Report(new TransferProgress { StatusMessage = "Download failed: no data received" });
-                return false;
-            }
+                return Fail("no data received");
 
             progress?.Report(new TransferProgress
             {
@@ -172,16 +193,21 @@ public class FtpTransferService : ISdCardTransferService
                 StatusMessage = "Download complete"
             });
             return true;
-        }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        {
-            Debug.WriteLine($"FTP download stalled. Last server line: {lastFtpLine}");
-            TryDeleteEmptyFile(localFilePath);
-            progress?.Report(new TransferProgress
+
+            bool Fail(string reason)
             {
-                StatusMessage = $"Download stalled (no data for 15 s). Last FTP reply: {lastFtpLine}"
-            });
-            return false;
+                Debug.WriteLine($"FTP download failed: {reason}. Last server line: {lastFtpLine}");
+                // Hard-kill the session so any abandoned read terminates via
+                // socket closure instead of lingering.
+                try { client?.Dispose(); } catch { }
+                client = null;
+                TryDeleteEmptyFile(localFilePath);
+                progress?.Report(new TransferProgress
+                {
+                    StatusMessage = $"Download failed: {reason}. Last FTP reply: {lastFtpLine}"
+                });
+                return false;
+            }
         }
         catch (Exception ex)
         {
@@ -195,9 +221,18 @@ public class FtpTransferService : ISdCardTransferService
         }
         finally
         {
+            try { client?.Dispose(); } catch { }
             _commManager.ResumeAfterTransfer();
         }
     }
+
+    /// <summary>
+    /// Attaches a continuation that observes a task's eventual exception so an
+    /// abandoned (timed-out) FluentFTP operation can never surface as an
+    /// unobserved or unhandled exception.
+    /// </summary>
+    private static void Observe(Task task) =>
+        task.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.NotOnRanToCompletion);
 
     /// <summary>Removes a zero-byte artifact left behind by a failed download.</summary>
     private static void TryDeleteEmptyFile(string path)
