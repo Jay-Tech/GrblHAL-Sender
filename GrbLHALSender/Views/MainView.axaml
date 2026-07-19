@@ -1020,6 +1020,19 @@
 			<!--END Right Section End-->
 		</Grid>
 		<!--END Content Grid -->
+
+		<!-- Virtual keyboard overlay. Lives INSIDE the main window (not a
+		     separate OS window) so the window manager is never involved:
+		     no activation dance, no focus loss on close, and drag is a
+		     simple render transform. Shown on TextBox double-tap. -->
+		<views:VirtualKeyboardView x:Name="KeyboardOverlay"
+								   Grid.Row="0" Grid.RowSpan="2"
+								   Width="750"
+								   HorizontalAlignment="Center"
+								   VerticalAlignment="Bottom"
+								   Margin="0,0,0,60"
+								   ZIndex="1000"
+								   IsVisible="False"/>
 	</Grid>
 	<!--END Main Grid -->
 </UserControl>

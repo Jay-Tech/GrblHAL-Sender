@@ -25,9 +25,8 @@ public partial class MainView : UserControl
     private string? _jogHoldAxis;
     private bool _jogHoldPositive;
 
-    // Virtual keyboard — single instance
-    private DialogWindow? _keyboardWindow;
-    private VirtualKeyboardViewModel? _keyboardViewModel;
+    // Virtual keyboard — overlay panel inside this window, single VM instance
+    private readonly VirtualKeyboardViewModel _keyboardViewModel = new();
 
 
     public MainView()
@@ -50,6 +49,11 @@ public partial class MainView : UserControl
         // Global handler: double-tap on any TextBox opens the virtual keyboard
         // Must use handledEventsToo: true because TextBox handles DoubleTapped internally (word select)
         AddHandler(InputElement.DoubleTappedEvent, OnGlobalDoubleTapped, RoutingStrategies.Bubble, handledEventsToo: true);
+
+        // Wire the keyboard overlay: it inherits MainViewModel as DataContext
+        // by default, so give it its own VM, and let ✕ hide the panel.
+        KeyboardOverlay.DataContext = _keyboardViewModel;
+        _keyboardViewModel.CloseAction = () => KeyboardOverlay.IsVisible = false;
 
         // Set up press-and-hold for continuous jog on all jog buttons
         SetupJogButton(XDown, "X", false);
@@ -143,82 +147,13 @@ public partial class MainView : UserControl
             ?? (e.Source as Visual)?.FindAncestorOfType<TextBox>();
         if (targetTextBox == null) return;
 
-        var parentWindow = TopLevel.GetTopLevel(this) as Window;
-        if (parentWindow == null) return;
+        // Ignore double-taps on the keyboard's own (read-only) surfaces.
+        if (targetTextBox.FindAncestorOfType<VirtualKeyboardView>() != null) return;
 
-        // If keyboard window already open, just retarget. Do NOT Activate()
-        // the keyboard window — that steals focus from the main window and
-        // forces a double-touch to get it back. But DO make sure it is still
-        // actually on screen: the WM can hide/unmap it without our Closed
-        // handler firing, which used to leave a live-but-invisible window that
-        // blocked the keyboard from ever showing again until app restart.
-        if (_keyboardWindow != null && _keyboardViewModel != null)
-        {
-            try
-            {
-                _keyboardViewModel.SetTarget(targetTextBox);
-                if (!_keyboardWindow.IsVisible)
-                    _keyboardWindow.Show(parentWindow);
-                return;
-            }
-            catch
-            {
-                // Window is in a broken state — drop it and build a fresh one below.
-                try { _keyboardWindow.Close(); } catch { /* already dead */ }
-                _keyboardWindow = null;
-                _keyboardViewModel = null;
-            }
-        }
-
-        // Create new keyboard instance
-        _keyboardViewModel = new VirtualKeyboardViewModel();
+        // The keyboard is an overlay panel inside this window — showing it is
+        // just a visibility flip. No OS window, no focus/activation involved.
         _keyboardViewModel.SetTarget(targetTextBox);
-
-        var keyboardView = new VirtualKeyboardView
-        {
-            DataContext = _keyboardViewModel
-        };
-
-        _keyboardWindow = new DialogWindow(
-            title: "VirtualKeyBoard",
-            content: keyboardView,
-            width: 750,
-            height: 285
-        );
-        _keyboardWindow.CanResize = false;
-        // Remove the OS title bar entirely: CanMinimize/CanMaximize are only
-        // WM hints and the Linux WM ignores them. BorderOnly keeps the frame;
-        // the keyboard's own ✕ key handles closing.
-        _keyboardWindow.WindowDecorations = WindowDecorations.BorderOnly;
-        // Hand focus to the main window BEFORE the keyboard dies. On X11 the
-        // close is async: activating from the Closed handler races the WM's
-        // own focus-revert (focused window destroyed → focus to nothing) and
-        // loses, leaving the next touch consumed by re-activation.
-        _keyboardViewModel.CloseAction = () =>
-        {
-            parentWindow.Activate();
-            _keyboardWindow?.Close();
-        };
-        _keyboardWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-        _keyboardWindow.Position = new PixelPoint(
-            (int)(parentWindow.Position.X + (parentWindow.Bounds.Width - _keyboardWindow.Width) / 2),
-            (int)(parentWindow.Bounds.Height - _keyboardWindow.Height - 100));
-        _keyboardWindow.Closed += (_, _) =>
-        {
-            _keyboardWindow = null;
-            _keyboardViewModel = null;
-
-            // Fallback for the CloseAction pre-activation: re-activate again
-            // shortly AFTER the window is actually gone. An immediate call here
-            // races the WM's focus-revert on window destruction and loses;
-            // deferred, it runs once the WM has settled.
-            DispatcherTimer.RunOnce(parentWindow.Activate, TimeSpan.FromMilliseconds(150));
-        };
-
-        // Show without taking focus — the target TextBox in the main window
-        // keeps its focus and caret.
-        _keyboardWindow.ShowActivated = false;
-        _keyboardWindow.Show(parentWindow);
+        KeyboardOverlay.IsVisible = true;
     }
 
     private void SetupJogButton(Button button, string axis, bool positive)
