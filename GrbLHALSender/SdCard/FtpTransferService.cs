@@ -75,45 +75,75 @@ public class FtpTransferService : ISdCardTransferService
     public async Task<bool> DownloadFileAsync(string remoteFileName, string localFilePath,
         IProgress<TransferProgress>? progress, CancellationToken ct)
     {
+        // Manual RETR stream instead of FluentFTP's high-level DownloadFile:
+        // the helper issues SIZE (and REST for resume support) before the
+        // transfer, which grblHAL's minimal embedded FTP server does not
+        // implement — the transfer dies after the local file was created,
+        // leaving a 0-byte file. A bare OpenRead/RETR matches the simplicity
+        // of the upload path, which works.
         try
         {
             using var client = await ConnectAsync(ct);
 
-            // Get file size for progress tracking
-            long totalBytes = await client.GetFileSize("/" + remoteFileName, -1, ct);
-            if (totalBytes < 0) totalBytes = 0;
-
-            var ftpProgress = new Progress<FtpProgress>(p =>
+            long transferred = 0;
+            await using (var remote = await client.OpenRead("/" + remoteFileName, FtpDataType.Binary, 0, 0, ct))
+            await using (var local = File.Create(localFilePath))
             {
-                progress?.Report(new TransferProgress
+                var buffer = new byte[8192];
+                int read;
+                while ((read = await remote.ReadAsync(buffer.AsMemory(), ct)) > 0)
                 {
-                    BytesTransferred = totalBytes > 0 ? (long)(p.Progress / 100.0 * totalBytes) : 0,
-                    TotalBytes = totalBytes,
-                    StatusMessage = $"Downloading... {p.Progress:F0}%"
-                });
-            });
+                    await local.WriteAsync(buffer.AsMemory(0, read), ct);
+                    transferred += read;
+                    progress?.Report(new TransferProgress
+                    {
+                        BytesTransferred = transferred,
+                        TotalBytes = 0,
+                        StatusMessage = $"Downloading... {transferred / 1024} KB"
+                    });
+                }
+            }
 
-            var result = await client.DownloadFile(localFilePath, "/" + remoteFileName,
-                FtpLocalExists.Overwrite, FtpVerify.None, ftpProgress, ct);
+            // Drain the server's end-of-transfer reply (226) so the control
+            // connection is left in a clean state before disposal.
+            try { await client.GetReply(ct); } catch { /* best effort */ }
+
+            if (transferred == 0)
+            {
+                TryDeleteEmptyFile(localFilePath);
+                progress?.Report(new TransferProgress { StatusMessage = "Download failed: no data received" });
+                return false;
+            }
 
             progress?.Report(new TransferProgress
             {
-                BytesTransferred = totalBytes,
-                TotalBytes = totalBytes,
-                StatusMessage = result == FtpStatus.Success ? "Download complete" : "Download failed"
+                BytesTransferred = transferred,
+                TotalBytes = transferred,
+                StatusMessage = "Download complete"
             });
-
-            return result == FtpStatus.Success;
+            return true;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"FTP download error: {ex.Message}");
+            Debug.WriteLine($"FTP download error: {ex}");
+            TryDeleteEmptyFile(localFilePath);
             progress?.Report(new TransferProgress
             {
                 StatusMessage = $"FTP error: {ex.Message}"
             });
             return false;
         }
+    }
+
+    /// <summary>Removes a zero-byte artifact left behind by a failed download.</summary>
+    private static void TryDeleteEmptyFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path) && new FileInfo(path).Length == 0)
+                File.Delete(path);
+        }
+        catch { /* best effort */ }
     }
 
     /// <summary>List all files on the SD card via FTP.</summary>
