@@ -24,6 +24,32 @@
             <Setter Property="Margin" Value="2"/>
             <Setter Property="MinHeight" Value="48"/>
             <Setter Property="Focusable" Value="False"/>
+            <!-- Fire on press: touch doesn't always deliver a clean release,
+                 so if we waited for release the click could be lost. -->
+            <Setter Property="ClickMode" Value="Press"/>
+        </Style>
+
+        <!-- Override the Fluent theme's inner ContentPresenter, which
+             otherwise repaints background AND wipes the blue border on
+             hover and press. -->
+        <Style Selector="Button.kb:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#4A4A4E"/>
+            <Setter Property="BorderBrush" Value="#007ACC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.kb:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#007ACC"/>
+            <Setter Property="BorderBrush" Value="#007ACC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.kb:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="BorderBrush" Value="#555"/>
+            <Setter Property="Foreground" Value="#888"/>
         </Style>
     </UserControl.Styles>
 

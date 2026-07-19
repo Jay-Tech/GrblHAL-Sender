@@ -504,7 +504,8 @@
 
 			<!--START Right Control-->
 			<!-- START Jog Control-->
-			<Border IsEnabled ="{Binding Connected}" x:Name="JogBorder"  Grid.Column="2" >
+			<Border IsEnabled ="{Binding Connected}" x:Name="JogBorder"  Grid.Column="2"
+					MaxWidth="330" MinWidth="325" >
 				<Grid  x:Name="Grid" Margin="0,45,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
 					   HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 					<Grid  x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
@@ -857,17 +858,14 @@
                                      FontSize="{DynamicResource BaseFontSize}" Content ="Spindle Off"
                                      Command="{Binding SpindleOffCommand}" />
 
-						<NumericUpDown Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+						<views:TouchNumericUpDown Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
 									   FontSize="24"
+									   MinHeight="48"
 									   Margin="5,10,10,0"
-                                       Increment="100"
+									   Increment="100"
 									   FormatString="0"
 									   Value="{Binding SpindleSetRpm, FallbackValue=1000}"
-									   ButtonSpinnerLocation="Right"
-									   Minimum="1000" Maximum="30000"
-									   ParsingNumberStyle="AllowDecimalPoint"
-									   ClipValueToMinMax="True">
-						</NumericUpDown>
+									   Minimum="1000" Maximum="30000"/>
 						
                         <TextBlock  Grid.Row="4" Grid.Column="1"
                                     Text="{Binding ActualRpm, StringFormat={}RPM:{0}, FallbackValue=0}"

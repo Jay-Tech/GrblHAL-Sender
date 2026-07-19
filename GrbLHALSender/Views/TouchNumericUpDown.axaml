@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="48"
+             x:Class="GrbLHALSender.Views.TouchNumericUpDown">
+
+    <UserControl.Styles>
+        <Style Selector="RepeatButton.spin">
+            <Setter Property="MinWidth" Value="56"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="Auto,*,Auto">
+        <RepeatButton x:Name="DecreaseButton" Grid.Column="0" Classes="spin"
+                      Content="&#x2212;" Margin="0,0,4,0"/>
+        <TextBox x:Name="ValueText" Grid.Column="1"
+                 HorizontalContentAlignment="Center"
+                 VerticalContentAlignment="Center"/>
+        <RepeatButton x:Name="IncreaseButton" Grid.Column="2" Classes="spin"
+                      Content="+" Margin="4,0,0,0"/>
+    </Grid>
+
+</UserControl>
