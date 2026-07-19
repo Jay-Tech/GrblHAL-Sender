@@ -190,7 +190,15 @@ public partial class MainView : UserControl
         // WM hints and the Linux WM ignores them. BorderOnly keeps the frame;
         // the keyboard's own ✕ key handles closing.
         _keyboardWindow.WindowDecorations = WindowDecorations.BorderOnly;
-        _keyboardViewModel.CloseAction = () => _keyboardWindow?.Close();
+        // Hand focus to the main window BEFORE the keyboard dies. On X11 the
+        // close is async: activating from the Closed handler races the WM's
+        // own focus-revert (focused window destroyed → focus to nothing) and
+        // loses, leaving the next touch consumed by re-activation.
+        _keyboardViewModel.CloseAction = () =>
+        {
+            parentWindow.Activate();
+            _keyboardWindow?.Close();
+        };
         _keyboardWindow.WindowStartupLocation = WindowStartupLocation.Manual;
         _keyboardWindow.Position = new PixelPoint(
             (int)(parentWindow.Position.X + (parentWindow.Bounds.Width - _keyboardWindow.Width) / 2),
@@ -200,12 +208,11 @@ public partial class MainView : UserControl
             _keyboardWindow = null;
             _keyboardViewModel = null;
 
-            // Closing the keyboard leaves the WM with no focused window (the
-            // keyboard was the active one after its ✕ was touched). Without
-            // this, the next touch on the main window is consumed re-activating
-            // it, so single-tap focus stops working until an extra tap —
-            // making the next double-tap-to-open feel broken and timing-y.
-            parentWindow.Activate();
+            // Fallback for the CloseAction pre-activation: re-activate again
+            // shortly AFTER the window is actually gone. An immediate call here
+            // races the WM's focus-revert on window destruction and loses;
+            // deferred, it runs once the WM has settled.
+            DispatcherTimer.RunOnce(parentWindow.Activate, TimeSpan.FromMilliseconds(150));
         };
 
         // Show without taking focus — the target TextBox in the main window
