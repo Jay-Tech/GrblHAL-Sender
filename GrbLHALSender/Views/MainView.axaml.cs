@@ -168,7 +168,7 @@ public partial class MainView : UserControl
             title: "VirtualKeyBoard",
             content: keyboardView,
             width: 750,
-            height: 265
+            height: 285
         );
         _keyboardWindow.CanResize = false;
         // Remove the OS title bar entirely: CanMinimize/CanMaximize are only

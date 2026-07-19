@@ -20,6 +20,14 @@ public partial class VirtualKeyboardView : UserControl
         // the pseudo-class off on any keyboard button.
         AddHandler(PointerReleasedEvent, OnAnyPointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerCaptureLostEvent, OnAnyPointerCaptureLost, RoutingStrategies.Tunnel, handledEventsToo: true);
+
+        // The keyboard window has no title bar — the grab strip at the top
+        // moves it instead, so it can be dragged clear of the field being edited.
+        DragHandle.PointerPressed += (_, e) =>
+        {
+            if (TopLevel.GetTopLevel(this) is Window window)
+                window.BeginMoveDrag(e);
+        };
     }
 
     private static void OnAnyPointerReleased(object? sender, PointerReleasedEventArgs e)

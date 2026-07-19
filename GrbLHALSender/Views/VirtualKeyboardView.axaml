@@ -53,7 +53,15 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Background="Transparent" Margin="6">
+    <DockPanel Margin="6,2,6,6">
+        <!-- Drag handle: grab anywhere on this strip to move the keyboard -->
+        <Border x:Name="DragHandle" DockPanel.Dock="Top" Height="18"
+                Background="Transparent" Cursor="SizeAll">
+            <Border Width="90" Height="5" CornerRadius="3" Background="#666"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Background="Transparent">
 
         <!-- Row 1: ` 1 2 3 4 5 6 7 8 9 0 - + ✕ -->
         <UniformGrid Grid.Row="0" Columns="14" Rows="1">
@@ -135,6 +143,7 @@
             <Button Grid.Column="6" Classes="kb" Content="Del"  Margin="0,0,0,2" CommandParameter="Del" Command="{Binding KeyPressCommand}"/>
         </Grid>
 
-    </Grid>
+        </Grid>
+    </DockPanel>
 
 </UserControl>
