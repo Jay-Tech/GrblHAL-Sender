@@ -81,26 +81,64 @@ public class FtpTransferService : ISdCardTransferService
         // implement — the transfer dies after the local file was created,
         // leaving a 0-byte file. A bare OpenRead/RETR matches the simplicity
         // of the upload path, which works.
+        string lastFtpLine = "";
         try
         {
             using var client = await ConnectAsync(ct);
 
+            // Keep the server's side of the conversation for diagnostics —
+            // async FluentFTP calls hang (not time out) on unanswered
+            // commands, so when the watchdog trips this tells us where.
+            client.LegacyLogger = (_, msg) =>
+            {
+                lastFtpLine = msg;
+                Debug.WriteLine($"FTP: {msg}");
+            };
+
+            // Learn the file size from the directory listing. LIST is known
+            // good on grblHAL's embedded server; SIZE is not implemented, and
+            // OpenRead with fileLen 0 would issue SIZE internally and hang.
+            long totalBytes = 0;
+            var items = await client.GetListing("/", FtpListOption.Auto, ct);
+            totalBytes = items.FirstOrDefault(i => i.Name == remoteFileName)?.Size ?? 0;
+
+            progress?.Report(new TransferProgress
+            {
+                TotalBytes = totalBytes,
+                StatusMessage = "Opening data connection..."
+            });
+
+            // Inactivity watchdog: async FluentFTP ignores ReadTimeout, so
+            // without this an unresponsive server stalls forever. Re-armed on
+            // every successful read — only 15 s of true silence trips it.
+            using var watchdog = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            watchdog.CancelAfter(15000);
+
             long transferred = 0;
-            await using (var remote = await client.OpenRead("/" + remoteFileName, FtpDataType.Binary, 0, 0, ct))
+            await using (var remote = await client.OpenRead("/" + remoteFileName, FtpDataType.Binary, 0, totalBytes, watchdog.Token))
             await using (var local = File.Create(localFilePath))
             {
                 var buffer = new byte[8192];
-                int read;
-                while ((read = await remote.ReadAsync(buffer.AsMemory(), ct)) > 0)
+                while (true)
                 {
+                    watchdog.CancelAfter(15000);
+                    int read = await remote.ReadAsync(buffer.AsMemory(), watchdog.Token);
+                    if (read <= 0) break;
+
                     await local.WriteAsync(buffer.AsMemory(0, read), ct);
                     transferred += read;
                     progress?.Report(new TransferProgress
                     {
                         BytesTransferred = transferred,
-                        TotalBytes = 0,
-                        StatusMessage = $"Downloading... {transferred / 1024} KB"
+                        TotalBytes = totalBytes,
+                        StatusMessage = totalBytes > 0
+                            ? $"Downloading... {100 * transferred / totalBytes}%"
+                            : $"Downloading... {transferred / 1024} KB"
                     });
+
+                    // Some embedded servers leave the data socket open after
+                    // the last byte; don't wait for a close that never comes.
+                    if (totalBytes > 0 && transferred >= totalBytes) break;
                 }
             }
 
@@ -122,6 +160,16 @@ public class FtpTransferService : ISdCardTransferService
                 StatusMessage = "Download complete"
             });
             return true;
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            Debug.WriteLine($"FTP download stalled. Last server line: {lastFtpLine}");
+            TryDeleteEmptyFile(localFilePath);
+            progress?.Report(new TransferProgress
+            {
+                StatusMessage = $"Download stalled (no data for 15 s). Last FTP reply: {lastFtpLine}"
+            });
+            return false;
         }
         catch (Exception ex)
         {
