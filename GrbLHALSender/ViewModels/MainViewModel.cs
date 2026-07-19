@@ -15,8 +15,10 @@ using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels;
@@ -555,12 +557,31 @@ public class MainViewModel : ViewModelBase
 
         CanSetTool = Connected && HomeState && CurrentGrblState is  GrblState.Idle or GrblState.Tool;
     }
+
     private void CloseApplication()
     {
-        if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
+            RuntimeInformation.OSArchitecture == Architecture.Arm)
+        {
+            
+            // Create a process to run the Linux shutdown command
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "shutdown",
+                Arguments = "-h +0:05", // 5 seconds is too granular for standard 'shutdown +m', so we use 'sudo shutdown -h +0:05' or approach below
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+        }
+        if (Application.Current?.ApplicationLifetime is
+            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Shutdown();
         }
+
     }
 
     private void MainViewModel_MidiTextCommitted(string command)
