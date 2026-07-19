@@ -126,7 +126,7 @@
 							   IsVisible="{Binding Connected}"
 							   ClipToBounds="True"
 							   HorizontalAlignment="Stretch"
-							   Margin="25,0,25,0"
+							   Margin="15,0,15,0"
 							   VerticalAlignment="Stretch"
 							   ItemsSource="{Binding SignalList}">
 					<ItemsRepeater.Layout>
