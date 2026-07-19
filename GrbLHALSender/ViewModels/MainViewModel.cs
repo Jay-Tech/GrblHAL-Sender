@@ -281,11 +281,6 @@ public class MainViewModel : ViewModelBase
         get => _spindleSetRpm;
         set => this.RaiseAndSetIfChanged(ref _spindleSetRpm, value);
     }
-    public string CallBackText
-    {
-        get => _callBackText;
-        set => this.RaiseAndSetIfChanged(ref _callBackText, value);
-    }
     public bool HomeState
     {
         get => _homeState;
@@ -473,8 +468,8 @@ public class MainViewModel : ViewModelBase
         HideBoxCommand = ReactiveCommand.Create<object>(HideToolList);
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
-        SpindleCWCommand = ReactiveCommand.Create<string>(SpindleCw);
-        SpindleCCWCommand = ReactiveCommand.Create<string>(SpindleCcw);
+        SpindleCWCommand = ReactiveCommand.Create(SpindleCw);
+        SpindleCCWCommand = ReactiveCommand.Create(SpindleCcw);
         SetToolSelectCommand = ReactiveCommand.Create<int>(SetSelectedTool);
         SpindleOffCommand = ReactiveCommand.Create(SpindleOff);
         SpindleResetCommand = ReactiveCommand.Create(SpindleReset);
@@ -486,7 +481,7 @@ public class MainViewModel : ViewModelBase
         RapidOrMediumCommand = ReactiveCommand.Create(RapidMedium);
         RapidOrFineCommand = ReactiveCommand.Create(RapidFine);
         ResetRapidCommand = ReactiveCommand.Create(RapidReset);
-        SpindleSetSpeedCommand = ReactiveCommand.Create<string>(SetSpindleSpeed);
+        SpindleSetSpeedCommand = ReactiveCommand.Create(SetSpindleSpeed);
         ToolSelectedCommand = ReactiveCommand.Create<int>(ToolSelected);
         SetTlrCommand = ReactiveCommand.Create(SetTlr);
         UnloadToolCommand = ReactiveCommand.Create(UnloadTool);
@@ -723,18 +718,18 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand(GrblHalConstants.SpindleOff);
     }
-    private void SpindleCcw(string rpm)
+    private void SpindleCcw()
     {
-        SendCommand($"{GrblHalConstants.SpindleCCw}S{rpm}");
+        SendCommand($"{GrblHalConstants.SpindleCCw} S{SpindleSetRpm}");
     }
-    private void SpindleCw(string rpm)
+    private void SpindleCw()
     {
-        SendCommand($"{GrblHalConstants.SpindleCw}S{rpm}");
+        SendCommand($"{GrblHalConstants.SpindleCw} S{SpindleSetRpm}");
     }
-    private void SetSpindleSpeed(string speed)
+    private void SetSpindleSpeed()
     {
-        if (string.IsNullOrEmpty(speed)) return;
-        SendCommand($"S{speed}");
+        if (string.IsNullOrEmpty(SpindleSetRpm.ToString())) return;
+        SendCommand($"S{SpindleSetRpm}");
     }
     private void ChangeStepRate(double step)
     {

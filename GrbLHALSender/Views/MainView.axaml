@@ -505,7 +505,7 @@
 			<!--START Right Control-->
 			<!-- START Jog Control-->
 			<Border IsEnabled ="{Binding Connected}" x:Name="JogBorder"  Grid.Column="2" >
-				<Grid  x:Name="Grid" Margin="0,45,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+				<Grid  x:Name="Grid" Margin="0,45,0,0"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
 					   HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 					<Grid  x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
 						   VerticalAlignment="Stretch" ColumnDefinitions="80,80,80,80">
@@ -821,14 +821,16 @@
 					<!--END Tool Control-->
 
 					<!--START Spindle Control-->
-					<Grid Grid.Row="4" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" Grid.ColumnDefinitions="*,*">
-						<Label Grid.Row="0" Grid.Column="0"
-							   Content="Spindle"
-							   Margin="0,5,0,0"
-							   Grid.ColumnSpan="2"
-							   HorizontalContentAlignment="Center"
-							   VerticalContentAlignment="Center"
-							   FontSize="{DynamicResource DetailFontSize}" />
+					<Grid Grid.Row="4" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" 
+                          Grid.ColumnDefinitions="*,*">
+						
+                        <Label Grid.Row="0" Grid.Column="0"
+                               Content="Spindle"
+                               Margin="0,5,0,0"
+                               Grid.ColumnSpan="2"
+                               HorizontalContentAlignment="Center"
+                               VerticalContentAlignment="Center"
+                               FontSize="{DynamicResource DetailFontSize}" />
 						<RadioButton Classes="ButtonStyle" Grid.Column="0" Grid.Row="1"
                                      FontSize="{DynamicResource BaseFontSize}"
                                      HorizontalAlignment="Stretch"
@@ -836,8 +838,7 @@
                                      CornerRadius="6,6,6,6"
                                      Height="45"
                                      Margin="5,5,5,0"
-                                     CommandParameter="{Binding #SpindleRpm.Text}"
-                                     Command="{Binding SpindleCWCommand}"></RadioButton>
+                                     Command="{Binding SpindleCWCommand}"/>
 						<RadioButton Classes="ButtonStyle" Grid.Column="1" Grid.Row="1"
                                      HorizontalAlignment="Stretch"
                                      CornerRadius="6,6,6,6"
@@ -845,8 +846,7 @@
                                      Margin="5,5,5,0"
                                      FontSize="{DynamicResource BaseFontSize}"
                                      Content="CCW"
-                                     Command="{Binding SpindleCCWCommand}"
-                                     CommandParameter="{Binding #SpindleRpm.Text}"/>
+                                     Command="{Binding SpindleCCWCommand}"/>
 						<RadioButton Classes="ButtonStyle" Grid.Column="0"
                                      Grid.Row="2"
                                      Grid.ColumnSpan="2"
@@ -857,51 +857,49 @@
                                      FontSize="{DynamicResource BaseFontSize}" Content ="Spindle Off"
                                      Command="{Binding SpindleOffCommand}" />
 
-						<NumericUpDown Grid.Row="3" Grid.Column="0" x:Name="SpindleRpm"
+						<NumericUpDown Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
 									   FontSize="24"
-									   Margin="5,10,0,0"
-									   MaxWidth="175" Increment="100"
-									   Text="{Binding CallBackText}"
+									   Margin="5,10,10,0"
+                                       Increment="100"
 									   FormatString="0"
-									   Value="{Binding SpindleSetRpm, FallbackValue=0}"
+									   Value="{Binding SpindleSetRpm, FallbackValue=1000}"
 									   ButtonSpinnerLocation="Right"
-									   Minimum="900" Maximum="30000"
+									   Minimum="1000" Maximum="30000"
 									   ParsingNumberStyle="AllowDecimalPoint"
 									   ClipValueToMinMax="True">
 						</NumericUpDown>
-
-
-						<TextBlock  Grid.Column="1"
-									Text="{Binding ActualRpm, StringFormat={}RPM:{0}, FallbackValue=0}"
-									Margin="3,10,3,0"
-									TextAlignment="Left"
-									FontSize="{DynamicResource DetailFontSizeLarge}" Grid.Row="3"
-									HorizontalAlignment="Left"
-									VerticalAlignment="Center"  />
-						<Button Grid.Column="0" Grid.ColumnSpan="2"
-								Grid.Row="5"
-								CornerRadius="6,6,6,6"
-								Height="45"
-								HorizontalContentAlignment="Center"
-								VerticalContentAlignment="Center"
-								HorizontalAlignment="Stretch"
-								VerticalAlignment="Stretch"
-								Content="Set Spindle Speed"
-								FontSize="{DynamicResource BaseFontSize}"
-								Margin="5,10,5,0"
-								Command="{Binding SpindleSetSpeedCommand }"
-								CommandParameter="{Binding #SpindleRpm.Text}" />
-						<Grid  HorizontalAlignment="Stretch"
-							   VerticalAlignment="Center"
-							   Grid.Column="0"
-							   Grid.Row="6"
-							   ColumnDefinitions="*,*"  >
-							<Button Grid.Column="0"
-									CornerRadius="6,6,6,6"
-									Height="45"
-									Content="{icons:MaterialIconExt Kind=PlusThick,  IconSize=50}"
-									Margin="5,10,5,0"
-									Command="{Binding SpindleIncreaseCommand}" />
+						
+                        <TextBlock  Grid.Row="4" Grid.Column="1"
+                                    Text="{Binding ActualRpm, StringFormat={}RPM:{0}, FallbackValue=0}"
+                                    Margin="3,10,3,0"
+                                    TextAlignment="Left"
+                                    FontSize="{DynamicResource DetailFontSizeLarge}" 
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"  />
+                       
+                        <Button Grid.Row="4" Grid.Column="0" 
+                                CornerRadius="6,6,6,6"
+                                Height="45"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Content="Set Speed"
+                                FontSize="{DynamicResource BaseFontSize}"
+                                Margin="5,10,5,0"
+                                Command="{Binding SpindleSetSpeedCommand }"/>
+						
+                        <Grid  Grid.Row="5"  Grid.Column="0" Grid.ColumnSpan="2" 
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Center" 
+                               ColumnDefinitions="*,*,*,*">
+							
+                            <Button Grid.Column="0"
+                                    CornerRadius="6,6,6,6"
+                                    Height="45"
+                                    Content="{icons:MaterialIconExt Kind=PlusThick,  IconSize=50}"
+                                    Margin="5,10,5,0"
+                                    Command="{Binding SpindleIncreaseCommand}" />
 							<Button Grid.Column="1"
 									CornerRadius="6,6,6,6"
 									Height="45"
@@ -910,38 +908,37 @@
 									VerticalAlignment="Center"
 									Margin="5,10,5,0"
 									Command="{Binding SpindleDecreaseCommand}" />
+                            <Button Grid.Column="2"
+                                    CornerRadius="6,6,6,6"
+                                    Height="40"
+                                    Content="{icons:MaterialIconExt Kind=Cached,  IconSize=40}"
+                                    Margin="5,10,0,0"
+                                    Command="{Binding SpindleResetCommand }" />
+                            <TextBlock Grid.Column="3"
+                                       Text="{Binding SpindleOverRide, StringFormat={}%{0}, FallbackValue=0}"
+                                       Margin="5,10,5,0"
+                                       TextAlignment="Left"
+                                       FontSize="{DynamicResource DetailFontSizeLarge}"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"/>	
 						</Grid>
-						<Grid ColumnDefinitions="*,*"
-							  HorizontalAlignment="Stretch"
-							  VerticalAlignment="Center"
-							  Grid.Column="1" Grid.Row="6">
-							<Button Grid.Column="0"
-									CornerRadius="6,6,6,6"
-									Height="40"
-									Content="{icons:MaterialIconExt Kind=Cached,  IconSize=40}"
-									Margin="5,10,0,0"
-									Command="{Binding SpindleResetCommand }" />
-							<TextBlock Grid.Column="1"
-									   Text="{Binding SpindleOverRide, StringFormat={}%{0}}"
-									   Margin="5,10,5,0"
-									   TextAlignment="Left"
-									   FontSize="{DynamicResource DetailFontSizeLarge}"
-									   HorizontalAlignment="Left"
-									   VerticalAlignment="Center"/>
-						</Grid>
+						
+                     
 
 					</Grid>
 					<!--END Spindle Control-->
 
 					<!--START OverRide Control-->
-					<Grid Grid.Row="5" RowDefinitions="Auto,Auto,Auto,Auto">
-						<Label Grid.Row="0"
-							   Content="Feed OverRide"
-							   HorizontalContentAlignment="Center"
-							   VerticalContentAlignment="Center"
-							   FontSize="{DynamicResource DetailFontSize}"
-							   Margin="0,5,0,0"/>
-						<Grid Grid.Row="1" ColumnDefinitions="*,*"  >
+					<Grid Grid.Row="6" RowDefinitions="Auto,Auto,Auto,Auto">
+						
+                        <Label Grid.Row="0"
+                               Content="Feed OverRide"
+                               HorizontalContentAlignment="Center"
+                               VerticalContentAlignment="Center"
+                               FontSize="{DynamicResource DetailFontSize}"
+                               Margin="0,5,0,0"/>
+						
+                        <Grid Grid.Row="1" ColumnDefinitions="*,*"  >
 							<TextBlock Grid.Column="0"
 									   Text="{Binding FeedRate,StringFormat={}Feed: {0}, FallbackValue=0}"
 									   TextAlignment="Left"
@@ -952,7 +949,8 @@
 										Margin="5,0,0,0"
 										FontSize="{DynamicResource DetailFontSizeLarge}" />
 						</Grid>
-						<Grid Grid.Row="2" Margin="0,5,0,0" ColumnDefinitions="*,*,*">
+						
+                        <Grid Grid.Row="2" Margin="0,5,0,0" ColumnDefinitions="*,*,*">
 							<Button Grid.Column="0"
 									Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
@@ -981,6 +979,7 @@
 									Height="45"
 									Command="{Binding FeedOrReset}" />
 						</Grid>
+
 						<Grid Grid.Row="3" Margin="0,5,0,0" ColumnDefinitions="*,*,*">
 							<Button Grid.Column="0"
 									Margin="5,0,5,0"

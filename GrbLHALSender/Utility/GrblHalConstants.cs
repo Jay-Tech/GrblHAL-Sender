@@ -32,9 +32,9 @@
         //Tool
         public const byte ToolAck = 0xA3;
         //Spindle
-        public const string SpindleCw = "M3";
-        public const string SpindleCCw = "M4";
-        public const string SpindleOff = "M5";
+        public const string SpindleCw = "M03";
+        public const string SpindleCCw = "M04";
+        public const string SpindleOff = "M05";
         //Settings
         public const string Getsettings = "$$";
         public const string GetsettingsAll = "$+";
