@@ -197,15 +197,18 @@ public class FtpTransferService : ISdCardTransferService
             bool Fail(string reason)
             {
                 Debug.WriteLine($"FTP download failed: {reason}. Last server line: {lastFtpLine}");
-                // Hard-kill the session so any abandoned read terminates via
-                // socket closure instead of lingering.
-                try { client?.Dispose(); } catch { }
-                client = null;
+                // Report FIRST, then dispose — and dispose off-thread.
+                // AsyncFtpClient.Dispose() blocks trying to QUIT politely,
+                // and against an unresponsive server that block is indefinite:
+                // it previously swallowed this failure report and hung the
+                // finally (leaving the status poll suspended).
                 TryDeleteEmptyFile(localFilePath);
                 progress?.Report(new TransferProgress
                 {
                     StatusMessage = $"Download failed: {reason}. Last FTP reply: {lastFtpLine}"
                 });
+                DisposeInBackground(client);
+                client = null;
                 return false;
             }
         }
@@ -221,7 +224,7 @@ public class FtpTransferService : ISdCardTransferService
         }
         finally
         {
-            try { client?.Dispose(); } catch { }
+            DisposeInBackground(client);
             _commManager.ResumeAfterTransfer();
         }
     }
@@ -233,6 +236,21 @@ public class FtpTransferService : ISdCardTransferService
     /// </summary>
     private static void Observe(Task task) =>
         task.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.NotOnRanToCompletion);
+
+    /// <summary>
+    /// Disposes an FTP client on a worker thread. Dispose attempts a graceful
+    /// QUIT and can block indefinitely against an unresponsive server — it
+    /// must never run inline on a path that reports progress or resumes polling.
+    /// </summary>
+    private static void DisposeInBackground(AsyncFtpClient? client)
+    {
+        if (client == null) return;
+        _ = Task.Run(() =>
+        {
+            try { client.Dispose(); }
+            catch { /* best effort */ }
+        });
+    }
 
     /// <summary>Removes a zero-byte artifact left behind by a failed download.</summary>
     private static void TryDeleteEmptyFile(string path)
