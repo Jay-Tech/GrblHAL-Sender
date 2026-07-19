@@ -541,6 +541,8 @@ public class MainViewModel : ViewModelBase
             // Handle connection exceptions (e.g., show a message to the user)
             ConsoleOutput.Add($"Connection failed: {e.Message}");
         }
+
+        SpindleSetRpm = 1000;
     }
 
 

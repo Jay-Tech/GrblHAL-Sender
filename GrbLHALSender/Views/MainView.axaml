@@ -873,7 +873,7 @@
 									   Increment="100"
 									   FormatString="0"
 									   Value="{Binding SpindleSetRpm, FallbackValue=1000}"
-									   Minimum="1000" Maximum="30000"/>
+									   Minimum="0" Maximum="30000"/>
 						
                         <TextBlock  Grid.Row="4" Grid.Column="1"
                                     Text="{Binding ActualRpm, StringFormat={}RPM:{0}, FallbackValue=0}"

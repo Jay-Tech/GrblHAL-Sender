@@ -87,7 +87,7 @@
             <Button Grid.Column="8"  Classes="kb" Content="I"  CommandParameter="I"  Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="9"  Classes="kb" Content="O"  CommandParameter="O"  Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="10" Classes="kb" Content="P"  CommandParameter="P"  Command="{Binding KeyPressCommand}"/>
-            <Button Grid.Column="11" Classes="kb" Content="BackSpace" FontSize="14" Margin="0,0,5,0"
+            <Button Grid.Column="11" Classes="kb" Content="BackSpace" FontSize="14" Margin="0,0,0,2"
                     CommandParameter="BackSpace" Command="{Binding KeyPressCommand}"/>
         </Grid>
 
@@ -104,7 +104,7 @@
             <Button Grid.Column="8"  Classes="kb" Content="K"     CommandParameter="K"     Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="9"  Classes="kb" Content="L"     CommandParameter="L"     Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="10" Classes="kb" Content=";"     CommandParameter=";"     Command="{Binding KeyPressCommand}"/>
-            <Button Grid.Column="11" Classes="kb" Content="Enter" FontSize="14" Margin="0,0,5,0"
+            <Button Grid.Column="11" Classes="kb" Content="Enter" FontSize="14" Margin="0,0,0,2"
                     CommandParameter="Enter" Command="{Binding KeyPressCommand}"/>
         </Grid>
 
@@ -121,16 +121,18 @@
             <Button Classes="kb" Content="M"   CommandParameter="M"    Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content=","   CommandParameter=","    Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="."   CommandParameter="."    Command="{Binding KeyPressCommand}"/>
-            <Button Classes="kb" Content="/"   CommandParameter="/"  Margin="0,0,8,0"   Command="{Binding KeyPressCommand}"/>
+            <Button Classes="kb" Content="/"   CommandParameter="/"  Margin="0,0,6,2"   Command="{Binding KeyPressCommand}"/>
         </UniformGrid>
 
-        <!-- Row 5: G90 G91 ... Space ... X0 Y0 -->
-        <Grid Grid.Row="4" ColumnDefinitions="1.2*,1.2*,4*,1.2*,1.2*">
+        <!-- Row 5: G90 G91 $ Space ◀ ▶ Del -->
+        <Grid Grid.Row="4" ColumnDefinitions="1.1*,1.1*,0.9*,3.6*,1.1*,1.1*,1.2*">
             <Button Grid.Column="0" Classes="kb" Content="G90" CommandParameter="G90 " Command="{Binding KeyPressCommand}"/>
             <Button Grid.Column="1" Classes="kb" Content="G91" CommandParameter="G91 " Command="{Binding KeyPressCommand}"/>
-            <Button Grid.Column="2" Classes="kb" Content="Space" CommandParameter="Space" Command="{Binding KeyPressCommand}"/>
-            <Button Grid.Column="3" Classes="kb" Content="X0"  CommandParameter="X0"   Command="{Binding KeyPressCommand}"/>
-            <Button Grid.Column="4" Classes="kb" Content="Y0"  CommandParameter="Y0" Margin="0,0,5,0"   Command="{Binding KeyPressCommand}"/>
+            <Button Grid.Column="2" Classes="kb" Content="$"   CommandParameter="$"    Command="{Binding KeyPressCommand}"/>
+            <Button Grid.Column="3" Classes="kb" Content="Space" CommandParameter="Space" Command="{Binding KeyPressCommand}"/>
+            <Button Grid.Column="4" Classes="kb" Content="&#x25C0;" CommandParameter="Left"  Command="{Binding KeyPressCommand}"/>
+            <Button Grid.Column="5" Classes="kb" Content="&#x25B6;" CommandParameter="Right" Command="{Binding KeyPressCommand}"/>
+            <Button Grid.Column="6" Classes="kb" Content="Del"  Margin="0,0,0,2" CommandParameter="Del" Command="{Binding KeyPressCommand}"/>
         </Grid>
 
     </Grid>

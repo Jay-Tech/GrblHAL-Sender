@@ -72,7 +72,6 @@ public partial class TouchNumericUpDown : UserControl
 
         IncreaseButton.Click += (_, _) => Step(+1);
         DecreaseButton.Click += (_, _) => Step(-1);
-
         ValueText.KeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter)

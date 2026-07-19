@@ -18,12 +18,12 @@
     </UserControl.Styles>
 
     <Grid ColumnDefinitions="Auto,*,Auto">
-        <RepeatButton x:Name="DecreaseButton" Grid.Column="0" Classes="spin"
+        <RepeatButton Name="DecreaseButton" Grid.Column="0" Classes="spin"
                       Content="&#x2212;" Margin="0,0,4,0"/>
-        <TextBox x:Name="ValueText" Grid.Column="1"
+        <TextBox Name="ValueText" Grid.Column="1"
                  HorizontalContentAlignment="Center"
                  VerticalContentAlignment="Center"/>
-        <RepeatButton x:Name="IncreaseButton" Grid.Column="2" Classes="spin"
+        <RepeatButton Name="IncreaseButton" Grid.Column="2" Classes="spin"
                       Content="+" Margin="4,0,0,0"/>
     </Grid>
 

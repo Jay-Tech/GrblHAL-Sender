@@ -20,11 +20,14 @@ public class VirtualKeyboardViewModel : ViewModelBase, IDialogCloseable
     }
 
     /// <summary>
-    /// Sets the target TextBox that receives keyboard input.
+    /// Sets the target TextBox that receives keyboard input. Moves the caret
+    /// to the end of the text — the double-tap that opened the keyboard
+    /// selects a word and leaves the caret wherever the tap landed.
     /// </summary>
     public void SetTarget(TextBox textBox)
     {
         _targetTextBox = textBox;
+        textBox.CaretIndex = textBox.Text?.Length ?? 0;
     }
 
     private void OnKeyPress(string key)
@@ -54,6 +57,22 @@ public class VirtualKeyboardViewModel : ViewModelBase, IDialogCloseable
 
             case "Space":
                 InsertText(" ", text, caretIndex);
+                break;
+
+            case "Left":
+                _targetTextBox.CaretIndex = Math.Max(0, caretIndex - 1);
+                break;
+
+            case "Right":
+                _targetTextBox.CaretIndex = Math.Min(text.Length, caretIndex + 1);
+                break;
+
+            case "Del":
+                if (caretIndex < text.Length)
+                {
+                    _targetTextBox.Text = text.Remove(caretIndex, 1);
+                    _targetTextBox.CaretIndex = caretIndex;
+                }
                 break;
 
             default:

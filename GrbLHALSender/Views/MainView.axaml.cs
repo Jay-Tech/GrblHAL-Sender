@@ -171,10 +171,10 @@ public partial class MainView : UserControl
             height: 265
         );
         _keyboardWindow.CanResize = false;
-        // Min/max on an owned window misbehave over a borderless fullscreen
-        // parent — remove them. Close stays (title bar + the keyboard's ✕ key).
-        _keyboardWindow.CanMinimize = false;
-        _keyboardWindow.CanMaximize = false;
+        // Remove the OS title bar entirely: CanMinimize/CanMaximize are only
+        // WM hints and the Linux WM ignores them. BorderOnly keeps the frame;
+        // the keyboard's own ✕ key handles closing.
+        _keyboardWindow.WindowDecorations = WindowDecorations.BorderOnly;
         _keyboardViewModel.CloseAction = () => _keyboardWindow?.Close();
         _keyboardWindow.WindowStartupLocation = WindowStartupLocation.Manual;
         _keyboardWindow.Position = new PixelPoint(
