@@ -199,6 +199,13 @@ public partial class MainView : UserControl
         {
             _keyboardWindow = null;
             _keyboardViewModel = null;
+
+            // Closing the keyboard leaves the WM with no focused window (the
+            // keyboard was the active one after its ✕ was touched). Without
+            // this, the next touch on the main window is consumed re-activating
+            // it, so single-tap focus stops working until an extra tap —
+            // making the next double-tap-to-open feel broken and timing-y.
+            parentWindow.Activate();
         };
 
         // Show without taking focus — the target TextBox in the main window
