@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using System;
 
 namespace GrbLHALSender.Views;
 
@@ -27,11 +28,20 @@ public partial class VirtualKeyboardView : UserControl
         // edited. Manual position tracking rather than Window.BeginMoveDrag:
         // BeginMoveDrag delegates to the window manager's move protocol, which
         // ignores touch input on some Linux WMs (observed on the Pi).
+        //
+        // Repositioning is one-move-in-flight: on X11 the position update is
+        // asynchronous, so pointer deltas measured before the window actually
+        // moved would re-include the previous move and compound into runaway
+        // acceleration off the screen. We wait for PositionChanged (with a
+        // timeout fallback) before applying the next delta, and clamp to the
+        // screen so the keyboard can never become unreachable.
         DragHandle.PointerPressed += (_, e) =>
         {
-            if (TopLevel.GetTopLevel(this) is not Window) return;
+            if (TopLevel.GetTopLevel(this) is not Window window) return;
             _dragging = true;
+            _moveInFlight = false;
             _dragStart = e.GetPosition(this);
+            window.PositionChanged += OnWindowPositionChanged;
             e.Pointer.Capture(DragHandle);
             e.Handled = true;
         };
@@ -40,27 +50,59 @@ public partial class VirtualKeyboardView : UserControl
         {
             if (!_dragging || TopLevel.GetTopLevel(this) is not Window window) return;
 
-            // Position is relative to the window, which moves with each update,
-            // so the reported point stays near the press point and the delta is
-            // the incremental movement since the last reposition.
+            // Wait for the previous reposition to be acknowledged; without this
+            // the delta below would still be measured against the old origin.
+            if (_moveInFlight && _moveStopwatch.ElapsedMilliseconds < 200) return;
+            _moveInFlight = false;
+
             var delta = e.GetPosition(this) - _dragStart;
+            if (Math.Abs(delta.X) < 1 && Math.Abs(delta.Y) < 1) return;
+
             var scale = window.DesktopScaling;
-            window.Position = new PixelPoint(
-                window.Position.X + (int)(delta.X * scale),
-                window.Position.Y + (int)(delta.Y * scale));
+            var newX = window.Position.X + (int)(delta.X * scale);
+            var newY = window.Position.Y + (int)(delta.Y * scale);
+
+            // Keep the window fully on its screen so it is always recoverable.
+            var screen = window.Screens?.ScreenFromWindow(window)?.WorkingArea;
+            if (screen is { } s)
+            {
+                var winW = (int)(window.Bounds.Width * scale);
+                var winH = (int)(window.Bounds.Height * scale);
+                newX = Math.Clamp(newX, s.X, Math.Max(s.X, s.Right - winW));
+                newY = Math.Clamp(newY, s.Y, Math.Max(s.Y, s.Bottom - winH));
+            }
+
+            _moveInFlight = true;
+            _moveStopwatch.Restart();
+            window.Position = new PixelPoint(newX, newY);
             e.Handled = true;
         };
 
         DragHandle.PointerReleased += (_, e) =>
         {
-            _dragging = false;
+            EndDrag();
             e.Pointer.Capture(null);
         };
-        DragHandle.PointerCaptureLost += (_, _) => _dragging = false;
+        DragHandle.PointerCaptureLost += (_, _) => EndDrag();
     }
 
     private bool _dragging;
+    private bool _moveInFlight;
     private Point _dragStart;
+    private readonly System.Diagnostics.Stopwatch _moveStopwatch = new();
+
+    private void OnWindowPositionChanged(object? sender, PixelPointEventArgs e)
+    {
+        _moveInFlight = false;
+    }
+
+    private void EndDrag()
+    {
+        _dragging = false;
+        _moveInFlight = false;
+        if (TopLevel.GetTopLevel(this) is Window window)
+            window.PositionChanged -= OnWindowPositionChanged;
+    }
 
     private static void OnAnyPointerReleased(object? sender, PointerReleasedEventArgs e)
     {

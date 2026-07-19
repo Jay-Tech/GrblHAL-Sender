@@ -22,7 +22,7 @@ namespace GrbLHALSender.Views
         private Vector _panStartOffset;
         private const double PanThreshold = 12;
         // Scroll multiplier: >1 means the list moves faster than the finger.
-        private const double PanSpeed = 1.8;
+        private const double PanSpeed = 2;
 
         public SettingView()
         {
