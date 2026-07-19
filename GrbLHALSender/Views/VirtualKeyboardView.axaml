@@ -57,7 +57,7 @@
         <!-- Drag handle: grab anywhere on this strip to move the keyboard -->
         <Border x:Name="DragHandle" DockPanel.Dock="Top" Height="18"
                 Background="Transparent" Cursor="SizeAll">
-            <Border Width="90" Height="5" CornerRadius="3" Background="#666"
+            <Border x:Name="GripBar" Width="90" Height="5" CornerRadius="3" Background="#666"
                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
 
