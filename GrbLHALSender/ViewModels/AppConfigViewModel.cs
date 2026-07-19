@@ -42,6 +42,7 @@ namespace GrbLHALSender.ViewModels
         private double _pollRate;
         private bool _borderlessWindow;
         private bool _streamBufferAhead = true;
+        private bool _shutDownOs;
 
         public AuxOutputViewModel AuxOutputViewModel { get; }
         public bool EnableCutLines
@@ -214,11 +215,18 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _borderlessWindow, value);
         }
 
+        public bool ShutDownOs
+        {
+            get => _shutDownOs;
+            set => this.RaiseAndSetIfChanged(ref _shutDownOs, value);
+        }
+
         public Action? CloseAction { get; set; }
 
         public ICommand SaveConfigCommand { get; }
 
         public ICommand CloseCommand { get; }
+        
 
         public AppConfigViewModel(ConfigManager configManager, 
             AuxOutputViewModel  auxOutputViewModel)
@@ -261,6 +269,7 @@ namespace GrbLHALSender.ViewModels
             RendererIndex = (int)_appConfig.Renderer;
             PollRate = _appConfig.PollRate;
             BorderlessWindow = _appConfig.Borderless;
+            ShutDownOs = _appConfig.ShutDownOs;
         }
 
         public void Save()
@@ -293,6 +302,7 @@ namespace GrbLHALSender.ViewModels
             _appConfig.Renderer = (GHalSenderConfig.RendererType)RendererIndex;
             _appConfig.PollRate = PollRate;
             _appConfig.Borderless = BorderlessWindow;
+            _appConfig.ShutDownOs = ShutDownOs;
             _configManager.SaveConfig();
         }
         private static readonly (string Name, string Display)[] AllButtons =

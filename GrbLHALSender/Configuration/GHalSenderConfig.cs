@@ -13,6 +13,7 @@ namespace GrbLHALSender.Configuration;
 public class GHalSenderConfig : ObservableObject
 {
     private bool _useMetric;
+    private bool _shutDownOs;
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ConnectionType
@@ -34,6 +35,12 @@ public class GHalSenderConfig : ObservableObject
     {
         get => _useMetric;
         set => SetProperty(ref _useMetric, value);
+    }
+
+    public bool ShutDownOs
+    {
+        get => _shutDownOs;
+        set => SetProperty(ref _shutDownOs, value);
     }
 
     public bool AutoConnect { get; set; } = false;
@@ -94,4 +101,6 @@ public class GHalSenderConfig : ObservableObject
         150,
         300,
     ];
+
+  
 }

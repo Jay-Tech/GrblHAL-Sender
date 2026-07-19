@@ -39,7 +39,16 @@
                                   ToolTip.Tip="Check to enable Borderless Window"
                                   IsChecked="{Binding BorderlessWindow}"/>
                         <CheckBox Grid.Row="0" Grid.Column="1"
-                                  Content="Use Metric"
+                                  Content="OS+App Shut Down"
+                                  Margin="20,0,0,0"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Top"
+                                  ToolTip.Tip="Check to Shut Down OS on App Close (Linux only)"
+                                  IsChecked="{Binding ShutDownOs}"/>
+                        <CheckBox Grid.Row="0" Grid.Column="2"
+                                  Content="Metric UI "
                                   Margin="20,0,0,0"
                                   HorizontalContentAlignment="Center"
                                   VerticalContentAlignment="Center"
@@ -47,15 +56,7 @@
                                   VerticalAlignment="Top"
                                   ToolTip.Tip="Check to enable Metric uncheck for imperial"
                                   IsChecked="{Binding UseMetric}"/>
-                        <CheckBox Grid.Row="0" Grid.Column="2"
-                                  Content="Turn On AntiAlias"
-                                  Margin="20,0,0,0"
-                                  HorizontalContentAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Top"
-                                  ToolTip.Tip="Turn off AntiAlias for 3d model. Image quality will decrease to save resources on lower-power devices."
-                                  IsChecked="{Binding UseAntiAlias}"/>
+                      
                         <CheckBox Grid.Row="0" Grid.Column="3"
                                   Content="Tool Path Progress"
                                   Margin="0,0,0,0"
@@ -74,7 +75,15 @@
                                   VerticalAlignment="Top"
                                   ToolTip.Tip="On (default): pre-fill grblHAL's RX buffer for maximum throughput. Off: send one gcode line at a time and wait for ack — slower, but the highlighted gcode line tracks the machine position more closely."
                                   IsChecked="{Binding StreamBufferAhead}"/>
-
+                        <CheckBox Grid.Row="1" Grid.Column="2"
+                                  Content="Turn On AntiAlias"
+                                  Margin="20,0,0,0"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Top"
+                                  ToolTip.Tip="Turn off AntiAlias for 3d model. Image quality will decrease to save resources on lower-power devices."
+                                  IsChecked="{Binding UseAntiAlias}"/>
 					</Grid>
                     <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
                         <Label Grid.Column="0"
@@ -93,7 +102,7 @@
                                   ToolTip.Tip="Software uses SkiaSharp (CPU). Hardware uses OpenGL (GPU). Requires save and takes effect immediately."
                                   ItemsSource="{Binding RendererOptions}"
                                   SelectedIndex="{Binding RendererIndex}"/>
-                      
+
                     </Grid>
                         <Grid Grid.Row="2" ColumnDefinitions="Auto,*"
                               Margin="0,10,0,0">

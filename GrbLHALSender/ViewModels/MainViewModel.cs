@@ -848,7 +848,7 @@ public class MainViewModel : ViewModelBase
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
             (RuntimeInformation.OSArchitecture == Architecture.Arm ||
-             RuntimeInformation.OSArchitecture == Architecture.Arm64))
+             RuntimeInformation.OSArchitecture == Architecture.Arm64) && _config.ShutDownOs)
         {
             TryLinuxShutdown();
         }
