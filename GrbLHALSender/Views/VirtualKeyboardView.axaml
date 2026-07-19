@@ -55,8 +55,8 @@
 
     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Background="Transparent" Margin="6">
 
-        <!-- Row 1: ` 1 2 3 4 5 6 7 8 9 0 - + -->
-        <UniformGrid Grid.Row="0" Columns="13" Rows="1">
+        <!-- Row 1: ` 1 2 3 4 5 6 7 8 9 0 - + ✕ -->
+        <UniformGrid Grid.Row="0" Columns="14" Rows="1">
             <Button Classes="kb" Content="`"  CommandParameter="`"  Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="1"  CommandParameter="1"  Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="2"  CommandParameter="2"  Command="{Binding KeyPressCommand}"/>
@@ -70,6 +70,8 @@
             <Button Classes="kb" Content="0"  CommandParameter="0"  Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="-"  CommandParameter="-"  Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="+"  CommandParameter="+"  Command="{Binding KeyPressCommand}"/>
+            <Button Classes="kb" Content="&#x2715;" Foreground="#FF6B6B"
+                    Command="{Binding CloseCommand}"/>
         </UniformGrid>
 
         <!-- Row 2: (pad) Q W E R T Y U I O P BackSpace -->

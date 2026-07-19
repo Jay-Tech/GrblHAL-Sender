@@ -58,6 +58,24 @@ public partial class MainView : UserControl
         SetupJogButton(YDown, "Y", false);
         SetupJogButton(ZUp, "Z", true);
         SetupJogButton(ZDown, "Z", false);
+
+        // Touch can leave :pressed/:pointerover stuck on aux output buttons
+        // (no pointer-leave event after a finger lifts), which masks their
+        // state styling. Clear both when the pointer really has gone away.
+        AuxOutputRepeater.AddHandler(PointerReleasedEvent,
+            (_, e) => ClearStuckTouchState(e.Source), RoutingStrategies.Tunnel, handledEventsToo: true);
+        AuxOutputRepeater.AddHandler(PointerCaptureLostEvent,
+            (_, e) => ClearStuckTouchState(e.Source), RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    private static void ClearStuckTouchState(object? source)
+    {
+        if (source is not Visual v) return;
+        var button = v as Button ?? v.FindAncestorOfType<Button>();
+        if (button == null) return;
+        var pseudo = (IPseudoClasses)button.Classes;
+        pseudo.Set(":pressed", false);
+        pseudo.Set(":pointerover", false);
     }
 
     IDisposable? _selectFilesInteractionDisposable;
@@ -128,11 +146,12 @@ public partial class MainView : UserControl
         var parentWindow = TopLevel.GetTopLevel(this) as Window;
         if (parentWindow == null) return;
 
-        // If keyboard window already open, just retarget
+        // If keyboard window already open, just retarget. Do NOT Activate()
+        // the keyboard window — that steals focus from the main window and
+        // forces a double-touch to get it back.
         if (_keyboardWindow != null && _keyboardViewModel != null)
         {
             _keyboardViewModel.SetTarget(targetTextBox);
-            _keyboardWindow.Activate();
             return;
         }
 
@@ -152,6 +171,11 @@ public partial class MainView : UserControl
             height: 265
         );
         _keyboardWindow.CanResize = false;
+        // Min/max on an owned window misbehave over a borderless fullscreen
+        // parent — remove them. Close stays (title bar + the keyboard's ✕ key).
+        _keyboardWindow.CanMinimize = false;
+        _keyboardWindow.CanMaximize = false;
+        _keyboardViewModel.CloseAction = () => _keyboardWindow?.Close();
         _keyboardWindow.WindowStartupLocation = WindowStartupLocation.Manual;
         _keyboardWindow.Position = new PixelPoint(
             (int)(parentWindow.Position.X + (parentWindow.Bounds.Width - _keyboardWindow.Width) / 2),
@@ -162,6 +186,9 @@ public partial class MainView : UserControl
             _keyboardViewModel = null;
         };
 
+        // Show without taking focus — the target TextBox in the main window
+        // keeps its focus and caret.
+        _keyboardWindow.ShowActivated = false;
         _keyboardWindow.Show(parentWindow);
     }
 

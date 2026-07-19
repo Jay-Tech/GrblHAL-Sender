@@ -822,6 +822,8 @@ public class MainViewModel : ViewModelBase
     private void ClearAlarm()
     {
         SendCommand("$X");
+       // Unlock();
+        AlarmActive = false;
     }
     private void Unlock()
     {

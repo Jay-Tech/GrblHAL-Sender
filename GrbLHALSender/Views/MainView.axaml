@@ -23,17 +23,17 @@
 		</Style>
 
 		<Style Selector="Label.metric">
-			<Setter Property="Content" Value= "Display:Metric"/>
+			<Setter Property="Content" Value= "Display:mm"/>
 		</Style>
 		<Style Selector="Label.imperial">
-			<Setter Property="Content" Value="Display:Inches"/>
+			<Setter Property="Content" Value="Display:in"/>
 		</Style>
 
 		<Style Selector="Label.machineMetric">
-			<Setter Property="Content" Value= "Machine:Metric"/>
+			<Setter Property="Content" Value= "Machine:mm"/>
 		</Style>
 		<Style Selector="Label.machineImperial">
-			<Setter Property="Content" Value="Machine:Inches"/>
+			<Setter Property="Content" Value="Machine:in"/>
 		</Style>
 
 
@@ -43,7 +43,7 @@
 	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="Transparent" >
 		<Border x:Name="HeaderBorder" Grid.Row="0"  Grid.ColumnSpan="3" Height="45" BorderThickness="1"  >
 			<!--Connect, WCS, Tool-->
-			<Grid ColumnDefinitions="125,105,150,125,150,150,200,200,*,Auto,Auto" >
+			<Grid ColumnDefinitions="125,105,150,125,150,150,150,175,*,Auto,Auto" >
 				<StackPanel  Grid.Column="0" Orientation="Horizontal" >
 					<Button  Margin="3,0,0,0"
 							 HorizontalAlignment="Left"
@@ -73,7 +73,7 @@
 					   Content="{Binding GrblHalState}" />
 				<Label Grid.Column="2"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="0,0,0,0"
+					   Margin="0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding WcsDisplay,
@@ -81,7 +81,7 @@
 					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="3"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="0,0,0,0"
+					   Margin="0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding ToolDisplay, StringFormat={} Tool:{0}}"
@@ -89,21 +89,21 @@
 				<Label Grid.Column="4"
 					   x:Name="JogStepLabel"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="0,0,0,0"
+					   Margin="0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left"
 					   Content="{Binding JogStep, StringFormat={} Step:{0}}"
 					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="5"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="0,0,0,0"
+					   Margin="0"
 					   VerticalAlignment="Center"
 					   HorizontalAlignment="Left" x:Name="JogFeedLabel"
 					   Content="{Binding JogRate, StringFormat={} Feed:{0}}"
 					   IsVisible="{Binding Connected}"/>
 				<Label Grid.Column="6"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="0,0,0,0"
+					   Margin="0"
 					   VerticalAlignment="Center"
 					   Classes.metric="{Binding UseMetric}"
 					   Classes.imperial="{Binding !UseMetric}"
@@ -113,7 +113,7 @@
 				</Label>
 				<Label Grid.Column="7"
 					   FontSize="{DynamicResource BaseFontSize}"
-					   Margin="0,0,0,0"
+					   Margin="0"
 					   VerticalAlignment="Center"
 					   Classes.machineMetric="{Binding MachineSettings.ReportInMetric}"
 					   Classes.machineImperial="{Binding !MachineSettings.ReportInMetric}"
@@ -160,13 +160,14 @@
 						Height="40"
 						Content="{Binding SubState,StringFormat={} Alarm{0}}"
 						FontSize="18"
+                        Width="100"
 						VerticalAlignment="Center"
 						HorizontalAlignment="Right"
 						HorizontalContentAlignment="Center"
 						VerticalContentAlignment="Center"
 						Command="{Binding ClearAlarmCommand}"
 						Margin="2,0"
-						Background ="Red" Width="100">
+						Background ="Red">
 				</Button>
 				<Grid Grid.Column="10" ColumnDefinitions="Auto,Auto">
 					<Button Grid.Column="0"
@@ -425,17 +426,24 @@
 											</ItemsRepeater.Layout>
 											<ItemsRepeater.ItemTemplate>
 												<DataTemplate>
-													<Button Height="45" Width="100"
-															Content="{Binding Name}"
-															FontSize="{DynamicResource BaseFontSize}"
-															HorizontalContentAlignment="Center"
-															VerticalContentAlignment="Center"
-															VerticalAlignment="Bottom"
-															HorizontalAlignment="Left"
-															Margin="2"
-															BorderBrush="{Binding IsActive, Converter={StaticResource ActiveBorderBrush}}"
+													<!-- Active-state border lives on a wrapper, not the Button
+													     itself: the Fluent theme repaints the Button's own border
+													     on :pointerover/:pressed (which stick after touch), hiding
+													     the bound state color until focus moved elsewhere. -->
+													<Border BorderBrush="{Binding IsActive, Converter={StaticResource ActiveBorderBrush}}"
 															BorderThickness="2"
-															Command="{Binding ToggleCommand}"/>
+															CornerRadius="5"
+															Margin="2"
+															VerticalAlignment="Bottom"
+															HorizontalAlignment="Left">
+														<Button Height="45" Width="100"
+																Content="{Binding Name}"
+																FontSize="{DynamicResource BaseFontSize}"
+																HorizontalContentAlignment="Center"
+																VerticalContentAlignment="Center"
+																BorderThickness="0"
+																Command="{Binding ToggleCommand}"/>
+													</Border>
 												</DataTemplate>
 											</ItemsRepeater.ItemTemplate>
 										</ItemsRepeater>

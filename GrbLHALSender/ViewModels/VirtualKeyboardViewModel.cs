@@ -5,15 +5,18 @@ using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels;
 
-public class VirtualKeyboardViewModel : ViewModelBase
+public class VirtualKeyboardViewModel : ViewModelBase, IDialogCloseable
 {
     private TextBox? _targetTextBox;
 
     public ICommand KeyPressCommand { get; }
+    public ICommand CloseCommand { get; }
+    public Action? CloseAction { get; set; }
 
     public VirtualKeyboardViewModel()
     {
         KeyPressCommand = ReactiveCommand.Create<string>(OnKeyPress);
+        CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
     }
 
     /// <summary>
@@ -39,25 +42,44 @@ public class VirtualKeyboardViewModel : ViewModelBase
                     _targetTextBox.Text = text.Remove(caretIndex - 1, 1);
                     _targetTextBox.CaretIndex = caretIndex - 1;
                 }
-                return;
+                break;
 
             case "Enter":
                 InsertText("\n", text, caretIndex);
-                return;
+                break;
 
             case "Tab":
                 InsertText("\t", text, caretIndex);
-                return;
+                break;
 
             case "Space":
                 InsertText(" ", text, caretIndex);
-                return;
+                break;
 
             default:
                 // Regular keys and CNC shortcuts (G0, G1, G90, G91, X0, Y0, etc.)
                 InsertText(key, text, caretIndex);
-                return;
+                break;
         }
+
+        RestoreTargetFocus();
+    }
+
+    /// <summary>
+    /// Hands focus back to the target TextBox's window after every key press.
+    /// Touching the keyboard window activates it (OS-level, we can't fully
+    /// prevent it on every WM); re-activating the main window here means the
+    /// next touch on the main screen works first time instead of needing one
+    /// touch to refocus and a second to act.
+    /// </summary>
+    private void RestoreTargetFocus()
+    {
+        if (_targetTextBox == null) return;
+
+        if (TopLevel.GetTopLevel(_targetTextBox) is Window window && !window.IsActive)
+            window.Activate();
+
+        _targetTextBox.Focus();
     }
 
     private void InsertText(string insert, string currentText, int caretIndex)
