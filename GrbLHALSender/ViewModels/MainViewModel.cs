@@ -26,7 +26,7 @@ namespace GrbLHALSender.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private bool _fine;
-    
+
     private readonly ConfigManager _configManager;
     private readonly MachineStateService _machineStateService;
     private JobViewModel _jobViewModel;
@@ -133,7 +133,7 @@ public class MainViewModel : ViewModelBase
     public CommunicationManager CommManager { get; set; }
     public ProbeViewModel ProbeViewModel { get; set; }
     public SurfacingViewModel SurfacingViewModel { get; set; }
-  
+
 
     public string UnitSystem { get; set; } = "G21";
     public bool UseMetric
@@ -293,8 +293,8 @@ public class MainViewModel : ViewModelBase
         {
             this.RaiseAndSetIfChanged(ref _homeState, value);
             UpdateButtonStates();
-        } 
-        
+        }
+
     }
     public bool TLR
     {
@@ -338,7 +338,7 @@ public class MainViewModel : ViewModelBase
             this.RaiseAndSetIfChanged(ref _fullScreenMode, value);
             this.RaisePropertyChanged(nameof(IsFullScreen));
         }
-        
+
     }
     public bool IsFullScreen => FullScreenMode == WindowState.FullScreen;
     public GrblState CurrentGrblState => _machineStateService.GrblState;
@@ -354,7 +354,7 @@ public class MainViewModel : ViewModelBase
         get => _canSetTool;
         set => this.RaiseAndSetIfChanged(ref _canSetTool, value);
     }
-   
+
 
     public ICommand CloseCommand { get; }
     public ICommand ConnectCommand { get; set; }
@@ -450,7 +450,7 @@ public class MainViewModel : ViewModelBase
                 UseHardwareRenderer = _config.Renderer == GHalSenderConfig.RendererType.Hardware;
             }
         };
-        _machineStateService.PropertyChanged+= (_, e) =>
+        _machineStateService.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MachineStateService.GrblState))
             {
@@ -547,41 +547,80 @@ public class MainViewModel : ViewModelBase
             ConsoleOutput.Add($"Connection failed: {e.Message}");
         }
     }
-   
+
 
     private void UpdateButtonStates()
     {
-        
+
         CanJog = Connected &&
                  CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
 
-        CanSetTool = Connected && HomeState && CurrentGrblState is  GrblState.Idle or GrblState.Tool;
+        CanSetTool = Connected && HomeState && CurrentGrblState is GrblState.Idle or GrblState.Tool;
     }
 
     private void CloseApplication()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
-            RuntimeInformation.OSArchitecture == Architecture.Arm)
+            (RuntimeInformation.OSArchitecture == Architecture.Arm ||
+             RuntimeInformation.OSArchitecture == Architecture.Arm64))
         {
-            
-            // Create a process to run the Linux shutdown command
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "shutdown",
-                Arguments = "-h +0:05", // 5 seconds is too granular for standard 'shutdown +m', so we use 'sudo shutdown -h +0:05' or approach below
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using var process = Process.Start(startInfo);
+            TryLinuxShutdown();
         }
+
         if (Application.Current?.ApplicationLifetime is
             Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Shutdown();
         }
+    }
 
+    private void TryLinuxShutdown()
+    {
+        // Try /sbin/shutdown -h now first, then systemctl poweroff as fallback.
+        // Both usually require root or an explicit polkit/sudoers rule.
+        string[][] attempts =
+        [
+            ["/sbin/shutdown", "-h", "now"],
+            ["/usr/sbin/shutdown", "-h", "now"],
+            ["/bin/systemctl", "poweroff"]
+        ];
+
+        foreach (var attempt in attempts)
+        {
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = attempt[0],
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                foreach (var arg in attempt.Skip(1))
+                    startInfo.ArgumentList.Add(arg);
+
+                using var proc = Process.Start(startInfo);
+                if (proc == null) continue;
+
+                // Wait briefly so we can capture the error if it exits fast.
+                // Real shutdowns daemonize and this Wait returns after the fork.
+                proc.WaitForExit(2000);
+
+                var stderr = proc.StandardError.ReadToEnd();
+                var stdout = proc.StandardOutput.ReadToEnd();
+
+                ConsoleOutput.Add($"[Shutdown] {attempt[0]} exit={proc.ExitCode} " +
+                                  $"stdout='{stdout.Trim()}' stderr='{stderr.Trim()}'");
+
+                if (proc.ExitCode == 0)
+                    return; // scheduled — we're done
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Add($"[Shutdown] {attempt[0]} threw: {ex.Message}");
+            }
+        }
     }
 
     private void MainViewModel_MidiTextCommitted(string command)
@@ -832,7 +871,7 @@ public class MainViewModel : ViewModelBase
         var svc = _machineStateService;
         if (!svc.Connected) return;
 
-       // Connected = true;
+        // Connected = true;
 
         // Map service positions to AxisCollection (UI concern: Axis objects have commands)
         int axisCount = Math.Min(svc.MachinePositions.Length, AxisCollection.Count);
@@ -988,7 +1027,7 @@ public class MainViewModel : ViewModelBase
     }
     public void Connect()
     {
-        if(Connected) return;
+        if (Connected) return;
         switch (_config.Connection)
         {
             case GHalSenderConfig.ConnectionType.Tcp:
@@ -1001,16 +1040,16 @@ public class MainViewModel : ViewModelBase
                 CommManager.WebSocketConnection(_config.WebSocketSettings);
                 break;
         }
-        
+
         Connected = CommManager.Adapter.IsConnected;
-        CommManager.Adapter.PropertyChanged+= (s, e) =>
+        CommManager.Adapter.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(ICommsAdapter.IsConnected))
             {
                 Connected = CommManager.Adapter.IsConnected;
             }
         };
-        
+
         CommManager.GetSettings();
         SendCommand("$X");
     }
