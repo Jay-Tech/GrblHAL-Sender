@@ -5,7 +5,7 @@
 
     <!-- Single source of truth. CI overrides via /p:Version=X.Y.Z.
          MSBuild derives AssemblyVersion, FileVersion, and InformationalVersion from this. -->
-    <Version>1.0.5</Version>
+    <Version>1.0.0</Version>
 
     <!-- Application metadata -->
     <Product>GrblHAL Sender</Product>

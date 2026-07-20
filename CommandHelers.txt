@@ -15,9 +15,12 @@ git push origin v1.0.X
 #Remove config 
 rm -r GrblHAL-Sender
 
+#Run from bash
+cd /usr/bin/grblhal-sender
+
 #Install linux 
-sudo wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.0.X/grblhal-sender_1.0.X_arm64.deb
-sudo apt install ./grblhal-sender_1.0.X_arm64.deb
+sudo wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.0.0/grblhal-sender_1.0.0_arm64.deb
+sudo apt install ./grblhal-sender_1.0.0_arm64.deb
 
 #Auto Start Linux 
 mkdir -p ~/.config/autostart
@@ -61,3 +64,4 @@ ssh-keygen -R <IpAdress>
 ssh <user>@<IpAdress>
 
 ssh PiHost@192.168.1.130
+
