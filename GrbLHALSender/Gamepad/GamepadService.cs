@@ -500,27 +500,27 @@ public class GamepadService : IDisposable
 
             case GamepadAction.JogXPos:
                 _mainViewModel.SendCommand(
-                    $"$J=G91{_mainViewModel.UnitSystem}X{_mainViewModel.JogStep}F{_mainViewModel.JogRate}");
+                    $"$J=G91{_mainViewModel.UnitSystem}X{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogXNeg:
                 _mainViewModel.SendCommand(
-                    $"$J=G91{_mainViewModel.UnitSystem}X-{_mainViewModel.JogStep}F{_mainViewModel.JogRate}");
+                    $"$J=G91{_mainViewModel.UnitSystem}X-{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogYPos:
                 _mainViewModel.SendCommand(
-                    $"$J=G91{_mainViewModel.UnitSystem}Y{_mainViewModel.JogStep}F{_mainViewModel.JogRate}");
+                    $"$J=G91{_mainViewModel.UnitSystem}Y{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogYNeg:
                 _mainViewModel.SendCommand(
-                    $"$J=G91{_mainViewModel.UnitSystem}Y-{_mainViewModel.JogStep}F{_mainViewModel.JogRate}");
+                    $"$J=G91{_mainViewModel.UnitSystem}Y-{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogZPos:
                 _mainViewModel.SendCommand(
-                    $"$J=G91{_mainViewModel.UnitSystem}Z{_mainViewModel.JogStep}F{_mainViewModel.JogRate}");
+                    $"$J=G91{_mainViewModel.UnitSystem}Z{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogZNeg:
                 _mainViewModel.SendCommand(
-                    $"$J=G91{_mainViewModel.UnitSystem}Z-{_mainViewModel.JogStep}F{_mainViewModel.JogRate}");
+                    $"$J=G91{_mainViewModel.UnitSystem}Z-{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
         }
     }

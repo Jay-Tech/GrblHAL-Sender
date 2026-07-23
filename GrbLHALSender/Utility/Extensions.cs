@@ -29,12 +29,12 @@ namespace GrbLHALSender.Utility
 
         public static int StringToInt(this string str)
         {
-            int.TryParse(str, out int result);
+            int.TryParse(str, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result);
             return result;
         }
         public static double StringToDouble(this string str)
         {
-            double.TryParse(str, out double result);
+            double.TryParse(str, NumberStyles.Float, CultureInfo.InvariantCulture, out double result);
             return result;
         }
     }

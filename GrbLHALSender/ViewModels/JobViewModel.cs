@@ -304,7 +304,24 @@ namespace GrbLHALSender.ViewModels
             if (selectFile?.Count <= 0) return;
             FileName = SelectedFiles[0]?.Name;
             var file = new GCodeParser();
-            file.ParseGCodeFile(SelectedFiles[0].Path.AbsolutePath, FileComplete);
+            // LocalPath (not AbsolutePath) — AbsolutePath percent-encodes spaces ("%20"),
+            // which made loads of files in paths with spaces fail with FileNotFound.
+            file.ParseGCodeFile(SelectedFiles[0].Path.LocalPath, FileComplete, OnFileLoadFailed);
+        }
+
+        /// <summary>
+        /// Called from the parser's background task when a file fails to load or parse.
+        /// Without this the exception was silently swallowed and the Start button
+        /// simply never enabled, with no feedback to the user.
+        /// </summary>
+        private void OnFileLoadFailed(Exception ex)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                FileLoaded = false;
+                EstimatedTime = string.Empty;
+                FileName = $"Load failed: {ex.Message}";
+            });
         }
 
         public void FileComplete(List<GCodeLine> gCodeJob)

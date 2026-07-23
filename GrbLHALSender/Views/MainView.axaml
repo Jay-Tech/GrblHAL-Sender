@@ -255,7 +255,7 @@
 											<Grid ColumnDefinitions="*,Auto">
 												<Label Grid.Row="0"  x:Name="WcoLabel"
                                                        Focusable="False"
-													   Content="{Binding Path=Position.Wco,StringFormat=N3}"
+													   Content="{Binding Path=Position.Wco,StringFormat=F3}"
 													   FontSize="32" 
                                                        MinWidth="175" 
                                                        Height="45"
@@ -271,7 +271,7 @@
 														   Opacity="0.6" />
 											</Grid>
 											<Label  Focusable="False"
-													Content="{Binding Path=Position.MPos,StringFormat=N3}"
+													Content="{Binding Path=Position.MPos,StringFormat=F3}"
 													FontSize="18" MinWidth="175" Height="25"
 													VerticalContentAlignment="Center"
 													HorizontalContentAlignment="Left"

@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Globalization;
+using GrbLHALSender.Utility;
 
 namespace GrbLHALSender.Probe
 {
@@ -26,6 +28,10 @@ namespace GrbLHALSender.Probe
     public class ProbeJobBuilder
     {
         public const string ProbeCommand = "G38.3";
+
+        // Probe values are stored/exchanged as dot-decimal strings; never parse with the OS culture.
+        private static double ParseInvariant(string value) =>
+            double.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
 
         public string ProbeSearchRate { get; set; }
         public string ProbeLatchRate { get; set; }
@@ -162,7 +168,7 @@ namespace GrbLHALSender.Probe
         /// </summary>
         public List<List<string>> ProbeBossCenter(string approxSize)
         {
-            var halfSize = (double.Parse(approxSize) / 2 + double.Parse(ProbeDistance)).ToString();
+            var halfSize = (ParseInvariant(approxSize) / 2 + ParseInvariant(ProbeDistance)).ToInvariantString();
             var phases = new List<List<string>>();
 
             // Phase 1: Move to +X side, drop to probe height, probe X- (toward boss)
@@ -182,7 +188,7 @@ namespace GrbLHALSender.Probe
                 UnitSystem,
                 "G91",
                 $"G0Z{ClearanceHeight}",
-                $"G0X-{(double.Parse(halfSize) * 2).ToString()}",
+                $"G0X-{(ParseInvariant(halfSize) * 2).ToInvariantString()}",
                 $"G0Z-{ClearanceHeight}"
             };
             xNegPhase.AddRange(ProbeSingleAxis("X", 1));
@@ -207,7 +213,7 @@ namespace GrbLHALSender.Probe
                 UnitSystem,
                 "G91",
                 $"G0Z{ClearanceHeight}",
-                $"G0Y-{(double.Parse(halfSize) * 2).ToString()}",
+                $"G0Y-{(ParseInvariant(halfSize) * 2).ToInvariantString()}",
                 $"G0Z-{ClearanceHeight}"
             };
             yNegPhase.AddRange(ProbeSingleAxis("Y", 1));
@@ -255,9 +261,9 @@ namespace GrbLHALSender.Probe
         public double CalculateZOffset()
         {
             if (ToolType == ProbeToolType.TouchPlate)
-                return double.Parse(TouchPlateThickness);
+                return ParseInvariant(TouchPlateThickness);
             else
-                return double.Parse(ProbeDiameter) / 2.0;
+                return ParseInvariant(ProbeDiameter) / 2.0;
         }
 
         /// <summary>
@@ -267,7 +273,7 @@ namespace GrbLHALSender.Probe
         /// </summary>
         public double CalculateXYOffset(int directionSign)
         {
-            var radius = double.Parse(ProbeDiameter) / 2.0;
+            var radius = ParseInvariant(ProbeDiameter) / 2.0;
             // If we probed in +X direction, the edge is at (result - radius)
             // If we probed in -X direction, the edge is at (result + radius)
             return -directionSign * radius;

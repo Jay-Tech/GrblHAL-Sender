@@ -10,11 +10,24 @@ public class GCodeParser
     private string? _line;
     public List<GCodeLine> GCodeJob { get; set; }
 
-    public void ParseGCodeFile(string file, Action<List<GCodeLine>> callBack)
+    /// <summary>
+    /// Parses the file on a background task. Any exception thrown while reading the file
+    /// or inside <paramref name="callBack"/> is reported through <paramref name="onError"/>
+    /// instead of being silently swallowed (which left the UI with no loaded file and a
+    /// permanently disabled Start button).
+    /// </summary>
+    public void ParseGCodeFile(string file, Action<List<GCodeLine>> callBack, Action<Exception>? onError = null)
     {
         Task.Factory.StartNew((() =>
         {
-            callBack(ParseJob(file, callBack));
+            try
+            {
+                callBack(ParseJob(file, callBack));
+            }
+            catch (Exception ex)
+            {
+                onError?.Invoke(ex);
+            }
         }));
     }
 
@@ -22,7 +35,7 @@ public class GCodeParser
     {
         GCodeJob = new List<GCodeLine>();
         int index = 0;
-        StreamReader sr = new StreamReader(file);
+        using StreamReader sr = new StreamReader(file);
         _line = sr.ReadLine();
         while (_line != null)
         {
@@ -34,7 +47,6 @@ public class GCodeParser
             _line = sr.ReadLine();
 
         }
-        sr.Close();
         return GCodeJob;
     }
 }

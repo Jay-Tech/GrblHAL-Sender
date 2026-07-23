@@ -1,10 +1,15 @@
 ﻿using ReactiveUI;
 using System;
+using System.Globalization;
 
 namespace GrbLHALSender.Settings
 {
     public class MachineSettings : ReactiveObject
     {
+        // grblHAL setting values are always dot-decimal; never parse with the OS culture.
+        private static bool TryParseInvariant(string value, out double result) =>
+            double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+
         private double _zSize;
         private double _ySize;
         private double _xSize;
@@ -88,7 +93,7 @@ namespace GrbLHALSender.Settings
         }
         public void SetXBoundaries(string value)
         {
-            if (double.TryParse(value, out var size))
+            if (TryParseInvariant(value, out var size))
             {
                 XSize = size;
             }
@@ -97,21 +102,21 @@ namespace GrbLHALSender.Settings
 
         public void SetYBoundaries(string value)
         {
-            if (double.TryParse(value, out var size))
+            if (TryParseInvariant(value, out var size))
             {
                 YSize = size;
             }
         }
         public void SetZBoundaries(string value)
         {
-            if (double.TryParse(value, out var size))
+            if (TryParseInvariant(value, out var size))
             {
                 ZSize = size;
             }
         }
         public void SetXRapid(string value)
         {
-            if (double.TryParse(value, out var rapid))
+            if (TryParseInvariant(value, out var rapid))
             {
                 XRapid = rapid;
             }
@@ -119,7 +124,7 @@ namespace GrbLHALSender.Settings
 
         public void SetYRapid(string value)
         {
-            if (double.TryParse(value, out var rapid))
+            if (TryParseInvariant(value, out var rapid))
             {
                 YRapid = rapid;
             }
@@ -127,7 +132,7 @@ namespace GrbLHALSender.Settings
 
         public void SetZRapid(string value)
         {
-            if (double.TryParse(value, out var rapid))
+            if (TryParseInvariant(value, out var rapid))
             {
                 ZRapid = rapid;
             }

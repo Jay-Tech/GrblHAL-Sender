@@ -186,7 +186,7 @@ public class WebServerService : IDisposable
         {
             var parts = new string[Math.Min(workPos.Length, 6)];
             for (int i = 0; i < parts.Length; i++)
-                parts[i] = workPos[i].ToString("F3");
+                parts[i] = workPos[i].ToString("F3", System.Globalization.CultureInfo.InvariantCulture);
             position = string.Join(" / ", parts);
         }
 

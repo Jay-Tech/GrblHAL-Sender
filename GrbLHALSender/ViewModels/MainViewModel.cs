@@ -987,24 +987,24 @@ public class MainViewModel : ViewModelBase
     }
     private void JogNeg(string axis)
     {
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{JogStep}F{JogRate}";
+        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{JogStep.ToInvariantString()}F{JogRate.ToInvariantString()}";
         SendCommand(command);
     }
     private void JogPos(string axis)
     {
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{JogStep}F{JogRate}";
+        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{JogStep.ToInvariantString()}F{JogRate.ToInvariantString()}";
         SendCommand(command);
     }
     public void JogContinuousNeg(string axis)
     {
         var distance = GetMachineDistance(axis);
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{distance}F{JogRate}";
+        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}-{distance}F{JogRate.ToInvariantString()}";
         SendCommand(command);
     }
     public void JogContinuousPos(string axis)
     {
         var distance = GetMachineDistance(axis);
-        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{distance}F{JogRate}";
+        var command = $"$J=G91{UnitSystem}{axis.ToUpper()}{distance}F{JogRate.ToInvariantString()}";
         SendCommand(command);
     }
 

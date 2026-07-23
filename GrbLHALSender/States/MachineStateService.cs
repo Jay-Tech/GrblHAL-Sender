@@ -6,6 +6,7 @@ using GrbLHALSender.Settings;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 
 namespace GrbLHALSender.States;
@@ -262,10 +263,12 @@ public class MachineStateService : ReactiveObject, IDisposable
 
         for (int i = 0; i < axisCount; i++)
         {
-            if (!double.TryParse(state.MPos[i], out mpos[i])) mpos[i] = 0;
+            // grblHAL reports are always dot-decimal — parse invariantly so comma-decimal
+            // OS regions (de-DE, fr-FR) can't misread "12.345" as 12345 or fail to 0.
+            if (!double.TryParse(state.MPos[i], NumberStyles.Float, CultureInfo.InvariantCulture, out mpos[i])) mpos[i] = 0;
             if (hasWco && i < state.Wco.Length)
             {
-                if (!double.TryParse(state.Wco[i], out wcoVals[i])) wcoVals[i] = 0;
+                if (!double.TryParse(state.Wco[i], NumberStyles.Float, CultureInfo.InvariantCulture, out wcoVals[i])) wcoVals[i] = 0;
             }
         }
 
@@ -311,11 +314,11 @@ public class MachineStateService : ReactiveObject, IDisposable
         AlarmActive = GrblState == GrblState.Alarm;
 
         // --- Feed & speed ---
-        if (int.TryParse(state.FeedRate, out var feedRate)) FeedRate =(int) ConvertUnit(feedRate);
-        if (int.TryParse(state.FeedOverRide, out var fo)) FeedOverride = fo;
-        if (int.TryParse(state.ProgramRPM, out var ps)) SpindleRpm = ps;
-        if (int.TryParse(state.ActualRpm, out var rpm)) ActualRpm = rpm;
-        if (int.TryParse(state.RpmOverRide, out var rO)) RpmOverride = rO;
+        if (double.TryParse(state.FeedRate, NumberStyles.Float, CultureInfo.InvariantCulture, out var feedRate)) FeedRate = (int)ConvertUnit(feedRate);
+        if (int.TryParse(state.FeedOverRide, NumberStyles.Integer, CultureInfo.InvariantCulture, out var fo)) FeedOverride = fo;
+        if (double.TryParse(state.ProgramRPM, NumberStyles.Float, CultureInfo.InvariantCulture, out var ps)) SpindleRpm = (int)ps;
+        if (double.TryParse(state.ActualRpm, NumberStyles.Float, CultureInfo.InvariantCulture, out var rpm)) ActualRpm = (int)rpm;
+        if (int.TryParse(state.RpmOverRide, NumberStyles.Integer, CultureInfo.InvariantCulture, out var rO)) RpmOverride = rO;
 
         // --- Display values ---
         WcsDisplay = state.WCS ?? "";
