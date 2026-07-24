@@ -18,6 +18,8 @@ public partial class GrblHalSetting : ReactiveObject
     private bool _allowNull;
     private bool _rebootRequired;
     private bool _needsSaving;
+    private string? _description;
+    private string _groupName = string.Empty;
 
     public int Id
     {
@@ -89,6 +91,23 @@ public partial class GrblHalSetting : ReactiveObject
     {
         get => _settingValue;
         set => this.RaiseAndSetIfChanged(ref _settingValue, value);
+    }
+
+    /// <summary>
+    /// Explanatory text from <c>$SED=&lt;id&gt;</c>. Null until the owning group is
+    /// expanded, and stays null on firmware built without descriptions.
+    /// </summary>
+    public string? Description
+    {
+        get => _description;
+        set => this.RaiseAndSetIfChanged(ref _description, value);
+    }
+
+    /// <summary>Resolved group name, filled in from <c>$EG</c> so rows and search can use it.</summary>
+    public string GroupName
+    {
+        get => _groupName;
+        set => this.RaiseAndSetIfChanged(ref _groupName, value);
     }
 
     public GrblHalSetting(int id, string value)

@@ -87,8 +87,8 @@ public class SettingEditorTemplate : IDataTemplate
                 Converter = new StringToBool(),
                 Mode = BindingMode.OneWay,
             },
-            Width = 400,
-            Content = setting.Name,
+            // No Content/Width: the row already shows the name, and a fixed 400px
+            // label here would push the control off the right edge.
             Command = ReactiveCommand.Create<bool>(_ =>
             {
                 setting.SettingValue = cb!.IsChecked == true ? "1" : "0";

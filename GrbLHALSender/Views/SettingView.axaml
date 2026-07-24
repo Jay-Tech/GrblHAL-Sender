@@ -2,9 +2,10 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:settings="clr-namespace:GrbLHALSender.Settings"
 			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
 			 xmlns:views="clr-namespace:GrbLHALSender.Views"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
 			 x:Class="GrbLHALSender.Views.SettingView"
 			 x:DataType="viewModels:SettingsViewModel">
 
@@ -12,60 +13,195 @@
 		<views:SettingEditorTemplate x:Key="SettingEditor" />
 	</UserControl.Resources>
 
-	<Grid RowDefinitions="*,60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-		<ScrollViewer Grid.Row="0" x:Name="SettingScroll" Margin="5,10,10,5"
-					  VerticalScrollBarVisibility="Hidden"
+	<UserControl.Styles>
+		<!-- Group header: full-width tap target, so it works with a thumb. -->
+		<Style Selector="Button.groupHeader">
+			<Setter Property="Background" Value="{DynamicResource SurfaceHeaderBrush}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}"/>
+			<Setter Property="BorderThickness" Value="0,0,0,1"/>
+			<Setter Property="CornerRadius" Value="0"/>
+			<Setter Property="HorizontalAlignment" Value="Stretch"/>
+			<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+			<Setter Property="Padding" Value="14,10"/>
+			<Setter Property="Focusable" Value="False"/>
+		</Style>
+		<Style Selector="Button.groupHeader:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+		</Style>
+
+		<!-- Expand/collapse chevron, driven by a class rather than a converter. -->
+		<Style Selector="TextBlock.chev">
+			<Setter Property="Text" Value="&#x25B6;"/>
+		</Style>
+		<Style Selector="TextBlock.chev.open">
+			<Setter Property="Text" Value="&#x25BC;"/>
+		</Style>
+
+		<!-- Setting id badge and group chip, mirroring the reference layout. -->
+		<Style Selector="TextBlock.settingId">
+			<Setter Property="FontSize" Value="26"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+		</Style>
+		<Style Selector="Border.groupChip">
+			<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="CornerRadius" Value="10"/>
+			<Setter Property="Padding" Value="8,2"/>
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+			<Setter Property="Margin" Value="0,4,0,0"/>
+		</Style>
+	</UserControl.Styles>
+
+	<Grid RowDefinitions="Auto,*,60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+		<!-- Filter bar. Same shape as the Reference tab so both searches behave alike. -->
+		<Border Grid.Row="0"
+				Background="{DynamicResource SurfaceBrush}"
+				BorderBrush="{DynamicResource PanelBorderBrush}"
+				BorderThickness="0,0,0,2"
+				Padding="10,8">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBox Grid.Column="0"
+						 Text="{Binding FilterText, Mode=TwoWay}"
+						 Watermark="Filter… e.g. spindle, inches, homing, 130"
+						 FontSize="20"
+						 Height="45"
+						 VerticalContentAlignment="Center"
+						 Margin="0,0,10,0"/>
+				<Button Grid.Column="1"
+						Classes="touch"
+						Content="Clear"
+						Width="110"
+						Command="{Binding ClearFilterCommand}"/>
+			</Grid>
+		</Border>
+
+		<ScrollViewer Grid.Row="1" x:Name="SettingScroll" Margin="5,8,10,5"
+					  VerticalScrollBarVisibility="Auto"
+					  HorizontalScrollBarVisibility="Disabled"
 					  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-			<ItemsControl ItemsSource="{Binding SettingCollection}">
+			<ItemsControl ItemsSource="{Binding Groups}">
 				<ItemsControl.ItemTemplate>
-					<DataTemplate>
-						<Border BorderThickness="1" BorderBrush="DimGray" Margin="0,1,0,1">
-							<StackPanel  HorizontalAlignment="Stretch" Opacity="1"  VerticalAlignment="Stretch" Orientation="Horizontal">
-								<TextBlock Text="{Binding GroupId, StringFormat=GrpId {0}}" HorizontalAlignment="Center" VerticalAlignment="Top" Width="100" FontSize="24"
-										   Margin="2,0,2,0"></TextBlock>
-								<Label  Focusable="False" Content="{Binding Id, StringFormat=Id {0}}" Margin="5,0,10,0"  FontSize="24" Width="100"
-										VerticalContentAlignment="Top" HorizontalContentAlignment="Left" HorizontalAlignment ="Left" VerticalAlignment="Top"></Label>
-								<Label  Focusable="False" Content="{Binding Name}"  Margin="5,0,10,0"  FontSize="24" MinWidth="150"  Width="370"
-										VerticalContentAlignment="Top"    HorizontalContentAlignment="Left" HorizontalAlignment ="Center" VerticalAlignment="Top"></Label>
-								<ContentControl  Focusable="False" Content="{Binding}" ContentTemplate="{StaticResource SettingEditor}" Margin="0,0,10,0"  FontSize="24" MinWidth="75"
-												 VerticalContentAlignment="Center" HorizontalContentAlignment="Left" HorizontalAlignment ="Left" VerticalAlignment="Center"/>
-								<Label  Focusable="False" Content="{Binding Unit}" Margin="5,0,10,0"  FontSize="24" Width="150"/>
+					<DataTemplate x:DataType="viewModels:SettingGroupViewModel">
+						<Border Classes="panel" Margin="0,0,0,8" ClipToBounds="True">
+							<StackPanel>
+
+								<!-- Header. Expanding is what triggers this group's
+								     descriptions to be fetched from the controller. -->
+								<Button Classes="groupHeader" Command="{Binding ToggleCommand}">
+									<Grid ColumnDefinitions="Auto,*,Auto">
+										<TextBlock Grid.Column="0"
+												   Classes="chev"
+												   Classes.open="{Binding IsExpanded}"
+												   FontSize="18"
+												   Width="26"
+												   Foreground="{DynamicResource AccentBrush}"
+												   VerticalAlignment="Center"/>
+										<TextBlock Grid.Column="1"
+												   Text="{Binding Name}"
+												   FontSize="21"
+												   FontWeight="SemiBold"
+												   Foreground="{DynamicResource TextPrimaryBrush}"
+												   VerticalAlignment="Center"/>
+										<TextBlock Grid.Column="2"
+												   Classes="muted"
+												   Text="{Binding Count}"
+												   FontSize="17"
+												   VerticalAlignment="Center"/>
+									</Grid>
+								</Button>
+
+								<ItemsControl ItemsSource="{Binding Settings}"
+											  IsVisible="{Binding IsExpanded}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="settings:GrblHalSetting">
+											<Border Classes="row" Padding="12,10">
+												<Grid ColumnDefinitions="110,*,Auto">
+
+													<StackPanel Grid.Column="0" VerticalAlignment="Top">
+														<TextBlock Classes="settingId" Text="{Binding Id}"/>
+														<Border Classes="groupChip">
+															<TextBlock Text="{Binding GroupName}"
+																	   FontSize="12"
+																	   TextTrimming="CharacterEllipsis"
+																	   MaxWidth="90"
+																	   Foreground="{DynamicResource AccentBrush}"/>
+														</Border>
+													</StackPanel>
+
+													<!-- Top-aligned, not centred: a bitfield row is as tall as its
+													     checkbox stack, and a centred name drifts far below the id
+													     badge (and off the bottom of the panel on tall rows). -->
+													<StackPanel Grid.Column="1" Margin="8,0,16,0" VerticalAlignment="Top">
+														<TextBlock Text="{Binding Name}"
+																   FontSize="19"
+																   FontWeight="SemiBold"
+																   TextWrapping="Wrap"
+																   Foreground="{DynamicResource TextPrimaryBrush}"/>
+														<TextBlock Classes="muted"
+																   Text="{Binding Description}"
+																   FontSize="15"
+																   TextWrapping="Wrap"
+																   Margin="0,3,0,0"
+																   IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+														<TextBlock Classes="muted"
+																   Text="{Binding Unit}"
+																   FontSize="13"
+																   Margin="0,3,0,0"
+																   IsVisible="{Binding Unit, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+													</StackPanel>
+
+													<ContentControl Grid.Column="2"
+																	Focusable="False"
+																	Content="{Binding}"
+																	ContentTemplate="{StaticResource SettingEditor}"
+																	MinWidth="200"
+																	FontSize="18"
+																	VerticalAlignment="Center"
+																	HorizontalAlignment="Right"/>
+												</Grid>
+											</Border>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
 							</StackPanel>
 						</Border>
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
 		</ScrollViewer>
-		<Grid Grid.Row="1" ColumnDefinitions="*,Auto">
 
+		<Grid Grid.Row="2" ColumnDefinitions="*,Auto">
 			<StackPanel Grid.Column="1"
 						Spacing="15"
 						Orientation="Horizontal"
 						HorizontalAlignment="Stretch">
-				<Button  Height="40" Width="125"
-						 FontSize="20" 
-						 HorizontalContentAlignment="Center"
-						 VerticalContentAlignment="Center"
-						 HorizontalAlignment="Right"
-                         VerticalAlignment="Center"
-						 Margin="0,0,25,5"
-						 Content="Save"  Command="{Binding CommandSave}"></Button>
-				<Button  Height="40" Width="125" 
-                         HorizontalContentAlignment="Center"
-                         VerticalContentAlignment="Center"
-                         HorizontalAlignment="Right"
-                         VerticalAlignment="Center"
-						 Margin="0,0,10,5"
-						 Command="{Binding ImportSettingsCommand}"
-						 Content="Import" FontSize="20"/>
-				<Button  Height="40" Width="125"
-						 FontSize="20" Margin="0,0,50,5"
-                         HorizontalContentAlignment="Center"
-                         VerticalContentAlignment="Center"
-                         HorizontalAlignment="Right"
-						 VerticalAlignment="Center"
-						 Command ="{Binding ExportSettingsCommand}"
-						 Content="Export"/>
+				<Button Height="40" Width="125"
+						FontSize="20"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						HorizontalAlignment="Right"
+						VerticalAlignment="Center"
+						Margin="0,0,25,5"
+						Content="Save" Command="{Binding CommandSave}"/>
+				<Button Height="40" Width="125"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						HorizontalAlignment="Right"
+						VerticalAlignment="Center"
+						Margin="0,0,10,5"
+						Command="{Binding ImportSettingsCommand}"
+						Content="Import" FontSize="20"/>
+				<Button Height="40" Width="125"
+						FontSize="20" Margin="0,0,50,5"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						HorizontalAlignment="Right"
+						VerticalAlignment="Center"
+						Command="{Binding ExportSettingsCommand}"
+						Content="Export"/>
 			</StackPanel>
 		</Grid>
 	</Grid>

@@ -59,7 +59,9 @@
 
 	</UserControl.Styles>
 	<!--Header-->
-	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="Transparent" >
+	<!-- Page fill comes from the palette, not the Fluent theme's RegionColor, so
+	     switching preset actually repaints the background behind every panel. -->
+	<Grid x:Name="MainGrid"  RowDefinitions="Auto, *" Background="{DynamicResource AppBackgroundBrush}" >
 		<Border x:Name="HeaderBorder" Grid.Row="0"  Grid.ColumnSpan="3" Height="45" BorderThickness="1"  >
 			<!--Connect, WCS, Tool-->
 			<Grid ColumnDefinitions="125,105,135,120,120,150,215,215,*,Auto,Auto" >

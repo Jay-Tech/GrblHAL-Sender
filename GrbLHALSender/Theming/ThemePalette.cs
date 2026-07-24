@@ -153,9 +153,10 @@ public static class ThemePresets
         ViewportBackground = Color.Parse("#191922"),
     };
 
-    public static IReadOnlyList<ThemePalette> All { get; } = [SlateDark, Classic, ShopLight];
+    /// <summary>Order here is the order shown in the Theme tab's dropdown.</summary>
+    public static IReadOnlyList<ThemePalette> All { get; } = [Classic, SlateDark, ShopLight];
 
-    public static ThemePalette Default => SlateDark;
+    public static ThemePalette Default => Classic;
 
     public static ThemePalette ById(string? id) =>
         All.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase))

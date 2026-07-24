@@ -45,6 +45,9 @@
         public const string Getstartuplines = "$N";
         public const string Getsettingsdetails = "$ES";
         public const string Getsettingsgroups = "$EG";
+        // Per-setting description: "$SED=<id>" -> [SETTINGDESCR:<id>|<text>].
+        // Not all firmware builds include the description strings.
+        public const string GetsettingDescription = "$SED=";
         public const string GetPins = "$PINS";
         //Alarm
         public const string Alarmcodes = "$EA";

@@ -53,26 +53,26 @@
 									   ChromeMediumLow="#ffeff2f6" ChromeWhite="White"
 									   ListLow="#ffe4e9f0" ListMedium="#ffc2ccd8" />
 
-				<!-- Slate ramp, matching the Reference tab. This retints every built-in
-				     Fluent control (Button, TextBox, TabControl, ComboBox, ListBox) with
-				     correct hover/pressed/disabled derivations, so no control needs its
-				     own override. The accent below is the *startup* value only —
-				     ThemeService overrides SystemAccentColor* at runtime. -->
+				<!-- Startup baseline for dark presets, tuned to Classic (the default).
+				     ThemeService layers each preset's own control colors over this at
+				     runtime; this ramp only has to cover what it does not override
+				     (scrollbars, checkbox glyphs, list hover) and avoid a flash of the
+				     wrong palette before the saved theme is applied. -->
 				<ColorPaletteResources x:Key="Dark"
-									   Accent="#ffe8a02e"
-									   RegionColor="#ff16191d"
-									   AltHigh="#ff20252b" AltLow="#ff16191d" AltMedium="#ff1b1f24"
-									   AltMediumHigh="#ff20252b" AltMediumLow="#ff1b1f24"
-									   BaseHigh="#ffe4e8eb" BaseLow="#ff2c3238" BaseMedium="#ff98a2ac"
-									   BaseMediumHigh="#ffc3cad1" BaseMediumLow="#ff6b7681"
-									   ChromeAltLow="#ffc3cad1" ChromeBlackHigh="#ff0e1114"
-									   ChromeBlackLow="#ffc3cad1" ChromeBlackMedium="#ff0e1114"
-									   ChromeBlackMediumLow="#ff0e1114"
-									   ChromeDisabledHigh="#ff2c3238" ChromeDisabledLow="#ff6b7681"
-									   ChromeGray="#ff7d8790" ChromeHigh="#ff7d8790"
-									   ChromeLow="#ff1b1f24" ChromeMedium="#ff20252b"
-									   ChromeMediumLow="#ff262c33" ChromeWhite="#ffe4e8eb"
-									   ListLow="#ff20252b" ListMedium="#ff2c3238" />
+									   Accent="#ff007acc"
+									   RegionColor="#ff282828"
+									   AltHigh="#ff2d2d30" AltLow="#ff282828" AltMedium="#ff2d2d30"
+									   AltMediumHigh="#ff2d2d30" AltMediumLow="#ff2d2d30"
+									   BaseHigh="#ffe8e8e8" BaseLow="#ff3f3f46" BaseMedium="#ffcccccc"
+									   BaseMediumHigh="#ffdcdcdc" BaseMediumLow="#ff7c7c7c"
+									   ChromeAltLow="#ffdcdcdc" ChromeBlackHigh="#ff141414"
+									   ChromeBlackLow="#ffdcdcdc" ChromeBlackMedium="#ff141414"
+									   ChromeBlackMediumLow="#ff141414"
+									   ChromeDisabledHigh="#ff3f3f46" ChromeDisabledLow="#ff8a8a8a"
+									   ChromeGray="#ff929292" ChromeHigh="#ff929292"
+									   ChromeLow="#ff252528" ChromeMedium="#ff2d2d30"
+									   ChromeMediumLow="#ff3e3e42" ChromeWhite="#ffe8e8e8"
+									   ListLow="#ff2d2d30" ListMedium="#ff3f3f46" />
 			</FluentTheme.Palettes>
 		</FluentTheme>
 

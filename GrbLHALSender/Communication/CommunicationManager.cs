@@ -131,6 +131,12 @@ namespace GrbLHALSender.Communication
 
                 var settings = await SendAsyncCommand(GrblHalConstants.Getsettingsdetails, timeOutMs: 2000);
 
+                // Group names. Collected rather than awaited-for-ok so firmware without
+                // $EG simply yields an empty list instead of stalling the sequence;
+                // the [SETTINGGROUP:...] lines are parsed by the normal receive path.
+                _grblHalSettings.Groups.Clear();
+                await SendCommandCollectResponsesAsync(GrblHalConstants.Getsettingsgroups, timeOutMs: 2000);
+
                 var settingResults = await SendAsyncCommand(GrblHalConstants.GetsettingsAll, timeOutMs: 2000);
                 if (settingResults)
                 {
@@ -193,6 +199,12 @@ namespace GrbLHALSender.Communication
                 SortExpressionComparer<GrblHalSetting>
                     .Ascending(s => s.GroupId)
                     .ThenByAscending(s => s.Id));
+
+            // Resolve group names once here, so the view model and search never have to
+            // reach back into the group dictionary per row.
+            foreach (var setting in _grblHalSettings.SettingCollection)
+                setting.GroupName = _grblHalSettings.GroupNameFor(setting.GroupId);
+
             _machineData = new MachineSettings();
 
             _machineData.SetXBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XAxisLength)?.SettingValue ?? "");
@@ -335,11 +347,25 @@ namespace GrbLHALSender.Communication
             {
                 var inner = data.AsSpan(1, data.Length - 2); // strip [ and ]
 
-                if (inner.StartsWith("SETTING"))
+                // Match the full prefix, not just "SETTING": $EG replies with
+                // SETTINGGROUP: and $SED with SETTINGDESCR:, and both would
+                // otherwise be parsed as settings and pollute the collection.
+                if (inner.StartsWith("SETTING:"))
                 {
                     var trimmed = data.Trim('[', ']');
                     var substring = trimmed.Split('|');
                     ParseSettingsData(substring.AsSpan());
+                }
+                else if (inner.StartsWith("SETTINGGROUP:"))
+                {
+                    var trimmed = data.Trim('[', ']');
+                    var substring = trimmed.Split('|');
+                    ParseSettingGroup(substring.AsSpan());
+                }
+                else if (inner.StartsWith("SETTINGDESCR:"))
+                {
+                    // Consumed by the awaiting GetSettingDescriptionAsync caller;
+                    // nothing to accumulate here.
                 }
                 else if (inner.StartsWith("ALARMCODE:"))
                 {
@@ -598,6 +624,46 @@ namespace GrbLHALSender.Communication
         private void ParseSettingsData(Span<string> asSpan)
         {
             _grblHalSettings.SettingCollection.Add(new GrblHalSetting(asSpan));
+        }
+
+        private void ParseSettingGroup(Span<string> asSpan)
+        {
+            var group = SettingGroup.Parse(asSpan);
+            if (group != null)
+                _grblHalSettings.AddGroup(group);
+        }
+
+        /// <summary>
+        /// Fetches a single setting's description via <c>$SED=&lt;id&gt;</c>. Returns null
+        /// when the firmware was built without descriptions, which callers should treat
+        /// as "stop asking" rather than retrying per setting.
+        /// </summary>
+        public async Task<string?> GetSettingDescriptionAsync(int id, int timeOutMs = 1500)
+        {
+            var lines = await SendCommandCollectResponsesAsync(
+                $"{GrblHalConstants.GetsettingDescription}{id}", timeOutMs: timeOutMs);
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim().Trim('[', ']');
+                if (!trimmed.StartsWith("SETTINGDESCR:", StringComparison.Ordinal)) continue;
+
+                // SETTINGDESCR:<id>|<description>
+                var split = trimmed.IndexOf('|');
+                if (split < 0) continue;
+
+                // Verify the id echoed back matches what we asked for. Responses are
+                // collected off the shared receive stream, so a late or interleaved
+                // reply would otherwise be pinned onto the wrong setting.
+                var idPart = trimmed["SETTINGDESCR:".Length..split];
+                if (!int.TryParse(idPart, out var replyId) || replyId != id) continue;
+
+                // Firmware escapes line breaks as a literal backslash-n.
+                var text = trimmed[(split + 1)..].Replace("\\n", "\n").Trim();
+                return string.IsNullOrWhiteSpace(text) ? null : text;
+            }
+
+            return null;
         }
 
         private void ParseRealTimeData(string data)
