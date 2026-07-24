@@ -54,11 +54,11 @@
 			<Button Classes="h1" Content="9"
 					CommandParameter="9"
 					Command="{Binding KeyPressCommand}"/>
-			<Button Classes="h1" Content="G"
-					CommandParameter="G"
-					Command="{Binding KeyPressCommand}"/>
 			<Button Classes="h1" Content="M"
 					CommandParameter="M"
+					Command="{Binding KeyPressCommand}"/>
+			<Button Classes="h1" Content="G"
+					CommandParameter="G"
 					Command="{Binding KeyPressCommand}"/>
 			<Button Classes="h1" Content="4"
 					CommandParameter="4"
@@ -69,8 +69,8 @@
 			<Button Classes="h1" Content="6"
 					CommandParameter="6"
 					Command="{Binding KeyPressCommand}"/>
-			<Button Classes="h1" Content="-"
-					CommandParameter="-"
+			<Button Classes="h1" Content="Q"
+					CommandParameter="Q"
 					Command="{Binding KeyPressCommand}"/>
 			<Button Classes="h1" Content="X"
 					CommandParameter="X"
@@ -84,14 +84,14 @@
 			<Button Classes="h1" Content="3"
 					CommandParameter="3"
 					Command="{Binding KeyPressCommand}"/>
-			<Button Classes="h1" Content="."
-					CommandParameter="."
+			<Button Classes="h1" Content="T"
+					CommandParameter="T"
 					Command="{Binding KeyPressCommand}"/>
 			<Button Classes="h1" Content="Y"
 					CommandParameter="Y"
 					Command="{Binding KeyPressCommand}"/>
-			<Button Classes="h1" Content="$"
-					CommandParameter="$"
+			<Button Classes="h1" Content="."
+					CommandParameter="."
 					Command="{Binding KeyPressCommand}"/>
 			<Button Classes="h1" Content="0"
 					CommandParameter="0"
@@ -99,8 +99,8 @@
 			<Button Classes="h1" Content="="
 					CommandParameter="="
 					Command="{Binding KeyPressCommand}"/>
-			<Button Classes="h1" Content="T"
-					CommandParameter="T"
+			<Button Classes="h1" Content="H"
+					CommandParameter="H"
 					Command="{Binding KeyPressCommand}"/>
 			<Button Classes="h1" Content="Z"
 					CommandParameter="Z"
@@ -111,11 +111,11 @@
 			<Button Classes="h1" Content="Del"
 					CommandParameter="Del"
 					Command="{Binding KeyPressCommand}"/>
-			<Button Classes="h1" Content="Ent"
-					CommandParameter="Ent"
+			<Button Classes="h1" Content="-"
+					CommandParameter="-"
 					Command="{Binding KeyPressCommand}"/>
-			<Button Classes="h1" Content="H"
-					CommandParameter="H"
+			<Button Classes="h1" Content="$"
+					CommandParameter="$"
 					Command="{Binding KeyPressCommand}"/>
 			<Button Classes="h1" Content="F"
 					CommandParameter="F"
