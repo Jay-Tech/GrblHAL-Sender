@@ -461,25 +461,34 @@
 											   DataContext="{Binding SettingsViewModel}"
 											   VerticalAlignment="Stretch"></views:SettingView>
 						</TabItem>
+						<TabItem Padding="8,0"
+								 FontWeight="DemiBold"
+								 HorizontalContentAlignment="Center"
+								 VerticalContentAlignment="Center"
+								 FontSize="{DynamicResource BaseFontSize}" x:Name="ReferenceTab"
+								 Header="Reference">
+							<views:CheatSheetView HorizontalAlignment="Stretch"
+												  DataContext="{Binding CheatSheetViewModel}"
+												  VerticalAlignment="Stretch"/>
+						</TabItem>
 					</TabControl>
 					<!-- END Tab Control -->
 
 					<!-- START Header Macro Button Control -->
-					<Grid RowDefinitions="Auto"
-						  Height="{Binding #HomeTab.Bounds}"
-						  ColumnDefinitions="Auto,*"
+					<Grid ColumnDefinitions="Auto,Auto,*"
 						  HorizontalAlignment="Stretch"
 						  VerticalAlignment="Top">
-						<Label Grid.Column="0"
-							   Margin="350,0,0,0"
+						<!-- Spacer tracks the tab strip width so the macro bar starts
+						     after the last tab instead of overlapping the headers. -->
+						<Border Grid.Column="0" Width="{Binding #ReferenceTab.Bounds.Right}"/>
+						<Label Grid.Column="1"
+							   Margin="25,5,10,0"
 							   Content="MACROS:"
-							   HorizontalAlignment="Right"
 							   VerticalAlignment="Bottom"
-							   HorizontalContentAlignment="Right"
 							   VerticalContentAlignment="Center"
 							   FontSize="{DynamicResource BaseFontSize}"
 							   IsVisible="{Binding MacroViewModel.MacroList.Count }"/>
-						<ItemsRepeater Grid.Column="1" x:Name="MacroRepeater"
+						<ItemsRepeater Grid.Column="2" x:Name="MacroRepeater"
 									   HorizontalAlignment="Left"
 									   VerticalAlignment="Bottom"
 									   ItemsSource="{Binding MacroViewModel.MacroList}"

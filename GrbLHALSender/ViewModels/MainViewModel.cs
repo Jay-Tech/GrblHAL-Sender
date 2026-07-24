@@ -133,6 +133,7 @@ public class MainViewModel : ViewModelBase
     public CommunicationManager CommManager { get; set; }
     public ProbeViewModel ProbeViewModel { get; set; }
     public SurfacingViewModel SurfacingViewModel { get; set; }
+    public CheatSheetViewModel CheatSheetViewModel { get; } = new();
 
 
     public string UnitSystem { get; set; } = "G21";
