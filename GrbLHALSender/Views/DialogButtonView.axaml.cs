@@ -20,12 +20,16 @@ public partial class DialogButtonView : UserControl
     {
         // Unsubscribe from previous ViewModel
         if (_viewModel != null)
+        {
             _viewModel.OpenDialogRequested -= OnOpenDialogRequested;
+            _viewModel.CloseDialogRequested -= OnCloseDialogRequested;
+        }
 
         if (DataContext is DialogViewModel vm)
         {
             _viewModel = vm;
             _viewModel.OpenDialogRequested += OnOpenDialogRequested;
+            _viewModel.CloseDialogRequested += OnCloseDialogRequested;
         }
 
         base.OnDataContextChanged(e);
@@ -111,6 +115,17 @@ public partial class DialogButtonView : UserControl
                 };
                 return (placeholder, 600, 400);
         }
+    }
+
+    private void OnCloseDialogRequested(DialogType dialogType)
+    {
+        var mainView = GetMainView();
+        if (mainView == null) return;
+
+        // CloseHost runs the dialog's onClosed callback, which handles
+        // MarkDialogClosed and any per-dialog cleanup/save side effects.
+        var host = dialogType == DialogType.Console ? mainView.ConsoleHost : mainView.DialogHost;
+        host.CloseHost();
     }
 
     private void OnOpenDialogRequested(DialogType dialogType)

@@ -18,11 +18,15 @@ public class DialogViewModel : ViewModelBase
 {
     /// <summary>
     /// Raised when a dialog should be opened. The View subscribes
-    /// and handles the actual Window creation.
+    /// and shows the content in the matching overlay host.
     /// </summary>
     public event Action<DialogType>? OpenDialogRequested;
 
-    public event Action<DialogType>? BringDialogFrontRequested;
+    /// <summary>
+    /// Raised when an already-open dialog's button is pressed again —
+    /// the buttons toggle, so the View closes the overlay.
+    /// </summary>
+    public event Action<DialogType>? CloseDialogRequested;
 
 
     // Track open dialogs to prevent duplicates
@@ -47,7 +51,7 @@ public class DialogViewModel : ViewModelBase
     {
         if (_openDialogs.Contains(dialogType))
         {
-            BringDialogFrontRequested?.Invoke(dialogType);
+            CloseDialogRequested?.Invoke(dialogType);
             return;
         }
         OpenDialogRequested?.Invoke(dialogType);

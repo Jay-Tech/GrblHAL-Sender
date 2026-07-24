@@ -12,8 +12,8 @@
 	     hosted content automatically. -->
 	<Border Background="#2D2D30"
 	        BorderBrush="#007ACC"
-	        BorderThickness="1"
-	        CornerRadius="6"
+	        BorderThickness="3"
+	        CornerRadius="5"
 	        ClipToBounds="True">
 		<DockPanel>
 			<!-- Title strip doubles as the drag handle, same pattern as the

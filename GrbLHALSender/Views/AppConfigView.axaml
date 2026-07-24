@@ -5,23 +5,23 @@
 			 xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
 			 xmlns:views="clr-namespace:GrbLHALSender.Views"
 			 x:DataType="vm:AppConfigViewModel"
-			 mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="725"
+			 mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="700"
 			 x:Class="GrbLHALSender.Views.AppConfigView">
 
 	<Design.DataContext>
 		vm:AppConfigViewModel
 	</Design.DataContext>
-    <UserControl.Styles>
-        <Style Selector="Label">
-            <Setter Property="FontSize" Value="18"/>
-        </Style>
-        <Style Selector="CheckBox">
-            <Setter Property="FontSize" Value="20"/>
-        </Style>
-        <Style Selector="TextBox">
-            <Setter Property="FontSize" Value="20"/>
-        </Style>
-    </UserControl.Styles>
+	<UserControl.Styles>
+		<Style Selector="Label">
+			<Setter Property="FontSize" Value="18"/>
+		</Style>
+		<Style Selector="CheckBox">
+			<Setter Property="FontSize" Value="20"/>
+		</Style>
+		<Style Selector="TextBox">
+			<Setter Property="FontSize" Value="20"/>
+		</Style>
+	</UserControl.Styles>
 	<Grid RowDefinitions="*,Auto">
 		<TabControl TabStripPlacement="Top">
 
@@ -29,123 +29,128 @@
 			<TabItem Header="APP" FontSize="16" Padding="15,5">
 				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="10">
 					<Grid Grid.Row="0" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*,*,*">
-                        <CheckBox Grid.Row="0" Grid.Column="0"
-                                  Content="Full Screen"
-                                  Margin="20,0,0,0"
-                                  HorizontalContentAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Top"
-                                  ToolTip.Tip="Check to enable Borderless Window"
-                                  IsChecked="{Binding BorderlessWindow}"/>
-                        <CheckBox Grid.Row="0" Grid.Column="1"
-                                  Content="OS+App Shut Down"
-                                  Margin="20,0,0,0"
-                                  HorizontalContentAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Top"
-                                  ToolTip.Tip="Check to Shut Down OS on App Close (Linux only)"
-                                  IsChecked="{Binding ShutDownOs}"/>
-                        <CheckBox Grid.Row="0" Grid.Column="2"
-                                  Content="Metric UI "
-                                  Margin="20,0,0,0"
-                                  HorizontalContentAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Top"
-                                  ToolTip.Tip="Check to enable Metric uncheck for imperial"
-                                  IsChecked="{Binding UseMetric}"/>
-                      
-                        <CheckBox Grid.Row="0" Grid.Column="3"
-                                  Content="Tool Path Progress"
-                                  Margin="0,0,0,0"
-                                  HorizontalContentAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Top"
-                                  ToolTip.Tip="Show cut progress on the 3D toolpath during job execution. Disable to save resources on lower-power devices."
-                                  IsChecked="{Binding EnableCutLines}"/>
-                        <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                  Content="Stream Buffer Ahead"
-                                  Margin="20,8,0,0"
-                                  HorizontalContentAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Top"
-                                  ToolTip.Tip="On (default): pre-fill grblHAL's RX buffer for maximum throughput. Off: send one gcode line at a time and wait for ack — slower, but the highlighted gcode line tracks the machine position more closely."
-                                  IsChecked="{Binding StreamBufferAhead}"/>
-                        <CheckBox Grid.Row="1" Grid.Column="2"
-                                  Content="Turn On AntiAlias"
-                                  Margin="20,0,0,0"
-                                  HorizontalContentAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Top"
-                                  ToolTip.Tip="Turn off AntiAlias for 3d model. Image quality will decrease to save resources on lower-power devices."
-                                  IsChecked="{Binding UseAntiAlias}"/>
-					</Grid>
-                    <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
-                        <Label Grid.Column="0"
-                               HorizontalAlignment="Right"
-                               VerticalAlignment="Center"
-                               HorizontalContentAlignment="Right"
-                               VerticalContentAlignment="Center"
-                               FontSize="18"
-                               Content="Renderer:"/>
-                        <ComboBox Grid.Column="1"
-                                  Width="250"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Center"
-                                  Margin="10,0,0,0"
-                                  FontSize="18"
-                                  ToolTip.Tip="Software uses SkiaSharp (CPU). Hardware uses OpenGL (GPU). Requires save and takes effect immediately."
-                                  ItemsSource="{Binding RendererOptions}"
-                                  SelectedIndex="{Binding RendererIndex}"/>
+						<CheckBox Grid.Row="0" Grid.Column="0"
+								  Content="Full Screen"
+								  Margin="20,0,0,0"
+								  HorizontalContentAlignment="Center"
+								  VerticalContentAlignment="Center"
+								  HorizontalAlignment="Left"
+								  VerticalAlignment="Top"
+								  ToolTip.Tip="Check to enable Borderless Window"
+								  IsChecked="{Binding BorderlessWindow}"/>
+						<CheckBox Grid.Row="0" Grid.Column="1"
+								  Content="OS+App Shut Down"
+								  Margin="20,0,0,0"
+								  HorizontalContentAlignment="Center"
+								  VerticalContentAlignment="Center"
+								  HorizontalAlignment="Left"
+								  VerticalAlignment="Top"
+								  ToolTip.Tip="Check to Shut Down OS on App Close (Linux only)"
+								  IsChecked="{Binding ShutDownOs}"/>
+						<CheckBox Grid.Row="0" Grid.Column="2"
+								  Content="Metric UI "
+								  Margin="20,0,0,0"
+								  HorizontalContentAlignment="Center"
+								  VerticalContentAlignment="Center"
+								  HorizontalAlignment="Left"
+								  VerticalAlignment="Top"
+								  ToolTip.Tip="Check to enable Metric uncheck for imperial"
+								  IsChecked="{Binding UseMetric}"/>
 
-                    </Grid>
-                        <Grid Grid.Row="2" ColumnDefinitions="Auto,*"
-                              Margin="0,10,0,0">
-						<Label Grid.Column="0"
-							   HorizontalAlignment="Right"
-							   VerticalAlignment="Center"
-							   HorizontalContentAlignment="Right"
-							   VerticalContentAlignment="Center"
-							   FontSize="18"
-							   Content="Spindle Image:"/>
-						<TextBox Grid.Column="1"
-								 Width="200"
-								 HorizontalAlignment="Left"
-								 VerticalAlignment="Center"
-								 HorizontalContentAlignment="Left"
-								 VerticalContentAlignment="Center"
-								 Margin="15,0,0,0"
-								 FontSize="18"
-								 ToolTip.Tip="PNG image filename in Config folder (e.g. spindle.png). Leave empty for default procedural drawing."
-								 Text="{Binding SpindleImagePath}"/>
+						<CheckBox Grid.Row="0" Grid.Column="3"
+								  Content="Tool Path Progress"
+								  Margin="0,0,0,0"
+								  HorizontalContentAlignment="Center"
+								  VerticalContentAlignment="Center"
+								  HorizontalAlignment="Left"
+								  VerticalAlignment="Top"
+								  ToolTip.Tip="Show cut progress on the 3D toolpath during job execution. Disable to save resources on lower-power devices."
+								  IsChecked="{Binding EnableCutLines}"/>
+						<CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+								  Content="Stream Buffer Ahead"
+								  Margin="20,8,0,0"
+								  HorizontalContentAlignment="Center"
+								  VerticalContentAlignment="Center"
+								  HorizontalAlignment="Left"
+								  VerticalAlignment="Top"
+								  ToolTip.Tip="On (default): pre-fill grblHAL's RX buffer for maximum throughput. Off: send one gcode line at a time and wait for ack — slower, but the highlighted gcode line tracks the machine position more closely."
+								  IsChecked="{Binding StreamBufferAhead}"/>
+						<CheckBox Grid.Row="1" Grid.Column="2"
+								  Content="Turn On AntiAlias"
+								  Margin="20,0,0,0"
+								  HorizontalContentAlignment="Center"
+								  VerticalContentAlignment="Center"
+								  HorizontalAlignment="Left"
+								  VerticalAlignment="Top"
+								  ToolTip.Tip="Turn off AntiAlias for 3d model. Image quality will decrease to save resources on lower-power devices."
+								  IsChecked="{Binding UseAntiAlias}"/>
+					</Grid>
+					<Grid Grid.Row="1" >
+						<StackPanel Orientation="Horizontal"  Spacing="10"
+                                    Margin="0,10,0,0"
+                                    HorizontalAlignment="Left">
+                            <Label 
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                HorizontalContentAlignment="Right"
+                                VerticalContentAlignment="Center"
+                                FontSize="18"
+                                Content="Poll Rate:"/>
+                            <TextBox 
+                                Width="185"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                HorizontalContentAlignment="Left"
+                                VerticalContentAlignment="Center"
+                                FontSize="18"
+                                ToolTip.Tip="Enter Poll Rate for real time report. Recommend to stay above 100mm"
+                                Text="{Binding PollRate}"/>
+                            <Label
+                                Margin="10,0,0,0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                FontSize="18"
+                                Content="Renderer:"/>
+                            <ComboBox
+                                Width="215"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                FontSize="18"
+                                ToolTip.Tip="Software uses SkiaSharp (CPU). Hardware uses OpenGL (GPU). Requires save and takes effect immediately."
+                                ItemsSource="{Binding RendererOptions}"
+                                SelectedIndex="{Binding RendererIndex}"/>
+                        </StackPanel>
+                        
+					</Grid>
+					<Grid Grid.Row="2" 
+						  Margin="0,10,0,0">
+						<StackPanel Orientation="Horizontal" Spacing="10">
+                            
+                            <Label Margin="0,0,0,0"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   HorizontalContentAlignment="Right"
+                                   VerticalContentAlignment="Center"
+                                   FontSize="18"
+                                   Content="Spdl Img:"/>
+                            <TextBox
+                                     Width="185"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Center"
+                                     HorizontalContentAlignment="Left"
+                                     VerticalContentAlignment="Center"
+                                     FontSize="18"
+                                     ToolTip.Tip="PNG image filename in Config folder (e.g. spindle.png). Leave empty for default procedural drawing."
+                                     Text="{Binding SpindleImagePath}"/>
+                           
+                        </StackPanel>
                        
 					</Grid>
-                    <Grid Grid.Row="3" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
-                        <Label Grid.Column="0"
-                               HorizontalAlignment="Right"
-                               VerticalAlignment="Center"
-                               HorizontalContentAlignment="Right"
-                               VerticalContentAlignment="Center"
-                               FontSize="18"
-                               Content="Poll Rate:"/>
-                        <TextBox Grid.Column="1"
-                                 Width="200"
-                                 HorizontalAlignment="Left"
-                                 VerticalAlignment="Center"
-                                 HorizontalContentAlignment="Left"
-                                 VerticalContentAlignment="Center"
-                                 Margin="60,0,0,0"
-                                 FontSize="18"
-                                 ToolTip.Tip="Enter Poll Rate for real time report.  
-								 Recommend to stay above 100mm"
-                                 Text="{Binding PollRate}"/>
-                    </Grid>
-					<Grid Grid.Row="4" ColumnDefinitions="*,*"  >
+					<Grid Grid.Row="3" ColumnDefinitions="*,*"  >
 						<Border Grid.Column="0" Padding="5,10"
 								Margin="0,10,0,0"
 								BorderBrush="AntiqueWhite"
@@ -379,68 +384,68 @@
 							  Content="Enable Rapid ATC"
 							  FontSize="20"
 							  IsChecked="{Binding IsAtcEnabled}"/>
-					
-						<Label Grid.Row="1" Grid.Column="0" 
-                               IsEnabled="{Binding IsAtcEnabled}"
-							   HorizontalAlignment="Right"
-							   VerticalAlignment="Center"
-							   HorizontalContentAlignment="Right"
-							   VerticalContentAlignment="Center"
-                               Margin="0,10,0,0"
-                               FontSize="20"
-                               Content="Number of Tools:"></Label>
-						<TextBox Grid.Row="1" Grid.Column="1" 
-                                 IsEnabled="{Binding IsAtcEnabled}"
-                                 Width="120" 
-                                 HorizontalAlignment="Left" 
-                                 VerticalAlignment="Center" 
-                                 HorizontalContentAlignment="Left" 
-                                 VerticalContentAlignment="Center" 
-                                 Margin="0,10,0,0"
-                                 FontSize="20"
-                                 Text="{Binding AtcToolCount}"/>
-                        <Label Grid.Row="2" Grid.Column="0" 
-                               IsEnabled="{Binding IsAtcEnabled}"
-                               HorizontalAlignment="Right"
-                               VerticalAlignment="Center"
-                               HorizontalContentAlignment="Right"
-                               VerticalContentAlignment="Center"
-                               Margin="0,10,0,0"
-                               FontSize="20"
-                               Content="TLR Macro:"></Label>
-                        <TextBox Grid.Row="2" Grid.Column="1"  
-                                 IsEnabled="{Binding IsAtcEnabled}"
-                                 Width="120" 
-                                 HorizontalAlignment="Left" 
-                                 VerticalAlignment="Center" 
-                                 HorizontalContentAlignment="Left" 
-                                 VerticalContentAlignment="Center" 
-                                 Margin="0,10,0,0"
-                                 FontSize="20"
-                                 ToolTip.Tip="Example: P231"
-                                 Text="{Binding  TlrMacro}"/>
 
-                        <Label Grid.Row="3" Grid.Column="0"
-                               IsEnabled="{Binding IsAtcEnabled}"
-                               HorizontalAlignment="Right"
-                               VerticalAlignment="Center"
-                               HorizontalContentAlignment="Right"
-                               VerticalContentAlignment="Center"
-                               FontSize="20"
-                               Margin="0,10,0,0"
-                               Content="Unload Macro:"></Label>
-                        <TextBox Grid.Row="3" Grid.Column="1" Width="120" 
-								 IsEnabled="{Binding IsAtcEnabled}"
-                                 HorizontalAlignment="Left" 
-                                 VerticalAlignment="Center" 
-                                 HorizontalContentAlignment="Left" 
-                                 VerticalContentAlignment="Center" 
-								 Margin="0,10,0,0"
-                                 FontSize="20"
-                                 ToolTip.Tip="Example: P221"
-                                 Text="{Binding UnloadMacro}"/>
-                   
-                </Grid>
+					<Label Grid.Row="1" Grid.Column="0"
+						   IsEnabled="{Binding IsAtcEnabled}"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   HorizontalContentAlignment="Right"
+						   VerticalContentAlignment="Center"
+						   Margin="0,10,0,0"
+						   FontSize="20"
+						   Content="Number of Tools:"></Label>
+					<TextBox Grid.Row="1" Grid.Column="1"
+							 IsEnabled="{Binding IsAtcEnabled}"
+							 Width="120"
+							 HorizontalAlignment="Left"
+							 VerticalAlignment="Center"
+							 HorizontalContentAlignment="Left"
+							 VerticalContentAlignment="Center"
+							 Margin="0,10,0,0"
+							 FontSize="20"
+							 Text="{Binding AtcToolCount}"/>
+					<Label Grid.Row="2" Grid.Column="0"
+						   IsEnabled="{Binding IsAtcEnabled}"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   HorizontalContentAlignment="Right"
+						   VerticalContentAlignment="Center"
+						   Margin="0,10,0,0"
+						   FontSize="20"
+						   Content="TLR Macro:"></Label>
+					<TextBox Grid.Row="2" Grid.Column="1"
+							 IsEnabled="{Binding IsAtcEnabled}"
+							 Width="120"
+							 HorizontalAlignment="Left"
+							 VerticalAlignment="Center"
+							 HorizontalContentAlignment="Left"
+							 VerticalContentAlignment="Center"
+							 Margin="0,10,0,0"
+							 FontSize="20"
+							 ToolTip.Tip="Example: P231"
+							 Text="{Binding  TlrMacro}"/>
+
+					<Label Grid.Row="3" Grid.Column="0"
+						   IsEnabled="{Binding IsAtcEnabled}"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   HorizontalContentAlignment="Right"
+						   VerticalContentAlignment="Center"
+						   FontSize="20"
+						   Margin="0,10,0,0"
+						   Content="Unload Macro:"></Label>
+					<TextBox Grid.Row="3" Grid.Column="1" Width="120"
+							 IsEnabled="{Binding IsAtcEnabled}"
+							 HorizontalAlignment="Left"
+							 VerticalAlignment="Center"
+							 HorizontalContentAlignment="Left"
+							 VerticalContentAlignment="Center"
+							 Margin="0,10,0,0"
+							 FontSize="20"
+							 ToolTip.Tip="Example: P221"
+							 Text="{Binding UnloadMacro}"/>
+
+				</Grid>
 			</TabItem>
 			<TabItem Header="Game Pad" FontSize="16" Padding="15,5">
 				<Grid RowDefinitions="Auto,*" Margin="0,10,0,0">
@@ -815,7 +820,7 @@
 					HorizontalContentAlignment="Center"
 					VerticalContentAlignment="Center"
 					HorizontalAlignment="Center"
-                    IsEnabled="{Binding !#SdTabItem.IsSelected}"
+					IsEnabled="{Binding !#SdTabItem.IsSelected}"
 					Command="{Binding CloseCommand }"/>
 		</StackPanel>
 	</Grid>
