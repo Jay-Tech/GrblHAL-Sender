@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             d:DesignWidth="480" d:DesignHeight="595"
+             x:Class="GrbLHALSender.Views.DialogHostView"
+             IsVisible="False">
+
+	<!-- In-window overlay host for tool dialogs (probe, macro, surfacing, config,
+	     console). Replaces the old DialogWindow child windows: no window manager
+	     involved, so positioning works on Wayland, focus never leaves the main
+	     window, and the global virtual-keyboard double-tap handler covers the
+	     hosted content automatically. -->
+	<Border Background="#2D2D30"
+	        BorderBrush="#007ACC"
+	        BorderThickness="1"
+	        CornerRadius="6"
+	        ClipToBounds="True">
+		<DockPanel>
+			<!-- Title strip doubles as the drag handle, same pattern as the
+			     virtual keyboard overlay. -->
+			<Border x:Name="DragHandle"
+			        DockPanel.Dock="Top"
+			        Height="38"
+			        Background="#252528"
+			        Cursor="SizeAll">
+				<Grid ColumnDefinitions="Auto,*,Auto">
+					<Border x:Name="GripBar"
+					        Grid.Column="0"
+					        Width="34" Height="5"
+					        CornerRadius="3"
+					        Background="#666"
+					        Margin="10,0,0,0"
+					        VerticalAlignment="Center"/>
+					<TextBlock x:Name="TitleText"
+					           Grid.Column="1"
+					           Margin="12,0,0,0"
+					           VerticalAlignment="Center"
+					           FontSize="18"
+					           FontWeight="SemiBold"
+					           Foreground="#E4E8EB"/>
+					<Button x:Name="CloseButton"
+					        Grid.Column="2"
+					        Width="44" Height="32"
+					        Margin="0,0,4,0"
+					        Content="✕"
+					        FontSize="16"
+					        Background="Transparent"
+					        BorderThickness="0"
+					        Focusable="False"
+					        HorizontalContentAlignment="Center"
+					        VerticalContentAlignment="Center"/>
+				</Grid>
+			</Border>
+			<ContentControl x:Name="HostContent" Margin="4"/>
+		</DockPanel>
+	</Border>
+</UserControl>

@@ -1,19 +1,15 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
 using GrbLHALSender.ViewModels;
 using System;
-using System.Collections.Generic;
 
 namespace GrbLHALSender.Views;
 
 public partial class DialogButtonView : UserControl
 {
     private DialogViewModel? _viewModel;
-    private readonly Dictionary<DialogType, Window> _openWindows = new();
 
     public DialogButtonView()
     {
@@ -24,31 +20,15 @@ public partial class DialogButtonView : UserControl
     {
         // Unsubscribe from previous ViewModel
         if (_viewModel != null)
-        {
             _viewModel.OpenDialogRequested -= OnOpenDialogRequested;
-            _viewModel.BringDialogFrontRequested -= BringDialogFrontRequested;
-        }
-        
 
         if (DataContext is DialogViewModel vm)
         {
             _viewModel = vm;
             _viewModel.OpenDialogRequested += OnOpenDialogRequested;
-            _viewModel.BringDialogFrontRequested += BringDialogFrontRequested;
         }
 
         base.OnDataContextChanged(e);
-    }
-
-    private void BringDialogFrontRequested(DialogType dialog)
-    {
-        if (_openWindows.TryGetValue(dialog, out var window))
-        {
-            if (window.WindowState == WindowState.Minimized)
-                window.WindowState = WindowState.Normal;
-
-            window.Activate();
-        }
     }
 
     /// <summary>
@@ -110,7 +90,7 @@ public partial class DialogButtonView : UserControl
                 if (surfacingMainVm != null)
                     surfacingView.DataContext = surfacingMainVm.SurfacingViewModel;
                 return (surfacingView, 560, 640);
-           
+
             case DialogType.AppConfig:
                 var appConfigView = new AppConfigView();
                 var appConfigViewVm = GetMainViewModel();
@@ -135,97 +115,49 @@ public partial class DialogButtonView : UserControl
 
     private void OnOpenDialogRequested(DialogType dialogType)
     {
-        var parentWindow = TopLevel.GetTopLevel(this) as Window;
-        if (parentWindow == null) return;
+        var mainView = GetMainView();
+        if (mainView == null) return;
 
         var (content, width, height) = CreateDialogContent(dialogType);
 
-        var dialogWindow = new DialogWindow(
-            title: $"{dialogType}",
-            content: content,
-            width: width,
-            height: height
-        );
+        // Console gets its own host so it can stay open for monitoring while
+        // a tool dialog (probe, macro, ...) is up. Everything else shares the
+        // single-slot host: opening one closes whichever was open.
+        var host = dialogType == DialogType.Console ? mainView.ConsoleHost : mainView.DialogHost;
 
         // Wire up CloseAction for any dialog whose ViewModel implements IDialogCloseable
         if (content.DataContext is IDialogCloseable closeable)
-        {
-            closeable.CloseAction = () => dialogWindow.Close();
-        }
+            closeable.CloseAction = () => host.CloseHost();
 
         // Wire up CloseConsoleAction for Console (DataContext is MainViewModel, not IDialogCloseable)
         if (dialogType == DialogType.Console && content.DataContext is MainViewModel consoleMainVm)
-        {
-            consoleMainVm.CloseConsoleAction = () => dialogWindow.Close();
-        }
+            consoleMainVm.CloseConsoleAction = () => host.CloseHost();
 
-        // Track open/close state
-        _openWindows[dialogType] = dialogWindow;
         _viewModel?.MarkDialogOpened(dialogType);
-        dialogWindow.Closed += (_, _) =>
+
+        host.ShowDialogContent($"{dialogType}", content, width, height, onClosed: () =>
         {
-            _openWindows.Remove(dialogType);
             _viewModel?.MarkDialogClosed(dialogType);
 
             // Clean up state when dialogs close
             if (dialogType == DialogType.Console)
             {
-                var mainVm = GetMainViewModel();
-                if (mainVm != null)
-                    mainVm.ShowConsole = false;
+                var vm = GetMainViewModel();
+                if (vm != null)
+                    vm.ShowConsole = false;
             }
             else if (dialogType == DialogType.Macro)
             {
-                var mainVm = GetMainViewModel();
-                if (mainVm != null)
-                    mainVm.MacroViewModel.DisplayMacroControl = false;
+                var vm = GetMainViewModel();
+                if (vm != null)
+                    vm.MacroViewModel.DisplayMacroControl = false;
             }
             else if (dialogType == DialogType.Probe)
             {
                 // Save probe settings when dialog closes
-                var mainVm = GetMainViewModel();
-                mainVm?.OpenProbeCommand.Execute(null);
+                var vm = GetMainViewModel();
+                vm?.OpenProbeCommand.Execute(null);
             }
-        };
-
-        // Enable virtual keyboard on double-tap for dialog TextBoxes
-        var mainView = GetMainView();
-        if (mainView != null)
-        {
-            dialogWindow.AddHandler(
-                InputElement.DoubleTappedEvent,
-                mainView.OnGlobalDoubleTapped,
-                RoutingStrategies.Bubble,
-                handledEventsToo: true);
-        }
-
-        // Align every dialog's bottom edge with the main window's bottom edge,
-        // using a consistent X offset so all dialogs open at the same location.
-        // PixelPoint is in physical pixels; Bounds/height are in DIPs — multiply
-        // by DesktopScaling to convert. Also scale the X offset to screen width
-        // so the dialog sits in the same relative spot on different resolutions.
-        dialogWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-        var parentPosition = parentWindow.Position;
-        var scaling = parentWindow.DesktopScaling;
-        var parentHeightPx = (int)(parentWindow.Bounds.Height * scaling);
-        var dialogHeightPx = (int)(height * scaling);
-
-        const double referenceScreenWidth = 1920.0;
-        const int baseXOffsetDip = 300;
-        const int bottomMarginDip = 60;
-
-        var screen = parentWindow.Screens?.ScreenFromWindow(parentWindow);
-        var screenWidthPx = screen?.Bounds.Width ?? (int)(referenceScreenWidth * scaling);
-        var widthRatio = screenWidthPx / (referenceScreenWidth * scaling);
-        var xOffsetPx = (int)(baseXOffsetDip * scaling * widthRatio);
-        var bottomMarginPx = (int)(bottomMarginDip * scaling);
-
-        dialogWindow.Position = new PixelPoint(
-            parentPosition.X + xOffsetPx,
-            parentPosition.Y + parentHeightPx - dialogHeightPx - bottomMarginPx
-        );
-
-        // Show non-modal, owned by parent window
-        dialogWindow.Show(parentWindow);
+        });
     }
 }

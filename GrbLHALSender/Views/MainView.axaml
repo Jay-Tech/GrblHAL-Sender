@@ -1030,6 +1030,25 @@
 		</Grid>
 		<!--END Content Grid -->
 
+		<!-- Dialog overlays. Same reasoning as the keyboard below: in-window
+		     panels instead of child OS windows, so positioning works on
+		     Wayland and focus never leaves the main window.
+		     DialogHost is single-slot (probe/macro/surfacing/config replace
+		     each other); ConsoleHost is independent so the console can stay
+		     open for monitoring while a tool dialog is up. -->
+		<views:DialogHostView x:Name="DialogHost"
+							  Grid.Row="0" Grid.RowSpan="2"
+							  HorizontalAlignment="Left"
+							  VerticalAlignment="Bottom"
+							  Margin="300,0,0,60"
+							  ZIndex="900"/>
+		<views:DialogHostView x:Name="ConsoleHost"
+							  Grid.Row="0" Grid.RowSpan="2"
+							  HorizontalAlignment="Right"
+							  VerticalAlignment="Bottom"
+							  Margin="0,0,15,60"
+							  ZIndex="890"/>
+
 		<!-- Virtual keyboard overlay. Lives INSIDE the main window (not a
 		     separate OS window) so the window manager is never involved:
 		     no activation dance, no focus loss on close, and drag is a

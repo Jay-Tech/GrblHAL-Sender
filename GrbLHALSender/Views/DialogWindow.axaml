@@ -1,8 +1,0 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="GrbLHALSender.Views.DialogWindow"
-        WindowStartupLocation="CenterOwner"
-        CanResize="True"
-        MinWidth="400" MinHeight="260">
-    <ContentPresenter x:Name="DialogContent" />
-</Window>
