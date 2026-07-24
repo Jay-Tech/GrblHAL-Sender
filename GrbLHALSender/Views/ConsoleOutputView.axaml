@@ -50,9 +50,17 @@
                      Foreground="#E8E8E8"
                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
                      ScrollViewer.VerticalScrollBarVisibility="Auto">
-                <!--<Interaction.Behaviors>
-                    <behaviors:ScrollToEndBehavior />
-                </Interaction.Behaviors>-->
+                <!-- Non-virtualized panel: the default VirtualizingStackPanel
+                     corrupts its realized containers under streaming appends
+                     with variable-width lines + per-tick scroll-to-selected
+                     (blank rows, overlapping text, bottom-up fill). The console
+                     is capped at 500 lines, so a plain StackPanel is cheap. -->
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <SelectableTextBlock Text="{Binding}"

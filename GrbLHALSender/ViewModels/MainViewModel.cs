@@ -108,6 +108,11 @@ public class MainViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _consoleOutput, value);
     }
 
+    // Must exceed the largest multi-line response the console can receive in
+    // one command — $$ / $ES on grblHAL return 200+ lines. The console ListBox
+    // is non-virtualized, so this cap also bounds its layout cost.
+    private const int MaxConsoleLines = 500;
+
     public ObservableCollection<double> JogRateList
     {
         get => _jogRateList;
@@ -919,8 +924,11 @@ public class MainViewModel : ViewModelBase
             if (ShowRtCommands && rawState != null)
                 ConsoleOutput.Add(rawState.RawRt);
 
-            if (ConsoleOutput.Count > 200)
-                ConsoleOutput.Clear();
+            // Trim oldest lines instead of clearing: a full wipe ate multi-line
+            // responses ($$, $ES) the moment they pushed the count over the cap,
+            // leaving only the trailing "ok" visible in the console.
+            while (ConsoleOutput.Count > MaxConsoleLines)
+                ConsoleOutput.RemoveAt(0);
             ConsoleOutputIndex = ConsoleOutput.Count - 1;
         }
         else
