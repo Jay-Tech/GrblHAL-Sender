@@ -7,6 +7,7 @@ using Avalonia.Rendering;
 using Avalonia.Threading;
 using GrbLHALSender.Gcode;
 using GrbLHALSender.Settings;
+using GrbLHALSender.Theming;
 using GrbLHALSender.Views.GcodeRenderControl;
 using Silk.NET.OpenGLES;
 using System;
@@ -555,7 +556,10 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
                 // Bind render target, set viewport, and clear
                 _gl.BindFramebuffer(FramebufferTarget.Framebuffer, renderFbo);
                 _gl.Viewport(0, 0, (uint)pixelW, (uint)pixelH);
-                _gl.ClearColor(25f / 255f, 25f / 255f, 30f / 255f, 1.0f);
+                // Read at draw time so a theme change is picked up on the next frame
+                // without any invalidation plumbing.
+                var bg = ThemeService.Current.ViewportBackground;
+                _gl.ClearColor(bg.R / 255f, bg.G / 255f, bg.B / 255f, 1.0f);
                 _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
                 // Build MVP

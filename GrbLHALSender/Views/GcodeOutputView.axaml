@@ -11,23 +11,18 @@
 		<viewModels:JobViewModel/>
 	</Design.DataContext>
 
-	<UserControl.Resources>
-		<FontFamily x:Key="ConsoleFont">Cascadia Mono,Consolas,Menlo,DejaVu Sans Mono,monospace</FontFamily>
-	</UserControl.Resources>
-
-	<Border HorizontalAlignment="Right" VerticalAlignment="Stretch"
-			Background="{StaticResource DarkReduceBrushAlpha}"
-			BorderBrush="#33FFFFFF" BorderThickness="1"
-			CornerRadius="4" Margin="0,60,5,75"
+	<Border Classes="overlayPanel"
+			HorizontalAlignment="Right" VerticalAlignment="Stretch"
+			Margin="0,60,5,75"
 			Padding="2"
 			MaxWidth="420" MinWidth="350">
 		<ae:TextEditor x:Name="GCodeEditor"
 					   IsReadOnly="True"
 					   ShowLineNumbers="False"
-					   FontFamily="{StaticResource ConsoleFont}"
+					   FontFamily="{DynamicResource MonoFontFamily}"
 					   FontSize="14"
 					   Background="Transparent"
-					   Foreground="#FFE8E8E8"
+					   Foreground="{DynamicResource TextPrimaryBrush}"
 					   HorizontalScrollBarVisibility="Auto"
 					   VerticalScrollBarVisibility="Auto" />
 	</Border>

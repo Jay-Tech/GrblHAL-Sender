@@ -6,13 +6,13 @@
              mc:Ignorable="d" d:DesignWidth="770" d:DesignHeight="280"
              x:Class="GrbLHALSender.Views.VirtualKeyboardView"
              x:DataType="vm:VirtualKeyboardViewModel"
-             Background="#2D2D30">
+             Background="{DynamicResource SurfaceBrush}">
 
     <UserControl.Styles>
         <Style Selector="Button.kb">
-            <Setter Property="Background" Value="#3E3E42"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#007ACC"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="FontSize" Value="18"/>
@@ -33,23 +33,23 @@
              otherwise repaints background AND wipes the blue border on
              hover and press. -->
         <Style Selector="Button.kb:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#4A4A4E"/>
-            <Setter Property="BorderBrush" Value="#007ACC"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         </Style>
 
         <Style Selector="Button.kb:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#007ACC"/>
-            <Setter Property="BorderBrush" Value="#007ACC"/>
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}"/>
         </Style>
 
         <Style Selector="Button.kb:disabled /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2D2D30"/>
-            <Setter Property="BorderBrush" Value="#555"/>
-            <Setter Property="Foreground" Value="#888"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
         </Style>
     </UserControl.Styles>
 
@@ -57,7 +57,7 @@
         <!-- Drag handle: grab anywhere on this strip to move the keyboard -->
         <Border x:Name="DragHandle" DockPanel.Dock="Top" Height="18"
                 Background="Transparent" Cursor="SizeAll">
-            <Border x:Name="GripBar" Width="90" Height="5" CornerRadius="3" Background="#666"
+            <Border x:Name="GripBar" Classes="grip" Width="90" Height="5" CornerRadius="3"
                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
 
@@ -78,7 +78,7 @@
             <Button Classes="kb" Content="0"  CommandParameter="0"  Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="-"  CommandParameter="-"  Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="+"  CommandParameter="+"  Command="{Binding KeyPressCommand}"/>
-            <Button Classes="kb" Content="&#x2715;" Foreground="#FF6B6B"
+            <Button Classes="kb" Content="&#x2715;" Foreground="{DynamicResource AlertBrush}"
                     Command="{Binding CloseCommand}"/>
         </UniformGrid>
 

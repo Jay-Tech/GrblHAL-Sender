@@ -15,14 +15,11 @@
 	<UserControl.Resources>
 	</UserControl.Resources>
 	<UserControl.Styles>
-		<Style Selector="Button">
+		<!-- Size/spacing that is specific to this button row. Everything else
+		     (height, radius, font size, content centering) comes from .touch. -->
+		<Style Selector="Button.touch">
 			<Setter Property="HorizontalAlignment" Value="Center"/>
-			<Setter Property="VerticalContentAlignment" Value="Center"/>
-			<Setter Property="HorizontalContentAlignment" Value="Center"/>
 			<Setter Property="VerticalAlignment" Value="Center"/>
-			<Setter Property="CornerRadius" Value="6,6,6,6"/>
-			<Setter Property="FontSize" Value="26"/>
-			<Setter Property="Height" Value="45"/>
 			<Setter Property="Width" Value="115"/>
 			<Setter Property="Margin" Value="15,5,15,0"/>
 			<Setter Property="BorderThickness" Value="3"/>
@@ -32,27 +29,27 @@
 		   Opacity=".6"
 		   VerticalAlignment="Stretch"
 		   HorizontalAlignment="Center">
-		<Button Grid.Row="0" Grid.Column="0" BorderBrush="{Binding }"
+		<Button Classes="touch" Grid.Row="0" Grid.Column="0" BorderBrush="{Binding }"
 				Command="{Binding  SelectFilesCommand}"
 				IsEnabled="{Binding !FileLoaded}"
 				Content="File"/>
-		<Button Grid.Row="0"  Grid.Column="1"
+		<Button Classes="touch" Grid.Row="0"  Grid.Column="1"
                 Command="{Binding  CloseFilesCommand}"
                 IsEnabled="{Binding FileLoaded}"
                 Content="Close"/>
-		<Button Grid.Row="0"  Grid.Column="2"
+		<Button Classes="touch" Grid.Row="0"  Grid.Column="2"
                 Content="Stop"
 				IsEnabled="{Binding JobRunning}"
                 Command="{Binding StopJobCommand}"/>
-		<Button Grid.Row="0" Grid.Column="3"
+		<Button Classes="touch" Grid.Row="0" Grid.Column="3"
                 Content="Hold"
                 IsEnabled="{Binding CanHoldJob}"
                 Command="{Binding PauseJobCommand}"/>
-		<Button Grid.Row="0" Grid.Column="4"
+		<Button Classes="touch" Grid.Row="0" Grid.Column="4"
                 Content="Start"
                 IsEnabled="{Binding CanStartJob}"
                 Command="{Binding StartJobCommand}"/>
-		<Button Grid.Row="0" Grid.Column="5"
+		<Button Classes="touch" Grid.Row="0" Grid.Column="5"
                 Content="G-code"
                 Command="{Binding OpenGCodePanel}"
                 IsEnabled="{Binding FileLoaded}"/>

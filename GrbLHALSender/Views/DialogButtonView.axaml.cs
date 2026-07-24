@@ -173,6 +173,13 @@ public partial class DialogButtonView : UserControl
                 var vm = GetMainViewModel();
                 vm?.OpenProbeCommand.Execute(null);
             }
+            else if (dialogType == DialogType.AppConfig)
+            {
+                // The Theme tab previews live, but this dialog only persists via its
+                // Save button — so dismissing it must put the saved colors back.
+                var vm = GetMainViewModel();
+                vm?.AppConfigViewModel.RevertUnsavedTheme();
+            }
         });
     }
 }

@@ -121,17 +121,11 @@
 
         <!-- Buttons -->
         <Grid Grid.Row="5" ColumnDefinitions="*,*,*">
-            <Button Grid.Column="0" Content="Generate" FontSize="18" Height="45"
-                    CornerRadius="6" HorizontalAlignment="Stretch" Margin="4"
-                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+            <Button Classes="touch" Grid.Column="0" Content="Generate" FontSize="18" HorizontalAlignment="Stretch" Margin="4"
                     Command="{Binding GenerateCommand}"/>
-            <Button Grid.Column="1" Content="Save .nc" FontSize="18" Height="45"
-                    CornerRadius="6" HorizontalAlignment="Stretch" Margin="4"
-                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+            <Button Classes="touch" Grid.Column="1" Content="Save .nc" FontSize="18" HorizontalAlignment="Stretch" Margin="4"
                     Command="{Binding SaveCommand}"/>
-            <Button Grid.Column="2" Content="Close" FontSize="18" Height="45"
-                    CornerRadius="6" HorizontalAlignment="Stretch" Margin="4"
-                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+            <Button Classes="touch" Grid.Column="2" Content="Close" FontSize="18" HorizontalAlignment="Stretch" Margin="4"
                     Command="{Binding CloseCommand}"/>
         </Grid>
     </Grid>

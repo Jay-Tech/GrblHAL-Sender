@@ -10,9 +10,10 @@ public sealed class CheatEntry
     public string Description { get; init; } = string.Empty;
     public bool IsHal { get; init; }
     public string? Note { get; init; }
-    // Set by the owning section so the row template can color the code
-    // column without reaching back up the visual tree.
-    public string CodeColor { get; internal set; } = "#E8A02E";
+    // Set by the owning section so the row template can style the code column
+    // without reaching back up the visual tree. A flag rather than a color:
+    // the actual brushes come from the theme, so they follow the user's accent.
+    public bool IsAlarm { get; internal set; }
 }
 
 public sealed class CheatSection
@@ -22,7 +23,6 @@ public sealed class CheatSection
     public string Subtitle { get; }
     public bool IsAlarm { get; }
     public IReadOnlyList<CheatEntry> Entries { get; }
-    public string TitleColor => IsAlarm ? "#E06666" : "#E8A02E";
 
     public CheatSection(string title, string category, string subtitle, bool isAlarm, IReadOnlyList<CheatEntry> entries)
     {
@@ -32,7 +32,7 @@ public sealed class CheatSection
         IsAlarm = isAlarm;
         Entries = entries;
         foreach (var e in entries)
-            e.CodeColor = isAlarm ? "#E06666" : "#E8A02E";
+            e.IsAlarm = isAlarm;
     }
 
     public CheatSection? Filter(string query)

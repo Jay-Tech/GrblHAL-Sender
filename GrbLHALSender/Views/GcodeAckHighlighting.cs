@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
 using AvaloniaEdit.Editing;
+using GrbLHALSender.Theming;
 using System.Globalization;
 
 namespace GrbLHALSender.Views;
@@ -22,12 +23,12 @@ public sealed class AckLineNumberMargin : LineNumberMargin
         set => SetValue(AckedLineIndexProperty, value);
     }
 
-    public IBrush AckedForeground { get; set; } = Brushes.White;
+    public IBrush AckedForeground { get; set; } =
+        new SolidColorBrush(ThemeService.Current.TextPrimary);
 
-    // Dim default so acked-white stands out. Mirrors the muted color the
-    // built-in AvaloniaEdit line-number margin uses against dark backgrounds.
+    // Dim default so the acked lines stand out against the not-yet-sent ones.
     public IBrush DefaultForeground { get; set; } =
-        new SolidColorBrush(Color.FromRgb(0x80, 0x80, 0x80));
+        new SolidColorBrush(ThemeService.Current.TextMuted);
 
     static AckLineNumberMargin()
     {

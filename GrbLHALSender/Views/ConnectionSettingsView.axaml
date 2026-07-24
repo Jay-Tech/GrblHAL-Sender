@@ -5,25 +5,33 @@
              x:DataType="viewModels:ConnectionViewModel"
              Width="300">
 
-  <Border Background="#2D2D30" CornerRadius="6" Padding="12" BorderBrush="#3F3F46" BorderThickness="1">
+  <UserControl.Styles>
+    <!-- Field labels in this popover share one muted style. -->
+    <Style Selector="TextBlock.field">
+      <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+      <Setter Property="FontSize" Value="13"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Border Classes="panel" Padding="12">
     <StackPanel Spacing="10">
 
       <TextBlock Text="Connection Settings" FontSize="16" FontWeight="Bold"
-                 Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                 Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,5"/>
       
       <CheckBox Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" VerticalContentAlignment="Center"
                 HorizontalContentAlignment="Center" Content="Auto Connect"
                 IsChecked="{Binding IsAutoStart}"></CheckBox>
 
       <!-- Connection Type -->
-      <TextBlock Text="Connection Type" Foreground="#CCCCCC" FontSize="13"/>
+      <TextBlock Text="Connection Type" Classes="field"/>
       <ComboBox ItemsSource="{Binding ConnectionTypes}"
                 SelectedIndex="{Binding SelectedConnectionType}"
                 HorizontalAlignment="Stretch" FontSize="14"/>
 
       <!-- Serial Panel (index 0) -->
       <StackPanel Spacing="8" x:Name="SerialPanel">
-        <TextBlock Text="Port" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBlock Text="Port" Classes="field"/>
         <Grid ColumnDefinitions="*,Auto">
           <ComboBox Grid.Column="0" ItemsSource="{Binding AvailablePorts}"
                     SelectedItem="{Binding SerialPort}"
@@ -32,7 +40,7 @@
                   Width="35" Height="32" HorizontalContentAlignment="Center"
                   Command="{Binding RefreshPortsCommand}"/>
         </Grid>
-        <TextBlock Text="Baud Rate" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBlock Text="Baud Rate" Classes="field"/>
         <ComboBox ItemsSource="{Binding BaudRates}"
                   SelectedItem="{Binding BaudRate}"
                   HorizontalAlignment="Stretch" FontSize="14"/>
@@ -40,17 +48,17 @@
        
       <!-- TCP Panel (index 1) -->
       <StackPanel Spacing="8" x:Name="TcpPanel">
-        <TextBlock Text="IP Address" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBlock Text="IP Address" Classes="field"/>
         <TextBox Text="{Binding TcpIpAddress}" FontSize="14"/>
-        <TextBlock Text="Port" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBlock Text="Port" Classes="field"/>
         <TextBox Text="{Binding TcpPort}" FontSize="14"/>
       </StackPanel>
 
       <!-- WebSocket Panel (index 2) -->
       <StackPanel Spacing="8" x:Name="WsPanel">
-        <TextBlock Text="IP Address" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBlock Text="IP Address" Classes="field"/>
         <TextBox Text="{Binding WsIpAddress}" FontSize="14"/>
-        <TextBlock Text="Port" Foreground="#CCCCCC" FontSize="13"/>
+        <TextBlock Text="Port" Classes="field"/>
         <TextBox Text="{Binding WsPort}" FontSize="14"/>
       </StackPanel>
 

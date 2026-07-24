@@ -8,14 +8,13 @@
 	<!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 	<Application.Resources>
 
-		<SolidColorBrush x:Key="DarkReduceBrushAlpha" Color="#59111111"> </SolidColorBrush>
-		<SolidColorBrush x:Key="SmokeWhiteText" Color="#FF111111"> </SolidColorBrush>
-		<SolidColorBrush x:Key="BorderBrushBlue" Color="#007ACC"> </SolidColorBrush>
-		<SolidColorBrush x:Key="AlertBrush" Color="Red" ></SolidColorBrush>
+		<!-- Colors are NOT declared here. ThemeService installs the whole semantic
+		     palette (SurfaceBrush, AccentBrush, TextPrimaryBrush, …) as a merged
+		     dictionary at startup and swaps it whenever the user changes the theme,
+		     which is what makes accent changes apply without a restart.
+		     Only theme-independent values belong in this block. -->
 
-		<Color x:Key="ButtonMainBackGroundColor">#FF505050</Color>
-		<Color x:Key="BorderBrush">#007ACC</Color>
-		<Color x:Key="Alert">Red</Color>
+		<FontFamily x:Key="MonoFontFamily">Cascadia Mono,Consolas,Menlo,DejaVu Sans Mono,monospace</FontFamily>
 
 		<sys:Double x:Key="TinyFontSize">12</sys:Double>
 		<sys:Double x:Key="SmallFontSize">18</sys:Double>
@@ -33,92 +32,53 @@
 		<!-- AvaloniaEdit control styles must be registered here for the TextEditor to render. -->
 		<StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
 
-		<!-- Disable FluentTheme animated transitions on buttons.
-		The default ~200ms color interpolation competes for UI thread time
-		during job execution, causing sluggish hover feedback. -->
-		<Style Selector="Button /template/ ContentPresenter">
-			<Setter Property="Transitions" >
-				<Transitions/>
-			</Setter>
-		</Style>
-
-		<Style Selector="TextBox.h1">
-			<Setter Property="FontSize" Value="20"/>
-			<Setter Property="Background" Value="White"/>
-		</Style>
-
-		<Style Selector="Button.h1">
-			<Setter Property="FontSize" Value="20"/>
-			<!--<Setter Property="Height" Value="58"/>
-			<Setter Property="Width" Value="51"/>-->
-			<Setter Property="Focusable" Value="False"></Setter>
-			<Setter Property="HorizontalAlignment" Value="Stretch"/>
-			<Setter Property="VerticalAlignment" Value="Stretch"/>
-			<Setter Property="HorizontalContentAlignment" Value="Center"/>
-			<Setter Property="VerticalContentAlignment" Value="Center"/>
-			<Setter Property="Margin" Value="1,1"></Setter>
-		</Style>
-
-		<Style Selector="Button.b2">
-			<Setter Property="CornerRadius" Value="10"/>
-			<Setter Property="Height" Value="65"/>
-			<Setter Property="Width" Value="65"/>
-			<Setter Property="BorderThickness" Value="4" ></Setter>
-			<Setter Property="BorderBrush" Value="{DynamicResource BorderBrushBlue}" ></Setter>
-			<Setter Property="Foreground" Value="{DynamicResource BorderBrushBlue}"/>
-
-		</Style>
-		<Style Selector="Button.b2:pointerover /template/ ContentPresenter">
-			<Setter Property="Foreground" Value="{DynamicResource BorderBrushBlue}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource BorderBrushBlue}" ></Setter>
-		</Style>
-
-		<!-- Custom Radio Button styled like button-->
-		<Style Selector="RadioButton.ButtonStyle">
-			<Setter Property="FontSize" Value="{DynamicResource BaseFontSize}" ></Setter>
-			<Setter Property="Template">
-				<ControlTemplate TargetType="RadioButton">
-					<Border
-					Name="ButtonBorder"
-					Background="{DynamicResource ButtonBackground}"
-					BorderBrush="{DynamicResource ThemeAccentBrush}"
-					BorderThickness="4"
-					CornerRadius="4"
-					Padding="5,5">
-						<ContentPresenter
-						Content="{TemplateBinding Content}"
-						HorizontalAlignment="Center"
-						VerticalAlignment="Center"/>
-					</Border>
-
-				</ControlTemplate>
-			</Setter>
-		</Style>
-
-		<Style Selector="RadioButton.ButtonStyle:pointerover /template/ Border#ButtonBorder">
-			<Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}"/>
-		</Style>
-
-		<Style Selector="RadioButton.ButtonStyle:checked /template/ Border#ButtonBorder">
-			<Setter Property="Background" Value="{DynamicResource ButtonBackgroundPressed}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource BorderBrushBlue}"/>
-		</Style>
-
-        <Style Selector="RadioButton.ButtonStyle:disabled /template/ Border#ButtonBorder">
-            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundDisabled}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushDisabled}"/>
-        </Style>
-
 		<FluentTheme DensityStyle="Normal">
 			<FluentTheme.Palettes>
-				<ColorPaletteResources x:Key="Light" Accent="#ff0073cf" AltHigh="White" AltLow="White" AltMedium="White" AltMediumHigh="White" AltMediumLow="White" BaseHigh="Black" BaseLow="#ffcccccc" BaseMedium="#ff898989" BaseMediumHigh="#ff5d5d5d" BaseMediumLow="#ff737373" ChromeAltLow="#ff5d5d5d" ChromeBlackHigh="Black" ChromeBlackLow="#ffcccccc" ChromeBlackMedium="#ff5d5d5d" ChromeBlackMediumLow="#ff898989" ChromeDisabledHigh="#ffcccccc" ChromeDisabledLow="#ff898989" ChromeGray="#ff737373" ChromeHigh="#ffcccccc" ChromeLow="#ffececec" ChromeMedium="#ffe6e6e6" ChromeMediumLow="#ffececec" ChromeWhite="White" ListLow="#ffe6e6e6" ListMedium="#ffcccccc" RegionColor="White" />
-				<ColorPaletteResources x:Key="Dark" Accent="#ff0073cf" AltHigh="#FF2E2E2E" AltLow="#FF2E2E2E" AltMedium="#FF2E2E2E" AltMediumHigh="#FF2E2E2E" AltMediumLow="#FF2E2E2E" BaseHigh="White" BaseLow="#ff505050" BaseMedium="#ffa8a8a8" BaseMediumHigh="#ffbebebe" BaseMediumLow="#ff7c7c7c" ChromeAltLow="#ffbebebe" ChromeBlackHigh="Black" ChromeBlackLow="#ffbebebe" ChromeBlackMedium="Black" ChromeBlackMediumLow="Black" ChromeDisabledHigh="#ff505050" ChromeDisabledLow="#ffa8a8a8" ChromeGray="#ff929292" ChromeHigh="#ff929292" ChromeLow="#ff232323" ChromeMedium="#ff2e2e2e" ChromeMediumLow="#ff454545" ChromeWhite="White" ListLow="#ff2e2e2e" ListMedium="#ff505050" RegionColor="#ff282828" />
+				<!-- Baseline for the Shop Light preset. ThemeService switches
+				     RequestedThemeVariant to Light when a light palette is chosen,
+				     then layers the preset's own control colors over this. -->
+				<ColorPaletteResources x:Key="Light"
+									   Accent="#ff0a6fb8"
+									   RegionColor="#ffeff2f6"
+									   AltHigh="White" AltLow="White" AltMedium="White"
+									   AltMediumHigh="White" AltMediumLow="White"
+									   BaseHigh="#ff1a1f27" BaseLow="#ffc2ccd8" BaseMedium="#ff5a6673"
+									   BaseMediumHigh="#ff3d4854" BaseMediumLow="#ff8592a1"
+									   ChromeAltLow="#ff3d4854" ChromeBlackHigh="Black"
+									   ChromeBlackLow="#ffc2ccd8" ChromeBlackMedium="#ff3d4854"
+									   ChromeBlackMediumLow="#ff5a6673"
+									   ChromeDisabledHigh="#ffc2ccd8" ChromeDisabledLow="#ff8592a1"
+									   ChromeGray="#ff6f7c8a" ChromeHigh="#ffc2ccd8"
+									   ChromeLow="#ffdfe5ed" ChromeMedium="#ffe4e9f0"
+									   ChromeMediumLow="#ffeff2f6" ChromeWhite="White"
+									   ListLow="#ffe4e9f0" ListMedium="#ffc2ccd8" />
+
+				<!-- Slate ramp, matching the Reference tab. This retints every built-in
+				     Fluent control (Button, TextBox, TabControl, ComboBox, ListBox) with
+				     correct hover/pressed/disabled derivations, so no control needs its
+				     own override. The accent below is the *startup* value only —
+				     ThemeService overrides SystemAccentColor* at runtime. -->
+				<ColorPaletteResources x:Key="Dark"
+									   Accent="#ffe8a02e"
+									   RegionColor="#ff16191d"
+									   AltHigh="#ff20252b" AltLow="#ff16191d" AltMedium="#ff1b1f24"
+									   AltMediumHigh="#ff20252b" AltMediumLow="#ff1b1f24"
+									   BaseHigh="#ffe4e8eb" BaseLow="#ff2c3238" BaseMedium="#ff98a2ac"
+									   BaseMediumHigh="#ffc3cad1" BaseMediumLow="#ff6b7681"
+									   ChromeAltLow="#ffc3cad1" ChromeBlackHigh="#ff0e1114"
+									   ChromeBlackLow="#ffc3cad1" ChromeBlackMedium="#ff0e1114"
+									   ChromeBlackMediumLow="#ff0e1114"
+									   ChromeDisabledHigh="#ff2c3238" ChromeDisabledLow="#ff6b7681"
+									   ChromeGray="#ff7d8790" ChromeHigh="#ff7d8790"
+									   ChromeLow="#ff1b1f24" ChromeMedium="#ff20252b"
+									   ChromeMediumLow="#ff262c33" ChromeWhite="#ffe4e8eb"
+									   ListLow="#ff20252b" ListMedium="#ff2c3238" />
 			</FluentTheme.Palettes>
 		</FluentTheme>
 
-
-		<!--<SimpleTheme ></SimpleTheme>-->
-
+		<!-- Shared control classes (.panel, .touch, .card, RadioButton.ButtonStyle …).
+		     Included after FluentTheme so these win over the base control themes. -->
+		<StyleInclude Source="avares://GrbLHALSender/Theming/Controls.axaml" />
 
 	</Application.Styles>
 </Application>

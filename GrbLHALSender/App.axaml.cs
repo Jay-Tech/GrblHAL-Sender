@@ -6,6 +6,7 @@ using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.SdCard;
 using GrbLHALSender.States;
+using GrbLHALSender.Theming;
 using GrbLHALSender.ViewModels;
 using GrbLHALSender.Views;
 using GrbLHALSender.Updates;
@@ -30,6 +31,12 @@ public partial class App : Application
         var collection = new ServiceCollection();
         collection.AddCommonServices();
         var services = collection.BuildServiceProvider();
+
+        // Resolve before MainViewModel: its constructor calls ConfigManager.LoadConfig(),
+        // and ThemeService applies the saved palette off that load event. Constructing it
+        // afterwards would miss the event and leave the app on the startup palette.
+        services.GetRequiredService<ThemeService>();
+
         var vm = services.GetRequiredService<MainViewModel>();
 
 
@@ -57,6 +64,7 @@ public static class ServiceCollectionExtensions
     public static void AddCommonServices(this IServiceCollection collection)
     {
         collection.AddSingleton<ConfigManager>();
+        collection.AddSingleton<ThemeService>();
         collection.AddSingleton<CommunicationManager>();
         collection.AddSingleton<MachineStateService>();
         collection.AddSingleton<GamepadService>();

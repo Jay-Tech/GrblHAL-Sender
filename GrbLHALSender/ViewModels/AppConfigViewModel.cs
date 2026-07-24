@@ -1,6 +1,7 @@
 ﻿using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
+using GrbLHALSender.Theming;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -43,6 +44,10 @@ namespace GrbLHALSender.ViewModels
         private bool _borderlessWindow;
         private bool _streamBufferAhead = true;
         private bool _shutDownOs;
+        private readonly ThemeService _themeService;
+        private int _themePresetIndex;
+        private string _accentColor = string.Empty;
+        private bool _suppressThemePreview;
 
         public AuxOutputViewModel AuxOutputViewModel { get; }
         public bool EnableCutLines
@@ -221,20 +226,64 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _shutDownOs, value);
         }
 
+        // ---------------- Theme ----------------
+
+        /// <summary>Built-in presets, shown in the Theme tab's dropdown.</summary>
+        public IReadOnlyList<ThemePalette> ThemePresetList { get; } = ThemePresets.All;
+
+        public int ThemePresetIndex
+        {
+            get => _themePresetIndex;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _themePresetIndex, value);
+                PreviewTheme();
+            }
+        }
+
+        /// <summary>
+        /// Accent override as "#RRGGBB", or empty for the preset default. Bound to the
+        /// hex box and set by the swatch buttons; every change previews immediately.
+        /// </summary>
+        public string AccentColor
+        {
+            get => _accentColor;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _accentColor, value);
+                this.RaisePropertyChanged(nameof(IsAccentValid));
+                PreviewTheme();
+            }
+        }
+
+        /// <summary>False while the hex box holds something unparseable, so the UI can say so.</summary>
+        public bool IsAccentValid =>
+            string.IsNullOrWhiteSpace(AccentColor) || ThemeService.TryParseColor(AccentColor, out _);
+
+        public IReadOnlyList<AccentSwatch> AccentSwatches { get; } = AccentSwatch.Defaults;
+
+        public ICommand SelectAccentCommand { get; }
+
+        public ICommand ResetAccentCommand { get; }
+
         public Action? CloseAction { get; set; }
 
         public ICommand SaveConfigCommand { get; }
 
         public ICommand CloseCommand { get; }
-        
 
-        public AppConfigViewModel(ConfigManager configManager, 
-            AuxOutputViewModel  auxOutputViewModel)
+
+        public AppConfigViewModel(ConfigManager configManager,
+            AuxOutputViewModel  auxOutputViewModel,
+            ThemeService themeService)
         {
             AuxOutputViewModel = auxOutputViewModel;
             _configManager = configManager;
+            _themeService = themeService;
             SaveConfigCommand = ReactiveCommand.Create(Save);
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
+            SelectAccentCommand = ReactiveCommand.Create<string>(hex => AccentColor = hex);
+            ResetAccentCommand = ReactiveCommand.Create(() => AccentColor = string.Empty);
             _configManager.OnConfigLoaded += _configManager_OnConfigLoaded;
          
         }
@@ -270,6 +319,52 @@ namespace GrbLHALSender.ViewModels
             PollRate = _appConfig.PollRate;
             BorderlessWindow = _appConfig.Borderless;
             ShutDownOs = _appConfig.ShutDownOs;
+            LoadTheme(_appConfig.Theme);
+        }
+
+        private void LoadTheme(ThemeConfig theme)
+        {
+            // Seeding the bound properties would otherwise fire a preview per setter
+            // and re-apply the theme that was just loaded.
+            _suppressThemePreview = true;
+            try
+            {
+                var index = ThemePresetList
+                    .Select((p, i) => (p, i))
+                    .FirstOrDefault(x => string.Equals(x.p.Id, theme.Preset, StringComparison.OrdinalIgnoreCase)).i;
+                ThemePresetIndex = index;
+                AccentColor = theme.AccentColor ?? string.Empty;
+            }
+            finally
+            {
+                _suppressThemePreview = false;
+            }
+        }
+
+        /// <summary>Applies the in-progress selection so the user sees it before saving.</summary>
+        private void PreviewTheme()
+        {
+            if (_suppressThemePreview) return;
+            _themeService.Apply(BuildThemeConfig());
+        }
+
+        private ThemeConfig BuildThemeConfig() => new()
+        {
+            Preset = ThemePresetList[Math.Clamp(ThemePresetIndex, 0, ThemePresetList.Count - 1)].Id,
+            // Blank or malformed input means "use the preset accent" rather than a broken color.
+            AccentColor = ThemeService.TryParseColor(AccentColor, out _) ? AccentColor : null,
+        };
+
+        /// <summary>
+        /// Drops an unsaved live preview and restores the persisted theme. Called when the
+        /// config dialog is dismissed without saving, so closing can't leave the app
+        /// wearing colors that aren't on disk.
+        /// </summary>
+        public void RevertUnsavedTheme()
+        {
+            if (_appConfig == null) return;
+            _themeService.Apply(_appConfig.Theme);
+            LoadTheme(_appConfig.Theme);
         }
 
         public void Save()
@@ -303,6 +398,9 @@ namespace GrbLHALSender.ViewModels
             _appConfig.PollRate = PollRate;
             _appConfig.Borderless = BorderlessWindow;
             _appConfig.ShutDownOs = ShutDownOs;
+            _appConfig.Theme = BuildThemeConfig();
+            // SaveConfig raises OnConfigSaved, which ThemeService listens to — the
+            // saved palette is applied from there, no explicit Apply needed.
             _configManager.SaveConfig();
         }
         private static readonly (string Name, string Display)[] AllButtons =

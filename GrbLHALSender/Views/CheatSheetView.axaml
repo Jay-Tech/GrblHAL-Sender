@@ -13,28 +13,40 @@
 			<Setter Property="Height" Value="42"/>
 			<Setter Property="MinWidth" Value="110"/>
 		</Style>
+
+		<!-- Section titles and code labels take the accent; alarm sections stay on
+		     the alert color, since "this is an alarm" is information the accent
+		     shouldn't be allowed to erase. DynamicResource (not a converter) so
+		     changing the accent repaints the list without rebuilding it. -->
+		<Style Selector="TextBlock.entryCode">
+			<Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+		</Style>
+		<Style Selector="TextBlock.entryCode.alarm">
+			<Setter Property="Foreground" Value="{DynamicResource AlertBrush}"/>
+		</Style>
 	</UserControl.Styles>
 
-	<Grid RowDefinitions="Auto,*" Background="#16191D">
+	<Grid RowDefinitions="Auto,*" Background="{DynamicResource AppBackgroundBrush}">
 
 		<!-- Filter bar -->
-		<Border Grid.Row="0" Background="#20252B" BorderBrush="#2C3238" BorderThickness="0,0,0,2" Padding="10,8">
+		<Border Grid.Row="0"
+		        Background="{DynamicResource SurfaceBrush}"
+		        BorderBrush="{DynamicResource PanelBorderBrush}"
+		        BorderThickness="0,0,0,2" Padding="10,8">
 			<Grid ColumnDefinitions="*,Auto,Auto" >
 				<TextBox Grid.Column="0"
 				         Text="{Binding FilterText, Mode=TwoWay}"
 				         Watermark="Filter… e.g. G38, probe, homing, alarm 9"
 				         FontSize="20"
-				         FontFamily="Consolas,Cascadia Mono,DejaVu Sans Mono,monospace"
+				         FontFamily="{DynamicResource MonoFontFamily}"
 				         Height="45"
 				         VerticalContentAlignment="Center"
 				         Margin="0,0,10,0"/>
 				<Button Grid.Column="1"
+				        Classes="touch"
 				        Content="Clear"
-				        Height="45"
-				        FontSize="18"
+				        Width="110"
 				        Margin="0,0,15,0"
-				        VerticalContentAlignment="Center"
-				        HorizontalContentAlignment="Center"
 				        Command="{Binding ClearFilterCommand}"/>
 				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
 					<RadioButton Classes="ButtonStyle cat" GroupName="CheatCat" IsChecked="True"
@@ -60,49 +72,48 @@
 					<DataTemplate x:DataType="data:CheatSection">
 						<StackPanel Margin="0,18,0,0">
 							<TextBlock Text="{Binding Title}"
-							           Foreground="{Binding TitleColor}"
-							           FontSize="19"
-							           FontWeight="Bold"
-							           LetterSpacing="1.5"/>
+							           Classes="sectionTitle entryCode"
+							           Classes.alarm="{Binding IsAlarm}"
+							           FontSize="19"/>
 							<TextBlock Text="{Binding Subtitle}"
-							           Foreground="#98A2AC"
+							           Classes="muted"
 							           FontSize="15"
 							           TextWrapping="Wrap"
 							           Margin="0,2,0,8"/>
-							<Border Background="#20252B" BorderBrush="#2C3238" BorderThickness="1" CornerRadius="6" Padding="0,4">
+							<Border Classes="panel" Padding="0,4">
 								<ItemsControl ItemsSource="{Binding Entries}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate x:DataType="data:CheatEntry">
-											<Border BorderBrush="#2C3238" BorderThickness="0,0,0,1" Padding="14,8">
+											<Border Classes="row" Padding="14,8">
 												<Grid ColumnDefinitions="160,*,Auto">
 													<TextBlock Grid.Column="0"
+													           Classes="code entryCode"
+													           Classes.alarm="{Binding IsAlarm}"
 													           Text="{Binding Code}"
-													           Foreground="{Binding CodeColor}"
-													           FontFamily="Consolas,Cascadia Mono,DejaVu Sans Mono,monospace"
 													           FontSize="19"
 													           FontWeight="SemiBold"
 													           VerticalAlignment="Top"/>
 													<StackPanel Grid.Column="1">
 														<TextBlock Text="{Binding Description}"
-														           Foreground="#E4E8EB"
+														           Foreground="{DynamicResource TextPrimaryBrush}"
 														           FontSize="17"
 														           TextWrapping="Wrap"/>
 														<TextBlock Text="{Binding Note}"
-														           Foreground="#98A2AC"
+														           Classes="muted"
 														           FontSize="14"
 														           TextWrapping="Wrap"
 														           Margin="0,2,0,0"
 														           IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 													</StackPanel>
 													<Border Grid.Column="2"
-													        Background="#33290F"
+													        Background="{DynamicResource AccentSoftBrush}"
 													        CornerRadius="3"
 													        Padding="6,2"
 													        Margin="10,0,0,0"
 													        VerticalAlignment="Top"
 													        IsVisible="{Binding IsHal}">
 														<TextBlock Text="HAL"
-														           Foreground="#E8A02E"
+														           Foreground="{DynamicResource AccentBrush}"
 														           FontSize="12"
 														           FontWeight="Bold"/>
 													</Border>

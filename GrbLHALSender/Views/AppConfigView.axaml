@@ -3,6 +3,7 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
+			 xmlns:theming="clr-namespace:GrbLHALSender.Theming"
 			 xmlns:views="clr-namespace:GrbLHALSender.Views"
 			 x:DataType="vm:AppConfigViewModel"
 			 mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="700"
@@ -374,6 +375,119 @@
 				</Grid>
 
 			</TabItem>
+
+			<!-- Theme Tab -->
+			<TabItem Header="Theme" FontSize="16" Padding="15,5">
+				<ScrollViewer>
+					<StackPanel Margin="15" Spacing="14">
+
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<Label Content="Preset:" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
+							<ComboBox Width="240"
+									  ItemsSource="{Binding ThemePresetList}"
+									  SelectedIndex="{Binding ThemePresetIndex}"
+									  VerticalAlignment="Center"
+									  ToolTip.Tip="Base color scheme. The accent below is applied on top of it.">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding DisplayName}"/>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+						</StackPanel>
+
+						<TextBlock Text="Accent color"
+								   FontSize="18"
+								   FontWeight="SemiBold"
+								   Margin="0,6,0,0"/>
+						<TextBlock Classes="muted"
+								   FontSize="14"
+								   TextWrapping="Wrap"
+								   Text="Used for borders, active states, the selected tab and signal indicators. Changes preview immediately; press Save to keep them."/>
+
+						<!-- Swatch grid. Deliberately large targets — this is driven by
+						     finger on a shop-floor touchscreen, not a mouse. -->
+						<ItemsControl ItemsSource="{Binding AccentSwatches}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal"/>
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="theming:AccentSwatch">
+									<!-- The color lives on the Border, not the Button: the Fluent
+									     theme repaints a Button's own background on :pointerover
+									     and :pressed, which would hide the swatch color exactly
+									     when the user taps it (and stick there after a touch). -->
+									<Border Width="64" Height="64"
+											Margin="4"
+											CornerRadius="6"
+											BorderThickness="2"
+											BorderBrush="{DynamicResource PanelBorderBrush}"
+											Background="{Binding Brush}">
+										<Button Classes="swatch"
+												HorizontalAlignment="Stretch"
+												VerticalAlignment="Stretch"
+												Background="Transparent"
+												BorderThickness="0"
+												Padding="0"
+												ToolTip.Tip="{Binding Name}"
+												CommandParameter="{Binding Hex}"
+												Command="{Binding $parent[TabItem].((vm:AppConfigViewModel)DataContext).SelectAccentCommand}"/>
+									</Border>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<StackPanel Orientation="Horizontal" Spacing="10">
+							<Label Content="Hex:" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
+							<TextBox Width="180"
+									 Text="{Binding AccentColor, Mode=TwoWay}"
+									 Watermark="preset default"
+									 VerticalContentAlignment="Center"
+									 ToolTip.Tip="Enter #RRGGBB, or leave blank to use the preset's own accent. Double-tap for the on-screen keyboard."/>
+							<Border Width="46" Height="34"
+									CornerRadius="5"
+									BorderThickness="2"
+									BorderBrush="{DynamicResource PanelBorderBrush}"
+									Background="{DynamicResource AccentBrush}"
+									VerticalAlignment="Center"
+									ToolTip.Tip="Current accent"/>
+							<Button Content="Reset"
+									Classes="touch-sm"
+									Width="110"
+									Command="{Binding ResetAccentCommand}"/>
+							<TextBlock Text="Not a valid color"
+									   Foreground="{DynamicResource AlertBrush}"
+									   FontSize="14"
+									   VerticalAlignment="Center"
+									   IsVisible="{Binding !IsAccentValid}"/>
+						</StackPanel>
+
+						<!-- Live sample so the effect is visible without closing the dialog. -->
+						<Border Classes="panel" Padding="14" Margin="0,8,0,0">
+							<StackPanel Spacing="10">
+								<TextBlock Text="Preview" Classes="sectionTitle" FontSize="15"/>
+								<StackPanel Orientation="Horizontal" Spacing="10">
+									<Button Content="Normal" Classes="touch-sm" Width="120"/>
+									<Button Content="Primary" Classes="touch-sm accent" Width="120"/>
+									<Button Content="Alarm" Classes="touch-sm danger" Width="120"/>
+									<Border Width="30" Height="30" CornerRadius="30"
+											Background="{DynamicResource AlertBrush}"
+											VerticalAlignment="Center"
+											ToolTip.Tip="Triggered signal LED"/>
+								</StackPanel>
+								<TextBlock Text="Primary text on a panel surface"
+										   Foreground="{DynamicResource TextPrimaryBrush}"
+										   FontSize="15"/>
+								<TextBlock Text="Muted secondary text" Classes="muted" FontSize="15"/>
+							</StackPanel>
+						</Border>
+
+					</StackPanel>
+				</ScrollViewer>
+			</TabItem>
+
 			<TabItem Header="R-ATC" FontSize="16" Padding="15,5">
 				<Grid RowDefinitions="Auto, Auto, Auto,Auto,*" ColumnDefinitions="*,*">
 					<CheckBox Margin="0,10,0,20" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2"
@@ -688,7 +802,7 @@
 					</Grid>
 					<TextBlock Grid.Row="2"
 							   Text="Changes require app restart. Access from LAN: http://&lt;this-pc-ip&gt;:port"
-							   Foreground="#888"
+							   Foreground="{DynamicResource TextMutedBrush}"
 							   FontSize="14"
 							   TextWrapping="Wrap"
 							   HorizontalAlignment="Center"
@@ -741,13 +855,13 @@
 							<!-- Column headers -->
 							<Grid Grid.Row="1" ColumnDefinitions="120,120,120,80,Auto" Margin="0,0,0,3">
 								<Label Grid.Column="0" Content="Name" FontSize="14"
-									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
 								<Label Grid.Column="1" Content="On Cmd" FontSize="14"
-									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
 								<Label Grid.Column="2" Content="Off Cmd" FontSize="14"
-									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
 								<Label Grid.Column="3" Content="State" FontSize="14"
-									   HorizontalContentAlignment="Left" Foreground="#AAA"/>
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
 							</Grid>
 							<ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
 								<ItemsControl ItemsSource="{Binding AuxOutputViewModel.AuxOutputItems}">
@@ -763,19 +877,19 @@
 												<Label Grid.Column="1"
 													   Content="{Binding OnCommand}"
 													   FontSize="14"
-													   Foreground="#888"
+													   Foreground="{DynamicResource TextMutedBrush}"
 													   VerticalAlignment="Center"
 													   HorizontalContentAlignment="Left"/>
 												<Label Grid.Column="2"
 													   Content="{Binding OffCommand}"
 													   FontSize="14"
-													   Foreground="#888"
+													   Foreground="{DynamicResource TextMutedBrush}"
 													   VerticalAlignment="Center"
 													   HorizontalContentAlignment="Left"/>
 												<Label Grid.Column="3"
 													   Content="{Binding StateKey}"
 													   FontSize="14"
-													   Foreground="#888"
+													   Foreground="{DynamicResource TextMutedBrush}"
 													   VerticalAlignment="Center"
 													   HorizontalContentAlignment="Left"/>
 												<Button Grid.Column="4"

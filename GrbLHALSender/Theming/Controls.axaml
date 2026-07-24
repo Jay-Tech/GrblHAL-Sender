@@ -1,0 +1,218 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!-- Shared control styling. Everything here paints from the semantic keys
+	     ThemeService installs, so a theme or accent change repaints the whole app
+	     without touching a single view. -->
+
+	<!-- Disable FluentTheme animated transitions on buttons.
+	     The default ~200ms color interpolation competes for UI thread time
+	     during job execution, causing sluggish hover feedback. -->
+	<Style Selector="Button /template/ ContentPresenter">
+		<Setter Property="Transitions">
+			<Transitions/>
+		</Setter>
+	</Style>
+
+	<!-- ===================== Surfaces ===================== -->
+
+	<!-- Standard panel: lifted surface, hairline border, matching radius.
+	     Replaces the ad-hoc "#2D2D30 + #3F3F46 + CornerRadius 6" repeated in views. -->
+	<Style Selector="Border.panel">
+		<Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="CornerRadius" Value="6"/>
+	</Style>
+
+	<!-- Panel floating over the 3D viewport: same chrome, translucent fill so the
+	     toolpath stays faintly visible behind it. -->
+	<Style Selector="Border.overlayPanel">
+		<Setter Property="Background" Value="{DynamicResource OverlayScrimBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="CornerRadius" Value="6"/>
+	</Style>
+
+	<!-- Inner grouping inside a panel — one step flatter than .panel. -->
+	<Style Selector="Border.card">
+		<Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="CornerRadius" Value="4"/>
+	</Style>
+
+	<!-- Hairline row separator inside a list-style card. -->
+	<Style Selector="Border.row">
+		<Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}"/>
+		<Setter Property="BorderThickness" Value="0,0,0,1"/>
+	</Style>
+
+	<!-- Drag grip on the movable overlays (virtual keyboard, dialog host).
+	     The armed state is a style class rather than a brush assigned from
+	     code-behind, so it keeps following the theme after an accent change. -->
+	<Style Selector="Border.grip">
+		<Setter Property="Background" Value="{DynamicResource GripIdleBrush}"/>
+	</Style>
+	<Style Selector="Border.grip.dragging">
+		<Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+	</Style>
+
+	<!-- ===================== Text ===================== -->
+
+	<Style Selector="TextBlock.muted">
+		<Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+	</Style>
+
+	<Style Selector="TextBlock.code">
+		<Setter Property="FontFamily" Value="{DynamicResource MonoFontFamily}"/>
+	</Style>
+
+	<Style Selector="TextBlock.sectionTitle">
+		<Setter Property="FontWeight" Value="Bold"/>
+		<Setter Property="LetterSpacing" Value="1.5"/>
+	</Style>
+
+	<!-- ===================== Buttons ===================== -->
+
+	<!-- The app-wide touch target. Replaces the Height/CornerRadius/alignment/FontSize
+	     block that was repeated on nearly every button in MainView. -->
+	<Style Selector="Button.touch">
+		<Setter Property="Height" Value="45"/>
+		<Setter Property="CornerRadius" Value="6"/>
+		<Setter Property="FontSize" Value="{DynamicResource BaseFontSize}"/>
+		<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="HorizontalAlignment" Value="Stretch"/>
+	</Style>
+
+	<!-- Compact variant for dialog/console button rows. -->
+	<Style Selector="Button.touch-sm">
+		<Setter Property="Height" Value="36"/>
+		<Setter Property="CornerRadius" Value="5"/>
+		<Setter Property="FontSize" Value="{DynamicResource SmallFontSize}"/>
+		<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="HorizontalAlignment" Value="Stretch"/>
+	</Style>
+
+	<!-- Destructive / attention actions (alarm, stop). The foreground is the
+	     contrast-picked companion to the fill, not a fixed light color. -->
+	<Style Selector="Button.danger">
+		<Setter Property="Background" Value="{DynamicResource AlertBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AlertBrush}"/>
+		<Setter Property="Foreground" Value="{DynamicResource AlertForegroundBrush}"/>
+	</Style>
+	<Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource AlertBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AlertBrush}"/>
+		<Setter Property="Foreground" Value="{DynamicResource AlertForegroundBrush}"/>
+	</Style>
+
+	<!-- Primary action. -->
+	<Style Selector="Button.accent">
+		<Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+		<Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}"/>
+	</Style>
+	<Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}"/>
+		<Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}"/>
+	</Style>
+	<Style Selector="Button.accent:pressed /template/ ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource AccentPressedBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentPressedBrush}"/>
+		<Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}"/>
+	</Style>
+
+	<!-- Fully transparent hit target laid over a colored Border (accent swatches).
+	     All three states are pinned to Transparent so the Fluent theme can never
+	     paint over the color underneath. -->
+	<Style Selector="Button.swatch /template/ ContentPresenter">
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="BorderThickness" Value="0"/>
+	</Style>
+	<Style Selector="Button.swatch:pointerover /template/ ContentPresenter">
+		<Setter Property="Background" Value="Transparent"/>
+	</Style>
+	<Style Selector="Button.swatch:pressed /template/ ContentPresenter">
+		<Setter Property="Background" Value="Transparent"/>
+	</Style>
+
+	<Style Selector="Button.h1">
+		<Setter Property="FontSize" Value="20"/>
+		<Setter Property="Focusable" Value="False"/>
+		<Setter Property="HorizontalAlignment" Value="Stretch"/>
+		<Setter Property="VerticalAlignment" Value="Stretch"/>
+		<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="Margin" Value="1,1"/>
+	</Style>
+
+	<!-- Square outlined icon button (keypad style). -->
+	<Style Selector="Button.b2">
+		<Setter Property="CornerRadius" Value="10"/>
+		<Setter Property="Height" Value="65"/>
+		<Setter Property="Width" Value="65"/>
+		<Setter Property="BorderThickness" Value="4"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+		<Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+	</Style>
+	<Style Selector="Button.b2:pointerover /template/ ContentPresenter">
+		<Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+	</Style>
+
+	<!-- ===================== Radio-as-button ===================== -->
+
+	<Style Selector="RadioButton.ButtonStyle">
+		<Setter Property="FontSize" Value="{DynamicResource BaseFontSize}"/>
+		<Setter Property="Template">
+			<ControlTemplate TargetType="RadioButton">
+				<Border Name="ButtonBorder"
+				        Background="{DynamicResource ButtonBackground}"
+				        BorderBrush="{DynamicResource PanelBorderBrush}"
+				        BorderThickness="{TemplateBinding BorderThickness}"
+				        CornerRadius="{TemplateBinding CornerRadius}"
+				        Padding="5,5">
+					<ContentPresenter Content="{TemplateBinding Content}"
+					                  HorizontalAlignment="Center"
+					                  VerticalAlignment="Center"/>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+		<Setter Property="BorderThickness" Value="2"/>
+		<Setter Property="CornerRadius" Value="6"/>
+	</Style>
+
+	<Style Selector="RadioButton.ButtonStyle:pointerover /template/ Border#ButtonBorder">
+		<Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}"/>
+	</Style>
+
+	<Style Selector="RadioButton.ButtonStyle:checked /template/ Border#ButtonBorder">
+		<Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+	</Style>
+
+	<Style Selector="RadioButton.ButtonStyle:disabled /template/ Border#ButtonBorder">
+		<Setter Property="Background" Value="{DynamicResource ButtonBackgroundDisabled}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushDisabled}"/>
+	</Style>
+
+	<!-- Tab strip colors (selected pipe, header fills) are driven by the Fluent
+	     TabItemHeader* keys that ThemeService overrides — see ThemeService.Build.
+	     Overriding those documented keys is safer than restyling template parts. -->
+
+	<!-- ===================== Inputs ===================== -->
+
+	<Style Selector="TextBox.h1">
+		<Setter Property="FontSize" Value="20"/>
+	</Style>
+
+	<Style Selector="TextBox.code">
+		<Setter Property="FontFamily" Value="{DynamicResource MonoFontFamily}"/>
+	</Style>
+
+</Styles>

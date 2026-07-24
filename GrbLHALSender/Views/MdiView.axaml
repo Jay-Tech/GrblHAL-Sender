@@ -29,12 +29,8 @@
                     Text="{Binding MdiText}">
 		</TextBox>
 
-		<Button Grid.Row="2"  CornerRadius="3" 
-                FontSize="{DynamicResource BaseFontSize}" 
-                Content="Send"  
-                Height="45"
-				HorizontalContentAlignment="Center"
-				VerticalContentAlignment="Center"
+		<Button Classes="touch" Grid.Row="2"  CornerRadius="3" 
+                Content="Send"
 				Command="{Binding MdiTextCommand}" 
                 Margin="0,5"
 				CommandParameter="{Binding MdiText}"

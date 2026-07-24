@@ -38,7 +38,7 @@ public partial class VirtualKeyboardView : UserControl
             _dragStart = e.GetPosition(parent);
             _baseX = _translate.X;
             _baseY = _translate.Y;
-            GripBar.Background = Avalonia.Media.Brushes.DodgerBlue; // drag armed
+            GripBar.Classes.Set("dragging", true); // drag armed
             e.Pointer.Capture(DragHandle);
             e.Handled = true;
         };
@@ -81,11 +81,8 @@ public partial class VirtualKeyboardView : UserControl
     private void EndDrag()
     {
         _dragging = false;
-        GripBar.Background = _gripIdleBrush;
+        GripBar.Classes.Set("dragging", false);
     }
-
-    private static readonly Avalonia.Media.IBrush _gripIdleBrush =
-        Avalonia.Media.Brush.Parse("#666");
 
     private static void OnAnyPointerReleased(object? sender, PointerReleasedEventArgs e)
     {

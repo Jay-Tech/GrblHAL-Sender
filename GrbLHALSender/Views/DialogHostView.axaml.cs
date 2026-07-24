@@ -36,7 +36,7 @@ public partial class DialogHostView : UserControl
             _dragStart = e.GetPosition(parent);
             _baseX = _translate.X;
             _baseY = _translate.Y;
-            GripBar.Background = Brushes.DodgerBlue; // drag armed
+            GripBar.Classes.Set("dragging", true); // drag armed
             e.Pointer.Capture(DragHandle);
             e.Handled = true;
         };
@@ -75,12 +75,10 @@ public partial class DialogHostView : UserControl
     private double _baseX;
     private double _baseY;
 
-    private static readonly IBrush GripIdleBrush = Brush.Parse("#666");
-
     private void EndDrag()
     {
         _dragging = false;
-        GripBar.Background = GripIdleBrush;
+        GripBar.Classes.Set("dragging", false);
     }
 
     /// <summary>

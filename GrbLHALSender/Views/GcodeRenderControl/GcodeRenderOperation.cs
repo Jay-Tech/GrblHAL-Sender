@@ -5,6 +5,7 @@ using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
 using GrbLHALSender.Gcode;
 using GrbLHALSender.Settings;
+using GrbLHALSender.Theming;
 using SkiaSharp;
 using System;
 using System.Numerics;
@@ -174,10 +175,22 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private static readonly SKPaint[] SelectedPaints = CreatePaintPair(new SKColor(255, 255, 0), 3f, SKPaintStyle.Stroke);
       
 
-        private static readonly SKPaint BackgroundPaint = new()
+        // The viewport fill follows the active theme, so unlike the toolpath paints
+        // this one can't be baked in at type-init time. Retuned in place rather than
+        // reallocated per frame; Render runs on the single render thread.
+        private static readonly SKPaint BackgroundPaintInstance = new();
+
+        private static SKPaint BackgroundPaint
         {
-            Color = new SKColor(25, 25, 30)
-        };
+            get
+            {
+                var bg = ThemeService.Current.ViewportBackground;
+                var color = new SKColor(bg.R, bg.G, bg.B);
+                if (BackgroundPaintInstance.Color != color)
+                    BackgroundPaintInstance.Color = color;
+                return BackgroundPaintInstance;
+            }
+        }
 
         private static readonly SKPaint[] SpindleShaftPaints = CreatePaintPair(new SKColor(180, 180, 190), 0f, SKPaintStyle.Fill);
         private static readonly SKPaint[] SpindleBitPaints = CreatePaintPair(new SKColor(220, 180, 50), 0f, SKPaintStyle.Fill);

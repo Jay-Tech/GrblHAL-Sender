@@ -11,15 +11,34 @@
 			 x:DataType="viewModels:MainViewModel">
 
 	<UserControl.Resources>
-		<convertors:LedBackGround x:Key="LedBackGround"></convertors:LedBackGround>
-		<convertors:ActiveBorderBrush x:Key="ActiveBorderBrush"></convertors:ActiveBorderBrush>
 	</UserControl.Resources>
 	<UserControl.Styles>
 		<Style Selector="Label.inactive">
-			<Setter Property="Background" Value="Red" />
+			<Setter Property="Background" Value="{DynamicResource AlertBrush}" />
 		</Style>
 		<Style Selector="Label.active">
-			<Setter Property="Background" Value="PaleGreen" />
+			<Setter Property="Background" Value="{DynamicResource OkBrush}" />
+		</Style>
+
+		<!-- Signal LEDs and the aux-output active ring. These are style classes
+		     rather than value converters on purpose: a converter returns a brush
+		     snapshot and only re-runs when its bound value changes, so switching
+		     theme left the LEDs painted in the old palette until the next signal
+		     edge. DynamicResource repaints them immediately. -->
+		<Style Selector="Label.led">
+			<Setter Property="Background" Value="{DynamicResource LedIdleBrush}" />
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+		</Style>
+		<Style Selector="Label.led.triggered">
+			<Setter Property="Background" Value="{DynamicResource AlertBrush}" />
+			<Setter Property="Foreground" Value="{DynamicResource AlertForegroundBrush}" />
+		</Style>
+
+		<Style Selector="Border.auxRing">
+			<Setter Property="BorderBrush" Value="Transparent" />
+		</Style>
+		<Style Selector="Border.auxRing.active">
+			<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
 		</Style>
 
 		<Style Selector="Label.metric">
@@ -135,9 +154,10 @@
 					<ItemsRepeater.ItemTemplate>
 						<DataTemplate>
 							<Label x:Name=""
+								   Classes="led"
+								   Classes.triggered="{Binding Triggered}"
 								   VerticalAlignment="Center"
 								   ClipToBounds="True"
-								   Foreground="White"
 								   VerticalContentAlignment="Center"
 								   HorizontalAlignment="Center"
 								   CornerRadius="45"
@@ -145,10 +165,7 @@
 								   Margin="3 0"
 								   Height="30" Width="30" FontWeight="Bold"
 								   FontSize="{DynamicResource DetailFontSize}"
-								   Content="{Binding Path=Id }"
-								   Background="{Binding Path=Triggered,
-								   Converter={StaticResource LedBackGround},
-								   ConverterParameter={Binding Path=Triggered}}"/>
+								   Content="{Binding Path=Id }"/>
 						</DataTemplate>
 					</ItemsRepeater.ItemTemplate>
 				</ItemsRepeater>
@@ -167,7 +184,7 @@
 						VerticalContentAlignment="Center"
 						Command="{Binding ClearAlarmCommand}"
 						Margin="2,0"
-						Background ="Red">
+						Classes="danger">
 				</Button>
 				<Grid Grid.Column="10" ColumnDefinitions="Auto,Auto">
 					<Button Grid.Column="0"
@@ -430,17 +447,15 @@
 													     itself: the Fluent theme repaints the Button's own border
 													     on :pointerover/:pressed (which stick after touch), hiding
 													     the bound state color until focus moved elsewhere. -->
-													<Border BorderBrush="{Binding IsActive, Converter={StaticResource ActiveBorderBrush}}"
+													<Border Classes="auxRing"
+															Classes.active="{Binding IsActive}"
 															BorderThickness="2"
 															CornerRadius="5"
 															Margin="2"
 															VerticalAlignment="Bottom"
 															HorizontalAlignment="Left">
-														<Button Height="45" Width="100"
+														<Button Classes="touch" Width="100"
 																Content="{Binding Name}"
-																FontSize="{DynamicResource BaseFontSize}"
-																HorizontalContentAlignment="Center"
-																VerticalContentAlignment="Center"
 																BorderThickness="0"
 																Command="{Binding ToggleCommand}"/>
 													</Border>
@@ -734,16 +749,11 @@
 							   VerticalContentAlignment="Center"
 							   HorizontalAlignment ="Stretch"
 							   VerticalAlignment="Stretch" ></Label>
-						<Button Grid.Row="1" Grid.Column="0"
-								Height="45" x:Name="SplitB"
+						<Button Classes="touch" Grid.Row="1" Grid.Column="0" x:Name="SplitB"
 								Content="{Binding SelectedTool,
 								StringFormat={}Tool# {0}}"
 								HorizontalAlignment="Stretch"
-								CornerRadius="6"
-								HorizontalContentAlignment="Center"
-								VerticalContentAlignment="Center"
-								VerticalAlignment="Stretch" Margin="5,0"
-								FontSize="{DynamicResource BaseFontSize}">
+								VerticalAlignment="Stretch" Margin="5,0">
 							<Button.Flyout >
 								<Flyout  Placement="LeftEdgeAlignedBottom" ShowMode="Standard">
 									<ListBox x:Name="ToolLb" SelectionMode="Single"
@@ -756,16 +766,13 @@
 											 behaviors:CloseMenuOnItemSelection.CommandParameter="{Binding SelectedTool}">
 										<ListBox.ItemTemplate>
 											<DataTemplate>
-												<Button Margin="0,5,0,5"
+												<Button Classes="touch" Margin="0,5,0,5"
 														Name="ToolButton"
 														CornerRadius="3"
 														Content="{Binding }"
-														Height="45"
 														Width="120"
 														Command="{Binding  $parent[Grid].((viewModels:MainViewModel)DataContext).SetToolSelectCommand}"
 														CommandParameter="{Binding #ToolButton.Content}"
-														HorizontalContentAlignment="Center"
-														VerticalContentAlignment="Center"
 														HorizontalAlignment="Stretch"
 														VerticalAlignment="Stretch" />
 											</DataTemplate>
@@ -775,14 +782,9 @@
 							</Button.Flyout>
 						</Button>
 						<!--Tool Change Section-->
-						<Button Grid.Row="1" Grid.Column="1"
-								Height="45"
-								CornerRadius="6"
+						<Button Classes="touch" Grid.Row="1" Grid.Column="1"
 								Content="Change"
 								Margin="5,0"
-								HorizontalContentAlignment="Center"
-								VerticalContentAlignment="Center"
-								FontSize="{DynamicResource BaseFontSize}"
 								HorizontalAlignment="Stretch"
 								Command="{Binding ToolSelectedCommand }"
 								CommandParameter="{Binding SelectedTool}"
@@ -798,15 +800,11 @@
 								   HorizontalAlignment ="Stretch"
 								   VerticalAlignment="Stretch" ></Label>
 							<Grid Grid.Row="1" Grid.Column="0"  ColumnDefinitions="*,Auto">
-								<Button Grid.Column="0"
-										Height="45"
+								<Button Classes="touch" Grid.Column="0"
 										CornerRadius="6,0,0,6"
 										IsEnabled="{Binding TlrCommandEnabled}"
 										Content="TLR"
 										Margin="5,5,0,0"
-										HorizontalContentAlignment="Center"
-										VerticalContentAlignment="Center"
-										FontSize="{DynamicResource BaseFontSize}"
 										HorizontalAlignment="Stretch"
 										Command="{Binding SetTlrCommand }"
 										VerticalAlignment="Stretch"/>
@@ -821,15 +819,10 @@
 									   Width="10"
 									   Height="45"/>
 							</Grid>
-							<Button Grid.Column="1" Grid.Row="1"
-									Height="45"
+							<Button Classes="touch" Grid.Column="1" Grid.Row="1"
 									IsEnabled="{Binding UnloadToolCommandEnabled}"
-									CornerRadius="6"
 									Content="Unload"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"
 									Margin="5,5,5,0"
-									FontSize="{DynamicResource BaseFontSize}"
 									HorizontalAlignment="Stretch"
 									Command="{Binding UnloadToolCommand }"
 									VerticalAlignment="Stretch"/>
@@ -892,15 +885,10 @@
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Center"  />
                        
-                        <Button Grid.Row="4" Grid.Column="0" 
-                                CornerRadius="6,6,6,6"
-                                Height="45"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
+                        <Button Classes="touch" Grid.Row="4" Grid.Column="0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 Content="Set Speed"
-                                FontSize="{DynamicResource BaseFontSize}"
                                 Margin="5,10,5,0"
                                 Command="{Binding SpindleSetSpeedCommand }"/>
 						
@@ -909,17 +897,12 @@
                                VerticalAlignment="Center" 
                                ColumnDefinitions="*,*,*,*">
 							
-                            <Button Grid.Column="0"
-                                    CornerRadius="6,6,6,6"
-                                    Height="45"
+                            <Button Classes="touch" Grid.Column="0"
                                     Content="{icons:MaterialIconExt Kind=PlusThick,  IconSize=50}"
                                     Margin="5,10,5,0"
                                     Command="{Binding SpindleIncreaseCommand}" />
-							<Button Grid.Column="1"
-									CornerRadius="6,6,6,6"
-									Height="45"
+							<Button Classes="touch" Grid.Column="1"
 									Content="{icons:MaterialIconExt Kind=MinusThick,  IconSize=45}"
-									HorizontalContentAlignment="Center"
 									VerticalAlignment="Center"
 									Margin="5,10,5,0"
 									Command="{Binding SpindleDecreaseCommand}" />
@@ -966,60 +949,42 @@
 						</Grid>
 						
                         <Grid Grid.Row="2" Margin="0,5,0,0" ColumnDefinitions="*,*,*">
-							<Button Grid.Column="0"
+							<Button Classes="touch" Grid.Column="0"
 									Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"
 									Content="{icons:MaterialIconExt Kind=PlusThick, IconSize=50}"
-									Height="45"
 									Command="{Binding FeedOrPlus }"/>
-							<Button Grid.Column="1"
+							<Button Classes="touch" Grid.Column="1"
 									Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"
 									Content="{icons:MaterialIconExt Kind=MinusThick, IconSize=45}"
-									Height="45"
 									Command="{Binding FeedOrMinus}" />
-							<Button Grid.Column="2"
+							<Button Classes="touch" Grid.Column="2"
 									Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"
 									Content="{icons:MaterialIconExt Kind=Cached, IconSize=45}"
-									Height="45"
 									Command="{Binding FeedOrReset}" />
 						</Grid>
 
 						<Grid Grid.Row="3" Margin="0,5,0,0" ColumnDefinitions="*,*,*">
-							<Button Grid.Column="0"
+							<Button Classes="touch" Grid.Column="0"
 									Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"
 									Content="{icons:MaterialIconExt Kind=MinusThick, IconSize=50}"
-									Height="45"
 									Command="{Binding RapidOrMediumCommand}" />
-							<Button Grid.Column="1" Margin="5,0,5,0"
+							<Button Classes="touch" Grid.Column="1" Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"
 									Content="{icons:MaterialIconExt Kind=MinusThick, IconSize=45}"
-									Height="45"
 									Command="{Binding RapidOrFineCommand}"/>
-							<Button Grid.Column="2" Margin="5,0,5,0"
+							<Button Classes="touch" Grid.Column="2" Margin="5,0,5,0"
 									VerticalAlignment="Stretch"
 									HorizontalAlignment="Stretch"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center"
 									Content="{icons:MaterialIconExt Kind=Cached, IconSize=45}"
-									Height="45"
 									Command="{Binding ResetRapidCommand}" />
 						</Grid>
 					</Grid>

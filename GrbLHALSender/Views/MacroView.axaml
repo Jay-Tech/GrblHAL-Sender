@@ -11,14 +11,9 @@
         <viewModels:MacroViewModel/>
     </Design.DataContext>
 
-    <UserControl.Resources>
-        <FontFamily x:Key="ConsoleFont">Cascadia Mono,Consolas,Menlo,DejaVu Sans Mono,monospace</FontFamily>
-    </UserControl.Resources>
-
     <!--Macro control Section-->
-	<Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-			Background="{StaticResource DarkReduceBrushAlpha}"
-			BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="4"
+	<Border Classes="overlayPanel"
+			HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
 			Padding="10">
 		<Grid HorizontalAlignment="Stretch"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto"
               VerticalAlignment="Stretch">
@@ -68,9 +63,9 @@
                        Text="Macro Code" />
 			<TextBox Grid.Row="5" x:Name="TextBox"
                      AcceptsReturn="True"
-                     FontFamily="{StaticResource ConsoleFont}"
+                     FontFamily="{DynamicResource MonoFontFamily}"
                      FontSize="22"
-                     Foreground="#E8E8E8"
+                     Foreground="{DynamicResource TextPrimaryBrush}"
 					 Text="{Binding MacroCommandText}" />
 			<Border Grid.Row="6" 
                     HorizontalAlignment="Stretch" 

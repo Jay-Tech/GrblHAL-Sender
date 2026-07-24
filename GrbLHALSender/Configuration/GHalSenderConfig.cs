@@ -3,6 +3,7 @@ using GrbLHALSender.Communication;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.Probe;
 using GrbLHALSender.SdCard;
+using GrbLHALSender.Theming;
 using GrbLHALSender.WebServer;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -62,6 +63,7 @@ public class GHalSenderConfig : ObservableObject
     public WebServerConfig WebServerConfig { get; set; } = new();
     public ProbeConfig ProbeConfig { get; set; } = new();
     public SdCardConfig SdCardConfig { get; set; } = new();
+    public ThemeConfig Theme { get; set; } = new();
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum RendererType
     {

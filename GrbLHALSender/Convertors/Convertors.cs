@@ -5,6 +5,7 @@ using Avalonia.Data.Converters;
 using Avalonia.Layout;
 using Avalonia.Media;
 using GrbLHALSender.Settings;
+using GrbLHALSender.Theming;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -37,34 +38,6 @@ namespace GrbLHALSender.Convertors
         }
     }
 
-
-    public class LedBackGround : IValueConverter
-    {
-        private int index = 0;
-        public static readonly LedBackGround Instance = new();
-
-
-        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            var themeVariant = Application.Current?.ActualThemeVariant;
-            SolidColorBrush b = null;
-            if (Application.Current!.TryFindResource("ThemeControlMidBrush", themeVariant, out Object? output) && output is SolidColorBrush brush)
-            {
-                b = brush;
-            }
-            if (value is bool v)
-            {
-                return v ? new SolidColorBrush(Color.FromRgb(255, 51, 51)) : b ?? new SolidColorBrush(Color.FromArgb(255, 80, 80, 80));
-            }
-
-
-            return new BindingNotification(new InvalidCastException(), BindingErrorType.Error);
-        }
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-    }
 
     public class StringToRadioButton : IValueConverter
     {
@@ -127,27 +100,6 @@ namespace GrbLHALSender.Convertors
             }
 
         }
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-    }
-
-    public class ActiveBorderBrush : IValueConverter
-    {
-        public static readonly ActiveBorderBrush Instance = new();
-        private static readonly SolidColorBrush ActiveBrush = new(Color.FromRgb(30, 144, 255)); // DodgerBlue
-        private static readonly SolidColorBrush InactiveBrush = new(Colors.Transparent);
-
-        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (value is bool isActive)
-            {
-                return isActive ? ActiveBrush : InactiveBrush;
-            }
-            return InactiveBrush;
-        }
-
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotSupportedException();
