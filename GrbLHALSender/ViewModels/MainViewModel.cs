@@ -86,6 +86,7 @@ public class MainViewModel : ViewModelBase
     private bool _uiActiveState;
     private bool _canSetTool;
     private bool _canJog;
+    private SpindleDirection _spindleDirection = SpindleDirection.Off;
 
     public ObservableCollection<Signal> SignalList
     {
@@ -355,7 +356,16 @@ public class MainViewModel : ViewModelBase
         get => _canSetTool;
         set => this.RaiseAndSetIfChanged(ref _canSetTool, value);
     }
-
+    /// <summary>
+    /// What the controller says the spindle is doing. The three spindle buttons all
+    /// render this one value, so they cannot contradict each other or show a direction
+    /// the machine never entered.
+    /// </summary>
+    public SpindleDirection SpindleDirection
+    {
+        get => _spindleDirection;
+        private set => this.RaiseAndSetIfChanged(ref _spindleDirection, value);
+    }
 
     public ICommand CloseCommand { get; }
     public ICommand ConnectCommand { get; set; }
@@ -434,8 +444,6 @@ public class MainViewModel : ViewModelBase
         CommManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
         // Discovered aux pins are added as presets in AppConfigViewModel only —
         // they don't auto-appear as buttons until the user adds them through config.
-
-
         _configManager?.GHalSenderConfig?.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(GHalSenderConfig.UseMetric))
@@ -451,11 +459,17 @@ public class MainViewModel : ViewModelBase
                 UseHardwareRenderer = _config.Renderer == GHalSenderConfig.RendererType.Hardware;
             }
         };
+        SpindleDirection = _machineStateService.SpindleDirection;
         _machineStateService.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(MachineStateService.GrblState))
+            switch (e.PropertyName)
             {
-                UpdateButtonStates();
+                case nameof(MachineStateService.GrblState):
+                    UpdateButtonStates();
+                    break;
+                case nameof(MachineStateService.SpindleDirection):
+                    SpindleDirection = _machineStateService.SpindleDirection;
+                    break;
             }
         };
 
@@ -550,7 +564,6 @@ public class MainViewModel : ViewModelBase
 
         SpindleSetRpm = 1000;
     }
-
 
     private void UpdateButtonStates()
     {

@@ -140,6 +140,29 @@
 		<Setter Property="Background" Value="Transparent"/>
 	</Style>
 
+	<!-- A button whose "on" look is driven entirely by bound state, never by the
+	     control's own toggle. Used where the highlight must mean "the machine is
+	     doing this", not "you asked for this" — the spindle buttons read the
+	     controller's reported direction, so a refused command never lights up.
+	     Every state is pinned because the Fluent theme repaints a Button's
+	     background on :pointerover/:pressed, and those stick after a touch. -->
+	<Style Selector="Button.stateToggle">
+		<Setter Property="BorderThickness" Value="2"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}"/>
+	</Style>
+	<Style Selector="Button.stateToggle.active /template/ ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+	</Style>
+	<Style Selector="Button.stateToggle.active:pointerover /template/ ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+	</Style>
+	<Style Selector="Button.stateToggle.active:pressed /template/ ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+	</Style>
+
 	<Style Selector="Button.h1">
 		<Setter Property="FontSize" Value="20"/>
 		<Setter Property="Focusable" Value="False"/>

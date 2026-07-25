@@ -11,6 +11,7 @@
 			 x:DataType="viewModels:MainViewModel">
 
 	<UserControl.Resources>
+		<convertors:EnumMatch x:Key="EnumMatch"/>
 	</UserControl.Resources>
 	<UserControl.Styles>
 		<Style Selector="Label.inactive">
@@ -844,31 +845,30 @@
                                HorizontalContentAlignment="Center"
                                VerticalContentAlignment="Center"
                                FontSize="{DynamicResource DetailFontSize}" />
-						<RadioButton Classes="ButtonStyle" Grid.Column="0" Grid.Row="1"
-                                     FontSize="{DynamicResource BaseFontSize}"
-                                     HorizontalAlignment="Stretch"
-                                     Content="CW"
-                                     CornerRadius="6,6,6,6"
-                                     Height="45"
-                                     Margin="5,5,5,0"
-                                     Command="{Binding SpindleCWCommand}"/>
-						<RadioButton Classes="ButtonStyle" Grid.Column="1" Grid.Row="1"
-                                     HorizontalAlignment="Stretch"
-                                     CornerRadius="6,6,6,6"
-                                     Height="45"
-                                     Margin="5,5,5,0"
-                                     FontSize="{DynamicResource BaseFontSize}"
-                                     Content="CCW"
-                                     Command="{Binding SpindleCCWCommand}"/>
-						<RadioButton Classes="ButtonStyle" Grid.Column="0"
-                                     Grid.Row="2"
-                                     Grid.ColumnSpan="2"
-                                     CornerRadius="6,6,6,6"
-                                     Height="45"
-                                     Margin="5,10,5,0"
-                                     HorizontalAlignment="Stretch"
-                                     FontSize="{DynamicResource BaseFontSize}" Content ="Spindle Off"
-                                     Command="{Binding SpindleOffCommand}" />
+						<!-- Buttons, not RadioButtons: a RadioButton checks itself on click,
+						     so it would light up on a command the controller went on to
+						     refuse. These carry no state of their own — the highlight comes
+						     from the reported SpindleDirection via Classes.active. -->
+						<Button Classes="touch stateToggle" Grid.Column="0" Grid.Row="1"
+								Classes.active="{Binding SpindleDirection,
+									Converter={StaticResource EnumMatch}, ConverterParameter=CW}"
+								Content="CW"
+								Margin="5,5,5,0"
+								Command="{Binding SpindleCWCommand}"/>
+						<Button Classes="touch stateToggle" Grid.Column="1" Grid.Row="1"
+								Classes.active="{Binding SpindleDirection,
+									Converter={StaticResource EnumMatch}, ConverterParameter=CCW}"
+								Content="CCW"
+								Margin="5,5,5,0"
+								Command="{Binding SpindleCCWCommand}"/>
+						<Button Classes="touch stateToggle" Grid.Column="0"
+								Grid.Row="2"
+								Grid.ColumnSpan="2"
+								Margin="5,10,5,0"
+								Classes.active="{Binding SpindleDirection,
+									Converter={StaticResource EnumMatch}, ConverterParameter=Off}"
+								Content="Spindle Off"
+								Command="{Binding SpindleOffCommand}" />
 
 						<views:TouchNumericUpDown Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
 									   FontSize="24"

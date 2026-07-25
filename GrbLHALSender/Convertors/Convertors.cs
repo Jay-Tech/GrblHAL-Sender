@@ -39,6 +39,27 @@ namespace GrbLHALSender.Convertors
     }
 
 
+    /// <summary>
+    /// True when the bound value equals the ConverterParameter, compared by name.
+    /// Lets several controls render one enum property — e.g. the spindle buttons all
+    /// read MachineStateService.SpindleDirection — so they cannot disagree with each
+    /// other or with the machine.
+    /// </summary>
+    public class EnumMatch : IValueConverter
+    {
+        public static readonly EnumMatch Instance = new();
+
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+            value != null &&
+            parameter != null &&
+            string.Equals(value.ToString(), parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
     public class StringToRadioButton : IValueConverter
     {
         public static readonly StringToRadioButton Instance = new();

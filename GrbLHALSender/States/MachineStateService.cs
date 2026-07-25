@@ -179,6 +179,13 @@ public class MachineStateService : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref _accessoryState, value);
     }
 
+    private SpindleDirection _spindleDirection = SpindleDirection.Off;
+    public SpindleDirection SpindleDirection
+    {
+        get => _spindleDirection;
+        private set => this.RaiseAndSetIfChanged(ref _spindleDirection, value);
+    }
+
     // Raw state for consumers that need the full object (e.g., console RT display)
     private RealTImeState? _rawState;
     private int _rpmOverride;
@@ -331,6 +338,19 @@ public class MachineStateService : ReactiveObject, IDisposable
 
         // --- Accessory state (A: field) ---
         AccessoryState = state.AccessoryState ?? "";
+        SpindleDirection = ParseSpindleDirection(AccessoryState);
+    }
+
+    /// <summary>
+    /// 'S' is spindle CW and 'C' is CCW, and the two are mutually exclusive. The other
+    /// flags this field can carry — 'F' flood, 'M' mist, 'E' encoder error, 'T' tool
+    /// change pending — contain neither letter, so a plain search is unambiguous.
+    /// </summary>
+    private static SpindleDirection ParseSpindleDirection(string accessoryState)
+    {
+        if (accessoryState.Contains('S')) return SpindleDirection.CW;
+        if (accessoryState.Contains('C')) return SpindleDirection.CCW;
+        return SpindleDirection.Off;
     }
 
     
