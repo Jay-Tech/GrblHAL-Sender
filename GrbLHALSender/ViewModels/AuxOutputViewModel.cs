@@ -67,8 +67,12 @@ public class AuxOutputViewModel : ViewModelBase, ISavableViewModel
     /// the stream, which the job streamer's character counting does not account for.
     /// </para>
     /// </summary>
-    private void OnCommandSent(object? sender, string command)
+    private void OnCommandSent(object? sender, CommandSentEventArgs e)
     {
+        // Applies to job lines as well as manual commands: a file that toggles the pin
+        // should move the button too.
+        var command = e.Command;
+
         // Runs for every streamed line, so reject the common case before parsing.
         if (AuxOutputItems.Count == 0) return;
         if (string.IsNullOrEmpty(command)) return;

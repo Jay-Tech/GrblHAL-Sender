@@ -42,17 +42,13 @@ namespace GrbLHALSender.ViewModels
 
         // Character-counting streaming protocol:
         // grblHAL reports its serial RX buffer size via $I+ (OPT line).
-        // We track how many bytes are "in-flight" (sent but not yet acked).
-        // Each line costs: text.Length + 1 (\r terminator added by WriteCommand).
-        // Each "ok" response frees the bytes for the oldest in-flight line.
+        // StreamAccounting tracks how many bytes are "in-flight" (sent but not yet
+        // acked) and which outstanding command each "ok" belongs to — including
+        // commands sent from outside the streamer, which occupy the same buffer.
         // Streaming is EVENT-DRIVEN: OnCommandAck directly calls FillBuffer().
         private const int DefaultRxBufferSize = 128;
-        private int _rxBufferSize = DefaultRxBufferSize;
-        private int _rxBufferUsed;
-        private int _pendingLine;  // Next line awaiting "ok" acknowledgment
-        private int _ackPending;   // Number of unacknowledged commands
-        private readonly Queue<int> _lineLengths = new(); // byte length of each in-flight line
-        private readonly object _bufferLock = new();
+        private readonly StreamAccounting _accounting = new();
+        private int _pendingLine;  // Job lines acknowledged so far
         private string _holdButtonText;
         private JobState _jobState;
         private bool _connected;
@@ -411,15 +407,13 @@ namespace GrbLHALSender.ViewModels
             _index = 0;
             _pendingLine = 0;
             _latestPendingLine = 0;
-            _ackPending = 0;
-            _rxBufferUsed = 0;
             CompletedSegmentIndex = -1;
-            lock (_bufferLock) { _lineLengths.Clear(); }
+            _accounting.Reset();
 
             // Use the real RX buffer size from the controller if available
             var reportedRxSize = _commsManager.Options?.RxBufferSize ?? DefaultRxBufferSize;
             var precentBuffer = reportedRxSize * _bufferPercentage / 100;
-            _rxBufferSize =  Math.Max(precentBuffer, DefaultRxBufferSize);
+            _accounting.Capacity = Math.Max(precentBuffer, DefaultRxBufferSize);
             JobState = JobState.Start;
 
             // Dispose previous token if any
@@ -491,6 +485,7 @@ namespace GrbLHALSender.ViewModels
             {
                 _commsManager.OnStateReceived += _commsManager_OnStateReceived;
                 _commsManager.OnCommandAck += _commsManager_OnCommandAck;
+                _commsManager.OnCommandSent += _commsManager_OnCommandSent;
                 // Claim the link for the duration. Tied to the ack subscription because
                 // the two cover exactly the same window: while we are counting acks,
                 // nothing else may send a command and consume one.
@@ -500,6 +495,7 @@ namespace GrbLHALSender.ViewModels
             {
                 _commsManager.OnStateReceived -= _commsManager_OnStateReceived;
                 _commsManager.OnCommandAck -= _commsManager_OnCommandAck;
+                _commsManager.OnCommandSent -= _commsManager_OnCommandSent;
                 _commsManager.EndStreaming();
             }
         }
@@ -541,6 +537,27 @@ namespace GrbLHALSender.ViewModels
             }
         }
 
+        /// <summary>
+        /// Records commands the streamer did not send — a jog during a tool change, an
+        /// aux output button, a macro, an injected event command. They sit in the same
+        /// controller RX buffer as our lines and each produces its own "ok", so leaving
+        /// them out of the accounting made that "ok" advance the file index and free
+        /// buffer room that was not actually free.
+        /// </summary>
+        private void _commsManager_OnCommandSent(object? sender, CommandSentEventArgs e)
+        {
+            if (!JobRunning) return;
+
+            var cost = StreamAccounting.CostOf(e.Command);
+
+            // A single character is written as a raw byte by the adapters, and grblHAL
+            // answers realtime bytes with no "ok" — recording one would leave an entry at
+            // the head of the queue that never clears, swallowing a real line's ack.
+            if (!e.IsStreamLine && e.Command.Length <= 1) return;
+
+            _accounting.RecordSent(cost, e.IsStreamLine);
+        }
+
         private void _commsManager_OnCommandAck(object? sender, EventArgs e)
         {
             if (!JobRunning) return;
@@ -548,34 +565,34 @@ namespace GrbLHALSender.ViewModels
             if (JobState is JobState.Start)
                 JobState = JobState.Running;
 
-            // Free the oldest in-flight line's bytes from the RX buffer
-            if (_ackPending > 0)
-                _ackPending--;
+            // Credit this "ok" to the oldest outstanding command, whatever sent it.
+            var acked = _accounting.Ack();
 
-            lock (_bufferLock)
-            {
-                if (_lineLengths.Count > 0)
-                {
-                    var freed = _lineLengths.Dequeue();
-                    _rxBufferUsed = Math.Max(0, _rxBufferUsed - freed);
-                }
-            }
-
-            _pendingLine++;
-            _latestPendingLine = _pendingLine;
-
-            // Check for job completion: all lines sent AND all acks received
-            if (_pendingLine >= GCodeOutPut.Count && _ackPending == 0)
-            {
-                Dispatcher.UIThread.Post(() => JobComplete());
+            // Nothing outstanding: an "ok" we have no record for. Ignoring it is the
+            // point — crediting it to a job line is what walked the file index forward
+            // during a tool change and ended jobs early.
+            if (acked == StreamAccounting.AckKind.Unrecorded)
                 return;
+
+            if (acked == StreamAccounting.AckKind.JobLine)
+            {
+                _pendingLine = _accounting.AckedJobLines;
+                _latestPendingLine = _pendingLine;
+
+                // Check for job completion: all lines sent AND all acks received
+                if (_pendingLine >= GCodeOutPut.Count && _accounting.AckPending == 0)
+                {
+                    Dispatcher.UIThread.Post(() => JobComplete());
+                    return;
+                }
             }
 
             // Don't send more while paused or in tool change
             if (JobState is JobState.Hold or JobState.Tool)
                 return;
 
-            // Event-driven: immediately refill the buffer
+            // Event-driven: immediately refill the buffer. A foreign command's ack also
+            // frees room, so this runs for those too.
             FillBuffer();
 
         }
@@ -591,7 +608,7 @@ namespace GrbLHALSender.ViewModels
             // previous line is ack'd before sending the next. This keeps the
             // displayed gcode line tightly aligned with actual machine motion.
             bool bufferAhead = Config?.StreamBufferAhead ?? true;
-            if (!bufferAhead && _ackPending > 0)
+            if (!bufferAhead && _accounting.AckPending > 0)
                 return;
 
             while (_index < GCodeOutPut.Count)
@@ -605,17 +622,15 @@ namespace GrbLHALSender.ViewModels
                     continue;
                 }
 
-                int lineBytes = line.Length + 1; // +1 for \r appended by WriteCommand
-
-                // Will this line fit in the remaining RX buffer space?
-                if (_rxBufferUsed + lineBytes > _rxBufferSize)
+                // Will this line fit in the remaining RX buffer space? Commands sent
+                // from elsewhere count against the same budget, so a burst of them
+                // holds the stream here until they are acked.
+                if (!_accounting.HasRoomFor(StreamAccounting.CostOf(line)))
                     break; // No room — wait for an ack to free space
 
-                // Send the line
-                _commsManager.SendCommand(line);
-                _rxBufferUsed += lineBytes;
-                _ackPending++;
-                lock (_bufferLock) { _lineLengths.Enqueue(lineBytes); }
+                // Send the line. The accounting is recorded by OnCommandSent, which
+                // fires inside this call, so the loop's next check sees fresh state.
+                _commsManager.SendStreamLine(line);
 
                 _latestFileIndex = _index;
                 _index++;
@@ -647,9 +662,7 @@ namespace GrbLHALSender.ViewModels
             _index = 0;
             _pendingLine = 0;
             _latestPendingLine = 0;
-            _ackPending = 0;
-            _rxBufferUsed = 0;
-            lock (_bufferLock) { _lineLengths.Clear(); }
+            _accounting.Reset();
             GcodeFileIndex = _index;
 
             // On program complete, mark all segments as completed (grey);

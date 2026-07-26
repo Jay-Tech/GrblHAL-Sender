@@ -21,6 +21,13 @@ namespace GrbLHALSender.Communication
 {
     public record AuxPinInfo(string Description, int PortNumber);
 
+    /// <summary>
+    /// A command that has just been written to the controller.
+    /// <paramref name="IsStreamLine"/> distinguishes a line of a streamed job file from
+    /// anything else — a jog, a macro, an aux output button, an injected event command.
+    /// </summary>
+    public record CommandSentEventArgs(string Command, bool IsStreamLine);
+
     public class CommunicationManager
     {
         private readonly ConfigManager _configManager;
@@ -40,11 +47,16 @@ namespace GrbLHALSender.Communication
         /// <summary>
         /// Every command written to the controller, whatever raised it — a panel button,
         /// MDI, a macro, a streamed job line, or a G-code event rule's injected command.
-        /// Lets UI that mirrors controller state notice changes it did not initiate.
-        /// Handlers run on the caller's thread, which during streaming is the comms
-        /// thread, so they must marshal any UI work themselves.
+        /// Lets UI that mirrors controller state notice changes it did not initiate, and
+        /// lets the job streamer account for commands it did not send.
+        /// <para>
+        /// Raised while holding the write lock, so handlers observe commands in the exact
+        /// order they reached the wire. Handlers run on the caller's thread, which during
+        /// streaming is the comms thread, so they must marshal any UI work themselves and
+        /// must not block.
+        /// </para>
         /// </summary>
-        public event EventHandler<string>? OnCommandSent;
+        public event EventHandler<CommandSentEventArgs>? OnCommandSent;
 
 
         private Dictionary<int, string> _errorCodes = new Dictionary<int, string>();
@@ -57,6 +69,9 @@ namespace GrbLHALSender.Communication
         private GrblHALOptions grblHalOptions = new();
         private readonly ProbeState _probe;
         private double _pollInterval;
+
+        // Serializes command writes with their OnCommandSent notification.
+        private readonly object _writeLock = new();
 
 
         public ICommsAdapter Adapter { get; set; }
@@ -136,10 +151,27 @@ namespace GrbLHALSender.Communication
             }
         }
 
-        public void SendCommand(string command)
+        /// <summary>Sends a command that is not part of a streamed job.</summary>
+        public void SendCommand(string command) => Write(command, isStreamLine: false);
+
+        /// <summary>
+        /// Sends one line of a streamed job. Separate from <see cref="SendCommand"/> only
+        /// so the streamer can tell its own lines from everything else in OnCommandSent.
+        /// </summary>
+        public void SendStreamLine(string command) => Write(command, isStreamLine: true);
+
+        private void Write(string command, bool isStreamLine)
         {
-            Adapter?.WriteCommand(command);
-            OnCommandSent?.Invoke(this, command);
+            // The write and the notification are one step. The job streamer records what
+            // the controller is holding from this event, and that record is only correct
+            // if it observes commands in the same order the bytes went out — otherwise a
+            // command sent from the UI thread mid-stream can be recorded out of sequence
+            // and its "ok" credited to the wrong entry.
+            lock (_writeLock)
+            {
+                Adapter?.WriteCommand(command);
+                OnCommandSent?.Invoke(this, new CommandSentEventArgs(command, isStreamLine));
+            }
         }
         public void GetSettings()
         {
