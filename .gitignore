@@ -452,3 +452,9 @@ $RECYCLE.BIN/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+##
+## Claude Code
+##
+# Scratch git worktrees created for isolated agent runs
+.claude/worktrees/
