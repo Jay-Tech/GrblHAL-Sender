@@ -3,9 +3,17 @@
     <Nullable>enable</Nullable>
     <AvaloniaVersion>11.0.9</AvaloniaVersion>
 
-    <!-- Single source of truth. CI overrides via /p:Version=X.Y.Z.
-         MSBuild derives AssemblyVersion, FileVersion, and InformationalVersion from this. -->
-    <Version>1.0.11</Version>
+    <!-- Version for local builds. MSBuild derives AssemblyVersion, FileVersion and
+         InformationalVersion from this, and the app shows it in the Utility dialog header.
+
+         Release builds do NOT use this value: release.yml takes the version from the
+         pushed git tag and passes /p:Version=X.Y.Z, which overrides it. Keep this in
+         step with the newest tag anyway — the update check compares the running build's
+         version against the latest release tag, so a stale value here makes a local
+         build report an update it already has. The release job fails if the two differ.
+
+         To release: bump this, commit, tag the commit v<same number>, push the tag. -->
+    <Version>1.0.13</Version>
 
     <!-- Application metadata -->
     <Product>GrblHAL Sender</Product>

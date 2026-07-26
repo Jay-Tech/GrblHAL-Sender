@@ -26,11 +26,37 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Extract version from tag
         id: version
         run: |
           TAG="${GITHUB_REF#refs/tags/v}"
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+      # The published binaries take their version from the tag (-p:Version, below), so
+      # this check is not about them. Directory.Build.props is what a local build reports
+      # and what the in-app update check compares against the latest release tag — if it
+      # drifts behind, a freshly built app announces an update it already has. Fail here
+      # rather than ship a release the props file disagrees with.
+      - name: Verify Directory.Build.props matches the tag
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          # Prerelease tags (v1.1.0-beta) carry a suffix the props file does not, and the
+          # app strips it too, so compare the numeric part only.
+          TAG_CORE="${TAG_VERSION%%-*}"
+          PROPS_VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props | head -n1)
+          echo "tag:   $TAG_VERSION (comparing $TAG_CORE)"
+          echo "props: $PROPS_VERSION"
+          if [ -z "$PROPS_VERSION" ]; then
+            echo "::error::No <Version> found in Directory.Build.props."
+            exit 1
+          fi
+          if [ "$TAG_CORE" != "$PROPS_VERSION" ]; then
+            echo "::error::Tag v$TAG_VERSION does not match <Version>$PROPS_VERSION</Version> in Directory.Build.props. Set the props file to $TAG_CORE, commit, then move the tag."
+            exit 1
+          fi
 
   build-windows:
     needs: prepare
