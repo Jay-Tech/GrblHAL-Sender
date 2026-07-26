@@ -909,6 +909,157 @@
 					</Border>
 				</Grid>
 			</TabItem>
+			<TabItem Header="G-code Events" FontSize="16" Padding="15,5">
+				<Grid RowDefinitions="Auto,*" Margin="10">
+					<!-- Add a rule from a template -->
+					<Border Grid.Row="0" BorderBrush="AntiqueWhite" BorderThickness="1" Padding="10" Margin="0,5,0,10">
+						<Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+							<Label Grid.Row="0" Grid.ColumnSpan="2"
+								   Content="EVENT RULES"
+								   HorizontalContentAlignment="Center"
+								   VerticalContentAlignment="Center"
+								   HorizontalAlignment="Center"
+								   VerticalAlignment="Center"
+								   Margin="0,0,0,8"/>
+							<Label Grid.Row="1" Grid.Column="0"
+								   Content="Template:"
+								   HorizontalAlignment="Right" VerticalAlignment="Center"
+								   HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+							<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="10,2,0,2">
+								<ComboBox ItemsSource="{Binding GcodeEventViewModel.Presets}"
+										  SelectedItem="{Binding GcodeEventViewModel.SelectedPreset}"
+										  DisplayMemberBinding="{Binding Name}"
+										  Width="275"
+										  FontSize="16"
+										  HorizontalAlignment="Left" VerticalAlignment="Center"
+										  ToolTip.Tip="Starting points — edit the trigger and commands after adding"/>
+								<Button Content="Add"
+										FontSize="16"
+										Height="35"
+										Width="80"
+										Margin="10,0,0,0"
+										Command="{Binding GcodeEventViewModel.AddPresetCommand}"
+										ToolTip.Tip="Add a rule based on the selected template"/>
+							</StackPanel>
+							<TextBlock Grid.Row="2" Grid.ColumnSpan="2"
+									   Margin="0,8,0,0"
+									   FontSize="13"
+									   TextWrapping="Wrap"
+									   Foreground="{DynamicResource TextMutedBrush}"
+									   Text="Trigger: one or more commands, comma separated (e.g. $H,G28). $-commands match as a prefix, so $H also catches $HX. A single word matches by value, so M6 catches T3M6 but not M61.&#10;Pre/Post: commands to send before / after the trigger, separated by | for more than one. {T} inserts that word's value from the triggering line, {LINE} the whole line."/>
+						</Grid>
+					</Border>
+					<!-- Configured rules -->
+					<Border Grid.Row="1" BorderBrush="AntiqueWhite" BorderThickness="1" Padding="10">
+						<Grid RowDefinitions="Auto,Auto,*">
+							<Label Grid.Row="0"
+								   Content="CONFIGURED RULES"
+								   HorizontalContentAlignment="Center"
+								   VerticalContentAlignment="Center"
+								   HorizontalAlignment="Center"
+								   Margin="0,0,0,5"/>
+							<!-- Column headers — Pre/Post sit on each rule's second line, labelled there -->
+							<!-- Last column is the fixed width of the Remove button, so the
+							     star-sized Name column measures the same here as in a row -->
+							<Grid Grid.Row="1" ColumnDefinitions="45,*,130,55,60,95" Margin="0,0,0,3">
+								<Label Grid.Column="0" Content="On" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
+								<Label Grid.Column="1" Content="Name" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
+								<Label Grid.Column="2" Content="Trigger" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
+								<Label Grid.Column="3" Content="Job" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
+								<Label Grid.Column="4" Content="MDI" FontSize="14"
+									   HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}"/>
+							</Grid>
+							<ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+								<ItemsControl ItemsSource="{Binding GcodeEventViewModel.Items}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<!-- Two lines per rule: identity and scope on top,
+											     the wrapper commands below with room to read them -->
+											<Border BorderBrush="{DynamicResource TextMutedBrush}"
+													BorderThickness="0,0,0,1"
+													Padding="0,4,0,8"
+													Margin="0,0,0,4">
+												<Grid RowDefinitions="Auto,Auto">
+													<Grid Grid.Row="0" ColumnDefinitions="45,*,130,55,60,95">
+														<CheckBox Grid.Column="0"
+																  IsChecked="{Binding Enabled}"
+																  VerticalAlignment="Center"
+																  ToolTip.Tip="Uncheck to keep the rule but stop it firing"/>
+														<TextBox Grid.Column="1"
+																 Text="{Binding Name}"
+																 FontSize="16"
+																 VerticalAlignment="Center"
+																 HorizontalAlignment="Stretch"
+																 ToolTip.Tip="Label for this rule — never sent to the controller"/>
+														<TextBox Grid.Column="2"
+																 Text="{Binding Trigger}"
+																 FontSize="16"
+																 Margin="6,0,0,0"
+																 VerticalAlignment="Center"
+																 HorizontalAlignment="Stretch"
+																 ToolTip.Tip="Command(s) to watch for, comma separated. Example: $H,G28"/>
+														<CheckBox Grid.Column="3"
+																  IsChecked="{Binding ApplyToJob}"
+																  Margin="12,0,0,0"
+																  VerticalAlignment="Center"
+																  ToolTip.Tip="Inject while streaming a loaded job file"/>
+														<CheckBox Grid.Column="4"
+																  IsChecked="{Binding ApplyToManual}"
+																  Margin="12,0,0,0"
+																  VerticalAlignment="Center"
+																  ToolTip.Tip="Inject for MDI, panel buttons, macros and gamepad commands"/>
+														<Button Grid.Column="5"
+																Content="Remove"
+																FontSize="14"
+																Height="30"
+																Width="90"
+																Margin="5,0,0,0"
+																HorizontalAlignment="Left"
+																VerticalAlignment="Center"
+																Command="{Binding $parent[UserControl].((vm:AppConfigViewModel)DataContext).GcodeEventViewModel.RemoveCommand}"
+																CommandParameter="{Binding}"/>
+													</Grid>
+													<!-- Indented to line up under Name, so the checkbox
+													     column stays a clear left edge for the list -->
+													<Grid Grid.Row="1" ColumnDefinitions="45,Auto,*,Auto,*" Margin="0,5,0,0">
+														<Label Grid.Column="1" Content="Pre:" FontSize="14"
+															   VerticalAlignment="Center"
+															   HorizontalContentAlignment="Left"
+															   Foreground="{DynamicResource TextMutedBrush}"/>
+														<TextBox Grid.Column="2"
+																 Text="{Binding PreCommands}"
+																 FontSize="16"
+																 Margin="6,0,0,0"
+																 VerticalAlignment="Center"
+																 HorizontalAlignment="Stretch"
+																 ToolTip.Tip="Sent before the trigger, | between commands. Example: M65P0|G4P0.2"/>
+														<Label Grid.Column="3" Content="Post:" FontSize="14"
+															   Margin="12,0,0,0"
+															   VerticalAlignment="Center"
+															   HorizontalContentAlignment="Left"
+															   Foreground="{DynamicResource TextMutedBrush}"/>
+														<TextBox Grid.Column="4"
+																 Text="{Binding PostCommands}"
+																 FontSize="16"
+																 Margin="6,0,0,0"
+																 VerticalAlignment="Center"
+																 HorizontalAlignment="Stretch"
+																 ToolTip.Tip="Sent after the trigger, | between commands. Example: M64P0"/>
+													</Grid>
+												</Grid>
+											</Border>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</ScrollViewer>
+						</Grid>
+					</Border>
+				</Grid>
+			</TabItem>
 			<TabItem Header="SD Card" x:Name="SdTabItem" FontSize="16" Padding="15,5">
 				<views:SdCardView x:Name="SdCardViewControl" />
 			</TabItem>

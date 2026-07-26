@@ -57,6 +57,12 @@ public class GCodeLine
     public int LineNumber { get; set; }
     public string Text { get; set; }
 
+    /// <summary>
+    /// True for a line added by a configured G-code event rule rather than read
+    /// from the file, so the UI can distinguish injected commands from the job.
+    /// </summary>
+    public bool IsInjected { get; set; }
+
     public GCodeLine(string text, int lineNumber)
     {
         Text = text;

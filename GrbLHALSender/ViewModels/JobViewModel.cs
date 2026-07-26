@@ -23,6 +23,7 @@ namespace GrbLHALSender.ViewModels
 
         private readonly CommunicationManager _commsManager;
         private readonly MachineStateService _machineStateService;
+        private readonly GcodeEventInjector _eventInjector;
 
         private bool _showGCodeConsole;
         private int _gCodeFileIndex;
@@ -276,10 +277,12 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _toolChangeVisible, value);
         }
 
-        public JobViewModel(CommunicationManager manager, MachineStateService machineStateService)
+        public JobViewModel(CommunicationManager manager, MachineStateService machineStateService,
+            GcodeEventInjector eventInjector)
         {
             _commsManager = manager;
             _machineStateService = machineStateService;
+            _eventInjector = eventInjector;
             _machineStateService.PropertyChanged += OnMachineStateChanged;
             GCodeOutPut = new ObservableCollection<GCodeLine>();
             CloseGCodeConsole = ReactiveCommand.Create(CloseGcodeConsole);
@@ -326,6 +329,13 @@ namespace GrbLHALSender.ViewModels
 
         public void FileComplete(List<GCodeLine> gCodeJob)
         {
+            // Inject configured pre/post event commands here, before the toolpath is
+            // built and before the lines reach GCodeOutPut. Doing it at load rather
+            // than mid-stream keeps one line list behind everything downstream — the
+            // character-counting streamer, the gcode view and the progress mapping all
+            // see exactly what gets sent. Rules edited after a load apply on next load.
+            gCodeJob = _eventInjector.ApplyToJob(gCodeJob);
+
             var builder = new ToolpathBuilder();
 
             // Use machine rapid rates in display units (mm or inches depending on $13)

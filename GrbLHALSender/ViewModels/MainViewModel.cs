@@ -6,6 +6,7 @@ using DynamicData;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
+using GrbLHALSender.Gcode;
 using GrbLHALSender.Settings;
 using GrbLHALSender.States;
 using GrbLHALSender.Updates;
@@ -73,6 +74,7 @@ public class MainViewModel : ViewModelBase
     private string _tlrMacro;
     private readonly GamepadService _gamepadService;
     private readonly WebServerService _webServerService;
+    private readonly GcodeEventInjector _eventInjector;
 
     // Buffered console log messages — accumulated on the data thread, drained on UI timer
     private readonly Queue<string> _consoleLogBuffer = new();
@@ -415,9 +417,10 @@ public class MainViewModel : ViewModelBase
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
         WebServerService webServerService, MachineStateService machineStateService,
         SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService,
-        SurfacingViewModel surfacingViewModel)
+        SurfacingViewModel surfacingViewModel, GcodeEventInjector eventInjector)
     {
         CommManager = commManager;
+        _eventInjector = eventInjector;
         ProbeViewModel = probeViewModel;
         SurfacingViewModel = surfacingViewModel;
         SettingsViewModel = settingsViewModel;
@@ -680,13 +683,13 @@ public class MainViewModel : ViewModelBase
     private void UnloadTool()
     {
         if (!AtcEnabled || !UnloadToolCommandEnabled) return;
-        CommManager.SendCommand($"G65{_unloadToolMacro}");
+        SendCommand($"G65{_unloadToolMacro}");
     }
 
     private void SetTlr()
     {
         if (!AtcEnabled || !TlrCommandEnabled) return;
-        CommManager.SendCommand($"G65{_tlrMacro}");
+        SendCommand($"G65{_tlrMacro}");
     }
 
     private void RapidReset()
@@ -806,11 +809,27 @@ public class MainViewModel : ViewModelBase
     {
         SendCommand(command);
     }
+    /// <summary>
+    /// Single funnel for operator-issued commands (panel buttons, MDI, gamepad, web UI).
+    /// Configured G-code event rules are expanded here, so a rule fires no matter which
+    /// of those raised the command.
+    /// </summary>
     public void SendCommand(string command)
     {
         if (string.IsNullOrEmpty(command)) return;
-        ConsoleOutput.Add(command);
-        CommManager.SendCommand(command);
+
+        if (_eventInjector.IsEmpty)
+        {
+            ConsoleOutput.Add(command);
+            CommManager.SendCommand(command);
+            return;
+        }
+
+        foreach (var line in _eventInjector.ExpandBlock(command, GcodeEventScope.Manual))
+        {
+            ConsoleOutput.Add(line);
+            CommManager.SendCommand(line);
+        }
     }
 
     private void ToggleConsoleRt()

@@ -50,6 +50,7 @@ namespace GrbLHALSender.ViewModels
         private bool _suppressThemePreview;
 
         public AuxOutputViewModel AuxOutputViewModel { get; }
+        public GcodeEventViewModel GcodeEventViewModel { get; }
         public bool EnableCutLines
         {
             get => _enableCutLines;
@@ -275,9 +276,11 @@ namespace GrbLHALSender.ViewModels
 
         public AppConfigViewModel(ConfigManager configManager,
             AuxOutputViewModel  auxOutputViewModel,
+            GcodeEventViewModel gcodeEventViewModel,
             ThemeService themeService)
         {
             AuxOutputViewModel = auxOutputViewModel;
+            GcodeEventViewModel = gcodeEventViewModel;
             _configManager = configManager;
             _themeService = themeService;
             SaveConfigCommand = ReactiveCommand.Create(Save);
@@ -392,6 +395,7 @@ namespace GrbLHALSender.ViewModels
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
              AuxOutputViewModel.Save();
+            GcodeEventViewModel.Save();
             _appConfig.UseAntiAlias = UseAntiAlias;
             _appConfig.SpindleImagePath = SpindleImagePath;
             _appConfig.Renderer = (GHalSenderConfig.RendererType)RendererIndex;

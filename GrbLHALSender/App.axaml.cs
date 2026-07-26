@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
+using GrbLHALSender.Gcode;
 using GrbLHALSender.SdCard;
 using GrbLHALSender.States;
 using GrbLHALSender.Theming;
@@ -72,6 +73,9 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<WebServerService>();
         collection.AddSingleton<SdCardService>();
         collection.AddSingleton<UpdateCheckService>();
+        // Explicit factory: the injector also has a test-only ctor overload, and
+        // this leaves the container nothing to guess about.
+        collection.AddSingleton(sp => new GcodeEventInjector(sp.GetRequiredService<ConfigManager>()));
         collection.AddTransient<SettingsViewModel>();
         collection.AddTransient<JobViewModel>();
         collection.AddTransient<MainViewModel>();
@@ -83,6 +87,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<AppConfigViewModel>();
         collection.AddTransient<SdCardViewModel>();
         collection.AddTransient<AuxOutputViewModel>();
+        collection.AddTransient<GcodeEventViewModel>();
         collection.AddTransient<SurfacingViewModel>();
     }
 

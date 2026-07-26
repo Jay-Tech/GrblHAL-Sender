@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
+using GrbLHALSender.Gcode;
 using ReactiveUI;
 using System;
 using System.Collections.ObjectModel;
@@ -20,6 +21,7 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
     private string _macroCommandText;
     private readonly ConfigManager _configManger;
     private readonly CommunicationManager _commsManager;
+    private readonly GcodeEventInjector _eventInjector;
     public ObservableCollection<Macro> MacroList { get; set; }
 
 
@@ -78,10 +80,12 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
 
 
     private ReactiveCommand<object, Unit> _doubleMacroTapCommand;
-    public MacroViewModel(ConfigManager configManger, CommunicationManager commsManager)
+    public MacroViewModel(ConfigManager configManger, CommunicationManager commsManager,
+        GcodeEventInjector eventInjector)
     {
         _configManger = configManger;
         _commsManager = commsManager;
+        _eventInjector = eventInjector;
         _configManger.OnConfigLoaded += _configManger_OnConfigLoaded;
         RunMacroCommand = ReactiveCommand.Create<string>(RunMacro);
         DeleteMacroCommand = ReactiveCommand.Create<Macro>(DeleteMacro);
@@ -168,9 +172,22 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
         var command = MacroList.First(x => x.Id == macroId);
         SendCommand(command.Command);
     }
+    /// <summary>
+    /// Macros are operator-issued G-code, so configured event rules apply. A macro
+    /// body may hold several commands; each is matched on its own line.
+    /// </summary>
     private void SendCommand(string command)
     {
-        _commsManager.SendCommand(command);
+        if (string.IsNullOrWhiteSpace(command)) return;
+
+        if (_eventInjector.IsEmpty)
+        {
+            _commsManager.SendCommand(command);
+            return;
+        }
+
+        foreach (var line in _eventInjector.ExpandBlock(command, GcodeEventScope.Manual))
+            _commsManager.SendCommand(line);
     }
 }
 

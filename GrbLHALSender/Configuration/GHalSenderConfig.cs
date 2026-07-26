@@ -76,6 +76,13 @@ public class GHalSenderConfig : ObservableObject
     public ToolList ToolList { get; set; } = new();
     public ObservableCollection<ViewModels.Macro> MacroList { get; set; } = new();
     public List<AuxOutputConfig> AuxOutputs { get; set; } = new();
+
+    /// <summary>
+    /// User-defined pre/post command rules keyed off G-code events (homing, tool
+    /// change, or any command the user types in). Empty by default — nothing is
+    /// injected until the user adds a rule.
+    /// </summary>
+    public List<GcodeEventHook> GcodeEvents { get; set; } = new();
     public double[] JogDistanceMetric { get; set; } =
     [
         .01,
