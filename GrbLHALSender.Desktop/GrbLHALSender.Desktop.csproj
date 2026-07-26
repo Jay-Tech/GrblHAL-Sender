@@ -4,7 +4,10 @@
     <!--If you are willing to use Windows/MacOS native APIs you will need to create 3 projects.
     One for Windows with net7.0-windows TFM, one for MacOS with net7.0-macos and one with net7.0 TFM for Linux.-->
     <TargetFramework>net9.0</TargetFramework>
-    <Version>1.0.0</Version>
+    <!-- Version deliberately not set here: it comes from Directory.Build.props, which
+         is the single source of truth. A local value overrode it, and because this is
+         the entry assembly it is what Assembly.GetEntryAssembly() reports - so the
+         update check was comparing a stale 1.0.0 against the latest release tag. -->
     <Nullable>enable</Nullable>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>

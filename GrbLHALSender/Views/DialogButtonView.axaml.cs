@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
+using GrbLHALSender.Utility;
 using GrbLHALSender.ViewModels;
 using System;
 
@@ -117,6 +118,16 @@ public partial class DialogButtonView : UserControl
         }
     }
 
+    /// <summary>
+    /// Header text for the dialog's title strip. The Utility (app config) dialog carries
+    /// the running build's version, so it can be read off the machine the app is on
+    /// rather than inferred from the installer or the repo.
+    /// </summary>
+    private static string DialogTitle(DialogType dialogType) =>
+        dialogType == DialogType.AppConfig
+            ? $"{dialogType}    v{AppVersion.Display}"
+            : $"{dialogType}";
+
     private void OnCloseDialogRequested(DialogType dialogType)
     {
         var mainView = GetMainView();
@@ -150,7 +161,7 @@ public partial class DialogButtonView : UserControl
 
         _viewModel?.MarkDialogOpened(dialogType);
 
-        host.ShowDialogContent($"{dialogType}", content, width, height, onClosed: () =>
+        host.ShowDialogContent(DialogTitle(dialogType), content, width, height, onClosed: () =>
         {
             _viewModel?.MarkDialogClosed(dialogType);
 

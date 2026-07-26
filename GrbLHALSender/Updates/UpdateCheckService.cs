@@ -1,7 +1,7 @@
+using GrbLHALSender.Utility;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -23,7 +23,7 @@ public class UpdateCheckService
     {
         try
         {
-            var currentVersion = GetCurrentVersion();
+            var currentVersion = AppVersion.Current;
             if (currentVersion == null)
                 return;
 
@@ -73,25 +73,4 @@ public class UpdateCheckService
         return null;
     }
 
-    private static string? GetCurrentVersion()
-    {
-        var attr = Assembly.GetEntryAssembly()?
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-        if (attr == null)
-            return null;
-
-        var version = attr.InformationalVersion;
-
-        // Strip metadata suffix like "+abc123"
-        var plusIndex = version.IndexOf('+');
-        if (plusIndex >= 0)
-            version = version[..plusIndex];
-
-        // Strip pre-release suffix like "-dev"
-        var dashIndex = version.IndexOf('-');
-        if (dashIndex >= 0)
-            version = version[..dashIndex];
-
-        return version;
-    }
 }
