@@ -88,6 +88,7 @@ public class MainViewModel : ViewModelBase
     private bool _uiActiveState;
     private bool _canSetTool;
     private bool _canJog;
+    private bool _canUseMdi;
     private SpindleDirection _spindleDirection = SpindleDirection.Off;
 
     public ObservableCollection<Signal> SignalList
@@ -358,6 +359,18 @@ public class MainViewModel : ViewModelBase
         get => _canSetTool;
         set => this.RaiseAndSetIfChanged(ref _canSetTool, value);
     }
+
+    /// <summary>
+    /// Whether the operator may type a command straight to the controller. Gated on the
+    /// same machine states as jogging, and additionally closed for the whole duration of
+    /// a job: an MDI command sent mid-job lands in the middle of the program and its
+    /// "ok" is miscounted by the streamer's character-counting protocol.
+    /// </summary>
+    public bool CanUseMdi
+    {
+        get => _canUseMdi;
+        set => this.RaiseAndSetIfChanged(ref _canUseMdi, value);
+    }
     /// <summary>
     /// What the controller says the spindle is doing. The three spindle buttons all
     /// render this one value, so they cannot contradict each other or show a direction
@@ -435,6 +448,13 @@ public class MainViewModel : ViewModelBase
         MdiViewModel = mdiViewModel;
         AppConfigViewModel = appConfigViewModel;
         MdiViewModel.MidiTextCommitted += MainViewModel_MidiTextCommitted;
+        // Job start/end has to re-evaluate the controls that send a g-code line —
+        // GrblState alone does not change at the moment a job begins or ends.
+        JobViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(JobViewModel.JobRunning))
+                UpdateButtonStates();
+        };
         ConnectionViewModel.LoadFromConfig(_config);
         ProbeViewModel.LoadFromConfig(_config);
         JobViewModel.Config = _config;
@@ -570,11 +590,20 @@ public class MainViewModel : ViewModelBase
 
     private void UpdateButtonStates()
     {
+        // A running job owns the link. The state check alone is not enough for the
+        // controls that send a g-code line: mid-job the machine reports Tool during a
+        // tool change and can read Idle between blocks, both of which pass the state
+        // test while the streamer is still counting acks for lines in flight.
+        var jobRunning = JobViewModel?.JobRunning ?? false;
 
         CanJog = Connected &&
                  CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
 
-        CanSetTool = Connected && HomeState && CurrentGrblState is GrblState.Idle or GrblState.Tool;
+        CanSetTool = Connected && HomeState && !jobRunning &&
+                     CurrentGrblState is GrblState.Idle or GrblState.Tool;
+
+        CanUseMdi = Connected && !jobRunning &&
+                    CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
     }
 
     private void CloseApplication()
@@ -638,8 +667,17 @@ public class MainViewModel : ViewModelBase
 
     private void MainViewModel_MidiTextCommitted(string command)
     {
-        SendCommand(command);
+        // Enforced here as well as by the panel's IsEnabled, so the rule holds however
+        // the text was submitted and does not depend on the view's layout staying put.
+        if (!CanUseMdi)
+        {
+            ConsoleOutput.Add(JobViewModel.JobRunning
+                ? "MDI blocked: a job is running"
+                : $"MDI blocked: machine is {GrblHalState}");
+            return;
+        }
 
+        SendCommand(command);
     }
 
     private void SetSelectedTool(int tool)

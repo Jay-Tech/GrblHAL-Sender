@@ -387,8 +387,14 @@
 					<!--END WCS Control -->
 
 					<!--START MDI Control-->
-					<views:MdiView Grid.Row="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-								   DataContext="{Binding MdiViewModel}"></views:MdiView>
+					<!--IsEnabled lives on this wrapper, not on MdiView itself: MdiView
+					    re-points DataContext at the MdiViewModel, so a binding there
+					    could not see CanUseMdi on the MainViewModel.-->
+					<Grid Grid.Row="4" IsEnabled="{Binding CanUseMdi}"
+						  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+						<views:MdiView HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+									   DataContext="{Binding MdiViewModel}"></views:MdiView>
+					</Grid>
 					<!--END MDI Control-->
 				</Grid>
 			</Border>
