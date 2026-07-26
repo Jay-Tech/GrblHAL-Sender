@@ -602,8 +602,16 @@ public class MainViewModel : ViewModelBase
         CanSetTool = Connected && HomeState && !jobRunning &&
                      CurrentGrblState is GrblState.Idle or GrblState.Tool;
 
-        CanUseMdi = Connected && !jobRunning &&
-                    CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
+        // One rule for every control that hands a g-code line straight to the
+        // controller: MDI, the macro buttons, and the probe cycles. Tool is allowed so a
+        // manual tool change can still be touched off; a running job is not, because
+        // those lines would land in the middle of the program.
+        var canSendManualGcode = Connected && !jobRunning &&
+                                 CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
+
+        CanUseMdi = canSendManualGcode;
+        if (MacroViewModel != null) MacroViewModel.CanRunMacro = canSendManualGcode;
+        if (ProbeViewModel != null) ProbeViewModel.CanProbe = canSendManualGcode;
     }
 
     private void CloseApplication()

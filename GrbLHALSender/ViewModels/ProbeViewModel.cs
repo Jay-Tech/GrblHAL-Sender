@@ -1,4 +1,4 @@
-using GrbLHALSender.Communication;
+﻿using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Probe;
 using GrbLHALSender.Utility;
@@ -34,6 +34,7 @@ namespace GrbLHALSender.ViewModels
         private string _probeYResult = "";
         private string _probeStatus = "";
         private bool _isProbing;
+        private bool _canProbe;
 
         // Command sequencing state
         private ProbeJobBuilder _probeJob;
@@ -162,8 +163,33 @@ namespace GrbLHALSender.ViewModels
         public bool IsProbing
         {
             get => _isProbing;
-            set => this.RaiseAndSetIfChanged(ref _isProbing, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _isProbing, value);
+                this.RaisePropertyChanged(nameof(CanStartProbe));
+            }
         }
+
+        /// <summary>
+        /// Whether the machine is in a state to accept a probe cycle. Pushed in by
+        /// MainViewModel, which owns the machine state and job status: a probe cycle
+        /// mid-job would interleave its moves into the running program.
+        /// </summary>
+        public bool CanProbe
+        {
+            get => _canProbe;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _canProbe, value);
+                this.RaisePropertyChanged(nameof(CanStartProbe));
+            }
+        }
+
+        /// <summary>
+        /// What the probe buttons bind to: the machine will accept a cycle and one is not
+        /// already running. Combined here because a binding cannot express the two together.
+        /// </summary>
+        public bool CanStartProbe => CanProbe && !IsProbing;
 
         public ICommand ProbeZCommand { get; }
         public ICommand ProbeCornerCommand { get; }
@@ -251,6 +277,8 @@ namespace GrbLHALSender.ViewModels
         private void StartProbeZ()
         {
             if (IsProbing) return;
+            // Enforced here too, so the rule does not rely on the view's IsEnabled.
+            if (!CanProbe) return;
             ClearResults();
             ProbeStatus = "Probing Z...";
 
@@ -286,6 +314,8 @@ namespace GrbLHALSender.ViewModels
         private void StartProbeCorner()
         {
             if (IsProbing) return;
+            // Enforced here too, so the rule does not rely on the view's IsEnabled.
+            if (!CanProbe) return;
             ClearResults();
             ProbeStatus = $"Probing corner ({SelectedCorner})...";
 
@@ -356,6 +386,8 @@ namespace GrbLHALSender.ViewModels
         private void StartProbeCenter()
         {
             if (IsProbing) return;
+            // Enforced here too, so the rule does not rely on the view's IsEnabled.
+            if (!CanProbe) return;
             ClearResults();
 
             _probeJob = CreateJobBuilder();

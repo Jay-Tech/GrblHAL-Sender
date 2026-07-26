@@ -19,6 +19,7 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
     private string _macroName;
     private bool _displayMacroControl;
     private string _macroCommandText;
+    private bool _canRunMacro;
     private readonly ConfigManager _configManger;
     private readonly CommunicationManager _commsManager;
     private readonly GcodeEventInjector _eventInjector;
@@ -68,6 +69,17 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
     {
         get => _macroCommandText;
         set => this.RaiseAndSetIfChanged(ref _macroCommandText, value);
+    }
+
+    /// <summary>
+    /// Whether a macro may be run. Pushed in by MainViewModel, which owns the machine
+    /// state and job status: a macro is arbitrary g-code, and running one mid-job
+    /// interleaves it into the program the controller is already executing.
+    /// </summary>
+    public bool CanRunMacro
+    {
+        get => _canRunMacro;
+        set => this.RaiseAndSetIfChanged(ref _canRunMacro, value);
     }
     public ICommand RunMacroCommand { get; }
     public ICommand DeleteMacroCommand { get; }
@@ -169,6 +181,8 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
     }
     private void RunMacro(string macroId)
     {
+        // Enforced here too, so the rule does not rely on the view's IsEnabled.
+        if (!CanRunMacro) return;
         var command = MacroList.First(x => x.Id == macroId);
         SendCommand(command.Command);
     }

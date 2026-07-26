@@ -512,9 +512,13 @@
 							   VerticalContentAlignment="Center"
 							   FontSize="{DynamicResource BaseFontSize}"
 							   IsVisible="{Binding MacroViewModel.MacroList.Count }"/>
+						<!--IsEnabled on the repeater rather than the templated button:
+						    it propagates to the children, and inside the template the
+						    DataContext is a Macro item, not the view model.-->
 						<ItemsRepeater Grid.Column="2" x:Name="MacroRepeater"
 									   HorizontalAlignment="Left"
 									   VerticalAlignment="Bottom"
+									   IsEnabled="{Binding MacroViewModel.CanRunMacro}"
 									   ItemsSource="{Binding MacroViewModel.MacroList}"
 									   Margin="0,0">
 							<ItemsRepeater.Layout>
