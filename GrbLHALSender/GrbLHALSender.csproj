@@ -13,6 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Lets the test project reach helpers that are internal because nothing in the
+         app should call them, but whose logic is worth testing directly. -->
+    <InternalsVisibleTo Include="GrbLHALSender.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="WebServer\wwwroot\**" />
   </ItemGroup>
 

@@ -240,6 +240,18 @@ namespace GrbLHALSender.Communication
 
         public void NewSerialConnection(SerialSettings connection)
         {
+            // Tear the old adapter down first, as the TCP and WebSocket paths do.
+            // Without this, a second connect attempt built a new Serial while the old
+            // one still held the port open: the new open failed with "access denied",
+            // and the old adapter kept its auto-reconnect loop running and its
+            // OnDataReceived hooked up — so status kept arriving from the zombie while
+            // every command went out through an adapter that was never opened.
+            if (Adapter != null)
+            {
+                Adapter.OnDataReceived -= Adapter_OnDataReceived;
+                Adapter.Close();
+            }
+
             Adapter = new Serial(connection);
             Adapter.OnDataReceived += Adapter_OnDataReceived;
         }

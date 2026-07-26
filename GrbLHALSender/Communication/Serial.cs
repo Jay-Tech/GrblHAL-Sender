@@ -136,17 +136,22 @@ namespace GrbLHALSender.Communication
 
         public void WriteBytes(byte[] data, int offset, int count)
         {
-            if (!_serialPort.IsOpen) return;
-            _serialPort.BaseStream.Write(data, offset, count);
-            _serialPort.BaseStream.Flush();
+            // Snapshot the field: Close() nulls it, and it can do so between the
+            // open check and the write.
+            var port = _serialPort;
+            if (port == null || !port.IsOpen) return;
+            port.BaseStream.Write(data, offset, count);
+            port.BaseStream.Flush();
         }
 
         private void SerialPort_RawDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            int bytesToRead = _serialPort.BytesToRead;
+            var port = _serialPort;
+            if (port == null) return;
+            int bytesToRead = port.BytesToRead;
             if (bytesToRead <= 0) return;
             var buffer = new byte[bytesToRead];
-            int read = _serialPort.Read(buffer, 0, bytesToRead);
+            int read = port.Read(buffer, 0, bytesToRead);
             if (read > 0)
             {
                 var data = new byte[read];
@@ -157,6 +162,8 @@ namespace GrbLHALSender.Communication
 
         public void Close()
         {
+            // Set first: it stops TriggerReconnect from starting a new reconnect loop
+            // while we are tearing this adapter down.
             _userClosed = true;
             if (_serialPort != null)
             {
@@ -166,13 +173,34 @@ namespace GrbLHALSender.Communication
             }
             _tokenSource?.Cancel();
             Thread.Sleep(100);
-            if (_serialPort == null) return;
-            _serialPort.DtrEnable = false;
-            _serialPort.RtsEnable = false;
-            if (!_serialPort.IsOpen) return;
-            _serialPort?.DiscardInBuffer();
-            _serialPort?.DiscardOutBuffer();
-            _serialPort?.Dispose();
+
+            // Report the drop before releasing the port. Close() used to leave
+            // IsConnected true, which left MainViewModel.Connected true — and its
+            // "if (Connected) return" guard then silently refused to reconnect.
+            IsConnected = false;
+
+            var port = _serialPort;
+            _serialPort = null;
+            if (port == null) return;
+
+            try
+            {
+                if (port.IsOpen)
+                {
+                    port.DtrEnable = false;
+                    port.RtsEnable = false;
+                    port.DiscardInBuffer();
+                    port.DiscardOutBuffer();
+                }
+                // Always dispose, open or not — a port left undisposed keeps the OS
+                // handle, and the next open of the same port fails with access denied.
+                port.Dispose();
+            }
+            catch (Exception)
+            {
+                // A port whose device has already vanished throws on every one of the
+                // calls above; the handle is gone either way and the caller is mid-teardown.
+            }
         }
 
         public void WriteByte(byte data)
@@ -183,7 +211,8 @@ namespace GrbLHALSender.Communication
         }
         public void WriteCommand(string command)
         {
-            if (!_serialPort.IsOpen) return;
+            var port = _serialPort;
+            if (port == null || !port.IsOpen) return;
             if (command.Length == 1)
                 WriteByte((byte)command.ToCharArray()[0]);
             else
@@ -209,8 +238,9 @@ namespace GrbLHALSender.Communication
                 {
                     try
                     {
-                        if (_serialPort.IsOpen)
-                            _serialPort.BaseStream.Write(command, 0, command.Length);
+                        var port = _serialPort;
+                        if (port != null && port.IsOpen)
+                            port.BaseStream.Write(command, 0, command.Length);
                         else
                         {
                             IsConnected = false;
@@ -233,7 +263,9 @@ namespace GrbLHALSender.Communication
         {
             lock (_sncLock)
             {
-                _receiveBuffer += _serialPort.ReadExisting();
+                var port = _serialPort;
+                if (port == null) return;
+                _receiveBuffer += port.ReadExisting();
 
                 while (true)
                 {

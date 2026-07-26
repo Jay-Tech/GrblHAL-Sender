@@ -1083,6 +1083,13 @@ public class MainViewModel : ViewModelBase
         }
 
         Connected = CommManager.Adapter.IsConnected;
+        if (!Connected)
+        {
+            // A failed open used to be completely silent, which made a busy or
+            // wrong port indistinguishable from a dead controller.
+            ConsoleOutput.Add($"Connection failed: could not open {DescribeTarget()}");
+        }
+
         CommManager.Adapter.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(ICommsAdapter.IsConnected))
@@ -1096,8 +1103,21 @@ public class MainViewModel : ViewModelBase
             }
         };
 
-        CommManager.GetSettings();
+        // Only query when the link is actually up. GetSettings retries $I+ in an
+        // unbounded loop, so running it against a port that failed to open left a
+        // background task spinning forever — and another one on every retry.
+        if (Connected)
+            CommManager.GetSettings();
     }
+
+    private string DescribeTarget() => _config.Connection switch
+    {
+        GHalSenderConfig.ConnectionType.Serial =>
+            $"{_config.SerialSettings.PortName} at {_config.SerialSettings.BaudRate} baud",
+        GHalSenderConfig.ConnectionType.Tcp =>
+            $"{_config.TcpSettings.IpAddress}:{_config.TcpSettings.PortNumber}",
+        _ => $"{_config.WebSocketSettings.IpAddress}:{_config.WebSocketSettings.PortNumber}"
+    };
 }
 public class Axis : ViewModelBase
 {

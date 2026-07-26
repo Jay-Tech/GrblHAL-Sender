@@ -1,7 +1,9 @@
 ﻿using GrbLHALSender.Configuration;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels
@@ -151,8 +153,12 @@ namespace GrbLHALSender.ViewModels
                 _ => config.Connection
             };
 
-            // Serial
-            config.SerialSettings.PortName = SerialPort ?? "COM1";
+            // Serial — keep the stored port when nothing is selected. The ComboBox
+            // clears its selection whenever the chosen port is missing from the list
+            // (controller unplugged or mid-reset), and defaulting to COM1 there would
+            // overwrite a good setting with a wrong one on the next Save.
+            if (!string.IsNullOrWhiteSpace(SerialPort))
+                config.SerialSettings.PortName = SerialPort;
             config.SerialSettings.BaudRate = BaudRate;
 
             // TCP
@@ -165,20 +171,86 @@ namespace GrbLHALSender.ViewModels
             _configManager.SaveConfig();
         }
 
-        public void RefreshPorts()
+        public void RefreshPorts() => ReconcilePorts(AvailablePorts, QueryPorts());
+
+        /// <summary>
+        /// Brings <paramref name="target"/> in line with <paramref name="desired"/> by
+        /// adding and removing individual items, never clearing.
+        /// <para>
+        /// Clear()-then-refill drops the ComboBox's SelectedItem, and the two-way
+        /// binding writes that null straight back into SerialPort — so a refresh could
+        /// silently forget the chosen port. Reconciling also heals a list that already
+        /// holds duplicate rows.
+        /// </para>
+        /// </summary>
+        internal static void ReconcilePorts(IList<string> target, IList<string> desired)
         {
-            AvailablePorts.Clear();
+            for (int i = target.Count - 1; i >= 0; i--)
+            {
+                if (!desired.Contains(target[i]))
+                    target.RemoveAt(i);
+            }
+
+            for (int i = 0; i < desired.Count; i++)
+            {
+                if (i >= target.Count)
+                    target.Add(desired[i]);
+                else if (target[i] != desired[i])
+                    target.Insert(i, desired[i]);
+            }
+
+            // Trailing leftovers: duplicates the loop above walked past.
+            while (target.Count > desired.Count)
+                target.RemoveAt(target.Count - 1);
+        }
+
+        private static List<string> QueryPorts()
+        {
             try
             {
-                foreach (var port in System.IO.Ports.SerialPort.GetPortNames())
-                {
-                    AvailablePorts.Add(port);
-                }
+                return OrderPorts(System.IO.Ports.SerialPort.GetPortNames());
             }
             catch (Exception)
             {
                 // Serial ports may not be available on all platforms
+                return [];
             }
+        }
+
+        /// <summary>
+        /// De-duplicates and orders the names the OS reports.
+        /// <para>
+        /// De-duplication matters on Windows: GetPortNames reads the
+        /// HKLM\HARDWARE\DEVICEMAP\SERIALCOMM registry map, and a USB CDC device that
+        /// re-enumerates (a controller reset or re-plug) can leave several device
+        /// entries pointing at the same COM name until Windows cleans them up. Those
+        /// arrive here as repeated identical names.
+        /// </para>
+        /// </summary>
+        internal static List<string> OrderPorts(IEnumerable<string> names) =>
+            names
+                .Where(p => p != null)
+                .Select(p => p.Trim())
+                .Where(p => p.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                // Numeric ordering, so COM11 sorts after COM4 rather than before it.
+                .OrderBy(PortPrefix, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(PortNumber)
+                .ThenBy(p => p, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+        private static string PortPrefix(string port)
+        {
+            int i = 0;
+            while (i < port.Length && !char.IsDigit(port[i])) i++;
+            return port[..i];
+        }
+
+        private static int PortNumber(string port)
+        {
+            int i = 0;
+            while (i < port.Length && !char.IsDigit(port[i])) i++;
+            return int.TryParse(port.AsSpan(i), out var number) ? number : int.MaxValue;
         }
     }
 }
