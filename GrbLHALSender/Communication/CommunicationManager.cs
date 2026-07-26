@@ -26,6 +26,9 @@ namespace GrbLHALSender.Communication
         private readonly ConfigManager _configManager;
         private const string StateString = "Idle|Run|Hold|Jog|Alarm:|Door|Check|Home|Sleep|Tool";
 
+        // ~15s of retries at 500ms before the connect query sequence gives up on $I+.
+        private const int MaxInfoAttempts = 30;
+
         public event EventHandler<string> OnConsoleLogReceived;
         public event EventHandler<RealTImeState> OnStateReceived;
         public event EventHandler<List<GrblHalSetting>> onSettingUpdated;
@@ -33,6 +36,15 @@ namespace GrbLHALSender.Communication
         public event EventHandler<ProbeState> OnProbeResults;
         public event EventHandler OnCommandAck;
         public event EventHandler<List<AuxPinInfo>> OnAuxPinsDiscovered;
+
+        /// <summary>
+        /// Every command written to the controller, whatever raised it — a panel button,
+        /// MDI, a macro, a streamed job line, or a G-code event rule's injected command.
+        /// Lets UI that mirrors controller state notice changes it did not initiate.
+        /// Handlers run on the caller's thread, which during streaming is the comms
+        /// thread, so they must marshal any UI work themselves.
+        /// </summary>
+        public event EventHandler<string>? OnCommandSent;
 
 
         private Dictionary<int, string> _errorCodes = new Dictionary<int, string>();
@@ -48,6 +60,27 @@ namespace GrbLHALSender.Communication
 
 
         public ICommsAdapter Adapter { get; set; }
+
+        /// <summary>
+        /// True while a job is being streamed to the controller.
+        /// <para>
+        /// The streamer uses grblHAL's character-counting protocol: it tracks the bytes
+        /// of every line it has sent and frees them as each "ok" arrives. A command sent
+        /// from anywhere else during that window breaks both halves of that bookkeeping —
+        /// its bytes occupy the controller's RX buffer unaccounted (risking an overflow
+        /// that corrupts the g-code mid-cut), and its "ok" is credited to a streamed
+        /// line that has not actually completed. So the request/response helpers below
+        /// refuse to send while this is set.
+        /// </para>
+        /// </summary>
+        public bool IsStreaming { get; private set; }
+
+        /// <summary>Called by the job streamer when it takes exclusive use of the link.</summary>
+        public void BeginStreaming() => IsStreaming = true;
+
+        /// <summary>Called by the job streamer when the job ends, however it ended.</summary>
+        public void EndStreaming() => IsStreaming = false;
+
         public MachineSettings MachineData => _machineData;
         public GrblHALOptions Options => grblHalOptions;
         public Type? ActiveAdapterType => Adapter?.GetType();
@@ -106,6 +139,7 @@ namespace GrbLHALSender.Communication
         public void SendCommand(string command)
         {
             Adapter?.WriteCommand(command);
+            OnCommandSent?.Invoke(this, command);
         }
         public void GetSettings()
         {
@@ -116,13 +150,16 @@ namespace GrbLHALSender.Communication
                 grblHalOptions.AxisLabels.Clear();
                 grblHalOptions.SignalLabels.Clear();
 
+                // Bounded retry. This used to loop until $I+ answered, with no exit — a
+                // controller that never replies (or a query refused because a job is
+                // streaming) left this task spinning for the life of the process, and a
+                // second connect attempt added another one. Give up after a few tries and
+                // continue: the code below is written to cope with missing option data.
                 var infoResults = await SendAsyncCommand(GrblHalConstants.GetinfoExtended, timeOutMs: 1000);
-                if (!infoResults)
+                for (var attempt = 0; !infoResults && attempt < MaxInfoAttempts; attempt++)
                 {
-                    while (!await SendAsyncCommand(GrblHalConstants.GetinfoExtended, timeOutMs: 1000))
-                    {
-                        Thread.Sleep(500);
-                    }
+                    await Task.Delay(500);
+                    infoResults = await SendAsyncCommand(GrblHalConstants.GetinfoExtended, timeOutMs: 1000);
                 }
                 // Always fire onOptionsUpdated after $I+ completes, regardless of which
                 // attempt succeeded. Previously this only ran on the fast path, which
@@ -293,6 +330,11 @@ namespace GrbLHALSender.Communication
         public async Task<List<string>> SendCommandCollectResponsesAsync(
             string command, string endMarker = "ok", int timeOutMs = 5000)
         {
+            // Never inject a command into a running job's stream — see IsStreaming.
+            // Callers get an empty result; those that would misread that as "the
+            // controller answered nothing" check IsStreaming before asking.
+            if (IsStreaming) return [];
+
             var lines = new List<string>();
             var tcs = new TaskCompletionSource<List<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -782,6 +824,9 @@ namespace GrbLHALSender.Communication
         }
         public async Task<bool> SendAsyncCommand(string command, string resultMatch = "ok", int timeOutMs = 300)
         {
+            // Never inject a command into a running job's stream — see IsStreaming.
+            if (IsStreaming) return false;
+
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             void Handler(object? sender, string data)

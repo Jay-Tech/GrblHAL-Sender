@@ -491,11 +491,16 @@ namespace GrbLHALSender.ViewModels
             {
                 _commsManager.OnStateReceived += _commsManager_OnStateReceived;
                 _commsManager.OnCommandAck += _commsManager_OnCommandAck;
+                // Claim the link for the duration. Tied to the ack subscription because
+                // the two cover exactly the same window: while we are counting acks,
+                // nothing else may send a command and consume one.
+                _commsManager.BeginStreaming();
             }
             else
             {
                 _commsManager.OnStateReceived -= _commsManager_OnStateReceived;
                 _commsManager.OnCommandAck -= _commsManager_OnCommandAck;
+                _commsManager.EndStreaming();
             }
         }
 

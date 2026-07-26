@@ -150,6 +150,13 @@ namespace GrbLHALSender.ViewModels
         private async Task EnsureDescriptionsAsync(SettingGroupViewModel group)
         {
             if (_descriptionsUnsupported) return;
+
+            // Checked before marking the group loaded, so it is retried once the job
+            // finishes. $SED queries are refused while streaming, and a refusal looks
+            // exactly like "this firmware has no descriptions" — which would switch
+            // descriptions off for the rest of the session.
+            if (_commManager.IsStreaming) return;
+
             if (!_descriptionsLoaded.Add(group.Name)) return;
 
             await _descriptionGate.WaitAsync();
@@ -165,6 +172,13 @@ namespace GrbLHALSender.ViewModels
                 foreach (var setting in group.Settings.ToList())
                 {
                     if (_descriptionsUnsupported) return;
+                    // A job can start while this group is still being fetched; stop
+                    // asking rather than reading the refusals as missing descriptions.
+                    if (_commManager.IsStreaming)
+                    {
+                        _descriptionsLoaded.Remove(group.Name);
+                        break;
+                    }
                     if (setting.Description != null) continue;
 
                     var text = await _commManager.GetSettingDescriptionAsync(setting.Id);
