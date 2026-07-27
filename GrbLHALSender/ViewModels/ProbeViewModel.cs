@@ -41,6 +41,8 @@ namespace GrbLHALSender.ViewModels
         private string _toolSetterPosition = "Not read yet";
         private string _toolSetterStatus = "";
         private bool _toolReferenceSet;
+        // Parser unit in force before a probe, so the sequence can hand it back.
+        private string? _modalUnitsBeforeProbe;
 
         // Command sequencing state
         private ProbeJobBuilder _probeJob;
@@ -252,16 +254,16 @@ namespace GrbLHALSender.ViewModels
                     ToolReferenceSet = _machineStateService.TLR;
             };
 
-            ProbeZCommand = ReactiveCommand.Create(StartProbeZ);
-            ProbeCornerCommand = ReactiveCommand.Create(StartProbeCorner);
-            ProbeCenterCommand = ReactiveCommand.Create(StartProbeCenter);
+            ProbeZCommand = ReactiveCommand.CreateFromTask(async () => { await CaptureModalUnitsAsync(); StartProbeZ(); });
+            ProbeCornerCommand = ReactiveCommand.CreateFromTask(async () => { await CaptureModalUnitsAsync(); StartProbeCorner(); });
+            ProbeCenterCommand = ReactiveCommand.CreateFromTask(async () => { await CaptureModalUnitsAsync(); StartProbeCenter(); });
             SetToolTypeTouchPlateCommand = ReactiveCommand.Create(() => SelectedToolType = ProbeToolType.TouchPlate);
             SetToolTypeProbe3DCommand = ReactiveCommand.Create(() => SelectedToolType = ProbeToolType.Probe3D);
             SetCornerCommand = ReactiveCommand.Create<string>(s => SelectedCorner = Enum.Parse<CornerDirection>(s));
             SetCenterTypeCommand = ReactiveCommand.Create<string>(s => SelectedCenterType = Enum.Parse<CenterFinderType>(s));
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
             ReadToolSetterCommand = ReactiveCommand.CreateFromTask(ReadToolSetterAsync);
-            ProbeToolReferenceHereCommand = ReactiveCommand.Create(() => StartToolReferenceProbe(moveToSetter: false));
+            ProbeToolReferenceHereCommand = ReactiveCommand.CreateFromTask(async () => { await CaptureModalUnitsAsync(); StartToolReferenceProbe(moveToSetter: false); });
             ProbeToolReferenceAtSetterCommand = ReactiveCommand.CreateFromTask(() => StartToolReferenceProbeAtSetterAsync());
             SetToolSetterXyCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("X0Y0", "XY"));
             SetToolSetterZCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("Z0", "Z"));
@@ -306,6 +308,53 @@ namespace GrbLHALSender.ViewModels
             pc.LatchDistance = LatchDistance;
             pc.ClearanceHeight = ClearanceHeight;
             pc.ApproxSize = ApproxSize;
+        }
+
+        /// <summary>
+        /// Notes the parser unit in force before a probe so it can be handed back.
+        /// <para>
+        /// A probe sequence starts with G20 or G21 to match the numbers in the UI, and that
+        /// is modal — it outlives the sequence. Left changed, the next thing to send an
+        /// unqualified coordinate has it read in the wrong unit: a metric machine left in
+        /// G20 treats millimetre values as inches and overshoots by 25.4.
+        /// </para>
+        /// </summary>
+        private async Task CaptureModalUnitsAsync()
+        {
+            if (IsProbing) return;
+            _modalUnitsBeforeProbe = await _communicationManager.GetModalUnitsAsync();
+        }
+
+        private void RestoreModalUnits()
+        {
+            // Nothing to restore if $G could not be read, or if it already matches what the
+            // sequence set — sending it anyway would just be noise.
+            if (_modalUnitsBeforeProbe == null || _modalUnitsBeforeProbe == UnitSystem) return;
+
+            _communicationManager.SendCommand(_modalUnitsBeforeProbe);
+            _modalUnitsBeforeProbe = null;
+        }
+
+        /// <summary>
+        /// Converts a value the controller reported into the unit the probe sequence is
+        /// sending in.
+        /// <para>
+        /// Needed because the two are set independently: $# and the status reports follow
+        /// $13, while the numbers we send are read in whatever G20/G21 the sequence
+        /// established. On a metric machine driven from an imperial display those differ,
+        /// and a raw millimetre coordinate sent as inches is a 25.4x overshoot.
+        /// </para>
+        /// </summary>
+        private double ToSequenceUnits(double reportedValue)
+        {
+            var machineIsMetric = _communicationManager.MachineData?.ReportInMetric ?? true;
+            var sequenceIsMetric = UnitSystem == "G21";
+
+            if (machineIsMetric == sequenceIsMetric) return reportedValue;
+
+            return machineIsMetric
+                ? reportedValue / 25.4   // mm reported, inches being sent
+                : reportedValue * 25.4;  // inches reported, mm being sent
         }
 
         private ProbeJobBuilder CreateJobBuilder()
@@ -440,14 +489,23 @@ namespace GrbLHALSender.ViewModels
                 return;
             }
 
+            // $# reports in the machine's units ($13); these go out under the sequence's
+            // G20/G21. Those are set independently, so the values have to be converted or
+            // the travel is out by a factor of 25.4.
+            var x = ToSequenceUnits(setter[0]).ToInvariantString("F3");
+            var y = ToSequenceUnits(setter[1]).ToInvariantString("F3");
+            var z = ToSequenceUnits(setter[2]).ToInvariantString("F3");
+
             var approach = new List<string>
             {
+                UnitSystem,
                 "G90",
                 "G53G0Z0",
-                $"G53G0X{setter[0].ToInvariantString("F3")}Y{setter[1].ToInvariantString("F3")}",
-                $"G53G0Z{setter[2].ToInvariantString("F3")}"
+                $"G53G0X{x}Y{y}",
+                $"G53G0Z{z}"
             };
 
+            await CaptureModalUnitsAsync();
             StartToolReferenceProbe(moveToSetter: true, approach);
         }
 
@@ -736,6 +794,7 @@ namespace GrbLHALSender.ViewModels
             // Leave the parser in absolute mode; the sequence switches to G91 for the
             // approach moves and abandoning it there would surprise the next command.
             _communicationManager.SendCommand("G90");
+            RestoreModalUnits();
 
             ProbeStatus = status;
         }
@@ -746,8 +805,9 @@ namespace GrbLHALSender.ViewModels
             _communicationManager.OnProbeResults -= OnProbeResult;
             IsProbing = false;
 
-            // Return to absolute mode
+            // Return to absolute mode, and hand the parser back the unit it was in.
             _communicationManager.SendCommand("G90");
+            RestoreModalUnits();
 
             _onAllPhasesComplete?.Invoke();
         }

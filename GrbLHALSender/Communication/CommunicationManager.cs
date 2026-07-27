@@ -607,6 +607,47 @@ namespace GrbLHALSender.Communication
         }
 
         /// <summary>
+        /// Reads which unit the g-code parser is currently in, "G20" or "G21", from $G.
+        /// <para>
+        /// This is not the same thing as $13. $13 decides the units the controller
+        /// <em>reports</em> in; G20/G21 is modal parser state that decides how it
+        /// <em>interprets</em> the numbers we send. A metric machine can be sitting in G20
+        /// because something left it there, and then every unqualified coordinate is off by
+        /// a factor of 25.4.
+        /// </para>
+        /// </summary>
+        public async Task<string?> GetModalUnitsAsync(int timeOutMs = 2000)
+        {
+            var lines = await SendCommandCollectResponsesAsync(
+                GrblHalConstants.Getparserstate, timeOutMs: timeOutMs);
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim().Trim('[', ']');
+                if (!trimmed.StartsWith("GC:", StringComparison.OrdinalIgnoreCase)) continue;
+
+                return ParseModalUnits(trimmed[3..]);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Picks G20 or G21 out of the modal word list $G reports, or null when neither is
+        /// present — in which case a caller must not guess.
+        /// </summary>
+        internal static string? ParseModalUnits(string modalWords)
+        {
+            foreach (var word in modalWords.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (word.Equals("G20", StringComparison.OrdinalIgnoreCase)) return "G20";
+                if (word.Equals("G21", StringComparison.OrdinalIgnoreCase)) return "G21";
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Parses a comma separated axis list as the controller reports it. Returns null
         /// rather than a partly filled array, so a caller cannot act on half a position.
         /// </summary>
