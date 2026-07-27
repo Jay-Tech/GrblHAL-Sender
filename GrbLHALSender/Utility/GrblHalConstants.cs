@@ -81,5 +81,10 @@
         //  Tool change
         /// <summary>Tool Probe Workpiece — probes the new tool and applies the offset ($341=1 and 2 only).</summary>
         public const string ToolProbeWorkpiece = "$TPW";
+        /// <summary>
+        /// Tool Length Reference — captures the last successful probe as the baseline that
+        /// $TPW measures against. Issued without a successful probe it clears the reference.
+        /// </summary>
+        public const string ToolLengthReference = "$TLR";
     }
 }

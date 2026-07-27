@@ -96,21 +96,34 @@
                    FontSize="{DynamicResource XlFontSize}"
                    Text="TOOL"
                    IsVisible="{Binding ToolChangeVisible}"/>
-		<!-- $TPW probes the new tool and applies the offset. grblHAL's manual tool change
-		     modes require it before cycle start, and there was previously no way to send
-		     it except MDI. Hidden unless $341 says this machine has that step. -->
-		<Button Grid.Column="4" Grid.Row="3" Grid.ColumnSpan="2"
-				Content="Touch Off"
-				FontSize="15"
-				Height="38" Width="140"
-				CornerRadius="6"
-				HorizontalAlignment="Center"
-				VerticalAlignment="Center"
-				HorizontalContentAlignment="Center"
-				VerticalContentAlignment="Center"
-				Command="{Binding TouchOffCommand}"
-				IsVisible="{Binding TouchOffVisible}"
-				ToolTip.Tip="Probe the new tool and apply its offset ($TPW), then press Start. Needs a reference established with the first tool — the offset is measured relative to the previous probe, not an absolute surface."/>
+		<!-- grblHAL's manual tool change modes need the new tool probed before cycle start,
+		     and there was previously no way to send either command except MDI. Hidden
+		     unless $341 says this machine has that step.
+		     Left-hand columns on purpose: the g-code viewer opens over the right side of
+		     the home tab and would cover them there. -->
+		<StackPanel Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"
+					Orientation="Horizontal"
+					Spacing="8"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					IsVisible="{Binding TouchOffVisible}">
+			<Button Content="Touch Off"
+					FontSize="15"
+					Height="38" Width="125"
+					CornerRadius="6"
+					HorizontalContentAlignment="Center"
+					VerticalContentAlignment="Center"
+					Command="{Binding TouchOffCommand}"
+					ToolTip.Tip="Probe the new tool and apply its offset ($TPW), then press Start."/>
+			<Button Content="Set Ref"
+					FontSize="15"
+					Height="38" Width="125"
+					CornerRadius="6"
+					HorizontalContentAlignment="Center"
+					VerticalContentAlignment="Center"
+					Command="{Binding SetToolReferenceCommand}"
+					ToolTip.Tip="Capture the probe just taken as the tool length reference ($TLR). Needed once, on the first tool change of a session — press Touch Off first, then this. $TPW measures against this baseline. Sent without a successful probe it CLEARS the reference."/>
+		</StackPanel>
 		<!-- Shares row 3 with TOOL: a tool change and an aborted job cannot both be
 		     current, and a job stopped by a rejected line must not be silent. -->
 		<TextBlock Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="6"

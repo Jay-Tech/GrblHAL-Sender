@@ -347,14 +347,23 @@ namespace GrbLHALSender.ViewModels
             await ReadToolSetterAsync();
         }
 
-        private string FormatAxes(double[] values)
+        /// <summary>
+        /// Formats the offset as the controller reported it.
+        /// <para>
+        /// Deliberately unlabelled. UnitLabel follows the display preference, while $#
+        /// reports in the machine's own units — so on a metric machine shown in inches the
+        /// label said "in" over millimetre values. A wrong unit is worse than none, and the
+        /// operator already knows what their machine reports in.
+        /// </para>
+        /// </summary>
+        private static string FormatAxes(double[] values)
         {
             var labels = new[] { "X", "Y", "Z", "A", "B", "C" };
             var parts = new List<string>(values.Length);
             for (var i = 0; i < values.Length && i < labels.Length; i++)
                 parts.Add($"{labels[i]} {values[i].ToInvariantString("F3")}");
 
-            return string.Join("   ", parts) + $"  {UnitLabel}";
+            return string.Join("   ", parts);
         }
 
         private void StartProbeZ()

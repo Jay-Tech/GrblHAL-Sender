@@ -70,16 +70,23 @@ buttons stay disabled, since those would interleave into the program.
 
 ## Manual touch off (modes 1 and 2)
 
-A **Touch Off** button appears beside the `TOOL` banner while the job is paused. It sends
-`$TPW`, which probes the new tool and applies its length offset.
+**Touch Off** and **Set Ref** buttons appear beside the `TOOL` banner while the job is
+paused.
 
-Sequence: stop at the `M6` → change the tool → jog it over the reference surface → **Touch
-Off** → **Start**.
+- **Touch Off** sends `$TPW` — probes the new tool and applies its length offset
+- **Set Ref** sends `$TLR` — captures the probe just taken as the reference `$TPW` measures
+  against
 
-> **A reference has to exist first.** `$TPW` applies the *difference* between this probe and
-> the previous one, so it needs a baseline established with the first tool. Without one the
-> first change of a session measures against nothing — and the result is a wrong Z rather
-> than an error. Touch off once with your reference tool before starting a job.
+Every tool change: stop at the `M6` → change the tool → jog it over the reference surface →
+**Touch Off** → **Start**.
+
+> **The first tool change of a session needs one extra step.** `$TPW` applies the
+> *difference* between this probe and the previous one, so the very first one has no
+> baseline to measure against. On the first change press **Touch Off**, then **Set Ref**,
+> then Start. After that Touch Off alone is enough.
+>
+> Order matters: `$TLR` must follow a *successful* probe. Sent before one, or after a failed
+> one, it clears the reference instead of setting it.
 
 Touch plate thickness plays no part in this. The offset is a differential against the same
 surface, so the thickness cancels out. Thickness only matters for setting workpiece Z zero,

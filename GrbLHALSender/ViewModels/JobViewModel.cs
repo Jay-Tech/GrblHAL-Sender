@@ -289,6 +289,7 @@ namespace GrbLHALSender.ViewModels
         public ICommand PauseJobCommand { get; }
         public ICommand StopJobCommand { get; }
         public ICommand TouchOffCommand { get; }
+        public ICommand SetToolReferenceCommand { get; }
         /// <summary>
         /// Reacts to MachineStateService property changes (fires on UI thread at ~10 Hz).
         /// Feeds Connected, GrblState, and SpindlePosition from the centralized service.
@@ -351,6 +352,7 @@ namespace GrbLHALSender.ViewModels
             PauseJobCommand = ReactiveCommand.Create(TogglePause);
             StopJobCommand = ReactiveCommand.Create(StopJob);
             TouchOffCommand = ReactiveCommand.Create(TouchOff);
+            SetToolReferenceCommand = ReactiveCommand.Create(SetToolReference);
             RunTime = "00:00:00";
             _jobTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (sender, args) =>
             {
@@ -535,6 +537,22 @@ namespace GrbLHALSender.ViewModels
             if (JobState != JobState.Tool || !ToolChangeNeedsTouchOff) return;
 
             _commsManager.SendCommand(GrblHalConstants.ToolProbeWorkpiece);
+        }
+
+        /// <summary>
+        /// Captures the probe just taken as the tool length reference that $TPW measures
+        /// against. Needed once, on the first tool change of a session, because $TPW
+        /// applies a difference and a difference needs a baseline.
+        /// <para>
+        /// Order matters: this must follow a successful probe. Issued before one, or after
+        /// a failed one, grblHAL clears the reference instead of setting it.
+        /// </para>
+        /// </summary>
+        private void SetToolReference()
+        {
+            if (JobState != JobState.Tool || !ToolChangeNeedsTouchOff) return;
+
+            _commsManager.SendCommand(GrblHalConstants.ToolLengthReference);
         }
 
         private void ResumeJob()
