@@ -5,6 +5,7 @@ using GrbLHALSender.Utility;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels
@@ -35,6 +36,8 @@ namespace GrbLHALSender.ViewModels
         private string _probeStatus = "";
         private bool _isProbing;
         private bool _canProbe;
+        private string _toolSetterPosition = "Not read yet";
+        private string _toolSetterStatus = "";
 
         // Command sequencing state
         private ProbeJobBuilder _probeJob;
@@ -191,6 +194,27 @@ namespace GrbLHALSender.ViewModels
         /// </summary>
         public bool CanStartProbe => CanProbe && !IsProbing;
 
+        /// <summary>
+        /// The stored G59.3 offset, as the controller reports it, or a note when it is not
+        /// known yet. Shown so the operator can see what is there before overwriting it.
+        /// </summary>
+        public string ToolSetterPosition
+        {
+            get => _toolSetterPosition;
+            set => this.RaiseAndSetIfChanged(ref _toolSetterPosition, value);
+        }
+
+        /// <summary>Outcome of the last tool setter action.</summary>
+        public string ToolSetterStatus
+        {
+            get => _toolSetterStatus;
+            set => this.RaiseAndSetIfChanged(ref _toolSetterStatus, value);
+        }
+
+        public ICommand ReadToolSetterCommand { get; }
+        public ICommand SetToolSetterXyCommand { get; }
+        public ICommand SetToolSetterZCommand { get; }
+
         public ICommand ProbeZCommand { get; }
         public ICommand ProbeCornerCommand { get; }
         public ICommand ProbeCenterCommand { get; }
@@ -214,6 +238,9 @@ namespace GrbLHALSender.ViewModels
             SetCornerCommand = ReactiveCommand.Create<string>(s => SelectedCorner = Enum.Parse<CornerDirection>(s));
             SetCenterTypeCommand = ReactiveCommand.Create<string>(s => SelectedCenterType = Enum.Parse<CenterFinderType>(s));
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
+            ReadToolSetterCommand = ReactiveCommand.CreateFromTask(ReadToolSetterAsync);
+            SetToolSetterXyCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("X0Y0", "XY"));
+            SetToolSetterZCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("Z0", "Z"));
 
 
             // Update IsTouchPlate when SelectedToolType changes
@@ -274,6 +301,62 @@ namespace GrbLHALSender.ViewModels
         }
 
         // ========== Probe Z ==========
+        /// <summary>
+        /// Reads the stored G59.3 offset for display.
+        /// <para>
+        /// Not run while probing: the <c>$#</c> report includes a <c>[PRB:...]</c> line,
+        /// which the receive path turns into a probe result, and a phantom touch arriving
+        /// mid-sequence would corrupt the offset being calculated.
+        /// </para>
+        /// </summary>
+        private async Task ReadToolSetterAsync()
+        {
+            if (IsProbing) return;
+
+            var position = await _communicationManager.GetCoordinateSystemAsync("G59.3");
+            if (position == null)
+            {
+                ToolSetterPosition = "Unknown — controller did not report G59.3";
+                return;
+            }
+
+            ToolSetterPosition = FormatAxes(position);
+        }
+
+        /// <summary>
+        /// Stores the current machine position as the G59.3 origin — where tool change
+        /// modes 2 and 3 go to reach the tool setter.
+        /// <para>
+        /// XY and Z are separate on purpose. The XY location is what the tool change moves
+        /// to, and overwriting a working Z by accident is the expensive mistake here, so
+        /// neither action touches an axis the operator did not name.
+        /// </para>
+        /// </summary>
+        private async Task SetToolSetterAsync(string axisWords, string label)
+        {
+            if (IsProbing) return;
+
+            // G10 L20 P9: P9 addresses G59.3, and L20 sets the offset so the current
+            // position reads as the given value — so zeros park the origin right here.
+            _communicationManager.SendCommand($"G10L20P9{axisWords}");
+            ToolSetterStatus = $"{label} stored from current position";
+
+            // Read it straight back rather than assume: this writes to the controller's
+            // persistent storage, and the operator should see what actually took effect.
+            await Task.Delay(150);
+            await ReadToolSetterAsync();
+        }
+
+        private string FormatAxes(double[] values)
+        {
+            var labels = new[] { "X", "Y", "Z", "A", "B", "C" };
+            var parts = new List<string>(values.Length);
+            for (var i = 0; i < values.Length && i < labels.Length; i++)
+                parts.Add($"{labels[i]} {values[i].ToInvariantString("F3")}");
+
+            return string.Join("   ", parts) + $"  {UnitLabel}";
+        }
+
         private void StartProbeZ()
         {
             if (IsProbing) return;

@@ -9,6 +9,7 @@ using GrbLHALSender.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -575,6 +576,53 @@ namespace GrbLHALSender.Communication
             }
 
             Debug.WriteLine($"***Warning Data Not Parsed: {data}***");
+        }
+
+        /// <summary>
+        /// Reads one coordinate system offset out of the <c>$#</c> report, e.g. "G59.3" —
+        /// where tool change modes 2 and 3 expect to find the tool setter. Returns null
+        /// when the controller does not report that system.
+        /// <para>
+        /// Note that <c>$#</c> also emits a <c>[PRB:...]</c> line, which the normal receive
+        /// path turns into a probe result. Callers must not do this in the middle of a
+        /// probing sequence or it will inject a phantom touch.
+        /// </para>
+        /// </summary>
+        public async Task<double[]?> GetCoordinateSystemAsync(string name, int timeOutMs = 2000)
+        {
+            var lines = await SendCommandCollectResponsesAsync(
+                GrblHalConstants.Getngcparameters, timeOutMs: timeOutMs);
+
+            var prefix = name + ":";
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim().Trim('[', ']');
+                if (!trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+
+                return ParseAxisValues(trimmed[prefix.Length..]);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Parses a comma separated axis list as the controller reports it. Returns null
+        /// rather than a partly filled array, so a caller cannot act on half a position.
+        /// </summary>
+        internal static double[]? ParseAxisValues(string csv)
+        {
+            var parts = csv.Split(',');
+            if (parts.Length == 0) return null;
+
+            var values = new double[parts.Length];
+            for (var i = 0; i < parts.Length; i++)
+            {
+                if (!double.TryParse(parts[i].Trim(), NumberStyles.Float,
+                        CultureInfo.InvariantCulture, out values[i]))
+                    return null;
+            }
+
+            return values;
         }
 
         /// <summary>

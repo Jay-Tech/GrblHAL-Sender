@@ -302,6 +302,70 @@
 
 				</Grid>
 			</TabItem>
+
+			<!-- G59.3 is where grblHAL's tool change modes 2 and 3 go to reach the tool
+			     setter, and there was previously no way to set it without typing
+			     G10 L20 P9 into MDI. -->
+			<TabItem Header="Tool Setter" FontSize="16" Padding="15,5">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Margin="10">
+					<TextBlock Grid.Row="0"
+							   Text="G59.3 is the tool setter position used by tool change modes 2 and 3. Jog the machine over the tool setter, then store it."
+							   FontSize="14" TextWrapping="Wrap"
+							   HorizontalAlignment="Center"
+							   Margin="0,0,0,12"/>
+
+					<Border Grid.Row="1" BorderBrush="AntiqueWhite" BorderThickness="1"
+							Padding="10" Margin="0,0,0,12">
+						<Grid RowDefinitions="Auto,Auto">
+							<Label Grid.Row="0" Content="STORED G59.3"
+								   FontSize="14"
+								   HorizontalAlignment="Center"
+								   HorizontalContentAlignment="Center"
+								   Foreground="{DynamicResource TextMutedBrush}"/>
+							<TextBlock Grid.Row="1"
+									   Text="{Binding ToolSetterPosition}"
+									   FontSize="18"
+									   TextWrapping="Wrap"
+									   HorizontalAlignment="Center"
+									   Margin="0,4,0,0"/>
+						</Grid>
+					</Border>
+
+					<StackPanel Grid.Row="2" Orientation="Horizontal"
+								HorizontalAlignment="Center" Spacing="10">
+						<Button Content="Read" FontSize="16" Height="45" Width="110"
+								CornerRadius="6"
+								HorizontalContentAlignment="Center"
+								VerticalContentAlignment="Center"
+								IsEnabled="{Binding CanStartProbe}"
+								Command="{Binding ReadToolSetterCommand}"
+								ToolTip.Tip="Read the stored G59.3 offset from the controller"/>
+						<Button Content="Set XY Here" FontSize="16" Height="45" Width="150"
+								CornerRadius="6"
+								HorizontalContentAlignment="Center"
+								VerticalContentAlignment="Center"
+								IsEnabled="{Binding CanStartProbe}"
+								Command="{Binding SetToolSetterXyCommand}"
+								ToolTip.Tip="Store the current X and Y as the G59.3 origin. Z is left alone."/>
+						<Button Content="Set Z Here" FontSize="16" Height="45" Width="150"
+								CornerRadius="6"
+								HorizontalContentAlignment="Center"
+								VerticalContentAlignment="Center"
+								IsEnabled="{Binding CanStartProbe}"
+								Command="{Binding SetToolSetterZCommand}"
+								ToolTip.Tip="Store the current Z as the G59.3 origin. X and Y are left alone."/>
+					</StackPanel>
+
+					<TextBlock Grid.Row="3"
+							   Text="{Binding ToolSetterStatus}"
+							   FontSize="14"
+							   HorizontalAlignment="Center"
+							   Margin="0,10,0,0"
+							   Foreground="{DynamicResource TextMutedBrush}"
+							   IsVisible="{Binding ToolSetterStatus,
+							   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+				</Grid>
+			</TabItem>
 		</TabControl>
 
 		<!-- Results Section -->
