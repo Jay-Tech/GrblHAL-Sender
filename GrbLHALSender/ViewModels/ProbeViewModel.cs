@@ -517,7 +517,7 @@ namespace GrbLHALSender.ViewModels
             {
                 // $TLR is deliberately not sent here: after a failed probe it clears any
                 // reference the controller was holding instead of setting a new one.
-                ProbeStatus = "Reference probe failed — no contact, reference unchanged";
+                ProbeStatus = "Probe failed — no contact, TLR not set";
                 return;
             }
 
