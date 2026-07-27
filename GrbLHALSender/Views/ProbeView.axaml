@@ -307,53 +307,56 @@
 			     setter, and there was previously no way to set it without typing
 			     G10 L20 P9 into MDI. -->
 			<TabItem Header="Tool Setter" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Margin="10">
+				<!-- Kept short deliberately: the dialog is 480x595 and this tab only gets
+				     what is left after the shared parameter panels. The $342 detail lives
+				     in the button tooltips. -->
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Margin="8,4">
 					<TextBlock Grid.Row="0"
-							   Text="G59.3 is the tool setter position used by tool change modes 2 and 3. The controller moves X, Y and Z here, then probes downward by $342 (tool change probing distance)."
-							   FontSize="14" TextWrapping="Wrap"
+							   Text="G59.3 tool setter position — used by tool change modes 2 and 3."
+							   FontSize="13" TextWrapping="Wrap"
 							   HorizontalAlignment="Center"
-							   Margin="0,0,0,6"/>
+							   Margin="0,0,0,4"/>
 					<TextBlock Grid.Row="1"
-							   Text="Z is the height probing STARTS from, not the tool setter surface. Store it at a safe clearance height above the setter — clear for your longest tool, and no further above the setter than $342."
-							   FontSize="14" TextWrapping="Wrap"
+							   Text="Z position set to safe Z height of longest tool"
+							   FontSize="13" TextWrapping="Wrap"
 							   HorizontalAlignment="Center"
 							   Foreground="{DynamicResource AlertBrush}"
-							   Margin="0,0,0,12"/>
+							   Margin="0,0,0,8"/>
 
 					<Border Grid.Row="2" BorderBrush="AntiqueWhite" BorderThickness="1"
-							Padding="10" Margin="0,0,0,12">
-						<Grid RowDefinitions="Auto,Auto">
-							<Label Grid.Row="0" Content="STORED G59.3"
-								   FontSize="14"
-								   HorizontalAlignment="Center"
-								   HorizontalContentAlignment="Center"
+							Padding="8,4" Margin="0,0,0,8">
+						<Grid ColumnDefinitions="Auto,*">
+							<Label Grid.Column="0" Content="G59.3:"
+								   FontSize="13"
+								   VerticalAlignment="Center"
+								   VerticalContentAlignment="Center"
 								   Foreground="{DynamicResource TextMutedBrush}"/>
-							<TextBlock Grid.Row="1"
+							<TextBlock Grid.Column="1"
 									   Text="{Binding ToolSetterPosition}"
-									   FontSize="18"
+									   FontSize="15"
 									   TextWrapping="Wrap"
-									   HorizontalAlignment="Center"
-									   Margin="0,4,0,0"/>
+									   VerticalAlignment="Center"
+									   HorizontalAlignment="Center"/>
 						</Grid>
 					</Border>
 
 					<StackPanel Grid.Row="3" Orientation="Horizontal"
-								HorizontalAlignment="Center" Spacing="10">
-						<Button Content="Read" FontSize="16" Height="45" Width="110"
+								HorizontalAlignment="Center" Spacing="8">
+						<Button Content="Read" FontSize="15" Height="40" Width="95"
 								CornerRadius="6"
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
 								IsEnabled="{Binding CanStartProbe}"
 								Command="{Binding ReadToolSetterCommand}"
 								ToolTip.Tip="Read the stored G59.3 offset from the controller"/>
-						<Button Content="Set XY Here" FontSize="16" Height="45" Width="150"
+						<Button Content="Set XY Here" FontSize="15" Height="40" Width="135"
 								CornerRadius="6"
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
 								IsEnabled="{Binding CanStartProbe}"
 								Command="{Binding SetToolSetterXyCommand}"
 								ToolTip.Tip="Store the current X and Y as the tool setter location. Z is left alone."/>
-						<Button Content="Set Z Here" FontSize="16" Height="45" Width="150"
+						<Button Content="Set Z Here" FontSize="15" Height="40" Width="135"
 								CornerRadius="6"
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
@@ -366,7 +369,7 @@
 							   Text="{Binding ToolSetterStatus}"
 							   FontSize="14"
 							   HorizontalAlignment="Center"
-							   Margin="0,10,0,0"
+							   Margin="0,6,0,0"
 							   Foreground="{DynamicResource TextMutedBrush}"
 							   IsVisible="{Binding ToolSetterStatus,
 							   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
