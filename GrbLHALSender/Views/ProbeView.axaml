@@ -307,14 +307,20 @@
 			     setter, and there was previously no way to set it without typing
 			     G10 L20 P9 into MDI. -->
 			<TabItem Header="Tool Setter" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Margin="10">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Margin="10">
 					<TextBlock Grid.Row="0"
-							   Text="G59.3 is the tool setter position used by tool change modes 2 and 3. Jog the machine over the tool setter, then store it."
+							   Text="G59.3 is the tool setter position used by tool change modes 2 and 3. The controller moves X, Y and Z here, then probes downward by $342 (tool change probing distance)."
 							   FontSize="14" TextWrapping="Wrap"
 							   HorizontalAlignment="Center"
+							   Margin="0,0,0,6"/>
+					<TextBlock Grid.Row="1"
+							   Text="Z is the height probing STARTS from, not the tool setter surface. Store it at a safe clearance height above the setter — clear for your longest tool, and no further above the setter than $342."
+							   FontSize="14" TextWrapping="Wrap"
+							   HorizontalAlignment="Center"
+							   Foreground="{DynamicResource AlertBrush}"
 							   Margin="0,0,0,12"/>
 
-					<Border Grid.Row="1" BorderBrush="AntiqueWhite" BorderThickness="1"
+					<Border Grid.Row="2" BorderBrush="AntiqueWhite" BorderThickness="1"
 							Padding="10" Margin="0,0,0,12">
 						<Grid RowDefinitions="Auto,Auto">
 							<Label Grid.Row="0" Content="STORED G59.3"
@@ -331,7 +337,7 @@
 						</Grid>
 					</Border>
 
-					<StackPanel Grid.Row="2" Orientation="Horizontal"
+					<StackPanel Grid.Row="3" Orientation="Horizontal"
 								HorizontalAlignment="Center" Spacing="10">
 						<Button Content="Read" FontSize="16" Height="45" Width="110"
 								CornerRadius="6"
@@ -346,17 +352,17 @@
 								VerticalContentAlignment="Center"
 								IsEnabled="{Binding CanStartProbe}"
 								Command="{Binding SetToolSetterXyCommand}"
-								ToolTip.Tip="Store the current X and Y as the G59.3 origin. Z is left alone."/>
+								ToolTip.Tip="Store the current X and Y as the tool setter location. Z is left alone."/>
 						<Button Content="Set Z Here" FontSize="16" Height="45" Width="150"
 								CornerRadius="6"
 								HorizontalContentAlignment="Center"
 								VerticalContentAlignment="Center"
 								IsEnabled="{Binding CanStartProbe}"
 								Command="{Binding SetToolSetterZCommand}"
-								ToolTip.Tip="Store the current Z as the G59.3 origin. X and Y are left alone."/>
+								ToolTip.Tip="Store the current Z as the height probing starts from. The controller descends $342 from here, so leave clearance for your longest tool. X and Y are left alone."/>
 					</StackPanel>
 
-					<TextBlock Grid.Row="3"
+					<TextBlock Grid.Row="4"
 							   Text="{Binding ToolSetterStatus}"
 							   FontSize="14"
 							   HorizontalAlignment="Center"
