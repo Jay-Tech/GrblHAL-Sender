@@ -88,6 +88,13 @@ Every tool change: stop at the `M6` → change the tool → jog it over the refe
 > Order matters: `$TLR` must follow a *successful* probe. Sent before one, or after a failed
 > one, it clears the reference instead of setting it.
 
+**Set Ref** rings red while the controller holds no reference and green once it does, from
+the `TLR` field of the status report. It is disabled while a reference exists — sending
+`$TLR` again re-bases the datum onto whatever was last probed, silently and with no error,
+which would shift work Z zero by the difference between the tools. To re-establish it
+deliberately — after moving the tool setter, say — send `$TLR` from MDI, which stays
+available during a tool change pause.
+
 Touch plate thickness plays no part in this. The offset is a differential against the same
 surface, so the thickness cancels out. Thickness only matters for setting workpiece Z zero,
 which is a separate operation in the **Probe** dialog.

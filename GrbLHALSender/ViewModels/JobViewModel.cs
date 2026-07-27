@@ -569,6 +569,12 @@ namespace GrbLHALSender.ViewModels
         {
             if (JobState != JobState.Tool || !ToolChangeNeedsTouchOff) return;
 
+            // Refused once the controller holds a reference. Sending it again re-bases the
+            // datum onto whatever was last probed — silently, with no error — so a second
+            // press after touching off a later tool would shift work Z zero by the
+            // difference between the tools. Deliberate re-establishing goes through MDI.
+            if (ToolReferenceSet) return;
+
             _commsManager.SendCommand(GrblHalConstants.ToolLengthReference);
         }
 

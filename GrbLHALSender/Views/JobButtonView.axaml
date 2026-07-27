@@ -141,7 +141,8 @@
 						HorizontalContentAlignment="Center"
 						VerticalContentAlignment="Center"
 						Command="{Binding SetToolReferenceCommand}"
-						ToolTip.Tip="Capture the probe just taken as the tool length reference ($TLR). Red means the controller holds no reference and $TPW has nothing to measure against — press Touch Off first, then this. Sent without a successful probe it CLEARS the reference."/>
+						IsEnabled="{Binding !ToolReferenceSet}"
+						ToolTip.Tip="Capture the probe just taken as the tool length reference ($TLR). Red and enabled means the controller holds no reference and $TPW has nothing to measure against — press Touch Off first, then this. Disabled once a reference exists, so a stray press cannot re-base the datum onto the wrong tool; to deliberately re-establish it, send $TLR from MDI."/>
 			</Border>
 		</StackPanel>
 		<!-- Shares row 3 with TOOL: a tool change and an aborted job cannot both be
