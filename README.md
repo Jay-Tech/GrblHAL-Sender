@@ -138,8 +138,18 @@ output change to the right moment:
 Aux output buttons follow these commands wherever they come from, so a rule that toggles a
 pin moves the matching button too.
 
-### Priority  V1.0.1
-Contuined Testing 
-- Tested on Linux including Pi5 
-- Tested on windows 
-- Probing needs testing 
+### Testing status
+
+Runs on Windows and on Linux including the Pi 5.
+
+Verified on hardware:
+- Tool change streaming at `$341=0` — the job holds at the `M6`, survives jogging during the
+  pause, and resumes cleanly on **Start**
+- G-code event injection around a tool change, including the dwell-first ordering
+- Serial connection and reconnection
+
+Still to test:
+- Manual touch off (`$341=1` / `2`) — the **Touch Off** button and `$TPW`
+- Tool setter position (`G59.3`)
+- Probing
+- Single instance guard on Linux
