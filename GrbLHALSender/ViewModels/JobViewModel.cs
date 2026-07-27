@@ -66,6 +66,8 @@ namespace GrbLHALSender.ViewModels
         private string _lastMachineState = "";
         // Ordinal of the job line carrying an unanswered M6, or 0 when none is outstanding.
         private int _toolChangeLine;
+        // Streaming is held at a tool change until the controller has finished it.
+        private readonly ToolChangeBarrier _toolChange = new();
         // Reported once per job so a persistent mismatch cannot flood the console.
         private bool _unmatchedAckReported;
 
@@ -435,6 +437,7 @@ namespace GrbLHALSender.ViewModels
             JobError = "";
             _lastMachineState = "";
             _toolChangeLine = 0;
+            _toolChange.Reset();
             _unmatchedAckReported = false;
             _accounting.Reset();
 
@@ -481,6 +484,11 @@ namespace GrbLHALSender.ViewModels
 
         private void ResumeJob()
         {
+            // Note that a cycle start was issued for an outstanding tool change: it is
+            // what triggers the controller's restore move, and only once that finishes is
+            // the change actually over.
+            _toolChange.CycleStartIssued();
+
             // Let _commsManager_OnStateReceived update to Running,
             // then refill the buffer in case acks arrived while paused
             _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
@@ -537,6 +545,9 @@ namespace GrbLHALSender.ViewModels
             _lastMachineState = state;
 
             JobState = MapGrblState(state, JobState, JobRunning);
+
+            if (JobRunning)
+                UpdateToolChangeBarrier(state);
 
             // Alarm during job — abort
             if (JobState == JobState.Alarm && JobRunning)
@@ -705,7 +716,7 @@ namespace GrbLHALSender.ViewModels
                 return;
 
             // A tool change is a barrier: nothing may go out until it clears.
-            if (ToolChangeBarrierUp)
+            if (_toolChange.IsUp)
                 return;
 
             while (_index < GCodeOutPut.Count)
@@ -738,12 +749,15 @@ namespace GrbLHALSender.ViewModels
                 // buffer past this line is thrown away, not queued. On a short file the
                 // whole remainder fitted in one fill and every line of it was rejected.
                 //
-                // The barrier lifts when this very line is acknowledged: grblHAL answers
-                // M6 only once the change is resolved, which also means a build that
-                // ignores M6 answers immediately and streaming carries straight on.
+                // The M6 line's own "ok" is NOT the signal to resume. In tool_change.c,
+                // tool_change() sets the pending flag and returns, so the acknowledgement
+                // arrives when the change *starts*. The flag is cleared much later, at the
+                // end of the restore move that cycle start triggers. See the state handler
+                // for what actually lifts this.
                 if (GcodeWords.IsToolChange(line))
                 {
                     _toolChangeLine = _accounting.AckedJobLines + _accounting.AckPending;
+                    _toolChange.ToolChangeSent();
                     break;
                 }
 
@@ -754,10 +768,22 @@ namespace GrbLHALSender.ViewModels
         }
 
         /// <summary>
-        /// True while a tool change has been sent but not yet answered by the controller.
+        /// Feeds a status report to the tool-change barrier and resumes streaming on the
+        /// report that lifts it. See ToolChangeBarrier for why no acknowledgement can
+        /// serve as the signal.
         /// </summary>
-        private bool ToolChangeBarrierUp =>
-            _toolChangeLine > 0 && _accounting.AckedJobLines < _toolChangeLine;
+        private void UpdateToolChangeBarrier(string machineState)
+        {
+            var lifted = _toolChange.Update(
+                machineState,
+                toolChangeLineAcked: _toolChangeLine > 0 &&
+                                     _accounting.AckedJobLines >= _toolChangeLine);
+
+            if (!lifted) return;
+
+            _toolChangeLine = 0;
+            FillBuffer();
+        }
 
         private void JobComplete()
         {
@@ -781,6 +807,7 @@ namespace GrbLHALSender.ViewModels
             _pendingLine = 0;
             _latestPendingLine = 0;
             _toolChangeLine = 0;
+            _toolChange.Reset();
             _accounting.Reset();
             GcodeFileIndex = _index;
 
