@@ -341,17 +341,26 @@ namespace GrbLHALSender.ViewModels
         /// Converts a value the controller reported into the unit the probe sequence is
         /// sending in.
         /// <para>
-        /// Needed because the two are set independently: $# and the status reports follow
-        /// $13, while the numbers we send are read in whatever G20/G21 the sequence
-        /// established. On a metric machine driven from an imperial display those differ,
-        /// and a raw millimetre coordinate sent as inches is a 25.4x overshoot.
+        /// Needed because the two are set independently: $# follows $13, while the numbers
+        /// we send are read in whatever G20/G21 the sequence established. On a metric
+        /// machine driven from an imperial display those differ, and a raw millimetre
+        /// coordinate sent as inches is a 25.4x overshoot.
+        /// </para>
+        /// <para>
+        /// For raw controller output only. MachineStateService has already converted its
+        /// positions to display units — see <see cref="MachinePosition"/> — so putting
+        /// those through here converts them a second time.
         /// </para>
         /// </summary>
-        private double ToSequenceUnits(double reportedValue)
-        {
-            var machineIsMetric = _communicationManager.MachineData?.ReportInMetric ?? true;
-            var sequenceIsMetric = UnitSystem == "G21";
+        private double ToSequenceUnits(double reportedValue) =>
+            ToSequenceUnits(reportedValue,
+                _communicationManager.MachineData?.ReportInMetric ?? true,
+                UnitSystem == "G21");
 
+        /// <inheritdoc cref="ToSequenceUnits(double)"/>
+        internal static double ToSequenceUnits(double reportedValue, bool machineIsMetric,
+            bool sequenceIsMetric)
+        {
             if (machineIsMetric == sequenceIsMetric) return reportedValue;
 
             return machineIsMetric
@@ -455,7 +464,7 @@ namespace GrbLHALSender.ViewModels
 
             var back = start == null
                 ? null
-                : new List<string> { "G90", $"G53G0Z{ToSequenceUnits(start[2]).ToInvariantString("F3")}" };
+                : new List<string> { "G90", $"G53G0Z{start[2].ToInvariantString("F3")}" };
 
             StartToolReferenceProbe(moveToSetter: false, returnMoves: back);
         }
@@ -463,6 +472,13 @@ namespace GrbLHALSender.ViewModels
         /// <summary>
         /// Machine position as the controller last reported it, or null when fewer than
         /// three axes have been seen — a caller must not build a move out of a partial one.
+        /// <para>
+        /// These are already in display units: MachineStateService converts on the way in,
+        /// and the sequence's G20/G21 comes from the same display preference. So they go
+        /// straight into a move — do <b>not</b> put them through ToSequenceUnits, which is
+        /// for raw controller output following $13. Doing so converts a second time and,
+        /// on a metric machine shown in inches, drives to machine zero instead.
+        /// </para>
         /// </summary>
         private double[]? MachinePosition()
         {
@@ -515,6 +531,8 @@ namespace GrbLHALSender.ViewModels
         {
             if (IsProbing || !CanProbe) return;
 
+            // Captured before the approach moves, so a good probe can put the machine back
+            // where the operator left it.
             var start = MachinePosition();
 
             var setter = await _communicationManager.GetCoordinateSystemAsync("G59.3");
@@ -524,37 +542,57 @@ namespace GrbLHALSender.ViewModels
                 return;
             }
 
-            // $# reports in the machine's units ($13); these go out under the sequence's
-            // G20/G21. Those are set independently, so the values have to be converted or
-            // the travel is out by a factor of 25.4.
-            var x = ToSequenceUnits(setter[0]).ToInvariantString("F3");
-            var y = ToSequenceUnits(setter[1]).ToInvariantString("F3");
-            var z = ToSequenceUnits(setter[2]).ToInvariantString("F3");
+            var (approach, back) = BuildSetterProbeMoves(setter, start, UnitSystem,
+                _communicationManager.MachineData?.ReportInMetric ?? true);
+
+            await CaptureModalUnitsAsync();
+            StartToolReferenceProbe(moveToSetter: true, approach, back);
+        }
+
+        /// <summary>
+        /// Builds the approach to the tool setter and the move back to where the operator
+        /// left the machine.
+        /// <para>
+        /// The two sets of coordinates arrive in different units, which is the trap here.
+        /// <paramref name="setter"/> is raw $# output and follows $13, so it has to be
+        /// converted into whatever the sequence sends in. <paramref name="start"/> came
+        /// from MachineStateService, which converts to display units on the way in — and
+        /// the sequence's unit word is chosen from that same display preference, so those
+        /// values are already right. Converting them again drove a metric machine shown in
+        /// inches to machine X0/Y0 instead of back to the captured position.
+        /// </para>
+        /// <para>
+        /// Z is deliberately not restored: it returns to machine zero and stays there,
+        /// because the pre-approach Z may be down in the work and dropping back to it
+        /// unattended is not worth the convenience.
+        /// </para>
+        /// </summary>
+        internal static (List<string> Approach, List<string> Return) BuildSetterProbeMoves(
+            double[] setter, double[]? start, string unitSystem, bool machineIsMetric)
+        {
+            var sequenceIsMetric = unitSystem == "G21";
+            string Setter(int axis) => ToSequenceUnits(setter[axis], machineIsMetric, sequenceIsMetric)
+                .ToInvariantString("F3");
 
             var approach = new List<string>
             {
-                UnitSystem,
+                unitSystem,
                 "G90",
                 "G53G0Z0",
-                $"G53G0X{x}Y{y}",
-                $"G53G0Z{z}"
+                $"G53G0X{Setter(0)}Y{Setter(1)}",
+                $"G53G0Z{Setter(2)}"
             };
 
-            // Captured before the approach moves, so a good probe can put the machine back
-            // where the operator left it. Z is deliberately not restored: it returns to
-            // machine zero and stays there, because the pre-approach Z may be down in the
-            // work and dropping back to it unattended is not worth the convenience.
             var back = start == null
                 ? new List<string> { "G90", "G53G0Z0" }
                 : new List<string>
                 {
                     "G90",
                     "G53G0Z0",
-                    $"G53G0X{ToSequenceUnits(start[0]).ToInvariantString("F3")}Y{ToSequenceUnits(start[1]).ToInvariantString("F3")}"
+                    $"G53G0X{start[0].ToInvariantString("F3")}Y{start[1].ToInvariantString("F3")}"
                 };
 
-            await CaptureModalUnitsAsync();
-            StartToolReferenceProbe(moveToSetter: true, approach, back);
+            return (approach, back);
         }
 
         private void OnToolReferenceComplete()
