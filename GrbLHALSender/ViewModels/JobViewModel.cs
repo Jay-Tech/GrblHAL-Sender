@@ -62,9 +62,6 @@ namespace GrbLHALSender.ViewModels
         private string _selectedLineInfo = "";
         private string _jobError = "";
         private string _controllerMessage = "";
-        // Last state grblHAL reported, so the tool-change ack can fire on the transition
-        // into Tool rather than on every status report while it lasts.
-        private string _lastMachineState = "";
         // Ordinal of the job line carrying an unanswered M6, or 0 when none is outstanding.
         private int _toolChangeLine;
         // Streaming is held at a tool change until the controller has finished it.
@@ -333,7 +330,11 @@ namespace GrbLHALSender.ViewModels
             }
         }
 
-        /// <summary>Shown only while a job is paused at a tool change that needs one.</summary>
+        /// <summary>
+        /// Shown while the machine is waiting at a tool change that needs one — during a
+        /// job or from an M6 typed into the MDI, since the controller waits the same way
+        /// either side of a loaded file.
+        /// </summary>
         public bool TouchOffVisible => ToolChangeVisible && ToolChangeNeedsTouchOff;
 
 
@@ -444,6 +445,21 @@ namespace GrbLHALSender.ViewModels
                             _ => JobState
                         };
                     }
+
+                    // Acknowledge a tool change wherever it came from — a job's M6 or one
+                    // typed into the MDI with no file loaded. 0xA3 installs the trap that
+                    // makes the next cycle start run the restore; without it the change
+                    // can never complete, which is why a manual M6 used to sit there
+                    // ignoring both touch off and Start. This handler is the one that is
+                    // always subscribed — the streaming handler only exists while a job
+                    // runs, and that is where the ack used to live.
+                    //
+                    // GrblState raises PropertyChanged only on a real transition, so this
+                    // is one ack per entry into Tool rather than one per status report.
+                    // The ack does not resume anything, so repeating it would achieve
+                    // nothing but put traffic in front of the operator's touch off.
+                    if (_machineStateService.GrblState == GrblState.Tool)
+                        _commsManager.Adapter?.WriteByte(GrblHalConstants.ToolAck);
                     break;
                 case nameof(MachineStateService.SpindlePosition):
                     CurrentSpindlePosition = _machineStateService.SpindlePosition;
@@ -453,9 +469,22 @@ namespace GrbLHALSender.ViewModels
                     break;
             }
         }
+        /// <summary>
+        /// Whether Start should just issue a cycle start, with no job of our own to run:
+        /// a hold the operator put the machine into, or a tool change from an M6 typed
+        /// into the MDI with no file loaded.
+        /// <para>
+        /// Tool has to be answered here rather than falling through, because StartJob's
+        /// file-loaded check returns early — so with nothing loaded, Start did nothing at
+        /// all and a manual tool change had no way to finish.
+        /// </para>
+        /// </summary>
+        internal static bool NeedsBareCycleStart(JobState state, bool jobRunning) =>
+            !jobRunning && state is JobState.Hold or JobState.Tool;
+
         public void StartJob()
         {
-            if (JobState == JobState.Hold && !JobRunning )
+            if (NeedsBareCycleStart(JobState, JobRunning))
             {
                 _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
                 return;
@@ -475,7 +504,6 @@ namespace GrbLHALSender.ViewModels
             CompletedSegmentIndex = -1;
             JobError = "";
             ControllerMessage = "";
-            _lastMachineState = "";
             _toolChangeLine = 0;
             _toolChange.Reset();
             _unmatchedAckReported = false;
@@ -600,8 +628,6 @@ namespace GrbLHALSender.ViewModels
         {
             var state = e.GrblHalState;
             var previousState = JobState;
-            var previousMachineState = _lastMachineState;
-            _lastMachineState = state;
 
             JobState = MapGrblState(state, JobState, JobRunning);
 
@@ -612,16 +638,6 @@ namespace GrbLHALSender.ViewModels
             if (JobState == JobState.Alarm && JobRunning)
             {
                 CancelAndCleanup(JobState.Alarm);
-            }
-
-            // Tool change — acknowledge once, on the transition into Tool. grblHAL's
-            // protocol is to send 0xA3 as soon as the state changes to Tool; it
-            // acknowledges the event and does not resume the program, so repeating it at
-            // poll rate for the length of the pause achieves nothing and puts needless
-            // traffic in front of the operator's touch off.
-            if (state == "Tool" && previousMachineState != "Tool")
-            {
-                _commsManager.Adapter?.WriteByte(GrblHalConstants.ToolAck);
             }
 
             // Resumed from Hold or Tool — refill the buffer to restart sending
