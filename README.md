@@ -70,12 +70,8 @@ buttons stay disabled, since those would interleave into the program.
 
 ## Manual touch off (modes 1 and 2)
 
-**Touch Off** and **Set Ref** buttons appear beside the `TOOL` banner while the job is
-paused.
-
-- **Touch Off** sends `$TPW` — probes the new tool and applies its length offset
-- **Set Ref** sends `$TLR` — captures the probe just taken as the reference `$TPW` measures
-  against
+A **Touch Off** button appears beside the `TOOL` banner while the job is paused. It sends
+`$TPW`, which probes the new tool and applies its length offset.
 
 Every tool change: stop at the `M6` → change the tool → jog it over the reference surface →
 **Touch Off** → **Start**.
@@ -94,18 +90,16 @@ to zero the stock from:
 Either way the reference is set only if the probe actually makes contact. Then zero on the
 stock and start the job, and every tool change from there needs nothing but **Touch Off**.
 
-The panel says whether the controller currently holds a reference, and the in-job **Set
-Ref** button remains as a fallback if you start a job without one.
+The panel says whether the controller currently holds a reference. On a good probe the tool
+is backed off the trigger, and **Probe at G59.3** also returns to the X/Y it started from —
+retracting Z to machine zero on the way and leaving it there, since the height it came from
+may be down in the work.
 
 > `$TLR` must follow a *successful* probe. Sent before one, or after a failed one, it clears
 > the reference instead of setting it — which is why the app only issues it on a good probe.
 
-**Set Ref** rings red while the controller holds no reference and green once it does, from
-the `TLR` field of the status report. It is disabled while a reference exists — sending
-`$TLR` again re-bases the datum onto whatever was last probed, silently and with no error,
-which would shift work Z zero by the difference between the tools. To re-establish it
-deliberately — after moving the tool setter, say — send `$TLR` from MDI, which stays
-available during a tool change pause.
+Re-running it re-bases the datum onto whatever was last probed, so only do it deliberately —
+after moving the tool setter, or re-zeroing against a different tool.
 
 Touch plate thickness plays no part in this. The offset is a differential against the same
 surface, so the thickness cancels out. Thickness only matters for setting workpiece Z zero,

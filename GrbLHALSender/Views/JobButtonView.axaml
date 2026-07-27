@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -25,15 +25,6 @@
 			<Setter Property="BorderThickness" Value="3"/>
 		</Style>
 
-		<!-- Tool length reference state, from the TLR field of the status report.
-		     DynamicResource rather than a converter so it repaints on a theme change
-		     instead of holding the old palette until TLR next flips. -->
-		<Style Selector="Border.tlrRing">
-			<Setter Property="BorderBrush" Value="{DynamicResource AlertBrush}"/>
-		</Style>
-		<Style Selector="Border.tlrRing.good">
-			<Setter Property="BorderBrush" Value="{DynamicResource OkBrush}"/>
-		</Style>
 	</UserControl.Styles>
 	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*,*"  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
 		   Opacity=".6"
@@ -106,11 +97,11 @@
                    FontSize="{DynamicResource XlFontSize}"
                    Text="TOOL"
                    IsVisible="{Binding ToolChangeVisible}"/>
-		<!-- grblHAL's manual tool change modes need the new tool probed before cycle start,
-		     and there was previously no way to send either command except MDI. Hidden
-		     unless $341 says this machine has that step.
-		     Left-hand columns on purpose: the g-code viewer opens over the right side of
-		     the home tab and would cover them there. -->
+		<!-- grblHAL's manual tool change modes need the new tool probed before cycle
+		     start. The reference $TPW measures against is established before the job under
+		     Probe > Tool Setter, so only the per-change touch off belongs here.
+		     Left-hand column on purpose: the g-code viewer opens over the right side of the
+		     home tab and would cover it there. -->
 		<StackPanel Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"
 					Orientation="Horizontal"
 					Spacing="8"
@@ -125,25 +116,6 @@
 					VerticalContentAlignment="Center"
 					Command="{Binding TouchOffCommand}"
 					ToolTip.Tip="Probe the new tool and apply its offset ($TPW), then press Start."/>
-			<!-- Ring rather than the button's own colours: the Fluent theme repaints a
-			     Button's border on :pointerover/:pressed, and those states stick after a
-			     touch, which would hide the bound state until focus moved elsewhere.
-			     Same reason the aux output buttons use a wrapper. -->
-			<Border Classes="tlrRing"
-					Classes.good="{Binding ToolReferenceSet}"
-					BorderThickness="2"
-					CornerRadius="6">
-				<Button Content="Set Ref"
-						FontSize="15"
-						Height="38" Width="125"
-						CornerRadius="6"
-						BorderThickness="0"
-						HorizontalContentAlignment="Center"
-						VerticalContentAlignment="Center"
-						Command="{Binding SetToolReferenceCommand}"
-						IsEnabled="{Binding !ToolReferenceSet}"
-						ToolTip.Tip="Capture the probe just taken as the tool length reference ($TLR). Red and enabled means the controller holds no reference and $TPW has nothing to measure against — press Touch Off first, then this. Disabled once a reference exists, so a stray press cannot re-base the datum onto the wrong tool; to deliberately re-establish it, send $TLR from MDI."/>
-			</Border>
 		</StackPanel>
 		<!-- Shares row 3 with TOOL: a tool change and an aborted job cannot both be
 		     current, and a job stopped by a rejected line must not be silent. -->

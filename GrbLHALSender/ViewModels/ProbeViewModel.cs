@@ -43,6 +43,8 @@ namespace GrbLHALSender.ViewModels
         private bool _toolReferenceSet;
         // Parser unit in force before a probe, so the sequence can hand it back.
         private string? _modalUnitsBeforeProbe;
+        // Moves that put the machine back where it started, run on a good probe only.
+        private List<string>? _toolReferenceReturn;
 
         // Command sequencing state
         private ProbeJobBuilder _probeJob;
@@ -263,7 +265,7 @@ namespace GrbLHALSender.ViewModels
             SetCenterTypeCommand = ReactiveCommand.Create<string>(s => SelectedCenterType = Enum.Parse<CenterFinderType>(s));
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
             ReadToolSetterCommand = ReactiveCommand.CreateFromTask(ReadToolSetterAsync);
-            ProbeToolReferenceHereCommand = ReactiveCommand.CreateFromTask(async () => { await CaptureModalUnitsAsync(); StartToolReferenceProbe(moveToSetter: false); });
+            ProbeToolReferenceHereCommand = ReactiveCommand.CreateFromTask(ProbeToolReferenceHereAsync);
             ProbeToolReferenceAtSetterCommand = ReactiveCommand.CreateFromTask(() => StartToolReferenceProbeAtSetterAsync());
             SetToolSetterXyCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("X0Y0", "XY"));
             SetToolSetterZCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("Z0", "Z"));
@@ -440,6 +442,35 @@ namespace GrbLHALSender.ViewModels
         }
 
         /// <summary>
+        /// Probes from where the machine is standing, then backs the tool off the trigger to
+        /// the height it started from. Without the retract the tool is left resting on the
+        /// setter, which is no place to leave it.
+        /// </summary>
+        private async Task ProbeToolReferenceHereAsync()
+        {
+            if (IsProbing || !CanProbe) return;
+
+            var start = MachinePosition();
+            await CaptureModalUnitsAsync();
+
+            var back = start == null
+                ? null
+                : new List<string> { "G90", $"G53G0Z{ToSequenceUnits(start[2]).ToInvariantString("F3")}" };
+
+            StartToolReferenceProbe(moveToSetter: false, returnMoves: back);
+        }
+
+        /// <summary>
+        /// Machine position as the controller last reported it, or null when fewer than
+        /// three axes have been seen — a caller must not build a move out of a partial one.
+        /// </summary>
+        private double[]? MachinePosition()
+        {
+            var pos = _machineStateService.MachinePositions;
+            return pos is { Length: >= 3 } ? pos : null;
+        }
+
+        /// <summary>
         /// Probes the tool currently in the spindle and captures the result as the tool
         /// length reference. Run this once, before starting a job, with the tool you set
         /// work Z zero from — after which every tool change only needs a touch off.
@@ -449,10 +480,12 @@ namespace GrbLHALSender.ViewModels
         /// setting it, so this only issues it when the probe actually made contact.
         /// </para>
         /// </summary>
-        private void StartToolReferenceProbe(bool moveToSetter, List<string>? approach = null)
+        private void StartToolReferenceProbe(bool moveToSetter, List<string>? approach = null,
+            List<string>? returnMoves = null)
         {
             if (IsProbing || !CanProbe) return;
 
+            _toolReferenceReturn = returnMoves;
             ClearResults();
             ProbeStatus = moveToSetter
                 ? "Moving to tool setter and probing reference..."
@@ -482,6 +515,8 @@ namespace GrbLHALSender.ViewModels
         {
             if (IsProbing || !CanProbe) return;
 
+            var start = MachinePosition();
+
             var setter = await _communicationManager.GetCoordinateSystemAsync("G59.3");
             if (setter == null || setter.Length < 3)
             {
@@ -505,8 +540,21 @@ namespace GrbLHALSender.ViewModels
                 $"G53G0Z{z}"
             };
 
+            // Captured before the approach moves, so a good probe can put the machine back
+            // where the operator left it. Z is deliberately not restored: it returns to
+            // machine zero and stays there, because the pre-approach Z may be down in the
+            // work and dropping back to it unattended is not worth the convenience.
+            var back = start == null
+                ? new List<string> { "G90", "G53G0Z0" }
+                : new List<string>
+                {
+                    "G90",
+                    "G53G0Z0",
+                    $"G53G0X{ToSequenceUnits(start[0]).ToInvariantString("F3")}Y{ToSequenceUnits(start[1]).ToInvariantString("F3")}"
+                };
+
             await CaptureModalUnitsAsync();
-            StartToolReferenceProbe(moveToSetter: true, approach);
+            StartToolReferenceProbe(moveToSetter: true, approach, back);
         }
 
         private void OnToolReferenceComplete()
@@ -523,6 +571,15 @@ namespace GrbLHALSender.ViewModels
 
             _communicationManager.SendCommand("G90");
             _communicationManager.SendCommand(GrblHalConstants.ToolLengthReference);
+
+            // Success only. A failed probe leaves grblHAL in a probe alarm that would refuse
+            // these anyway, and the operator will want to see where it stopped.
+            if (_toolReferenceReturn != null)
+            {
+                foreach (var move in _toolReferenceReturn)
+                    _communicationManager.SendCommand(move);
+            }
+
             ProbeStatus = "Tool length reference set — zero on the stock and start the job";
         }
 

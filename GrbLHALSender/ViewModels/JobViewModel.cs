@@ -89,7 +89,6 @@ namespace GrbLHALSender.ViewModels
         internal GHalSenderConfig? Config;
         private bool _toolChangeVisible;
         private bool _toolChangeNeedsTouchOff;
-        private bool _toolReferenceSet;
 
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
@@ -290,7 +289,6 @@ namespace GrbLHALSender.ViewModels
         public ICommand PauseJobCommand { get; }
         public ICommand StopJobCommand { get; }
         public ICommand TouchOffCommand { get; }
-        public ICommand SetToolReferenceCommand { get; }
         /// <summary>
         /// Reacts to MachineStateService property changes (fires on UI thread at ~10 Hz).
         /// Feeds Connected, GrblState, and SpindlePosition from the centralized service.
@@ -338,18 +336,6 @@ namespace GrbLHALSender.ViewModels
         /// <summary>Shown only while a job is paused at a tool change that needs one.</summary>
         public bool TouchOffVisible => ToolChangeVisible && ToolChangeNeedsTouchOff;
 
-        /// <summary>
-        /// Whether the controller currently holds a tool length reference, from the TLR
-        /// field of the status report. Colours the Set Ref control rather than hiding it:
-        /// a reference can legitimately be re-established — after moving the tool setter,
-        /// or re-zeroing with a different tool — so the action stays available, and the
-        /// colour says whether it is still needed.
-        /// </summary>
-        public bool ToolReferenceSet
-        {
-            get => _toolReferenceSet;
-            set => this.RaiseAndSetIfChanged(ref _toolReferenceSet, value);
-        }
 
         public JobViewModel(CommunicationManager manager, MachineStateService machineStateService,
             GcodeEventInjector eventInjector)
@@ -366,7 +352,6 @@ namespace GrbLHALSender.ViewModels
             PauseJobCommand = ReactiveCommand.Create(TogglePause);
             StopJobCommand = ReactiveCommand.Create(StopJob);
             TouchOffCommand = ReactiveCommand.Create(TouchOff);
-            SetToolReferenceCommand = ReactiveCommand.Create(SetToolReference);
             RunTime = "00:00:00";
             _jobTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (sender, args) =>
             {
@@ -460,9 +445,6 @@ namespace GrbLHALSender.ViewModels
                         };
                     }
                     break;
-                case nameof(MachineStateService.TLR):
-                    ToolReferenceSet = _machineStateService.TLR;
-                    break;
                 case nameof(MachineStateService.SpindlePosition):
                     CurrentSpindlePosition = _machineStateService.SpindlePosition;
                     break;
@@ -554,28 +536,6 @@ namespace GrbLHALSender.ViewModels
             if (JobState != JobState.Tool || !ToolChangeNeedsTouchOff) return;
 
             _commsManager.SendCommand(GrblHalConstants.ToolProbeWorkpiece);
-        }
-
-        /// <summary>
-        /// Captures the probe just taken as the tool length reference that $TPW measures
-        /// against. Needed once, on the first tool change of a session, because $TPW
-        /// applies a difference and a difference needs a baseline.
-        /// <para>
-        /// Order matters: this must follow a successful probe. Issued before one, or after
-        /// a failed one, grblHAL clears the reference instead of setting it.
-        /// </para>
-        /// </summary>
-        private void SetToolReference()
-        {
-            if (JobState != JobState.Tool || !ToolChangeNeedsTouchOff) return;
-
-            // Refused once the controller holds a reference. Sending it again re-bases the
-            // datum onto whatever was last probed — silently, with no error — so a second
-            // press after touching off a later tool would shift work Z zero by the
-            // difference between the tools. Deliberate re-establishing goes through MDI.
-            if (ToolReferenceSet) return;
-
-            _commsManager.SendCommand(GrblHalConstants.ToolLengthReference);
         }
 
         private void ResumeJob()
