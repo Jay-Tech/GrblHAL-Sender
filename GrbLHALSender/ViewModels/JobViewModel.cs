@@ -64,6 +64,8 @@ namespace GrbLHALSender.ViewModels
         // Last state grblHAL reported, so the tool-change ack can fire on the transition
         // into Tool rather than on every status report while it lasts.
         private string _lastMachineState = "";
+        // Ordinal of the job line carrying an unanswered M6, or 0 when none is outstanding.
+        private int _toolChangeLine;
         private int _ackedLineIndex;
 
 
@@ -424,6 +426,7 @@ namespace GrbLHALSender.ViewModels
             CompletedSegmentIndex = -1;
             JobError = "";
             _lastMachineState = "";
+            _toolChangeLine = 0;
             _accounting.Reset();
 
             // Use the real RX buffer size from the controller if available
@@ -681,6 +684,10 @@ namespace GrbLHALSender.ViewModels
             if (!bufferAhead && _accounting.AckPending > 0)
                 return;
 
+            // A tool change is a barrier: nothing may go out until it clears.
+            if (ToolChangeBarrierUp)
+                return;
+
             while (_index < GCodeOutPut.Count)
             {
                 var line = GCodeOutPut[_index].Text;
@@ -705,11 +712,32 @@ namespace GrbLHALSender.ViewModels
                 _latestFileIndex = _index;
                 _index++;
 
+                // Stop dead on a tool change. grblHAL suspends the program at M6 and
+                // rejects any further g-code with error:40 ("command not allowed while a
+                // tool change is pending") — so anything already sitting in its receive
+                // buffer past this line is thrown away, not queued. On a short file the
+                // whole remainder fitted in one fill and every line of it was rejected.
+                //
+                // The barrier lifts when this very line is acknowledged: grblHAL answers
+                // M6 only once the change is resolved, which also means a build that
+                // ignores M6 answers immediately and streaming carries straight on.
+                if (GcodeWords.IsToolChange(line))
+                {
+                    _toolChangeLine = _accounting.AckedJobLines + _accounting.AckPending;
+                    break;
+                }
+
                 // Lock-step mode: stop after the first line sent this call.
                 if (!bufferAhead)
                     break;
             }
         }
+
+        /// <summary>
+        /// True while a tool change has been sent but not yet answered by the controller.
+        /// </summary>
+        private bool ToolChangeBarrierUp =>
+            _toolChangeLine > 0 && _accounting.AckedJobLines < _toolChangeLine;
 
         private void JobComplete()
         {
@@ -732,6 +760,7 @@ namespace GrbLHALSender.ViewModels
             _index = 0;
             _pendingLine = 0;
             _latestPendingLine = 0;
+            _toolChangeLine = 0;
             _accounting.Reset();
             GcodeFileIndex = _index;
 
