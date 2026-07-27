@@ -900,11 +900,19 @@ namespace GrbLHALSender.ViewModels
             _communicationManager.OnProbeResults -= OnProbeResult;
             IsProbing = false;
 
-            // Return to absolute mode, and hand the parser back the unit it was in.
+            // Absolute mode first: the completion handlers all assume it.
             _communicationManager.SendCommand("G90");
-            RestoreModalUnits();
 
             _onAllPhasesComplete?.Invoke();
+
+            // The unit goes back last, after the handler has had its say. Those handlers
+            // emit numbers computed in the sequence's unit — the tool reference return
+            // move, the Z work offset, the move to a computed center — so restoring first
+            // has the controller read every one of them in the wrong unit. That is what
+            // sent the G59.3 return to the home corner: X -1.360in went out behind a
+            // restored G21 and was taken as -1.360mm. The Z leg hid it, because its return
+            // is G53G0Z0 and zero is zero in either unit.
+            RestoreModalUnits();
         }
 
         private void ClearResults()
