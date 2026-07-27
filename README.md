@@ -86,7 +86,8 @@ surface, so the thickness cancels out. Thickness only matters for setting workpi
 which is a separate operation in the **Probe** dialog.
 
 ## Tool setter position (G59.3)
-
+![ToolSetter](Media/ToolSetter.png)
+</br>
 Modes 2 and 3 drive to the `G59.3` offset to reach the tool setter. Set it under
 **Probe → Tool Setter**: jog the machine where you want it and store the position. X/Y and
 Z are stored separately so neither overwrites the other by accident, and the stored value is
@@ -104,7 +105,8 @@ macro — is shown in the job panel, not only in the console. A macro that stops
 "manually unload the tool and unlock to continue" says so on screen.
 
 # G-code Events
-
+![GcodeEvents](Media/GcodeEvents.png)
+</br>
 Pre and post commands can be injected around any g-code event, configured under
 **Utility → G-code Events**. The original use case is lifting a dust shoe out of the way for
 a tool change or a homing cycle, but nothing about it is specific to that.
