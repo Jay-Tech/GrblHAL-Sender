@@ -61,6 +61,14 @@ namespace GrbLHALSender.Communication
         public event EventHandler<List<AuxPinInfo>> OnAuxPinsDiscovered;
 
         /// <summary>
+        /// Text the controller sends in a <c>[MSG:...]</c> wrapper, with the wrapper
+        /// stripped. This is how a g-code macro talks to the operator — grblHAL turns
+        /// <c>(debug, ...)</c> into one of these — so it carries the reason a program has
+        /// stopped. Raised on the comms thread.
+        /// </summary>
+        public event EventHandler<string>? OnControllerMessage;
+
+        /// <summary>
         /// Every command written to the controller, whatever raised it — a panel button,
         /// MDI, a macro, a streamed job line, or a G-code event rule's injected command.
         /// Lets UI that mirrors controller state notice changes it did not initiate, and
@@ -481,9 +489,16 @@ namespace GrbLHALSender.Communication
                     var substring = trimmed.Split('|');
                     ParseError(substring.AsSpan());
                 }
-                else if (inner.StartsWith("MSG:Pgm End"))
+                else if (inner.StartsWith("MSG:"))
                 {
-                    // Program end notification — can be handled in the future
+                    // Everything the controller says in words: a macro's (debug, ...)
+                    // output, door and unlock notices, program end. Raised so the UI can
+                    // put it where the operator will actually look — a tool change macro
+                    // that stops on "manually unload tool 3 and unlock to continue" is
+                    // useless if the text only reaches a console panel that is closed.
+                    var text = ExtractMessage(data);
+                    if (text != null)
+                        OnControllerMessage?.Invoke(this, text);
                 }
                 else if (inner.StartsWith("PRB"))
                 {
@@ -560,6 +575,24 @@ namespace GrbLHALSender.Communication
             }
 
             Debug.WriteLine($"***Warning Data Not Parsed: {data}***");
+        }
+
+        /// <summary>
+        /// Pulls the text out of a <c>[MSG:...]</c> line, or null when there is none.
+        /// <para>
+        /// Strips exactly one bracket from each end rather than trimming every bracket,
+        /// so a message whose own text ends in one survives intact.
+        /// </para>
+        /// </summary>
+        internal static string? ExtractMessage(string data)
+        {
+            const string prefix = "[MSG:";
+            if (data.Length < prefix.Length + 1) return null;
+            if (!data.StartsWith(prefix, StringComparison.Ordinal)) return null;
+            if (data[^1] != ']') return null;
+
+            var text = data[prefix.Length..^1].Trim();
+            return text.Length > 0 ? text : null;
         }
 
         private void ParseAllPins(List<string> pinLines)

@@ -25,7 +25,7 @@
 			<Setter Property="BorderThickness" Value="3"/>
 		</Style>
 	</UserControl.Styles>
-	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*,*"  RowDefinitions="Auto,Auto,Auto,Auto"
+	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*,*"  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
 		   Opacity=".6"
 		   VerticalAlignment="Stretch"
 		   HorizontalAlignment="Center">
@@ -108,6 +108,19 @@
 				   FontSize="{DynamicResource BaseFontSize}"
 				   Text="{Binding JobError}"
 				   IsVisible="{Binding JobError,
+				   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+		<!-- What the controller said, e.g. a tool change macro's (debug, ...) text. Its
+		     own row because it can appear alongside the TOOL banner: a macro that stops on
+		     "manually unload tool 3 and unlock to continue" needs both showing at once. -->
+		<TextBlock Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="6"
+				   HorizontalAlignment="Center"
+				   VerticalAlignment="Center"
+				   Margin="15,2,15,0"
+				   TextWrapping="Wrap"
+				   Foreground="{DynamicResource TextPrimaryBrush}"
+				   FontSize="{DynamicResource DetailFontSizeLarge}"
+				   Text="{Binding ControllerMessage}"
+				   IsVisible="{Binding ControllerMessage,
 				   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 	</Grid>
 </UserControl>

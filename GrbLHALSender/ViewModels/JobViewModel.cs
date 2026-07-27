@@ -61,6 +61,7 @@ namespace GrbLHALSender.ViewModels
         private int _completedSegmentIndex = -1;
         private string _selectedLineInfo = "";
         private string _jobError = "";
+        private string _controllerMessage = "";
         // Last state grblHAL reported, so the tool-change ack can fire on the transition
         // into Tool rather than on every status report while it lasts.
         private string _lastMachineState = "";
@@ -239,6 +240,21 @@ namespace GrbLHALSender.ViewModels
         {
             get => _jobError;
             set => this.RaiseAndSetIfChanged(ref _jobError, value);
+        }
+
+        /// <summary>
+        /// The last thing the controller said in words during this job.
+        /// <para>
+        /// Kept until the next job starts rather than cleared on resume: a tool change
+        /// macro that stops on "tool 3 failed zone 1, manually unload and unlock to
+        /// continue" is exactly the message the operator still needs to be reading after
+        /// they have dealt with it.
+        /// </para>
+        /// </summary>
+        public string ControllerMessage
+        {
+            get => _controllerMessage;
+            set => this.RaiseAndSetIfChanged(ref _controllerMessage, value);
         }
 
         public bool CanHoldJob
@@ -435,6 +451,7 @@ namespace GrbLHALSender.ViewModels
             _latestPendingLine = 0;
             CompletedSegmentIndex = -1;
             JobError = "";
+            ControllerMessage = "";
             _lastMachineState = "";
             _toolChangeLine = 0;
             _toolChange.Reset();
@@ -511,6 +528,7 @@ namespace GrbLHALSender.ViewModels
             CompletedSegmentIndex = -1;
             SelectedLineInfo = "";
             JobError = "";
+            ControllerMessage = "";
             EstimatedTime = string.Empty;
             AckedLineIndex = 0;
             if (ShowGCodeConsole) ShowGCodeConsole = false;
@@ -523,6 +541,7 @@ namespace GrbLHALSender.ViewModels
                 _commsManager.OnStateReceived += _commsManager_OnStateReceived;
                 _commsManager.OnCommandAck += _commsManager_OnCommandAck;
                 _commsManager.OnCommandSent += _commsManager_OnCommandSent;
+                _commsManager.OnControllerMessage += _commsManager_OnControllerMessage;
                 // Claim the link for the duration. Tied to the ack subscription because
                 // the two cover exactly the same window: while we are counting acks,
                 // nothing else may send a command and consume one.
@@ -533,6 +552,7 @@ namespace GrbLHALSender.ViewModels
                 _commsManager.OnStateReceived -= _commsManager_OnStateReceived;
                 _commsManager.OnCommandAck -= _commsManager_OnCommandAck;
                 _commsManager.OnCommandSent -= _commsManager_OnCommandSent;
+                _commsManager.OnControllerMessage -= _commsManager_OnControllerMessage;
                 _commsManager.EndStreaming();
             }
         }
@@ -621,6 +641,21 @@ namespace GrbLHALSender.ViewModels
             if (!e.IsStreamLine && e.Command.Length <= 1) return;
 
             _accounting.RecordSent(cost, e.IsStreamLine);
+        }
+
+        /// <summary>
+        /// Shows what the controller said while a job is running. This is the only place a
+        /// macro's <c>(debug, ...)</c> text becomes visible without the console panel open,
+        /// and the macro failure branches that end in M0 depend on the operator reading it.
+        /// </summary>
+        private void _commsManager_OnControllerMessage(object? sender, string message)
+        {
+            // Program end adds nothing the job panel does not already show, and letting it
+            // through would overwrite the message explaining why a run stopped.
+            if (message.StartsWith("Pgm End", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            Dispatcher.UIThread.Post(() => ControllerMessage = message);
         }
 
         private void _commsManager_OnCommandAck(object? sender, CommandAck e)
