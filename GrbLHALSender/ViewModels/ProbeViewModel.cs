@@ -1,6 +1,7 @@
 ﻿using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Probe;
+using GrbLHALSender.States;
 using GrbLHALSender.Utility;
 using ReactiveUI;
 using System;
@@ -14,6 +15,7 @@ namespace GrbLHALSender.ViewModels
     {
         private readonly CommunicationManager _communicationManager;
         private readonly ConfigManager _configManager;
+        private readonly MachineStateService _machineStateService;
 
         private ProbeToolType _selectedToolType = ProbeToolType.TouchPlate;
         private double _touchPlateThickness = 1.0;
@@ -38,6 +40,7 @@ namespace GrbLHALSender.ViewModels
         private bool _canProbe;
         private string _toolSetterPosition = "Not read yet";
         private string _toolSetterStatus = "";
+        private bool _toolReferenceSet;
 
         // Command sequencing state
         private ProbeJobBuilder _probeJob;
@@ -211,6 +214,18 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _toolSetterStatus, value);
         }
 
+        /// <summary>
+        /// Whether the controller holds a tool length reference, from the TLR field of the
+        /// status report.
+        /// </summary>
+        public bool ToolReferenceSet
+        {
+            get => _toolReferenceSet;
+            set => this.RaiseAndSetIfChanged(ref _toolReferenceSet, value);
+        }
+
+        public ICommand ProbeToolReferenceHereCommand { get; }
+        public ICommand ProbeToolReferenceAtSetterCommand { get; }
         public ICommand ReadToolSetterCommand { get; }
         public ICommand SetToolSetterXyCommand { get; }
         public ICommand SetToolSetterZCommand { get; }
@@ -225,10 +240,17 @@ namespace GrbLHALSender.ViewModels
         public Action? CloseAction { get; set; }
         public ICommand CloseCommand { get; }
 
-        public ProbeViewModel(CommunicationManager communicationManager, ConfigManager configManager)
+        public ProbeViewModel(CommunicationManager communicationManager, ConfigManager configManager,
+            MachineStateService machineStateService)
         {
             _communicationManager = communicationManager;
             _configManager = configManager;
+            _machineStateService = machineStateService;
+            _machineStateService.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(MachineStateService.TLR))
+                    ToolReferenceSet = _machineStateService.TLR;
+            };
 
             ProbeZCommand = ReactiveCommand.Create(StartProbeZ);
             ProbeCornerCommand = ReactiveCommand.Create(StartProbeCorner);
@@ -239,6 +261,8 @@ namespace GrbLHALSender.ViewModels
             SetCenterTypeCommand = ReactiveCommand.Create<string>(s => SelectedCenterType = Enum.Parse<CenterFinderType>(s));
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
             ReadToolSetterCommand = ReactiveCommand.CreateFromTask(ReadToolSetterAsync);
+            ProbeToolReferenceHereCommand = ReactiveCommand.Create(() => StartToolReferenceProbe(moveToSetter: false));
+            ProbeToolReferenceAtSetterCommand = ReactiveCommand.CreateFromTask(() => StartToolReferenceProbeAtSetterAsync());
             SetToolSetterXyCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("X0Y0", "XY"));
             SetToolSetterZCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("Z0", "Z"));
 
@@ -364,6 +388,84 @@ namespace GrbLHALSender.ViewModels
                 parts.Add($"{labels[i]} {values[i].ToInvariantString("F3")}");
 
             return string.Join("   ", parts);
+        }
+
+        /// <summary>
+        /// Probes the tool currently in the spindle and captures the result as the tool
+        /// length reference. Run this once, before starting a job, with the tool you set
+        /// work Z zero from — after which every tool change only needs a touch off.
+        /// <para>
+        /// Deliberately a pre-job action rather than something done mid-stream. It ends in
+        /// $TLR, and $TLR sent after a failed probe clears the reference rather than
+        /// setting it, so this only issues it when the probe actually made contact.
+        /// </para>
+        /// </summary>
+        private void StartToolReferenceProbe(bool moveToSetter, List<string>? approach = null)
+        {
+            if (IsProbing || !CanProbe) return;
+
+            ClearResults();
+            ProbeStatus = moveToSetter
+                ? "Moving to tool setter and probing reference..."
+                : "Probing tool length reference...";
+
+            _probeJob = CreateJobBuilder();
+            _phases = new List<List<string>>();
+            if (moveToSetter && approach != null)
+                _phases.Add(approach);
+            _phases.Add(_probeJob.ProbeZ());
+
+            _phaseResults = new List<ProbeState>();
+            _onAllPhasesComplete = OnToolReferenceComplete;
+
+            RunPhases();
+        }
+
+        /// <summary>
+        /// Reads the stored tool setter position and drives to it before probing.
+        /// <para>
+        /// Retracts Z to machine zero before travelling and only descends once over the
+        /// setter, so the approach cannot drag a long tool across the work — the same order
+        /// a tool change macro uses.
+        /// </para>
+        /// </summary>
+        private async Task StartToolReferenceProbeAtSetterAsync()
+        {
+            if (IsProbing || !CanProbe) return;
+
+            var setter = await _communicationManager.GetCoordinateSystemAsync("G59.3");
+            if (setter == null || setter.Length < 3)
+            {
+                ProbeStatus = "No G59.3 tool setter position stored — set it first";
+                return;
+            }
+
+            var approach = new List<string>
+            {
+                "G90",
+                "G53G0Z0",
+                $"G53G0X{setter[0].ToInvariantString("F3")}Y{setter[1].ToInvariantString("F3")}",
+                $"G53G0Z{setter[2].ToInvariantString("F3")}"
+            };
+
+            StartToolReferenceProbe(moveToSetter: true, approach);
+        }
+
+        private void OnToolReferenceComplete()
+        {
+            // The last result is the latch pass, the accurate one.
+            var probe = _phaseResults.Count > 0 ? _phaseResults[^1] : null;
+            if (probe == null || !probe.ProbeSuccessful)
+            {
+                // $TLR is deliberately not sent here: after a failed probe it clears any
+                // reference the controller was holding instead of setting a new one.
+                ProbeStatus = "Reference probe failed — no contact, reference unchanged";
+                return;
+            }
+
+            _communicationManager.SendCommand("G90");
+            _communicationManager.SendCommand(GrblHalConstants.ToolLengthReference);
+            ProbeStatus = "Tool length reference set — zero on the stock and start the job";
         }
 
         private void StartProbeZ()

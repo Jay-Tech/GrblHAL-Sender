@@ -310,7 +310,7 @@
 				<!-- Kept short deliberately: the dialog is 480x595 and this tab only gets
 				     what is left after the shared parameter panels. The $342 detail lives
 				     in the button tooltips. -->
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Margin="8,4">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="8,4">
 					<TextBlock Grid.Row="0"
 							   Text="G59.3 tool setter position — used by tool change modes 2 and 3."
 							   FontSize="13" TextWrapping="Wrap"
@@ -365,7 +365,54 @@
 								ToolTip.Tip="Store the current Z as the height probing starts from. The controller descends $342 from here, so leave clearance for your longest tool. X and Y are left alone."/>
 					</StackPanel>
 
-					<TextBlock Grid.Row="4"
+					<!-- Establishing the tool length reference is a pre-job step, done here
+					     rather than during a tool change: it ends in $TLR, and $TLR after a
+					     failed probe clears the reference instead of setting it. Doing it
+					     before the job also keeps it away from a live stream. -->
+					<Border Grid.Row="4" BorderBrush="AntiqueWhite" BorderThickness="1"
+							Padding="8,6" Margin="0,8,0,0">
+						<Grid RowDefinitions="Auto,Auto,Auto">
+							<TextBlock Grid.Row="0"
+									   FontSize="13" TextWrapping="Wrap"
+									   HorizontalAlignment="Center"
+									   Text="Tool length reference — probe once with the tool you zero the stock from, before starting the job."/>
+							<!-- Two mutually exclusive labels rather than a converter, matching
+							     how the rest of this view expresses boolean state. -->
+							<TextBlock Grid.Row="1"
+									   FontSize="13" FontWeight="DemiBold"
+									   Margin="0,4,0,6"
+									   HorizontalAlignment="Center"
+									   Foreground="{DynamicResource OkBrush}"
+									   Text="Reference is set"
+									   IsVisible="{Binding ToolReferenceSet}"/>
+							<TextBlock Grid.Row="1"
+									   FontSize="13" FontWeight="DemiBold"
+									   Margin="0,4,0,6"
+									   HorizontalAlignment="Center"
+									   Foreground="{DynamicResource AlertBrush}"
+									   Text="No reference set"
+									   IsVisible="{Binding !ToolReferenceSet}"/>
+							<StackPanel Grid.Row="2" Orientation="Horizontal"
+										HorizontalAlignment="Center" Spacing="8">
+								<Button Content="Probe Here" FontSize="15" Height="40" Width="135"
+										CornerRadius="6"
+										HorizontalContentAlignment="Center"
+										VerticalContentAlignment="Center"
+										IsEnabled="{Binding CanStartProbe}"
+										Command="{Binding ProbeToolReferenceHereCommand}"
+										ToolTip.Tip="Probe straight down from where the machine is standing, then set the reference. Position the tool over the setter first."/>
+								<Button Content="Probe at G59.3" FontSize="15" Height="40" Width="150"
+										CornerRadius="6"
+										HorizontalContentAlignment="Center"
+										VerticalContentAlignment="Center"
+										IsEnabled="{Binding CanStartProbe}"
+										Command="{Binding ProbeToolReferenceAtSetterCommand}"
+										ToolTip.Tip="Retract Z to machine zero, travel to the stored tool setter position, descend and probe, then set the reference."/>
+							</StackPanel>
+						</Grid>
+					</Border>
+
+					<TextBlock Grid.Row="5"
 							   Text="{Binding ToolSetterStatus}"
 							   FontSize="14"
 							   HorizontalAlignment="Center"

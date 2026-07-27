@@ -80,13 +80,25 @@ paused.
 Every tool change: stop at the `M6` → change the tool → jog it over the reference surface →
 **Touch Off** → **Start**.
 
-> **The first tool change of a session needs one extra step.** `$TPW` applies the
-> *difference* between this probe and the previous one, so the very first one has no
-> baseline to measure against. On the first change press **Touch Off**, then **Set Ref**,
-> then Start. After that Touch Off alone is enough.
->
-> Order matters: `$TLR` must follow a *successful* probe. Sent before one, or after a failed
-> one, it clears the reference instead of setting it.
+## Tool length reference — do this before the job
+
+`$TPW` applies the *difference* between this probe and the previous one, so it needs a
+baseline. Set it once per session under **Probe → Tool Setter**, with the tool you are going
+to zero the stock from:
+
+- **Probe Here** — probes straight down from where the machine is standing; jog the tool
+  over the setter first
+- **Probe at G59.3** — retracts Z to machine zero, travels to the stored tool setter
+  position, descends and probes
+
+Either way the reference is set only if the probe actually makes contact. Then zero on the
+stock and start the job, and every tool change from there needs nothing but **Touch Off**.
+
+The panel says whether the controller currently holds a reference, and the in-job **Set
+Ref** button remains as a fallback if you start a job without one.
+
+> `$TLR` must follow a *successful* probe. Sent before one, or after a failed one, it clears
+> the reference instead of setting it — which is why the app only issues it on a good probe.
 
 **Set Ref** rings red while the controller holds no reference and green once it does, from
 the `TLR` field of the status report. It is disabled while a reference exists — sending
