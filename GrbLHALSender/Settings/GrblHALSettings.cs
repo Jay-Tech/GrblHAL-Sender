@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -49,7 +49,7 @@ public class GrblHALSettings
         if (SettingCollection.Any(x => x.Id.Equals(id)))
         {
             var setting = SettingCollection.First(x => x.Id.Equals(id));
-            setting.SettingValue = data[1];
+            setting.SetReportedValue(data[1]);
 
         }
         else

@@ -1,4 +1,4 @@
-using ReactiveUI;
+﻿using ReactiveUI;
 using System;
 using System.Globalization;
 
@@ -81,6 +81,8 @@ public partial class GrblHalSetting : ReactiveObject
         internal set => this.RaiseAndSetIfChanged(ref _rebootRequired, value);
     }
 
+    private string _reportedValue = "";
+
     public bool NeedsSaving
     {
         get => _needsSaving;
@@ -90,7 +92,26 @@ public partial class GrblHalSetting : ReactiveObject
     public string SettingValue
     {
         get => _settingValue;
-        set => this.RaiseAndSetIfChanged(ref _settingValue, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _settingValue, value);
+
+            // Dirty means "differs from what the controller reported", not "a key was
+            // pressed". The editor used to flag this from the TextBox's KeyUp event, which
+            // the virtual keyboard never raises — it assigns Text directly — so on a
+            // touchscreen an edit showed on screen and was silently never sent. Deriving it
+            // from the value covers every route in, and un-flags an edit that is reverted.
+            NeedsSaving = _settingValue != _reportedValue;
+        }
+    }
+
+    /// <summary>
+    /// Applies a value the controller reported, and takes it as the clean baseline.
+    /// </summary>
+    internal void SetReportedValue(string value)
+    {
+        _reportedValue = value;
+        SettingValue = value;
     }
 
     /// <summary>
@@ -113,7 +134,7 @@ public partial class GrblHalSetting : ReactiveObject
     public GrblHalSetting(int id, string value)
     {
         Id = id;
-        SettingValue = value;
+        SetReportedValue(value);
     }
 
     public GrblHalSetting(Span<string> data)

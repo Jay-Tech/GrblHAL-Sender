@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
@@ -130,7 +130,6 @@ public class SettingEditorTemplate : IDataTemplate
             [!TextBox.TextProperty] = new Binding(nameof(GrblHalSetting.SettingValue)),
             Width = 200,
         };
-        tb.KeyUp += (_, _) => setting.NeedsSaving = true;
         return tb;
     }
 

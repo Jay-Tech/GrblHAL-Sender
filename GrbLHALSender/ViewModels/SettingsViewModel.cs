@@ -265,7 +265,7 @@ namespace GrbLHALSender.ViewModels
             var needSaving = SettingCollection.Where(x => x.NeedsSaving).ToList();
             var t = Task.Factory.StartNew(async () =>
             {
-                foreach (var command in needSaving.Select(item => $"${item.Id}={item.SettingValue}"))
+                foreach (var command in needSaving.Select(item => $"${item.Id}={item.SettingValue?.Trim()}"))
                 {
                     _commManager.SendCommand(command);
                     await Task.Delay(200);
