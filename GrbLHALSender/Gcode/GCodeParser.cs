@@ -39,7 +39,15 @@ public class GCodeParser
         _line = sr.ReadLine();
         while (_line != null)
         {
-            if (!string.IsNullOrEmpty(_line) && !_line.StartsWith("(") && !_line.EndsWith(")"))
+            // Lines of a single character are dropped along with blanks and comments.
+            // The adapters write a one-character command as a raw byte rather than a
+            // line (see WriteCommand), and grblHAL answers realtime bytes with no "ok" —
+            // so a lone "%" program-demarcation line, or a stray space, would be sent,
+            // never acknowledged, and the job could never satisfy its completion check.
+            // Such a line carries no motion, so dropping it here keeps the streamer's
+            // line count honest instead of special-casing it downstream.
+            if (!string.IsNullOrEmpty(_line) && _line.Trim().Length > 1
+                && !_line.StartsWith("(") && !_line.EndsWith(")"))
             {
                 GCodeJob.Add(new GCodeLine(_line, index));
                 index++;

@@ -448,6 +448,10 @@ public class MainViewModel : ViewModelBase
         MdiViewModel = mdiViewModel;
         AppConfigViewModel = appConfigViewModel;
         MdiViewModel.MidiTextCommitted += MainViewModel_MidiTextCommitted;
+        // Streaming diagnostics reach the console. Raised on the comms thread, so the
+        // add has to be marshalled — ConsoleOutput is bound.
+        JobViewModel.DiagnosticMessage += (_, msg) =>
+            Dispatcher.UIThread.Post(() => ConsoleOutput.Add($"[Job] {msg}"));
         // Job start/end has to re-evaluate the controls that send a g-code line —
         // GrblState alone does not change at the moment a job begins or ends.
         JobViewModel.PropertyChanged += (_, e) =>

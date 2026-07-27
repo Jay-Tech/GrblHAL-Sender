@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using GrbLHALSender.Gcode;
 using Xunit;
@@ -50,6 +51,39 @@ public class GCodeFileLoadTests
             var completed = await Task.WhenAny(errorReceived.Task, Task.Delay(5000));
             Assert.Same(errorReceived.Task, completed);
             Assert.Equal("boom in FileComplete", (await errorReceived.Task).Message);
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public async Task ParseGCodeFile_DropsSingleCharacterLines()
+    {
+        // A one-character line is written to the controller as a raw byte, not a line,
+        // and grblHAL answers realtime bytes with no "ok" — so a lone "%" program
+        // demarcation would be sent, never acknowledged, and the job could never reach
+        // its completion check. It has to be gone before the streamer sees it.
+        var file = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(file, "%\nG21\nG1 X1 Y1 F100\n \n%\n");
+            var parser = new GCodeParser();
+            var linesReceived = new TaskCompletionSource<List<GCodeLine>>();
+
+            parser.ParseGCodeFile(
+                file,
+                lines => linesReceived.TrySetResult(lines),
+                ex => linesReceived.TrySetException(ex));
+
+            var completed = await Task.WhenAny(linesReceived.Task, Task.Delay(5000));
+            Assert.Same(linesReceived.Task, completed);
+
+            var lines = await linesReceived.Task;
+            Assert.Equal(["G21", "G1 X1 Y1 F100"], lines.Select(l => l.Text));
+            // Numbering stays contiguous so the streamer's completion check can be met.
+            Assert.Equal([0, 1], lines.Select(l => l.LineNumber));
         }
         finally
         {

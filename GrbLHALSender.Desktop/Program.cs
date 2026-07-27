@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using GrbLHALSender.Utility;
 using ReactiveUI.Avalonia;
 using ReactiveUI.Builder;
 using System;
@@ -21,6 +22,20 @@ class Program
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
         CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
+
+        // One instance only. Two copies both auto-connecting fight over the serial port,
+        // and the loser presents a working-looking window whose commands go nowhere.
+        // Claimed before Avalonia starts so the second copy costs nothing and never
+        // touches the port. Held for the process lifetime — the OS releases it on exit,
+        // crash included, so a lock can never be left behind.
+        using var instance = SingleInstance.TryAcquire();
+        if (instance == null)
+        {
+            Console.Error.WriteLine(
+                "GrblHAL Sender is already running. Close the other window first.");
+            Environment.ExitCode = 1;
+            return;
+        }
 
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);

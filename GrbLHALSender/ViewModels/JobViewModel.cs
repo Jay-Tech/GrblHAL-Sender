@@ -66,6 +66,14 @@ namespace GrbLHALSender.ViewModels
         private string _lastMachineState = "";
         // Ordinal of the job line carrying an unanswered M6, or 0 when none is outstanding.
         private int _toolChangeLine;
+        // Reported once per job so a persistent mismatch cannot flood the console.
+        private bool _unmatchedAckReported;
+
+        /// <summary>
+        /// Streaming diagnostics worth putting in front of the operator. Raised on the
+        /// comms thread, so subscribers must marshal to the UI themselves.
+        /// </summary>
+        public event EventHandler<string>? DiagnosticMessage;
         private int _ackedLineIndex;
 
 
@@ -427,6 +435,7 @@ namespace GrbLHALSender.ViewModels
             JobError = "";
             _lastMachineState = "";
             _toolChangeLine = 0;
+            _unmatchedAckReported = false;
             _accounting.Reset();
 
             // Use the real RX buffer size from the controller if available
@@ -619,9 +628,20 @@ namespace GrbLHALSender.ViewModels
 
             // Nothing outstanding: a response we have no record for. Ignoring it is the
             // point — crediting it to a job line is what walked the file index forward
-            // during a tool change and ended jobs early.
+            // during a tool change and ended jobs early. But it should never happen, and
+            // it is the one visible symptom of the queue being out of step with the
+            // controller, so say so once rather than swallow it silently.
             if (acked == StreamAccounting.AckKind.Unrecorded)
+            {
+                if (!_unmatchedAckReported)
+                {
+                    _unmatchedAckReported = true;
+                    DiagnosticMessage?.Invoke(this,
+                        "response received with no command outstanding — " +
+                        "stream accounting may be out of step with the controller");
+                }
                 return;
+            }
 
             if (e.IsError)
             {
