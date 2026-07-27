@@ -607,13 +607,20 @@ public class MainViewModel : ViewModelBase
                      CurrentGrblState is GrblState.Idle or GrblState.Tool;
 
         // One rule for every control that hands a g-code line straight to the
-        // controller: MDI, the macro buttons, and the probe cycles. Tool is allowed so a
-        // manual tool change can still be touched off; a running job is not, because
-        // those lines would land in the middle of the program.
+        // controller: MDI, the macro buttons, and the probe cycles. A running job is not
+        // allowed, because those lines would land in the middle of the program.
         var canSendManualGcode = Connected && !jobRunning &&
                                  CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
 
-        CanUseMdi = canSendManualGcode;
+        // A mid-job tool change is the one exception for MDI. grblHAL's protocol requires
+        // the operator to touch off ($TPW in modes 1 and 2) before cycle start, so that
+        // has to be reachable while the job sits paused at an M6 — otherwise the tool
+        // change cannot be completed at all. Safe now that commands from outside the
+        // streamer are accounted for, and the controller rejects whatever it will not
+        // accept at that point, which is treated as a manual failure rather than the
+        // job's.
+        CanUseMdi = canSendManualGcode ||
+                    (Connected && jobRunning && CurrentGrblState is GrblState.Tool);
         if (MacroViewModel != null) MacroViewModel.CanRunMacro = canSendManualGcode;
         if (ProbeViewModel != null) ProbeViewModel.CanProbe = canSendManualGcode;
     }
@@ -684,7 +691,7 @@ public class MainViewModel : ViewModelBase
         if (!CanUseMdi)
         {
             ConsoleOutput.Add(JobViewModel.JobRunning
-                ? "MDI blocked: a job is running"
+                ? "MDI blocked: a job is running (allowed during a tool change)"
                 : $"MDI blocked: machine is {GrblHalState}");
             return;
         }
