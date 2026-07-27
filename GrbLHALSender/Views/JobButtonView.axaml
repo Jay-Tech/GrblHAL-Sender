@@ -96,6 +96,21 @@
                    FontSize="{DynamicResource XlFontSize}"
                    Text="TOOL"
                    IsVisible="{Binding ToolChangeVisible}"/>
+		<!-- $TPW probes the new tool and applies the offset. grblHAL's manual tool change
+		     modes require it before cycle start, and there was previously no way to send
+		     it except MDI. Hidden unless $341 says this machine has that step. -->
+		<Button Grid.Column="4" Grid.Row="3" Grid.ColumnSpan="2"
+				Content="Touch Off"
+				FontSize="15"
+				Height="38" Width="140"
+				CornerRadius="6"
+				HorizontalAlignment="Center"
+				VerticalAlignment="Center"
+				HorizontalContentAlignment="Center"
+				VerticalContentAlignment="Center"
+				Command="{Binding TouchOffCommand}"
+				IsVisible="{Binding TouchOffVisible}"
+				ToolTip.Tip="Probe the new tool and apply its offset ($TPW), then press Start. Needs a reference established with the first tool — the offset is measured relative to the previous probe, not an absolute surface."/>
 		<!-- Shares row 3 with TOOL: a tool change and an aborted job cannot both be
 		     current, and a job stopped by a rejected line must not be silent. -->
 		<TextBlock Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="6"

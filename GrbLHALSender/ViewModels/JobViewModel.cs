@@ -88,6 +88,7 @@ namespace GrbLHALSender.ViewModels
         // Set by MainViewModel — references config object so changes take effect immediately
         internal GHalSenderConfig? Config;
         private bool _toolChangeVisible;
+        private bool _toolChangeNeedsTouchOff;
 
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
@@ -287,6 +288,7 @@ namespace GrbLHALSender.ViewModels
         public ICommand CloseFilesCommand { get; }
         public ICommand PauseJobCommand { get; }
         public ICommand StopJobCommand { get; }
+        public ICommand TouchOffCommand { get; }
         /// <summary>
         /// Reacts to MachineStateService property changes (fires on UI thread at ~10 Hz).
         /// Feeds Connected, GrblState, and SpindlePosition from the centralized service.
@@ -307,6 +309,7 @@ namespace GrbLHALSender.ViewModels
                            JobState is (JobState.Idle or JobState.ProgramComplete or JobState.Stop));
 
             ToolChangeVisible = JobState == JobState.Tool;
+            this.RaisePropertyChanged(nameof(TouchOffVisible));
         }
 
         public bool ToolChangeVisible
@@ -314,6 +317,24 @@ namespace GrbLHALSender.ViewModels
             get => _toolChangeVisible;
             set => this.RaiseAndSetIfChanged(ref _toolChangeVisible, value);
         }
+
+        /// <summary>
+        /// Whether this machine's tool change mode expects the operator to touch the new
+        /// tool off. Pushed in by MainViewModel from $341: true for modes 1 and 2 only —
+        /// mode 3 probes by itself, and modes 0 and 4 have no touch-off step.
+        /// </summary>
+        public bool ToolChangeNeedsTouchOff
+        {
+            get => _toolChangeNeedsTouchOff;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _toolChangeNeedsTouchOff, value);
+                this.RaisePropertyChanged(nameof(TouchOffVisible));
+            }
+        }
+
+        /// <summary>Shown only while a job is paused at a tool change that needs one.</summary>
+        public bool TouchOffVisible => ToolChangeVisible && ToolChangeNeedsTouchOff;
 
         public JobViewModel(CommunicationManager manager, MachineStateService machineStateService,
             GcodeEventInjector eventInjector)
@@ -329,6 +350,7 @@ namespace GrbLHALSender.ViewModels
             CloseFilesCommand = ReactiveCommand.Create(CloseFile);
             PauseJobCommand = ReactiveCommand.Create(TogglePause);
             StopJobCommand = ReactiveCommand.Create(StopJob);
+            TouchOffCommand = ReactiveCommand.Create(TouchOff);
             RunTime = "00:00:00";
             _jobTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (sender, args) =>
             {
@@ -497,6 +519,22 @@ namespace GrbLHALSender.ViewModels
             // Don't set JobState here — let _commsManager_OnStateReceived
             // update it to Hold when grblHAL actually confirms the hold
             _commsManager.Adapter?.WriteByte(GrblHalConstants.FeedHold);
+        }
+
+        /// <summary>
+        /// Probes the newly fitted tool and applies the offset, the step grblHAL's manual
+        /// tool change modes require before cycle start. $TPW measures against the last
+        /// probe rather than an absolute surface, so touch plate thickness plays no part —
+        /// but it does mean a reference has to have been established with the first tool,
+        /// or the very first change of a session applies a delta against nothing.
+        /// </summary>
+        private void TouchOff()
+        {
+            // Only meaningful while the controller is waiting at a tool change, and only
+            // in the modes that implement the command.
+            if (JobState != JobState.Tool || !ToolChangeNeedsTouchOff) return;
+
+            _commsManager.SendCommand(GrblHalConstants.ToolProbeWorkpiece);
         }
 
         private void ResumeJob()

@@ -621,6 +621,12 @@ public class MainViewModel : ViewModelBase
         // job's.
         CanUseMdi = canSendManualGcode ||
                     (Connected && jobRunning && CurrentGrblState is GrblState.Tool);
+
+        // Whether this machine's $341 mode expects the operator to touch the new tool off.
+        // Read from the controller rather than configured here, so the control cannot
+        // appear on a machine that has no such step — or be missing on one that does.
+        if (JobViewModel != null)
+            JobViewModel.ToolChangeNeedsTouchOff = MachineSettings?.ToolChangeNeedsTouchOff ?? false;
         if (MacroViewModel != null) MacroViewModel.CanRunMacro = canSendManualGcode;
         if (ProbeViewModel != null) ProbeViewModel.CanProbe = canSendManualGcode;
     }
@@ -1047,6 +1053,8 @@ public class MainViewModel : ViewModelBase
     private void _commManager_onSettingUpdated(object? sender, List<GrblHalSetting> e)
     {
         MachineSettings = CommManager.MachineData;
+        // $341 arrives with the settings, and the touch-off control depends on it.
+        UpdateButtonStates();
 
         MachineInMetric = CommManager.MachineData.ReportInMetric;
         if (UseMetric != MachineInMetric)

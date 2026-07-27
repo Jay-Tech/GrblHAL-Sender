@@ -14,6 +14,7 @@ namespace GrbLHALSender.Settings
         private double _ySize;
         private double _xSize;
         private bool _reportInMetric;
+        private int _toolChangeMode;
         private double _xRapid;
         private double _yRapid;
         private double _zRapid;
@@ -56,6 +57,26 @@ namespace GrbLHALSender.Settings
         /// </summary>
         public string UnitLabel => ReportInMetric ? "mm" : "in";
 
+        //grbl setting $341 tool change mode
+        // 0 Normal, 1 Manual touch off, 2 Manual touch off @ G59.3,
+        // 3 Automatic touch off @ G59.3, 4 Ignore M6.
+        public int ToolChangeMode
+        {
+            get => _toolChangeMode;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _toolChangeMode, value);
+                this.RaisePropertyChanged(nameof(ToolChangeNeedsTouchOff));
+            }
+        }
+
+        /// <summary>
+        /// True for the modes where the operator has to touch the new tool off with
+        /// <c>$TPW</c> before cycle start. Mode 3 probes by itself and modes 0 and 4 have
+        /// no touch-off step at all, so the control must not appear for those.
+        /// </summary>
+        public bool ToolChangeNeedsTouchOff => ToolChangeMode is 1 or 2;
+
         // Display-unit properties: returns values in the display unit (mm or inches)
         // Machine settings $130/$131/$132 and $110/$111/$112 are always stored in mm.
         // When $13=1 (imperial), these convert mm → inches for rendering/display.
@@ -90,6 +111,11 @@ namespace GrbLHALSender.Settings
         public void SetIsMetric(string value)
         {
             ReportInMetric = value.Equals("0", StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        public void SetToolChangeMode(string value)
+        {
+            ToolChangeMode = int.TryParse(value, out var mode) ? mode : 0;
         }
         public void SetXBoundaries(string value)
         {

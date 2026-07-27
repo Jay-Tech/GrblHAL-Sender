@@ -77,5 +77,9 @@
         public const int YAxisLength = 131;
         public const int ZRapid = 112;
         public const int ZAxisLength = 132;
+        public const int ToolChangeMode = 341;
+        //  Tool change
+        /// <summary>Tool Probe Workpiece — probes the new tool and applies the offset ($341=1 and 2 only).</summary>
+        public const string ToolProbeWorkpiece = "$TPW";
     }
 }

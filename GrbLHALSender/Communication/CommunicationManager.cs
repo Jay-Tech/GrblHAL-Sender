@@ -308,6 +308,7 @@ namespace GrbLHALSender.Communication
             _machineData.SetYRapid(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.YRapid)?.SettingValue ?? "");
             _machineData.SetZRapid(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ZRapid)?.SettingValue ?? "");
             _machineData.SetIsMetric(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ReportUnits)?.SettingValue ?? "");
+            _machineData.SetToolChangeMode(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ToolChangeMode)?.SettingValue ?? "");
             onSettingUpdated?.Invoke(this, _grblHalSettings.SettingCollection);
         }
 
