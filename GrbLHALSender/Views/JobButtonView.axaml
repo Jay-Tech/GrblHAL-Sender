@@ -24,6 +24,16 @@
 			<Setter Property="Margin" Value="15,5,15,0"/>
 			<Setter Property="BorderThickness" Value="3"/>
 		</Style>
+
+		<!-- Tool length reference state, from the TLR field of the status report.
+		     DynamicResource rather than a converter so it repaints on a theme change
+		     instead of holding the old palette until TLR next flips. -->
+		<Style Selector="Border.tlrRing">
+			<Setter Property="BorderBrush" Value="{DynamicResource AlertBrush}"/>
+		</Style>
+		<Style Selector="Border.tlrRing.good">
+			<Setter Property="BorderBrush" Value="{DynamicResource OkBrush}"/>
+		</Style>
 	</UserControl.Styles>
 	<Grid  Background="Transparent"  ColumnDefinitions="*,*,*,*,*,*"  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
 		   Opacity=".6"
@@ -115,14 +125,24 @@
 					VerticalContentAlignment="Center"
 					Command="{Binding TouchOffCommand}"
 					ToolTip.Tip="Probe the new tool and apply its offset ($TPW), then press Start."/>
-			<Button Content="Set Ref"
-					FontSize="15"
-					Height="38" Width="125"
-					CornerRadius="6"
-					HorizontalContentAlignment="Center"
-					VerticalContentAlignment="Center"
-					Command="{Binding SetToolReferenceCommand}"
-					ToolTip.Tip="Capture the probe just taken as the tool length reference ($TLR). Needed once, on the first tool change of a session — press Touch Off first, then this. $TPW measures against this baseline. Sent without a successful probe it CLEARS the reference."/>
+			<!-- Ring rather than the button's own colours: the Fluent theme repaints a
+			     Button's border on :pointerover/:pressed, and those states stick after a
+			     touch, which would hide the bound state until focus moved elsewhere.
+			     Same reason the aux output buttons use a wrapper. -->
+			<Border Classes="tlrRing"
+					Classes.good="{Binding ToolReferenceSet}"
+					BorderThickness="2"
+					CornerRadius="6">
+				<Button Content="Set Ref"
+						FontSize="15"
+						Height="38" Width="125"
+						CornerRadius="6"
+						BorderThickness="0"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						Command="{Binding SetToolReferenceCommand}"
+						ToolTip.Tip="Capture the probe just taken as the tool length reference ($TLR). Red means the controller holds no reference and $TPW has nothing to measure against — press Touch Off first, then this. Sent without a successful probe it CLEARS the reference."/>
+			</Border>
 		</StackPanel>
 		<!-- Shares row 3 with TOOL: a tool change and an aborted job cannot both be
 		     current, and a job stopped by a rejected line must not be silent. -->

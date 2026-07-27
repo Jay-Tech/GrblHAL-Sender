@@ -89,6 +89,7 @@ namespace GrbLHALSender.ViewModels
         internal GHalSenderConfig? Config;
         private bool _toolChangeVisible;
         private bool _toolChangeNeedsTouchOff;
+        private bool _toolReferenceSet;
 
 
         public IReadOnlyList<IStorageFile>? SelectedFiles { get; set; }
@@ -337,6 +338,19 @@ namespace GrbLHALSender.ViewModels
         /// <summary>Shown only while a job is paused at a tool change that needs one.</summary>
         public bool TouchOffVisible => ToolChangeVisible && ToolChangeNeedsTouchOff;
 
+        /// <summary>
+        /// Whether the controller currently holds a tool length reference, from the TLR
+        /// field of the status report. Colours the Set Ref control rather than hiding it:
+        /// a reference can legitimately be re-established — after moving the tool setter,
+        /// or re-zeroing with a different tool — so the action stays available, and the
+        /// colour says whether it is still needed.
+        /// </summary>
+        public bool ToolReferenceSet
+        {
+            get => _toolReferenceSet;
+            set => this.RaiseAndSetIfChanged(ref _toolReferenceSet, value);
+        }
+
         public JobViewModel(CommunicationManager manager, MachineStateService machineStateService,
             GcodeEventInjector eventInjector)
         {
@@ -445,6 +459,9 @@ namespace GrbLHALSender.ViewModels
                             _ => JobState
                         };
                     }
+                    break;
+                case nameof(MachineStateService.TLR):
+                    ToolReferenceSet = _machineStateService.TLR;
                     break;
                 case nameof(MachineStateService.SpindlePosition):
                     CurrentSpindlePosition = _machineStateService.SpindlePosition;
