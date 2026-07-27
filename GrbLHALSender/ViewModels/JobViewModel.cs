@@ -66,6 +66,9 @@ namespace GrbLHALSender.ViewModels
         private int _toolChangeLine;
         // Streaming is held at a tool change until the controller has finished it.
         private readonly ToolChangeBarrier _toolChange = new();
+        // The same, for a change with no job behind it — an M6 from the MDI. Nothing is
+        // being streamed, so this holds the UI rather than the stream.
+        private readonly ToolChangeBarrier _manualToolChange = new();
         // Reported once per job so a persistent mismatch cannot flood the console.
         private bool _unmatchedAckReported;
 
@@ -432,13 +435,24 @@ namespace GrbLHALSender.ViewModels
             {
                 case nameof(MachineStateService.Connected):
                     Connected = _machineStateService.Connected;
+                    // Whatever the controller was in the middle of, we are no longer
+                    // watching it. Left latched, the first Idle after reconnecting would
+                    // put the UI back into a tool change that is long over.
+                    if (!Connected) _manualToolChange.Reset();
                     break;
                 case nameof(MachineStateService.GrblState):
                     if (!JobRunning)
                     {
+                        TrackManualToolChange(_machineStateService.GrblState);
+
                         JobState = _machineStateService.GrblState switch
                         {
-                            GrblState.Idle => JobState.Idle,
+                            // Latched, not mapped: the operator has to jog to the setter to
+                            // touch off, and grblHAL reports Idle as soon as that jog
+                            // finishes. Taking it at face value cleared the TOOL banner and
+                            // the Touch Off button on the first jog, leaving $TPW reachable
+                            // only by typing it into the MDI.
+                            GrblState.Idle => _manualToolChange.IsUp ? JobState.Tool : JobState.Idle,
                             GrblState.Alarm => JobState.Alarm,
                             GrblState.Hold => JobState.Hold,
                             GrblState.Tool => JobState.Tool,
@@ -470,6 +484,27 @@ namespace GrbLHALSender.ViewModels
             }
         }
         /// <summary>
+        /// Follows a tool change the streamer did not start, so Idle reported mid-change
+        /// can be told from Idle meaning it is over.
+        /// <para>
+        /// Alarm ends it however it got there — a soft reset out of a half-finished change
+        /// comes back through Alarm, and without this the barrier would still be up when
+        /// the machine next reported Idle and would latch the UI back into a tool change
+        /// that no longer exists.
+        /// </para>
+        /// </summary>
+        private void TrackManualToolChange(GrblState state)
+        {
+            if (state == GrblState.Tool)
+                _manualToolChange.ManualToolChangeSeen();
+            else if (state == GrblState.Alarm || !Connected)
+                _manualToolChange.Reset();
+            else
+                // Answered already: outside a job there is no M6 line of ours to wait on.
+                _manualToolChange.Update(_machineStateService.GrblStateString, toolChangeLineAcked: true);
+        }
+
+        /// <summary>
         /// Whether Start should just issue a cycle start, with no job of our own to run:
         /// a hold the operator put the machine into, or a tool change from an M6 typed
         /// into the MDI with no file loaded.
@@ -486,6 +521,10 @@ namespace GrbLHALSender.ViewModels
         {
             if (NeedsBareCycleStart(JobState, JobRunning))
             {
+                // Same note as ResumeJob: the cycle start is what runs the controller's
+                // restore move, and the change is only over once that finishes. Without
+                // this the barrier would never lift and the UI would stay in Tool.
+                _manualToolChange.CycleStartIssued();
                 _commsManager.Adapter?.WriteByte(GrblHalConstants.CycleStart);
                 return;
             }
@@ -506,6 +545,9 @@ namespace GrbLHALSender.ViewModels
             ControllerMessage = "";
             _toolChangeLine = 0;
             _toolChange.Reset();
+            // A job takes over the tool-change handling entirely; anything the manual
+            // barrier was still holding would only fight it.
+            _manualToolChange.Reset();
             _unmatchedAckReported = false;
             _accounting.Reset();
 

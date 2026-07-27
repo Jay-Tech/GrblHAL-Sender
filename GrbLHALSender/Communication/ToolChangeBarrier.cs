@@ -41,6 +41,20 @@ internal sealed class ToolChangeBarrier
     }
 
     /// <summary>
+    /// Called when the machine entered Tool state with nothing streaming — an M6 typed
+    /// into the MDI. There is no sent line to hang the barrier on, so entering the state
+    /// is what raises it; from there the change ends exactly as a job's does.
+    /// </summary>
+    public void ManualToolChangeSeen()
+    {
+        if (IsUp) return;
+
+        IsUp = true;
+        _sawToolState = true;
+        _cycleStarted = false;
+    }
+
+    /// <summary>
     /// Called when a cycle start has been issued while the barrier is up. That is what
     /// triggers the controller's restore move, so the change cannot end before it.
     /// </summary>
