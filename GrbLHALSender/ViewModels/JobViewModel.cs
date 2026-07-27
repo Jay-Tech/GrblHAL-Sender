@@ -61,6 +61,9 @@ namespace GrbLHALSender.ViewModels
         private int _completedSegmentIndex = -1;
         private string _selectedLineInfo = "";
         private string _jobError = "";
+        // Last state grblHAL reported, so the tool-change ack can fire on the transition
+        // into Tool rather than on every status report while it lasts.
+        private string _lastMachineState = "";
         private int _ackedLineIndex;
 
 
@@ -420,6 +423,7 @@ namespace GrbLHALSender.ViewModels
             _latestPendingLine = 0;
             CompletedSegmentIndex = -1;
             JobError = "";
+            _lastMachineState = "";
             _accounting.Reset();
 
             // Use the real RX buffer size from the controller if available
@@ -517,18 +521,10 @@ namespace GrbLHALSender.ViewModels
         {
             var state = e.GrblHalState;
             var previousState = JobState;
+            var previousMachineState = _lastMachineState;
+            _lastMachineState = state;
 
-            JobState = state switch
-            {
-                "Hold" => JobState.Hold,
-                "Tool" => JobState.Tool,
-                "Run" => JobState.Running,
-                "Alarm" => JobState.Alarm,
-                "Home" => JobState.Running,
-                "Idle" => JobState.Idle,
-                "Door" => JobState.Hold,
-                _ => JobState
-            };
+            JobState = MapGrblState(state, JobState, JobRunning);
 
             // Alarm during job — abort
             if (JobState == JobState.Alarm && JobRunning)
@@ -536,8 +532,12 @@ namespace GrbLHALSender.ViewModels
                 CancelAndCleanup(JobState.Alarm);
             }
 
-            // Tool change — acknowledge when grblHAL reports Tool state
-            if (JobState == JobState.Tool)
+            // Tool change — acknowledge once, on the transition into Tool. grblHAL's
+            // protocol is to send 0xA3 as soon as the state changes to Tool; it
+            // acknowledges the event and does not resume the program, so repeating it at
+            // poll rate for the length of the pause achieves nothing and puts needless
+            // traffic in front of the operator's touch off.
+            if (state == "Tool" && previousMachineState != "Tool")
             {
                 _commsManager.Adapter?.WriteByte(GrblHalConstants.ToolAck);
             }
@@ -549,6 +549,35 @@ namespace GrbLHALSender.ViewModels
                 FillBuffer();
             }
         }
+
+        /// <summary>
+        /// Maps grblHAL's reported state onto the job's own state.
+        /// <para>
+        /// Idle deliberately does not clear a tool change or a hold while a job is
+        /// running. grblHAL reports Jog while the operator jogs to touch off and Idle once
+        /// that jog finishes, and neither means the program resumed — it resumes only on
+        /// cycle start, which shows up as Run. Treating Idle as a resume unlatched the
+        /// pause: the TOOL banner disappeared and, worse, the streamer stopped holding
+        /// back and emptied the rest of the file into the controller, which acknowledged
+        /// each line as it buffered it. The machine sat waiting for cycle start while the
+        /// file index ran to the end, with no error anywhere.
+        /// </para>
+        /// </summary>
+        internal static JobState MapGrblState(string grblState, JobState current, bool jobRunning) =>
+            grblState switch
+            {
+                "Hold" => JobState.Hold,
+                "Tool" => JobState.Tool,
+                "Run" => JobState.Running,
+                "Alarm" => JobState.Alarm,
+                "Home" => JobState.Running,
+                "Door" => JobState.Hold,
+                "Idle" => jobRunning && current is JobState.Tool or JobState.Hold
+                    ? current
+                    : JobState.Idle,
+                // Jog, Check, Sleep and anything unrecognised leave the job state alone.
+                _ => current
+            };
 
         /// <summary>
         /// Records commands the streamer did not send — a jog during a tool change, an

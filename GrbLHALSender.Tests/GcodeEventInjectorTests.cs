@@ -227,6 +227,35 @@ public class GcodeEventInjectorTests
     }
 
     [Fact]
+    public void SynchronizedDustShoeRule_ExpandsToSeparateWellFormedLines()
+    {
+        // The rule as configured on the machine: synchronized aux codes (M63/M62) with a
+        // dwell either side of the tool change. Pinned because a malformed or merged line
+        // reaching the controller mid-job is indistinguishable, from the operator's seat,
+        // from a firmware problem.
+        var hook = new GcodeEventHook
+        {
+            Trigger = "M6",
+            PreCommands = "M63P0|G4P0.2",
+            PostCommands = "M62P0|G4P1",
+        };
+
+        var lines = new List<GCodeLine> { new("G1X10Y10F1000", 0), new("T2M6", 1), new("G1X20", 2) };
+        var result = new GcodeEventInjector([hook]).ApplyToJob(lines);
+
+        Assert.Equal(
+            ["G1X10Y10F1000", "M63P0", "G4P0.2", "T2M6", "M62P0", "G4P1", "G1X20"],
+            result.Select(l => l.Text));
+
+        // No line carries a separator, stray whitespace, or a merged neighbour.
+        Assert.All(result, l =>
+        {
+            Assert.DoesNotContain('|', l.Text);
+            Assert.Equal(l.Text.Trim(), l.Text);
+        });
+    }
+
+    [Fact]
     public void Hooks_SurviveConfigRoundTrip()
     {
         // The rules live in the app config JSON. A serialization gap would silently
