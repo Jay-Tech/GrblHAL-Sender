@@ -60,6 +60,7 @@ namespace GrbLHALSender.ViewModels
         private DispatcherTimer? _fileIndexTimer;
         private int _completedSegmentIndex = -1;
         private string _selectedLineInfo = "";
+        private string _jobError = "";
         private int _ackedLineIndex;
 
 
@@ -213,6 +214,16 @@ namespace GrbLHALSender.ViewModels
         {
             get => _selectedLineInfo;
             set => this.RaiseAndSetIfChanged(ref _selectedLineInfo, value);
+        }
+
+        /// <summary>
+        /// Why the job stopped, when it stopped for a reason the operator would not
+        /// otherwise see. Empty at all other times.
+        /// </summary>
+        public string JobError
+        {
+            get => _jobError;
+            set => this.RaiseAndSetIfChanged(ref _jobError, value);
         }
 
         public bool CanHoldJob
@@ -408,6 +419,7 @@ namespace GrbLHALSender.ViewModels
             _pendingLine = 0;
             _latestPendingLine = 0;
             CompletedSegmentIndex = -1;
+            JobError = "";
             _accounting.Reset();
 
             // Use the real RX buffer size from the controller if available
@@ -474,6 +486,7 @@ namespace GrbLHALSender.ViewModels
             ToolpathData = null;
             CompletedSegmentIndex = -1;
             SelectedLineInfo = "";
+            JobError = "";
             EstimatedTime = string.Empty;
             AckedLineIndex = 0;
             if (ShowGCodeConsole) ShowGCodeConsole = false;
@@ -558,23 +571,40 @@ namespace GrbLHALSender.ViewModels
             _accounting.RecordSent(cost, e.IsStreamLine);
         }
 
-        private void _commsManager_OnCommandAck(object? sender, EventArgs e)
+        private void _commsManager_OnCommandAck(object? sender, CommandAck e)
         {
             if (!JobRunning) return;
 
             if (JobState is JobState.Start)
                 JobState = JobState.Running;
 
-            // Credit this "ok" to the oldest outstanding command, whatever sent it.
+            // Credit the response to the oldest outstanding command, whatever sent it.
+            // "ok" and "error:N" both end a command and both free its bytes, so both
+            // must be credited — an error that skipped this left the queue head stuck
+            // forever, which put every later response one entry out of step and left the
+            // job unable to reach its own end.
             var acked = _accounting.Ack();
 
-            // Nothing outstanding: an "ok" we have no record for. Ignoring it is the
+            // Nothing outstanding: a response we have no record for. Ignoring it is the
             // point — crediting it to a job line is what walked the file index forward
             // during a tool change and ended jobs early.
             if (acked == StreamAccounting.AckKind.Unrecorded)
                 return;
 
-            if (acked == StreamAccounting.AckKind.JobLine)
+            if (e.IsError)
+            {
+                // A rejected line means the controller did not run the program that is in
+                // the file. Carrying on would cut a toolpath with a hole in it, so stop.
+                if (acked == StreamAccounting.AckKind.JobLine)
+                {
+                    Dispatcher.UIThread.Post(() => AbortOnLineError(e.ErrorCode));
+                    return;
+                }
+
+                // A rejected manual command — a jog past a soft limit, say — is not the
+                // job's problem. The queue is straight again, so carry on below.
+            }
+            else if (acked == StreamAccounting.AckKind.JobLine)
             {
                 _pendingLine = _accounting.AckedJobLines;
                 _latestPendingLine = _pendingLine;
@@ -595,6 +625,17 @@ namespace GrbLHALSender.ViewModels
             // frees room, so this runs for those too.
             FillBuffer();
 
+        }
+
+        /// <summary>
+        /// Stops the job because the controller rejected one of its lines. Uses the same
+        /// hold-then-reset path as the Stop button, and reports the code so the operator
+        /// is not left guessing why the job ended.
+        /// </summary>
+        private void AbortOnLineError(int errorCode)
+        {
+            JobError = $"Job stopped: controller rejected a line (error:{errorCode})";
+            StopJob();
         }
 
         /// <summary>

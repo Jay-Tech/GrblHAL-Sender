@@ -503,14 +503,47 @@ namespace GrbLHALSender.ViewModels
             }
         }
 
-        private void OnCommandAck(object sender, EventArgs e)
+        private void OnCommandAck(object? sender, CommandAck e)
         {
+            // A rejected command means the rest of the sequence is operating on state the
+            // controller never reached, so stop instead of probing on regardless.
+            if (e.IsError)
+            {
+                AbortSequence($"Probe aborted: controller rejected a command (error:{e.ErrorCode})");
+                return;
+            }
+
             SendNextCommand();
         }
 
         private void OnProbeResult(object sender, ProbeState e)
         {
             _phaseResults.Add(e);
+        }
+
+        /// <summary>
+        /// Tears the sequence down without running the completion callback.
+        /// <para>
+        /// Deliberately not <see cref="CompleteAllPhases"/>: that invokes
+        /// <c>_onAllPhasesComplete</c>, which sets work offsets from whatever results
+        /// arrived — so finishing a half-run probe "successfully" would apply an offset
+        /// derived from touches that never happened.
+        /// </para>
+        /// </summary>
+        private void AbortSequence(string status)
+        {
+            _communicationManager.OnCommandAck -= OnCommandAck;
+            _communicationManager.OnProbeResults -= OnProbeResult;
+            IsProbing = false;
+            _phases = null;
+            _currentPhaseCommands = null;
+            _onAllPhasesComplete = null;
+
+            // Leave the parser in absolute mode; the sequence switches to G91 for the
+            // approach moves and abandoning it there would surprise the next command.
+            _communicationManager.SendCommand("G90");
+
+            ProbeStatus = status;
         }
 
         private void CompleteAllPhases()

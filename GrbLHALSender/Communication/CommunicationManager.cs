@@ -28,6 +28,17 @@ namespace GrbLHALSender.Communication
     /// </summary>
     public record CommandSentEventArgs(string Command, bool IsStreamLine);
 
+    /// <summary>
+    /// The controller's response to one command. grblHAL answers every line with either
+    /// "ok" or "error:N", and either way that command is finished and its bytes have left
+    /// the RX buffer — so both must be reported, or anything counting outstanding
+    /// commands loses its place at the first rejected line.
+    /// </summary>
+    public record CommandAck(bool IsError, int ErrorCode)
+    {
+        public static readonly CommandAck Ok = new(false, 0);
+    }
+
     public class CommunicationManager
     {
         private readonly ConfigManager _configManager;
@@ -41,7 +52,12 @@ namespace GrbLHALSender.Communication
         public event EventHandler<List<GrblHalSetting>> onSettingUpdated;
         public event EventHandler<GrblHALOptions> onOptionsUpdated;
         public event EventHandler<ProbeState> OnProbeResults;
-        public event EventHandler OnCommandAck;
+        /// <summary>
+        /// One response per command sent: "ok", or "error:N" carrying the code. Both end
+        /// the command, so subscribers that track outstanding commands must treat them
+        /// alike; only the caller decides whether the failure matters.
+        /// </summary>
+        public event EventHandler<CommandAck>? OnCommandAck;
         public event EventHandler<List<AuxPinInfo>> OnAuxPinsDiscovered;
 
         /// <summary>
@@ -424,7 +440,7 @@ namespace GrbLHALSender.Communication
             // "ok" acknowledgement
             if (data.Equals("ok", StringComparison.OrdinalIgnoreCase))
             {
-                OnCommandAck?.Invoke(this, EventArgs.Empty);
+                OnCommandAck?.Invoke(this, CommandAck.Ok);
                 return;
             }
 
@@ -511,14 +527,21 @@ namespace GrbLHALSender.Communication
             // Error responses: error:N
             if (data.StartsWith("error:", StringComparison.OrdinalIgnoreCase))
             {
+                var errorCode = 0;
                 var valuePair = data.Split(':');
                 if (valuePair.Length >= 2)
                 {
-                    var code = valuePair[1].StringToInt();
-                    Debug.WriteLine(_errorCodes.TryGetValue(code, out var error)
-                        ? $"***Error Code {code}: {error}***"
-                        : $"***Unknown Error Code {code}***");
+                    errorCode = valuePair[1].StringToInt();
+                    Debug.WriteLine(_errorCodes.TryGetValue(errorCode, out var error)
+                        ? $"***Error Code {errorCode}: {error}***"
+                        : $"***Unknown Error Code {errorCode}***");
                 }
+
+                // A rejected command is still a finished command. Reporting it here is
+                // what keeps the job streamer's outstanding-command queue aligned; when
+                // errors were silent, one rejected line left the queue head stuck and
+                // every later "ok" was credited to the wrong command.
+                OnCommandAck?.Invoke(this, new CommandAck(true, errorCode));
                 return;
             }
 

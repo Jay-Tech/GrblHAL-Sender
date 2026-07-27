@@ -93,6 +93,40 @@ public class StreamAccountingTests
     }
 
     [Fact]
+    public void ARejectedLineMustStillBeCredited_OrTheJobCanNeverFinish()
+    {
+        // grblHAL answers every line with "ok" or "error:N". When the error was not fed
+        // through here, the queue head never cleared: every later response was credited
+        // to the wrong command, AckedJobLines stayed permanently short of the line count,
+        // and the completion check could never fire - the app sat "running" forever.
+        var acc = NewAccounting(capacity: 4096);
+        for (var i = 0; i < 3; i++) acc.RecordSent(10, isJobLine: true);
+
+        acc.Ack();                       // line 1 -> ok
+        acc.Ack();                       // line 2 -> error:20, credited the same way
+        acc.Ack();                       // line 3 -> ok
+
+        Assert.Equal(3, acc.AckedJobLines);
+        Assert.Equal(0, acc.AckPending);
+        Assert.Equal(0, acc.BufferUsed);
+    }
+
+    [Fact]
+    public void ARejectedForeignCommand_LeavesTheQueueStraight()
+    {
+        // A jog rejected past a soft limit still gets a response, so the job line behind
+        // it must still be the next thing credited.
+        var acc = NewAccounting(capacity: 4096);
+        acc.RecordSent(25, isJobLine: false); // jog, will be rejected
+        acc.RecordSent(10, isJobLine: true);
+
+        Assert.Equal(StreamAccounting.AckKind.Foreign, acc.Ack());
+        Assert.Equal(StreamAccounting.AckKind.JobLine, acc.Ack());
+        Assert.Equal(1, acc.AckedJobLines);
+        Assert.Equal(0, acc.BufferUsed);
+    }
+
+    [Fact]
     public void Ack_WithNothingOutstanding_IsIgnored()
     {
         var acc = NewAccounting();
