@@ -9,9 +9,15 @@
 
 	<Grid RowDefinitions="Auto,Auto,*,Auto,Auto, Auto" Margin="10">
 
-		<!-- Probe Tool Type Selection -->
+		<!-- Probe Tool Type Selection.
+		     Hidden on the Tool Setter tab: probe type, diameter and plate thickness play no
+		     part in a tool length measurement — the offset is differential, so thickness
+		     cancels, and diameter only matters for edge and centre finding. Hiding it also
+		     gives that tab the height it needs. The rate and distance panel below stays,
+		     because the tool reference probe really does use those values. -->
 		<Border Grid.Row="0" BorderThickness="1" CornerRadius="4" Padding="10,8"
-				Margin="0,0,0,0">
+				Margin="0,0,0,0"
+				IsVisible="{Binding !#ToolSetterTab.IsSelected}">
 			<Grid RowDefinitions="*,*" >
 				<Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto">
 					<Label  Grid.Column="0"
@@ -306,7 +312,7 @@
 			<!-- G59.3 is where grblHAL's tool change modes 2 and 3 go to reach the tool
 			     setter, and there was previously no way to set it without typing
 			     G10 L20 P9 into MDI. -->
-			<TabItem Header="Tool Setter" FontSize="16" Padding="15,5">
+			<TabItem Header="Tool Setter" x:Name="ToolSetterTab" FontSize="16" Padding="15,5">
 				<!-- Kept short deliberately: the dialog is 480x595 and this tab only gets
 				     what is left after the shared parameter panels. The $342 detail lives
 				     in the button tooltips. -->
@@ -424,8 +430,11 @@
 			</TabItem>
 		</TabControl>
 
-		<!-- Results Section -->
-		<Border Grid.Row="3" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
+		<!-- Results Section.
+		     Also hidden on the Tool Setter tab: a tool length reference probe sets no work
+		     offsets, so these stay blank there and only take up room the tab needs. -->
+		<Border Grid.Row="3" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"
+				IsVisible="{Binding !#ToolSetterTab.IsSelected}">
 			<Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowDefinitions="Auto">
 				<Label Grid.Column="0" Content="X:" FontSize="16" FontWeight="Bold"
 					   VerticalAlignment="Center" Margin="0,0,3,0"/>
