@@ -2,6 +2,7 @@
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.Theming;
+using GrbLHALSender.WebServer;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ namespace GrbLHALSender.ViewModels
     {
        
         private readonly ConfigManager _configManager;
+        private readonly FileUploadService _fileUploadService;
        // private readonly CommunicationManager _commManager;
         private GHalSenderConfig _appConfig;
         private bool _enableCutLines;
@@ -189,6 +191,13 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _webServerPort, value);
         }
 
+        /// <summary>
+        /// Where uploads actually land, read live from the service rather than rebuilt here
+        /// so the two can never disagree. Shown because the path is otherwise unguessable:
+        /// on Linux it resolves inside <c>~/.config</c>, which is hidden from file browsers.
+        /// </summary>
+        public string UploadDirectory => _fileUploadService.UploadDirectory;
+
         public bool UseAntiAlias
         {
             get => _useAntiAlias;
@@ -277,12 +286,14 @@ namespace GrbLHALSender.ViewModels
         public AppConfigViewModel(ConfigManager configManager,
             AuxOutputViewModel  auxOutputViewModel,
             GcodeEventViewModel gcodeEventViewModel,
-            ThemeService themeService)
+            ThemeService themeService,
+            FileUploadService fileUploadService)
         {
             AuxOutputViewModel = auxOutputViewModel;
             GcodeEventViewModel = gcodeEventViewModel;
             _configManager = configManager;
             _themeService = themeService;
+            _fileUploadService = fileUploadService;
             SaveConfigCommand = ReactiveCommand.Create(Save);
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
             SelectAccentCommand = ReactiveCommand.Create<string>(hex => AccentColor = hex);

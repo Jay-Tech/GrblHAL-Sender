@@ -74,6 +74,7 @@ public class MainViewModel : ViewModelBase
     private string _tlrMacro;
     private readonly GamepadService _gamepadService;
     private readonly WebServerService _webServerService;
+    private readonly FileUploadService _fileUploadService;
     private readonly GcodeEventInjector _eventInjector;
 
     // Buffered console log messages — accumulated on the data thread, drained on UI timer
@@ -415,6 +416,14 @@ public class MainViewModel : ViewModelBase
     public ICommand SetTlrCommand { get; }
     public ICommand UnloadToolCommand { get; }
     public ICommand OpenProbeCommand { get; }
+    /// <summary>
+    /// Where the file browser should open. Files uploaded over the web server land in the
+    /// app data directory, which on Linux is <c>~/.config</c> — hidden, so a picker that
+    /// starts anywhere else will not show them and offers no way to reach them on a
+    /// touchscreen with no keyboard.
+    /// </summary>
+    public string GcodeStartFolder => _fileUploadService.UploadDirectory;
+
     public Action? CloseConsoleAction { get; set; }
     public ICommand CloseConsoleCommand { get; }
 
@@ -430,9 +439,11 @@ public class MainViewModel : ViewModelBase
         MdiViewModel mdiViewModel, GamepadService gamepadService, AppConfigViewModel appConfigViewModel,
         WebServerService webServerService, MachineStateService machineStateService,
         SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService,
-        SurfacingViewModel surfacingViewModel, GcodeEventInjector eventInjector)
+        SurfacingViewModel surfacingViewModel, GcodeEventInjector eventInjector,
+        FileUploadService fileUploadService)
     {
         CommManager = commManager;
+        _fileUploadService = fileUploadService;
         _eventInjector = eventInjector;
         ProbeViewModel = probeViewModel;
         SurfacingViewModel = surfacingViewModel;

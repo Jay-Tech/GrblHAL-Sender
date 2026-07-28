@@ -216,12 +216,40 @@ public partial class MainView : UserControl
     private async Task<IReadOnlyList<IStorageFile>?> InteractionHandler(string input)
     {
         var topLevel = TopLevel.GetTopLevel(this);
-        var storageFiles = await topLevel!.StorageProvider.OpenFilePickerAsync(
-            new FilePickerOpenOptions()
+        if (topLevel == null) return null;
+
+        var options = new FilePickerOpenOptions
+        {
+            AllowMultiple = true,
+            Title = input,
+            FileTypeFilter = new List<FilePickerFileType>
             {
-                AllowMultiple = true,
-                Title = input
-            });
-        return storageFiles;
+                new("G-Code Files")
+                {
+                    Patterns = new[] { "*.nc", "*.ngc", "*.gcode", "*.tap", "*.gc", "*.cnc" }
+                },
+                new("All Files") { Patterns = new[] { "*.*" } }
+            }
+        };
+
+        // Open where the web server puts uploads. That is under the app data directory,
+        // which on Linux is ~/.config — a leading-dot path no file picker lists, so a file
+        // uploaded from a phone was effectively unreachable from the touchscreen.
+        var start = _viewModel?.GcodeStartFolder;
+        if (!string.IsNullOrEmpty(start))
+        {
+            try
+            {
+                options.SuggestedStartLocation =
+                    await topLevel.StorageProvider.TryGetFolderFromPathAsync(start);
+            }
+            catch
+            {
+                // A start folder that cannot be resolved is a worse reason to fail than it
+                // is a problem — the picker still opens, just wherever it did before.
+            }
+        }
+
+        return await topLevel.StorageProvider.OpenFilePickerAsync(options);
     }
 }

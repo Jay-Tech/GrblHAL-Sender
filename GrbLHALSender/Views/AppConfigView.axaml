@@ -772,7 +772,7 @@
 				</Grid>
 			</TabItem>
 			<TabItem Header="Web Server" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto" Margin="10,10,10,0">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto" Margin="10,10,10,0">
 					<CheckBox Grid.Row="0"
 							  Content="Enable Web Server"
 							  HorizontalAlignment="Center"
@@ -800,7 +800,26 @@
 								 IsEnabled="{Binding IsWebServerEnabled}"
 								 Text="{Binding WebServerPort}"/>
 					</Grid>
-					<TextBlock Grid.Row="2"
+					<!-- The upload path is not guessable: on Linux it resolves inside
+					     ~/.config, which file browsers hide, so an uploaded file looked
+					     lost. Selectable so it can be copied rather than transcribed. -->
+					<StackPanel Grid.Row="2" Margin="0,20,0,0" HorizontalAlignment="Center">
+						<TextBlock Text="Uploaded files are saved to:"
+								   Foreground="{DynamicResource TextMutedBrush}"
+								   FontSize="14"
+								   HorizontalAlignment="Center"/>
+						<SelectableTextBlock Text="{Binding UploadDirectory}"
+											 FontSize="14"
+											 TextWrapping="Wrap"
+											 HorizontalAlignment="Center"
+											 Margin="0,4,0,0"/>
+						<TextBlock Text="The file browser opens here."
+								   Foreground="{DynamicResource TextMutedBrush}"
+								   FontSize="14"
+								   HorizontalAlignment="Center"
+								   Margin="0,4,0,0"/>
+					</StackPanel>
+					<TextBlock Grid.Row="3"
 							   Text="Changes require app restart. Access from LAN: http://&lt;this-pc-ip&gt;:port"
 							   Foreground="{DynamicResource TextMutedBrush}"
 							   FontSize="14"

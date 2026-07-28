@@ -11,6 +11,17 @@ public class FileUploadService
     private string _uploadDirectory = "";
     private WebServerConfig _config = new();
 
+    /// <summary>
+    /// Absolute path uploads are written to, or empty before Initialize has run.
+    /// <para>
+    /// Worth surfacing rather than leaving implicit. On Linux this resolves under
+    /// $XDG_CONFIG_HOME — <c>~/.config/GrblHAL-Sender/GCodeFiles</c> by default — and a
+    /// leading-dot directory is hidden from every file picker, so an operator who uploaded
+    /// a file over the web server had no way to find it from the file browser.
+    /// </para>
+    /// </summary>
+    public string UploadDirectory => _uploadDirectory;
+
     public void Initialize(WebServerConfig config)
     {
         _config = config;
