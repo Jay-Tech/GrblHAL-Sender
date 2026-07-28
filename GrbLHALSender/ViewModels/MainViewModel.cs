@@ -468,6 +468,7 @@ public class MainViewModel : ViewModelBase
         _machineStateService.PropertyChanged += OnMachineStateChanged;
         CommManager.onOptionsUpdated += _commManager_onOptionsUpdated;
         CommManager.onSettingUpdated += _commManager_onSettingUpdated;
+        CommManager.onMachineDataChanged += _commManager_onMachineDataChanged;
         CommManager.OnConsoleLogReceived += _commManager_OnConsoleLogReceived;
         // Discovered aux pins are added as presets in AppConfigViewModel only —
         // they don't auto-appear as buttons until the user adds them through config.
@@ -1050,7 +1051,17 @@ public class MainViewModel : ViewModelBase
                 sig.Triggered = shouldBeTriggered;
         }
     }
-    private void _commManager_onSettingUpdated(object? sender, List<GrblHalSetting> e)
+    private void _commManager_onSettingUpdated(object? sender, List<GrblHalSetting> e) =>
+        RefreshMachineSettings();
+
+    /// <summary>
+    /// A single setting was written while connected. Same work as a full settings read —
+    /// the values it feeds do not care which of the two they came from.
+    /// </summary>
+    private void _commManager_onMachineDataChanged(object? sender, MachineSettings e) =>
+        RefreshMachineSettings();
+
+    private void RefreshMachineSettings()
     {
         MachineSettings = CommManager.MachineData;
         // $341 arrives with the settings, and the touch-off control depends on it.
@@ -1061,7 +1072,6 @@ public class MainViewModel : ViewModelBase
         {
             SetUpUiUnit();
         }
-
     }
     private void _commManager_onOptionsUpdated(object? sender, GrblHALOptions e)
     {

@@ -206,8 +206,11 @@ public class MachineStateService : ReactiveObject, IDisposable
         // Subscribe to raw state events (fires on data thread at ~200 Hz)
         _commManager.OnStateReceived += OnStateReceived;
 
-        // Listen for setting updates to track machine's native unit system
+        // Listen for setting updates to track machine's native unit system. Both events
+        // matter: the full read at connect, and $13 written while running — position
+        // conversion would otherwise use the connect-time unit for the rest of the session.
         _commManager.onSettingUpdated += OnSettingUpdated;
+        _commManager.onMachineDataChanged += OnMachineDataChanged;
 
         // Throttled UI update timer at 10 Hz — identical pattern to previous MainViewModel
         _uiUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
@@ -247,6 +250,11 @@ public class MachineStateService : ReactiveObject, IDisposable
     private void OnSettingUpdated(object? sender, List<GrblHalSetting> e)
     {
         _machineInMetric = _commManager.MachineData?.ReportInMetric ?? true;
+    }
+
+    private void OnMachineDataChanged(object? sender, MachineSettings e)
+    {
+        _machineInMetric = e.ReportInMetric;
     }
 
     /// <summary>
@@ -393,5 +401,6 @@ public class MachineStateService : ReactiveObject, IDisposable
         _uiUpdateTimer = null;
         _commManager.OnStateReceived -= OnStateReceived;
         _commManager.onSettingUpdated -= OnSettingUpdated;
+        _commManager.onMachineDataChanged -= OnMachineDataChanged;
     }
 }

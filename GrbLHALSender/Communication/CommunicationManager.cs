@@ -51,6 +51,13 @@ namespace GrbLHALSender.Communication
         public event EventHandler<string> OnConsoleLogReceived;
         public event EventHandler<RealTImeState> OnStateReceived;
         public event EventHandler<List<GrblHalSetting>> onSettingUpdated;
+        /// <summary>
+        /// A single setting was written while connected, so anything derived from
+        /// <see cref="MachineData"/> needs re-reading. Deliberately separate from
+        /// <see cref="onSettingUpdated"/>, which means "the whole list was re-read" and
+        /// makes the settings editor rebuild every row.
+        /// </summary>
+        public event EventHandler<MachineSettings>? onMachineDataChanged;
         public event EventHandler<GrblHALOptions> onOptionsUpdated;
         public event EventHandler<ProbeState> OnProbeResults;
         /// <summary>
@@ -197,6 +204,18 @@ namespace GrbLHALSender.Communication
                 Adapter?.WriteCommand(command);
                 OnCommandSent?.Invoke(this, new CommandSentEventArgs(command, isStreamLine));
             }
+
+            // Outside the lock, and never for a streamed line: a job file has no business
+            // writing settings, and the derivation must not sit in the streamer's path.
+            // Parsed here so the common case costs a string check rather than a dispatch.
+            if (!isStreamLine && TryParseSettingWrite(command, out var id, out var value))
+            {
+                // A save or an import sends from a background task, and what this updates
+                // is bound to the settings grid. Touching bound objects off the UI thread
+                // throws on a thread with nothing to catch it, which takes the process
+                // down with it.
+                _dispatcher.Post(() => RecordSettingWrite(id, value));
+            }
         }
         public void GetSettings()
         {
@@ -299,17 +318,96 @@ namespace GrbLHALSender.Communication
             foreach (var setting in _grblHalSettings.SettingCollection)
                 setting.GroupName = _grblHalSettings.GroupNameFor(setting.GroupId);
 
+            // A reconnect can be against different firmware, so this starts clean rather
+            // than carrying over anything the previous controller reported.
             _machineData = new MachineSettings();
+            ApplyDerivedSettings();
 
-            _machineData.SetXBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XAxisLength)?.SettingValue ?? "");
-            _machineData.SetYBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.YAxisLength)?.SettingValue ?? "");
-            _machineData.SetZBoundaries(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ZAxisLength)?.SettingValue ?? "");
-            _machineData.SetXRapid(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.XRapid)?.SettingValue ?? "");
-            _machineData.SetYRapid(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.YRapid)?.SettingValue ?? "");
-            _machineData.SetZRapid(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ZRapid)?.SettingValue ?? "");
-            _machineData.SetIsMetric(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ReportUnits)?.SettingValue ?? "");
-            _machineData.SetToolChangeMode(_grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == GrblHalConstants.ToolChangeMode)?.SettingValue ?? "");
             onSettingUpdated?.Invoke(this, _grblHalSettings.SettingCollection);
+        }
+
+        /// <summary>
+        /// Derives the typed machine settings from the raw <c>$</c> collection. Deliberately
+        /// mutates <see cref="MachineData"/> in place, so callers holding a reference to it
+        /// see a live setting change without having to re-fetch.
+        /// </summary>
+        private void ApplyDerivedSettings()
+        {
+            string ValueOf(int id) =>
+                _grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == id)?.SettingValue ?? "";
+
+            _machineData.SetXBoundaries(ValueOf(GrblHalConstants.XAxisLength));
+            _machineData.SetYBoundaries(ValueOf(GrblHalConstants.YAxisLength));
+            _machineData.SetZBoundaries(ValueOf(GrblHalConstants.ZAxisLength));
+            _machineData.SetXRapid(ValueOf(GrblHalConstants.XRapid));
+            _machineData.SetYRapid(ValueOf(GrblHalConstants.YRapid));
+            _machineData.SetZRapid(ValueOf(GrblHalConstants.ZRapid));
+            _machineData.SetIsMetric(ValueOf(GrblHalConstants.ReportUnits));
+            _machineData.SetToolChangeMode(ValueOf(GrblHalConstants.ToolChangeMode));
+        }
+
+        /// <summary>
+        /// Pulls a setting write out of an outgoing command: <c>"$341=2"</c> gives 341 and
+        /// "2". False for everything else — <c>$$</c>, <c>$G</c>, <c>$TPW</c>, g-code, and
+        /// in particular <c>$J=</c>, which shares the shape but is a jog, not a setting.
+        /// </summary>
+        internal static bool TryParseSettingWrite(string command, out int id, out string value)
+        {
+            id = 0;
+            value = "";
+
+            var trimmed = command?.Trim() ?? "";
+            if (trimmed.Length < 4 || trimmed[0] != '$') return false;
+
+            var equals = trimmed.IndexOf('=');
+            if (equals < 2) return false;
+
+            if (!int.TryParse(trimmed.AsSpan(1, equals - 1), NumberStyles.Integer,
+                    CultureInfo.InvariantCulture, out id))
+                return false;
+
+            value = trimmed[(equals + 1)..].Trim();
+            return value.Length > 0;
+        }
+
+        /// <summary>
+        /// Keeps the app's model in step with a setting the operator just wrote, from the
+        /// settings editor, an import, or the MDI.
+        /// <para>
+        /// Settings are otherwise read exactly once, at connect, so a value changed while
+        /// running never reached <see cref="MachineData"/> — the settings grid showed the
+        /// new number while everything deriving from it still held the connect-time one,
+        /// and the two only reconciled on reconnect. That is how a $341 change mid-session
+        /// silently removed the Touch Off button.
+        /// </para>
+        /// <para>
+        /// Taken on the write rather than an acknowledgement: nothing correlates acks to
+        /// non-streamed commands, so a value the controller rejects is recorded optimistically
+        /// — the same assumption the settings grid already makes.
+        /// </para>
+        /// <para>
+        /// Runs on the UI thread; see the dispatch in <c>Write</c>.
+        /// </para>
+        /// </summary>
+        private void RecordSettingWrite(int id, string value)
+        {
+            // Only settings this controller actually reported. An unknown id is far more
+            // likely a typo in the MDI than a real setting worth inventing an entry for.
+            var setting = _grblHalSettings.SettingCollection.FirstOrDefault(x => x.Id == id);
+            if (setting == null) return;
+
+            // NeedsSaving, not the value alone. The editor writes the typed value into the
+            // setting and only then sends it, so on that path the value already matches
+            // while the baseline behind it does not — and the derivation it needs has still
+            // never run. Comparing values alone skipped exactly the case this exists for.
+            if (setting.SettingValue == value && !setting.NeedsSaving) return;
+
+            // The controller holds this now, so it is the clean baseline — this also clears
+            // the dirty flag the editor set when the value was typed.
+            setting.SetReportedValue(value);
+            ApplyDerivedSettings();
+
+            onMachineDataChanged?.Invoke(this, _machineData);
         }
 
         private void SendState(RealTImeState rtState)
