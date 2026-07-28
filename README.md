@@ -1,8 +1,8 @@
-# Project is back Active
+# GrblHAL Sender
 
-## GrblHal Sender a cross platform sender application  built using Avalonia UI and .Net
+A cross platform sender application for grblHAL, built using Avalonia UI and .NET.
 
-Goal was to create a application that will run on a cheap mini PC with a UI design that is touch monitor friendly, and will not require a mouse or keyboard to use.
+The goal was an application that runs on a cheap mini PC, with a UI designed to be touch monitor friendly and usable without a mouse or keyboard.
 </br>
 ---
 ![Home Screen](Media/HomeScreen.png)
@@ -29,20 +29,21 @@ Goal was to create a application that will run on a cheap mini PC with a UI desi
 ## Rapid-ATC
 ![AppSetting](Media/SettingRAtc.png)
 </br>
-## Wireess Gamepad
+## Wireless Gamepad
 ![Gamepad](Media/GamePad.png) ![Setting Button](Media/GamePadButtons.png) ![Setting Trigger](Media/GamePadTrigger.png)
 </br>
 ## Web Server
 ![WebServer](Media/SettingWebServer.png)
 </br>
-## Macro Download and Upload Suppprted
+## Macro Download and Upload Supported
 ![SDCard](Media/settingSdcard.png)
 
 # Tool Change
 
 What the sender does at an `M6` depends on the controller's `$341` tool change mode. The
-mode is read from the machine at connect, so the relevant controls appear on their own —
-there is nothing to configure in the app to match it.
+mode is read from the machine, so the relevant controls appear on their own — there is
+nothing to configure in the app to match it. Changing `$341` while connected is picked up
+as well, without a reconnect.
 
 | `$341` | Mode | What the sender does |
 |---|---|---|
@@ -165,13 +166,19 @@ pin moves the matching button too.
 Runs on Windows and on Linux including the Pi 5.
 
 Verified on hardware:
-- Tool change streaming at `$341=0` — the job holds at the `M6`, survives jogging during the
-  pause, and resumes cleanly on **Start**
+- Tool change streaming — the job holds at the `M6`, survives jogging during the pause, and
+  resumes cleanly on **Start**
+- Manual touch off (`$341=1` / `2`) — the **Touch Off** button and `$TPW`, including jogging
+  to the setter and back mid-change
+- Automatic touch off (`$341=3`)
+- `M6T<n>` from the MDI with no file loaded
+- Tool length reference and tool setter position (`G59.3`), including the return to the X/Y
+  the probe started from
+- Changing `$341` while connected — the controls follow without a reconnect
 - G-code event injection around a tool change, including the dwell-first ordering
 - Serial connection and reconnection
+- Single instance guard on Linux
 
 Still to test:
-- Manual touch off (`$341=1` / `2`) — the **Touch Off** button and `$TPW`
-- Tool setter position (`G59.3`)
-- Probing
-- Single instance guard on Linux
+- The probe cycles — corner probe, center finder and workpiece Z zero, with both the touch
+  plate and 3D probe tool types
