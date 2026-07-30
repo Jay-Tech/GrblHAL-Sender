@@ -230,6 +230,15 @@
 
 	<!-- ===================== Inputs ===================== -->
 
+	<!-- No Cut/Copy/Paste flyout on any text box. On a touchscreen the double-tap that
+	     opens the virtual keyboard also brings this up, and it lands on top of the very
+	     fields being edited — in the Probe dialog it covered Latch Rate and Latch Dist.
+	     There is nothing behind it worth keeping either: entry here goes through the
+	     virtual keyboard, and the keyboard shortcuts are unaffected by removing it. -->
+	<Style Selector="TextBox">
+		<Setter Property="ContextFlyout" Value="{x:Null}"/>
+	</Style>
+
 	<Style Selector="TextBox.h1">
 		<Setter Property="FontSize" Value="20"/>
 	</Style>

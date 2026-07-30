@@ -20,14 +20,24 @@ public class VirtualKeyboardViewModel : ViewModelBase, IDialogCloseable
     }
 
     /// <summary>
-    /// Sets the target TextBox that receives keyboard input. Moves the caret
-    /// to the end of the text — the double-tap that opened the keyboard
-    /// selects a word and leaves the caret wherever the tap landed.
+    /// Sets the target TextBox that receives keyboard input, with the caret at the end and
+    /// nothing selected.
+    /// <para>
+    /// The double-tap that opens the keyboard is a word-select as far as the TextBox is
+    /// concerned, and it leaves the caret wherever the tap landed. Collapsing the selection
+    /// matters beyond the caret position on a touchscreen: while text is selected Avalonia
+    /// shows drag handles either side of it, which sit over the neighbouring fields and are
+    /// fiddly to dismiss with a finger. Setting CaretIndex alone does not clear a selection.
+    /// </para>
     /// </summary>
     public void SetTarget(TextBox textBox)
     {
         _targetTextBox = textBox;
-        textBox.CaretIndex = textBox.Text?.Length ?? 0;
+
+        var end = textBox.Text?.Length ?? 0;
+        textBox.SelectionStart = end;
+        textBox.SelectionEnd = end;
+        textBox.CaretIndex = end;
     }
 
     private void OnKeyPress(string key)
