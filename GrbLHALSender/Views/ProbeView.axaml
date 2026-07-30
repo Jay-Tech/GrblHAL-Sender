@@ -209,22 +209,24 @@
 						</Grid>
 					</StackPanel>
 
-					<!-- Options -->
-					<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,0,0,10">
+					<!-- Options. Spans both columns and keeps the two heights on one line: the
+					     tab sits in a star row inside a fixed-height dialog, so stacking them
+					     clipped the bottom of this row and took the probe button with it. -->
+					<StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,5">
 						<CheckBox Content="Include Z Probe" FontSize="14"
 								  IsChecked="{Binding IncludeZInCorner}" Margin="0,0,0,5"/>
 						<StackPanel Orientation="Horizontal">
 							<Label Content="Clearance Height:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
 							<TextBox Text="{Binding ClearanceHeightText}" FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-									 Margin="0,0,2,0"/>
+									 Margin="0,0,2,0"
+									 ToolTip.Tip="Safe height it lifts to before moving, and how far it steps clear of the stock."/>
 							<TextBlock Text="{Binding UnitLabel}"
 									   FontSize="13" VerticalAlignment="Center"
-									   Opacity="0.6"/>
-						</StackPanel>
-						<!-- How far below the start height the stylus drops to get beside the
-						     stock. Distinct from Clearance Height, which is what it lifts to. -->
-						<StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+									   Opacity="0.6" Margin="0,0,15,0"/>
+
+							<!-- How far below the start height the stylus drops to get beside the
+							     stock. Distinct from Clearance Height, which is what it lifts to. -->
 							<Label Content="Probe Depth:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
 							<TextBox Text="{Binding ProbeDepthText}" FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
@@ -236,17 +238,17 @@
 						</StackPanel>
 					</StackPanel>
 
-					<!-- Probe Button -->
-					<Button Grid.Row="1" Grid.Column="1" 
-                            Content="Probe Corner" 
+					<!-- Probe Button. In the star row, which was previously empty space. -->
+					<Button Grid.Row="2" Grid.ColumnSpan="2"
+                            Content="Probe Corner"
                             FontSize="18"
-							Height="50" Width="160" 
+							Height="50" Width="160"
                             CornerRadius="6"
-							HorizontalAlignment="Center" 
-                            VerticalAlignment="Center"
-							HorizontalContentAlignment="Center" 
+							HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+							HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
-							Margin="0,10,0,0"
+							Margin="0,5,0,0"
 							IsEnabled="{Binding CanStartProbe}"
 							Command="{Binding ProbeCornerCommand}"/>
 				</Grid>
