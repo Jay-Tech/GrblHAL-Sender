@@ -390,26 +390,69 @@ namespace GrbLHALSender.ViewModels
         /// check rather than a wrong datum nobody notices.
         /// </para>
         /// </summary>
-        private bool NumericFieldsValid()
+        private bool FieldsValid(List<(string Label, string Text)> fields)
         {
-            var bad = FirstInvalidField();
-            if (bad == null) return true;
+            foreach (var (label, text) in fields)
+            {
+                if (IsNumber(text)) continue;
 
-            ProbeStatus = $"{bad} is not a number — fix it before probing";
-            return false;
+                ProbeStatus = $"{label} is not a number — fix it before probing";
+                return false;
+            }
+
+            return true;
         }
 
-        private string? FirstInvalidField() =>
-            !IsNumber(SearchRateText) ? "Search Rate"
-            : !IsNumber(LatchRateText) ? "Latch Rate"
-            : !IsNumber(ProbeDistanceText) ? "Distance"
-            : !IsNumber(LatchDistanceText) ? "Latch Dist"
-            : !IsNumber(ClearanceHeightText) ? "Clearance"
-            : !IsNumber(ProbeDepthText) ? "Probe Depth"
-            : !IsNumber(ProbeDiameterText) ? "Diameter"
-            : IsTouchPlate && !IsNumber(TouchPlateThicknessText) ? "Plate Thickness"
-            : !IsNumber(ApproxSizeText) ? "Approx Size"
-            : null;
+        /// <summary>
+        /// The four every cycle reads. Deliberately the only ones checked in common: validating
+        /// the whole dialog meant a tool reference probe could be refused over Diameter, which
+        /// it never reads and which its own tab does not even display.
+        /// </summary>
+        private List<(string Label, string Text)> CommonFields() =>
+        [
+            ("Search Rate", SearchRateText),
+            ("Latch Rate", LatchRateText),
+            ("Distance", ProbeDistanceText),
+            ("Latch Dist", LatchDistanceText)
+        ];
+
+        /// <summary>A Z touch reads the plate thickness, and on a 3D probe nothing else.</summary>
+        private List<(string, string)> ZProbeFields()
+        {
+            var fields = CommonFields();
+            if (IsTouchPlate) fields.Add(("Plate Thickness", TouchPlateThicknessText));
+            return fields;
+        }
+
+        /// <summary>
+        /// A corner reads the approach heights, and the stylus radius for edge compensation.
+        /// </summary>
+        private List<(string, string)> CornerFields()
+        {
+            var fields = CommonFields();
+            fields.Add(("Clearance Height", ClearanceHeightText));
+            fields.Add(("Probe Depth", ProbeDepthText));
+            if (!IsTouchPlate) fields.Add(("Diameter", ProbeDiameterText));
+            if (IsTouchPlate && IncludeZInCorner)
+                fields.Add(("Plate Thickness", TouchPlateThicknessText));
+            return fields;
+        }
+
+        /// <summary>
+        /// A centre reads the diameter for the size it reports, and on a boss the approximate
+        /// size and clearance it needs to stand off and drop. The inside cycle needs neither.
+        /// </summary>
+        private List<(string, string)> CenterFields()
+        {
+            var fields = CommonFields();
+            if (!IsTouchPlate) fields.Add(("Diameter", ProbeDiameterText));
+            if (SelectedCenterType == CenterFinderType.Boss)
+            {
+                fields.Add(("Approx Size", ApproxSizeText));
+                fields.Add(("Clearance Height", ClearanceHeightText));
+            }
+            return fields;
+        }
 
         /// <summary>
         /// Whether a field holds something a probe can be run on. Invariant, because the
@@ -606,8 +649,11 @@ namespace GrbLHALSender.ViewModels
             List<string>? returnMoves = null)
         {
             if (IsProbing || !CanProbe) return;
+            // Rates and distances only. A tool length reference is a straight vertical touch:
+            // no stylus radius, and no plate thickness either, since the offset $TPW applies is
+            // the difference between two probes of the same surface and thickness cancels.
             // Before ClearResults, which would wipe the message explaining the refusal.
-            if (!NumericFieldsValid()) return;
+            if (!FieldsValid(CommonFields())) return;
 
             _toolReferenceReturn = returnMoves;
             ClearResults();
@@ -734,7 +780,7 @@ namespace GrbLHALSender.ViewModels
             if (IsProbing) return;
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
-            if (!NumericFieldsValid()) return;
+            if (!FieldsValid(ZProbeFields())) return;
             ClearResults();
             ProbeStatus = "Probing Z...";
 
@@ -788,7 +834,7 @@ namespace GrbLHALSender.ViewModels
             if (IsProbing) return;
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
-            if (!NumericFieldsValid()) return;
+            if (!FieldsValid(CornerFields())) return;
 
             // Where the operator left the stylus. Every approach move is planned absolutely
             // from here, so the legs cannot drift lower as they go, and it is where the cycle
@@ -898,7 +944,7 @@ namespace GrbLHALSender.ViewModels
             if (IsProbing) return;
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
-            if (!NumericFieldsValid()) return;
+            if (!FieldsValid(CenterFields())) return;
 
             // Captured before anything moves: the inside cycle returns here by machine
             // coordinate between phases rather than stepping back blindly, and both cycles
