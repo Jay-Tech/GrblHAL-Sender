@@ -41,7 +41,6 @@ public class CornerProbeSequenceTests
         LatchDistance = "1",
         ClearanceHeight = "5",
         ProbeDepth = "3",
-        ProbeDiameter = "2",
         TouchPlateThickness = "1",
         UnitSystem = "G21"
     };

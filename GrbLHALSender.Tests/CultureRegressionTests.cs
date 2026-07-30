@@ -84,13 +84,16 @@ public class CultureRegressionTests
             {
                 ToolType = ProbeToolType.TouchPlate,
                 TouchPlateThickness = "19.05", // 3/4" plate stored invariantly
-                ProbeDiameter = "6.35",
             };
 
             Assert.Equal(19.05, builder.CalculateZOffset(), 3);
 
+            // A 3D probe needs no Z compensation at all: the ball meets the surface with its
+            // underside, directly below its centre, so the trigger is the surface. Returning
+            // the stylus radius here put work Z a radius low — measured on hardware as 0.039in
+            // with a 0.0787in stylus. Radius belongs to a side touch only.
             builder.ToolType = ProbeToolType.Probe3D;
-            Assert.Equal(6.35 / 2.0, builder.CalculateZOffset(), 3);
+            Assert.Equal(0, builder.CalculateZOffset(), 3);
         });
     }
 
@@ -107,7 +110,6 @@ public class CultureRegressionTests
                 ProbeDistance = "10.5",
                 LatchDistance = "1.5",
                 ClearanceHeight = "5.0",
-                ProbeDiameter = "6.35",
             };
 
             var phases = builder.ProbeBossCenter("50.8");

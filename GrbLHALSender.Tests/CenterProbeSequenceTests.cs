@@ -33,7 +33,6 @@ public class CenterProbeSequenceTests
         LatchDistance = "1",
         ClearanceHeight = "5",
         ProbeDepth = "3",
-        ProbeDiameter = "2",
         UnitSystem = "G21"
     };
 

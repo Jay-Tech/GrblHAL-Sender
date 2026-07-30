@@ -35,7 +35,6 @@ namespace GrbLHALSender.Probe
 
         public string ProbeSearchRate { get; set; }
         public string ProbeLatchRate { get; set; }
-        public string ProbeDiameter { get; set; }
         public string ProbeDistance { get; set; }
         public string LatchDistance { get; set; }
         public string ClearanceHeight { get; set; }
@@ -304,29 +303,27 @@ namespace GrbLHALSender.Probe
         }
 
         /// <summary>
-        /// Calculates the Z WCS offset from probe result.
-        /// Touch plate: offset = plate thickness (Z=0 is plate thickness above contact)
-        /// 3D probe: offset = stylus radius (ball center is radius above contact)
+        /// How far below the trigger position the surface actually is.
+        /// <para>
+        /// Touch plate: the plate thickness, since the trigger happens at the top of the plate
+        /// and the surface is its thickness below.
+        /// </para>
+        /// <para>
+        /// 3D probe: nothing. The stylus meets a Z surface with the bottom of the ball, directly
+        /// beneath its centre, so the trigger position <em>is</em> the surface. Stylus radius
+        /// compensates a <em>side</em> touch, where the ball contacts on its flank and its
+        /// centre ends up a radius away from the edge — it has no part in a Z touch. Returning
+        /// the radius here set work Z one radius below the surface, measured on hardware as
+        /// 0.039in low with a 0.0787in stylus, which would have cut everything that much deep.
+        /// </para>
         /// </summary>
-        public double CalculateZOffset()
-        {
-            if (ToolType == ProbeToolType.TouchPlate)
-                return ParseInvariant(TouchPlateThickness);
-            else
-                return ParseInvariant(ProbeDiameter) / 2.0;
-        }
+        public double CalculateZOffset() =>
+            ToolType == ProbeToolType.TouchPlate ? ParseInvariant(TouchPlateThickness) : 0;
 
-        /// <summary>
-        /// Calculates the X or Y WCS offset from probe result, accounting for probe diameter.
-        /// directionSign: the direction the probe moved (+1 or -1)
-        /// For edge probing, offset by half the probe diameter opposite to probe direction.
-        /// </summary>
-        public double CalculateXYOffset(int directionSign)
-        {
-            var radius = ParseInvariant(ProbeDiameter) / 2.0;
-            // If we probed in +X direction, the edge is at (result - radius)
-            // If we probed in -X direction, the edge is at (result + radius)
-            return -directionSign * radius;
-        }
+        // Edge compensation deliberately does not live here. It is applied in
+        // OnProbeCornerComplete, against the machine coordinate the probe reported and in the
+        // opposite sense to the work-coordinate offset this class used to return — the edge is
+        // at contact + sign * radius. Keeping a second, oppositely signed version of that
+        // arithmetic here with no caller was asking for the wrong one to be picked up later.
     }
 }

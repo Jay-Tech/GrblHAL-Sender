@@ -51,6 +51,9 @@ namespace GrbLHALSender.ViewModels
         // Where a corner cycle began, so its approach heights and its finishing move can all
         // be planned from one fixed reference rather than from wherever the last probe stopped.
         private double[]? _cornerStart;
+        // The same for a centre cycle: the inside phases return to it, and both cycles climb
+        // back to its height before crossing to the measured centre.
+        private double[]? _centerStart;
 
         // Command sequencing state
         private ProbeJobBuilder _probeJob;
@@ -466,7 +469,6 @@ namespace GrbLHALSender.ViewModels
             {
                 ProbeSearchRate = SearchRate.ToInvariantString(),
                 ProbeLatchRate = LatchRate.ToInvariantString(),
-                ProbeDiameter = ProbeDiameter.ToInvariantString(),
                 ProbeDistance = ProbeDistance.ToInvariantString(),
                 LatchDistance = LatchDistance.ToInvariantString(),
                 ClearanceHeight = ClearanceHeight.ToInvariantString(),
@@ -744,7 +746,12 @@ namespace GrbLHALSender.ViewModels
             }
 
             var zOffset = _probeJob.CalculateZOffset();
-            ProbeZResult = _phaseResults[0].ZOffset;
+
+            // Converted for display: [PRB:] reports in the machine's own units ($13), so on a
+            // metric machine shown in inches this read as millimetres under an "in" label —
+            // -56.335 where the operator expected about -2.2.
+            ProbeZResult = ToSequenceUnits(_phaseResults[0].ZOffset.StringToDouble())
+                .ToInvariantString("F3");
 
             // Set Z WCS: G10 L20 P0 Z{offset}
             _communicationManager.SendCommand($"G90");
@@ -878,14 +885,15 @@ namespace GrbLHALSender.ViewModels
             if (!CanProbe) return;
             if (!NumericFieldsValid()) return;
 
-            // Captured before anything moves: every phase returns here by machine coordinate
-            // rather than stepping back blindly, and the point is known to be clear because
-            // the machine is standing on it. These are already in display units, which is
-            // what the sequence sends in — see MachinePosition.
-            var start = SelectedCenterType == CenterFinderType.Boss ? null : MachinePosition();
-            if (SelectedCenterType != CenterFinderType.Boss && start == null)
+            // Captured before anything moves: the inside cycle returns here by machine
+            // coordinate between phases rather than stepping back blindly, and both cycles
+            // climb back to this height before crossing to the centre. The point is known to
+            // be clear because the machine is standing on it. Already in display units, which
+            // is what the sequence sends in — see MachinePosition.
+            _centerStart = MachinePosition();
+            if (_centerStart == null)
             {
-                ProbeStatus = "No machine position reported yet — cannot plan the return moves";
+                ProbeStatus = "No machine position reported yet — cannot plan the moves";
                 return;
             }
 
@@ -901,7 +909,7 @@ namespace GrbLHALSender.ViewModels
             else
             {
                 ProbeStatus = $"Probing {SelectedCenterType} center...";
-                _phases = _probeJob.ProbeInsideCenter(start![0], start[1]);
+                _phases = _probeJob.ProbeInsideCenter(_centerStart[0], _centerStart[1]);
             }
 
             _phaseResults = new List<ProbeState>();
@@ -959,13 +967,24 @@ namespace GrbLHALSender.ViewModels
             ProbeXResult = centerX.ToInvariantString("F3");
             ProbeYResult = centerY.ToInvariantString("F3");
 
-            // Move to the computed centre, then call it X0 Y0.
+            _communicationManager.SendCommand("G90");
+
+            // Climb back to the starting height before crossing to the centre. On a boss the
+            // last probe leaves the stylus alongside the feature and below its top face, so
+            // going straight across drives into it. A bore got away with it because that same
+            // position is inside the hole.
+            if (_centerStart != null)
+            {
+                _communicationManager.SendCommand(
+                    $"G53G0Z{_centerStart[2].ToInvariantString("F3")}");
+            }
+
+            // Then to the computed centre, and call it X0 Y0.
             //
             // G53 on the move, because the centre was averaged from PRB and so is a machine
             // coordinate. Sent without it, G0 reads those numbers in the active work system —
             // which is offset by however far work zero sits from machine zero, so the machine
             // rapids somewhere else entirely and then that spot gets stamped as the origin.
-            _communicationManager.SendCommand("G90");
             _communicationManager.SendCommand(
                 $"G53G0X{centerX.ToInvariantString("F3")}Y{centerY.ToInvariantString("F3")}");
             _communicationManager.SendCommand("G10L20P0X0Y0");
