@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using GrbLHALSender.Probe;
 using Xunit;
 
@@ -5,20 +7,32 @@ namespace GrbLHALSender.Tests;
 
 /// <summary>
 /// Tests the motion a corner probe makes, which is the part that has to be right before a
-/// stylus is anywhere near it.
+/// stylus is anywhere near it. All three faults below were found on hardware, in one run.
 /// <para>
-/// Reported from hardware: bringing the probe to the corner and starting the cycle made it
-/// lift and then immediately probe sideways. The old sequence retracted Z and probed from
-/// there, so with the stylus over the top face the sideways move passed above the edge and
-/// touched nothing. There was no lateral move clear of the stock and no plunge.
+/// <b>It grazed the edge.</b> The X leg stood off to the left of the corner but never stepped
+/// back into the stock, so the stylus sat diagonally past the corner and the probe caught the
+/// very end of the face. Each leg now steps in on the axis it is <em>not</em> probing.
 /// </para>
 /// <para>
-/// Each leg is now lift, step clear, drop below the top face, probe back in. The order is
-/// the safety property: dropping before stepping clear puts the stylus into the material.
+/// <b>The second leg plunged deeper than the first.</b> The lifts and drops were relative and
+/// did not cancel: lifting Clearance and dropping Clearance plus Depth each time left every
+/// leg another Depth lower. Every position is absolute now, planned from the start point.
+/// </para>
+/// <para>
+/// <b>It stopped pressed against the last face.</b> Nothing lifted or moved to the corner it
+/// had just measured; that finishing move lives in OnProbeCornerComplete.
 /// </para>
 /// </summary>
 public class CornerProbeSequenceTests
 {
+    private const double StartX = -100;
+    private const double StartY = -60;
+    private const double StartZ = -10;
+
+    // Clearance 5 and Depth 3, so safe Z is -5 and probing Z is -13.
+    private const string SafeZ = "G53G0Z-5.000";
+    private const string ProbeZ = "G53G0Z-13.000";
+
     private static ProbeJobBuilder Builder() => new()
     {
         ProbeSearchRate = "100",
@@ -32,100 +46,120 @@ public class CornerProbeSequenceTests
         UnitSystem = "G21"
     };
 
-    [Fact]
-    public void TheFirstLegLiftsThenStepsClearThenDropsThenProbes()
-    {
-        var phases = Builder().ProbeCorner(CornerDirection.FrontLeft, includeZ: false);
+    private static List<List<string>> Phases(
+        CornerDirection corner = CornerDirection.FrontLeft, bool includeZ = false) =>
+        Builder().ProbeCorner(corner, includeZ, StartX, StartY, StartZ);
 
-        // Front left: stock is to the +X and +Y, so step clear toward -X and probe back +X.
+    [Fact]
+    public void TheXLegStandsOffInXAndStepsBackIntoTheStockInY()
+    {
+        // Front left: stock lies to +X and +Y. Stand off to -X, step in to +Y.
         Assert.Equal(
-            new[] { "G21", "G91", "G0Z5", "G0X-5", "G0Z-8", "G21", "G91", "G38.3F100X10", "G0X-1", "G38.3F20X1" },
-            phases[0]);
+            new[]
+            {
+                "G21", "G90", SafeZ, "G53G0Y-55.000X-105.000", ProbeZ,
+                "G21", "G91", "G38.3F100X10", "G0X-1", "G38.3F20X1"
+            },
+            Phases()[0]);
     }
 
     [Fact]
-    public void TheDropIsTheLiftPlusTheDepth()
+    public void TheYLegStandsOffInYAndStepsIntoTheStockInX()
     {
-        // Net result is ProbeDepth below where the operator left the stylus, not below the
-        // safe height — otherwise raising the clearance would quietly probe shallower.
-        var phases = Builder().ProbeCorner(CornerDirection.FrontLeft, includeZ: false);
-
-        Assert.Contains("G0Z5", phases[0]);    // lift
-        Assert.Contains("G0Z-8", phases[0]);   // 5 + 3
-    }
-
-    [Fact]
-    public void TheSecondLegStepsIntoTheStockBeforeSteppingClear()
-    {
-        // The first leg leaves the machine on the edge it just found. Probing Y from there
-        // would run along the X face instead of into the Y one.
-        var phases = Builder().ProbeCorner(CornerDirection.FrontLeft, includeZ: false);
-
         Assert.Equal(
-            new[] { "G21", "G91", "G0Z5", "G0X5", "G0Y-5", "G0Z-8", "G21", "G91", "G38.3F100Y10", "G0Y-1", "G38.3F20Y1" },
-            phases[1]);
+            new[]
+            {
+                "G21", "G90", SafeZ, "G53G0X-95.000Y-65.000", ProbeZ,
+                "G21", "G91", "G38.3F100Y10", "G0Y-1", "G38.3F20Y1"
+            },
+            Phases()[1]);
     }
 
     [Fact]
-    public void EveryLegLiftsBeforeItMovesLaterally()
+    public void BothLegsProbeAtTheSameHeight()
     {
-        foreach (var corner in new[] { CornerDirection.FrontLeft, CornerDirection.FrontRight,
-                                       CornerDirection.BackLeft, CornerDirection.BackRight })
-        {
-            var phases = Builder().ProbeCorner(corner, includeZ: false);
-            foreach (var phase in phases)
-            {
-                var lift = phase.IndexOf($"G0Z5");
-                var firstLateral = phase.FindIndex(c => c.StartsWith("G0X") || c.StartsWith("G0Y"));
-                Assert.True(lift >= 0, $"{corner}: no lift");
-                Assert.True(lift < firstLateral, $"{corner}: moved sideways before lifting");
-            }
-        }
+        // The accumulation bug: the front probe ended a whole Depth below the left one.
+        foreach (var phase in Phases())
+            Assert.Contains(ProbeZ, phase);
     }
 
     [Fact]
-    public void EveryLegDropsOnlyAfterItIsClearOfTheStock()
+    public void BothLegsLiftToTheSameSafeHeight()
     {
-        foreach (var corner in new[] { CornerDirection.FrontLeft, CornerDirection.FrontRight,
-                                       CornerDirection.BackLeft, CornerDirection.BackRight })
+        foreach (var phase in Phases())
+            Assert.Contains(SafeZ, phase);
+    }
+
+    [Theory]
+    [InlineData(CornerDirection.FrontLeft)]
+    [InlineData(CornerDirection.FrontRight)]
+    [InlineData(CornerDirection.BackLeft)]
+    [InlineData(CornerDirection.BackRight)]
+    public void EveryLegTouchesBothAxesOnTheWayIn(CornerDirection corner)
+    {
+        // Standing off on one axis alone is what left the stylus off the end of the face.
+        foreach (var phase in Phases(corner))
         {
-            var phases = Builder().ProbeCorner(corner, includeZ: false);
-            foreach (var phase in phases)
-            {
-                // Only the approach counts. The probe itself retracts sideways between its
-                // search and latch passes, which is after the drop and entirely correct.
-                var firstProbe = phase.FindIndex(c => c.StartsWith("G38"));
-                var approach = phase.GetRange(0, firstProbe);
-
-                var drop = approach.IndexOf("G0Z-8");
-                var lastLateral = approach.FindLastIndex(c =>
-                    c.StartsWith("G0X") || c.StartsWith("G0Y"));
-
-                Assert.True(drop >= 0, $"{corner}: no drop in the approach");
-                Assert.True(drop > lastLateral, $"{corner}: dropped before stepping clear");
-            }
+            var approach = phase.Single(c => c.StartsWith("G53G0") && !c.Contains('Z'));
+            Assert.Contains('X', approach);
+            Assert.Contains('Y', approach);
         }
     }
 
     [Theory]
-    // Stock lies toward the probe direction, so the step clear is always the other way.
-    [InlineData(CornerDirection.FrontLeft, "G0X-5", "G38.3F100X10")]
-    [InlineData(CornerDirection.FrontRight, "G0X5", "G38.3F100X-10")]
-    [InlineData(CornerDirection.BackLeft, "G0X-5", "G38.3F100X10")]
-    [InlineData(CornerDirection.BackRight, "G0X5", "G38.3F100X-10")]
-    public void TheStepClearOpposesTheProbeDirection(
-        CornerDirection corner, string expectedStepClear, string expectedProbe)
+    [InlineData(CornerDirection.FrontLeft)]
+    [InlineData(CornerDirection.FrontRight)]
+    [InlineData(CornerDirection.BackLeft)]
+    [InlineData(CornerDirection.BackRight)]
+    public void EveryLegLiftsThenMovesAcrossThenDrops(CornerDirection corner)
     {
-        var phases = Builder().ProbeCorner(corner, includeZ: false);
+        foreach (var phase in Phases(corner))
+        {
+            var lift = phase.IndexOf(SafeZ);
+            var across = phase.FindIndex(c => c.StartsWith("G53G0") && !c.Contains('Z'));
+            var drop = phase.IndexOf(ProbeZ);
 
-        Assert.Contains(expectedStepClear, phases[0]);
+            Assert.True(lift >= 0 && across >= 0 && drop >= 0, $"{corner}: missing a move");
+            Assert.True(lift < across, $"{corner}: moved across before lifting");
+            Assert.True(across < drop, $"{corner}: dropped before moving across");
+        }
+    }
+
+    [Theory]
+    [InlineData(CornerDirection.FrontLeft)]
+    [InlineData(CornerDirection.FrontRight)]
+    [InlineData(CornerDirection.BackLeft)]
+    [InlineData(CornerDirection.BackRight)]
+    public void EveryApproachMoveIsAbsolute(CornerDirection corner)
+    {
+        // Relative approach moves are what accumulated. Only the probe itself is incremental.
+        foreach (var phase in Phases(corner))
+        {
+            var approach = phase.GetRange(0, phase.FindIndex(c => c.StartsWith("G38")));
+            Assert.Contains("G90", approach);
+            Assert.DoesNotContain(approach, c => c.StartsWith("G0Z"));
+        }
+    }
+
+    [Theory]
+    // Stand off away from the stock; probe back toward it.
+    [InlineData(CornerDirection.FrontLeft, "G53G0Y-55.000X-105.000", "G38.3F100X10")]
+    [InlineData(CornerDirection.FrontRight, "G53G0Y-55.000X-95.000", "G38.3F100X-10")]
+    [InlineData(CornerDirection.BackLeft, "G53G0Y-65.000X-105.000", "G38.3F100X10")]
+    [InlineData(CornerDirection.BackRight, "G53G0Y-65.000X-95.000", "G38.3F100X-10")]
+    public void TheStandOffOpposesTheProbeDirection(
+        CornerDirection corner, string expectedApproach, string expectedProbe)
+    {
+        var phases = Phases(corner);
+
+        Assert.Contains(expectedApproach, phases[0]);
         Assert.Contains(expectedProbe, phases[0]);
     }
 
     [Fact]
     public void IncludingZPutsTheTopFaceProbeFirst()
     {
-        var phases = Builder().ProbeCorner(CornerDirection.FrontLeft, includeZ: true);
+        var phases = Phases(includeZ: true);
 
         Assert.Equal(3, phases.Count);
         Assert.Contains("G38.3F100Z-10", phases[0]);
@@ -134,6 +168,6 @@ public class CornerProbeSequenceTests
     [Fact]
     public void WithoutZThereAreOnlyTheTwoEdgeLegs()
     {
-        Assert.Equal(2, Builder().ProbeCorner(CornerDirection.FrontLeft, includeZ: false).Count);
+        Assert.Equal(2, Phases().Count);
     }
 }

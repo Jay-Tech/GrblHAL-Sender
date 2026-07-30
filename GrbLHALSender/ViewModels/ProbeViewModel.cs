@@ -48,6 +48,9 @@ namespace GrbLHALSender.ViewModels
         private string? _modalUnitsBeforeProbe;
         // Moves that put the machine back where it started, run on a good probe only.
         private List<string>? _toolReferenceReturn;
+        // Where a corner cycle began, so its approach heights and its finishing move can all
+        // be planned from one fixed reference rather than from wherever the last probe stopped.
+        private double[]? _cornerStart;
 
         // Command sequencing state
         private ProbeJobBuilder _probeJob;
@@ -747,6 +750,13 @@ namespace GrbLHALSender.ViewModels
             _communicationManager.SendCommand($"G90");
             _communicationManager.SendCommand($"G10L20P0Z{zOffset.ToInvariantString("F3")}");
 
+            // Then lift clear. The latch pass stops on contact, so without this the stylus is
+            // left resting on the surface — no place to leave a probe, and it makes whatever
+            // the operator does next a scrape across the work.
+            _communicationManager.SendCommand("G91");
+            _communicationManager.SendCommand($"G0Z{ClearanceHeight.ToInvariantString("F3")}");
+            _communicationManager.SendCommand("G90");
+
             ProbeStatus = $"Z set. Offset: {zOffset.ToInvariantString("F3")}";
         }
 
@@ -757,11 +767,24 @@ namespace GrbLHALSender.ViewModels
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
             if (!NumericFieldsValid()) return;
+
+            // Where the operator left the stylus. Every approach move is planned absolutely
+            // from here, so the legs cannot drift lower as they go, and it is where the cycle
+            // returns to at the end. Already in display units, which is what the sequence
+            // sends in — see MachinePosition.
+            _cornerStart = MachinePosition();
+            if (_cornerStart == null)
+            {
+                ProbeStatus = "No machine position reported yet — cannot plan the approach";
+                return;
+            }
+
             ClearResults();
             ProbeStatus = $"Probing corner ({SelectedCorner})...";
 
             _probeJob = CreateJobBuilder();
-            _phases = _probeJob.ProbeCorner(SelectedCorner, IncludeZInCorner);
+            _phases = _probeJob.ProbeCorner(SelectedCorner, IncludeZInCorner,
+                _cornerStart[0], _cornerStart[1], _cornerStart[2]);
             _phaseResults = new List<ProbeState>();
             _onAllPhasesComplete = OnProbeCornerComplete;
 
@@ -832,6 +855,17 @@ namespace GrbLHALSender.ViewModels
             }
 
             _communicationManager.SendCommand(cmd);
+
+            // Lift clear, then stand over the corner just measured. Stopping on the last
+            // contact leaves the stylus pressed against the front face with the operator none
+            // the wiser whether the datum took — and X0 Y0 is now that corner, since the G10
+            // above put the work origin there.
+            if (_cornerStart != null)
+            {
+                var safeZ = (_cornerStart[2] + ClearanceHeight).ToInvariantString("F3");
+                _communicationManager.SendCommand($"G53G0Z{safeZ}");
+                _communicationManager.SendCommand("G0X0Y0");
+            }
 
             ProbeStatus = $"Corner set. X:{xEdge.ToInvariantString("F3")} Y:{yEdge.ToInvariantString("F3")}";
         }
@@ -994,9 +1028,29 @@ namespace GrbLHALSender.ViewModels
             SendNextCommand();
         }
 
+        /// <summary>
+        /// Files a probe report against the phase that produced it, keeping one entry per phase
+        /// — that phase's last result, which is the latch pass and the accurate one.
+        /// <para>
+        /// Every <c>ProbeSingleAxis</c> probes twice, search then latch, so a phase reports two
+        /// <c>[PRB:]</c> lines. Appending them all left the handlers reading one phase's latch
+        /// as the next phase's result. The centre finder averaged the X+ search against the X+
+        /// latch, called the midpoint of those two the centre of the bore — which is the +X
+        /// wall — and rapided into it. The corner took its Y datum off the X phase the same way.
+        /// </para>
+        /// </summary>
+        internal static void RecordPhaseResult(List<ProbeState> results, int phaseIndex,
+            ProbeState result)
+        {
+            while (results.Count <= phaseIndex)
+                results.Add(result);
+
+            results[phaseIndex] = result;
+        }
+
         private void OnProbeResult(object sender, ProbeState e)
         {
-            _phaseResults.Add(e);
+            RecordPhaseResult(_phaseResults, _phaseIndex, e);
 
             // Stop the whole sequence on the first miss. G38.3 does not error when it fails to
             // make contact, and nothing else here was watching, so the remaining phases went on

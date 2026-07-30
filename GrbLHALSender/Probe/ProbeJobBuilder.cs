@@ -99,51 +99,65 @@ namespace GrbLHALSender.Probe
         /// from there would run along the face rather than into the one at right angles.
         /// </para>
         /// </summary>
-        public List<List<string>> ProbeCorner(CornerDirection corner, bool includeZ)
+        /// <param name="startX">Machine X the operator left the stylus at, in sequence units.</param>
+        /// <param name="startY">Machine Y the operator left the stylus at.</param>
+        /// <param name="startZ">Machine Z the operator left the stylus at.</param>
+        public List<List<string>> ProbeCorner(CornerDirection corner, bool includeZ,
+            double startX, double startY, double startZ)
         {
             GetCornerDirections(corner, out var xSign, out var ySign);
 
-            // Total plunge is the lift plus the depth, so the stylus ends up ProbeDepth below
-            // where the operator left it rather than below the safe height.
-            var drop = (ParseInvariant(ClearanceHeight) + ParseInvariant(ProbeDepth))
-                .ToInvariantString();
+            var clear = ParseInvariant(ClearanceHeight);
+            var safeZ = (startZ + clear).ToInvariantString("F3");
+            var probeZ = (startZ - ParseInvariant(ProbeDepth)).ToInvariantString("F3");
 
             var phases = new List<List<string>>();
 
             if (includeZ)
                 phases.Add(ProbeZ());
 
-            phases.Add(ApproachAndProbe("X", xSign, drop, alsoMoveIn: null, 0));
-            phases.Add(ApproachAndProbe("Y", ySign, drop, alsoMoveIn: "X", xSign));
+            // Each leg stands off on the axis it is about to probe and steps *in* on the other,
+            // so the stylus ends up against the middle of a face rather than off the end of it.
+            // Standing off in X alone leaves it diagonally past the corner, where the probe
+            // only grazes the edge.
+            phases.Add(ApproachAndProbe(
+                "X", startX - xSign * clear,
+                "Y", startY + ySign * clear,
+                safeZ, probeZ, xSign));
+
+            phases.Add(ApproachAndProbe(
+                "Y", startY - ySign * clear,
+                "X", startX + xSign * clear,
+                safeZ, probeZ, ySign));
 
             return phases;
         }
 
         /// <summary>
-        /// One leg of a corner probe: up, out, down, probe back in.
-        /// <paramref name="alsoMoveIn"/> names an axis to step into the stock on first, used
-        /// by the second leg to get off the edge the first leg found.
+        /// One leg of a corner probe: up to safe, across to the stand-off, down to probing
+        /// depth, then probe back toward the face.
+        /// <para>
+        /// Every position is absolute, by machine coordinate. Relative lifts and drops do not
+        /// cancel across legs — lifting by Clearance and dropping by Clearance plus Depth each
+        /// time left the second leg a whole Depth lower than the first, which is why the front
+        /// probe plunged further than the left one.
+        /// </para>
         /// </summary>
-        private List<string> ApproachAndProbe(string axis, int sign, string drop,
-            string? alsoMoveIn, int alsoMoveInSign)
+        private List<string> ApproachAndProbe(
+            string standOffAxis, double standOffPos,
+            string stepInAxis, double stepInPos,
+            string safeZ, string probeZ, int probeSign)
         {
-            var outward = sign > 0 ? "-" : "";
             var phase = new List<string>
             {
                 UnitSystem,
-                "G91",
-                $"G0Z{ClearanceHeight}"
+                "G90",
+                $"G53G0Z{safeZ}",
+                $"G53G0{stepInAxis}{stepInPos.ToInvariantString("F3")}" +
+                    $"{standOffAxis}{standOffPos.ToInvariantString("F3")}",
+                $"G53G0Z{probeZ}"
             };
-
-            if (alsoMoveIn != null)
-            {
-                var inward = alsoMoveInSign > 0 ? "" : "-";
-                phase.Add($"G0{alsoMoveIn}{inward}{ClearanceHeight}");
-            }
-
-            phase.Add($"G0{axis}{outward}{ClearanceHeight}");
-            phase.Add($"G0Z-{drop}");
-            phase.AddRange(ProbeSingleAxis(axis, sign));
+            phase.AddRange(ProbeSingleAxis(standOffAxis, probeSign));
 
             return phase;
         }
