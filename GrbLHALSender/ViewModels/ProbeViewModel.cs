@@ -27,6 +27,7 @@ namespace GrbLHALSender.ViewModels
         private string _probeDistanceText = "10";
         private string _latchDistanceText = "1";
         private string _clearanceHeightText = "5";
+        private string _probeDepthText = "5";
         private string _approxSizeText = "25";
         private string _unitSystem = "G21";
 
@@ -126,6 +127,12 @@ namespace GrbLHALSender.ViewModels
             set => SetNumericField(ref _clearanceHeightText, value, nameof(ClearanceHeight));
         }
 
+        public string ProbeDepthText
+        {
+            get => _probeDepthText;
+            set => SetNumericField(ref _probeDepthText, value, nameof(ProbeDepth));
+        }
+
         public string ApproxSizeText
         {
             get => _approxSizeText;
@@ -139,6 +146,7 @@ namespace GrbLHALSender.ViewModels
         public double ProbeDistance => _probeDistanceText.StringToDouble();
         public double LatchDistance => _latchDistanceText.StringToDouble();
         public double ClearanceHeight => _clearanceHeightText.StringToDouble();
+        public double ProbeDepth => _probeDepthText.StringToDouble();
         public double ApproxSize => _approxSizeText.StringToDouble();
 
         private void SetNumericField(ref string field, string value, string numericName,
@@ -327,6 +335,7 @@ namespace GrbLHALSender.ViewModels
             ProbeDistanceText = pc.ProbeDistance.ToInvariantString();
             LatchDistanceText = pc.LatchDistance.ToInvariantString();
             ClearanceHeightText = pc.ClearanceHeight.ToInvariantString();
+            ProbeDepthText = pc.ProbeDepth.ToInvariantString();
             ApproxSizeText = pc.ApproxSize.ToInvariantString();
             UnitSystem = config.UseMetric ? "G21" : "G20";
             config?.PropertyChanged += (_, e) =>
@@ -349,6 +358,7 @@ namespace GrbLHALSender.ViewModels
             pc.ProbeDistance = ProbeDistance;
             pc.LatchDistance = LatchDistance;
             pc.ClearanceHeight = ClearanceHeight;
+            pc.ProbeDepth = ProbeDepth;
             pc.ApproxSize = ApproxSize;
         }
 
@@ -378,6 +388,7 @@ namespace GrbLHALSender.ViewModels
             : !IsNumber(ProbeDistanceText) ? "Distance"
             : !IsNumber(LatchDistanceText) ? "Latch Dist"
             : !IsNumber(ClearanceHeightText) ? "Clearance"
+            : !IsNumber(ProbeDepthText) ? "Probe Depth"
             : !IsNumber(ProbeDiameterText) ? "Diameter"
             : IsTouchPlate && !IsNumber(TouchPlateThicknessText) ? "Plate Thickness"
             : !IsNumber(ApproxSizeText) ? "Approx Size"
@@ -456,6 +467,7 @@ namespace GrbLHALSender.ViewModels
                 ProbeDistance = ProbeDistance.ToInvariantString(),
                 LatchDistance = LatchDistance.ToInvariantString(),
                 ClearanceHeight = ClearanceHeight.ToInvariantString(),
+                ProbeDepth = ProbeDepth.ToInvariantString(),
                 TouchPlateThickness = TouchPlateThickness.ToInvariantString(),
                 ToolType = SelectedToolType,
                 UnitSystem = UnitSystem
@@ -786,29 +798,42 @@ namespace GrbLHALSender.ViewModels
                 return;
             }
 
-            var xProbeResult = _phaseResults[phaseOffset].XOffset.StringToDouble();
-            var yProbeResult = _phaseResults[phaseOffset + 1].YOffset.StringToDouble();
-            var xCompensation = _probeJob.CalculateXYOffset(xSign);
-            var yCompensation = _probeJob.CalculateXYOffset(ySign);
+            // The edge, in machine coordinates, from where each probe actually triggered.
+            //
+            // G10 L2 rather than L20, because L20 works from wherever the machine happens to
+            // be standing and by now it is standing nowhere useful: each leg lifts, steps
+            // clear and drops, so it is a lift and two lateral moves away from the X edge it
+            // measured. The reported positions are the only record of where the edges were.
+            //
+            // Converted on the way in: PRB follows $13, while these go out under the
+            // sequence's G20/G21, and the radius they are combined with came from the UI in
+            // display units. See ToSequenceUnits.
+            var xEdge = ToSequenceUnits(_phaseResults[phaseOffset].XOffset.StringToDouble())
+                        + xSign * ProbeDiameter / 2.0;
+            var yEdge = ToSequenceUnits(_phaseResults[phaseOffset + 1].YOffset.StringToDouble())
+                        + ySign * ProbeDiameter / 2.0;
 
-            ProbeXResult = _phaseResults[phaseOffset].XOffset;
-            ProbeYResult = _phaseResults[phaseOffset + 1].YOffset;
+            ProbeXResult = xEdge.ToInvariantString("F3");
+            ProbeYResult = yEdge.ToInvariantString("F3");
 
-            // Build the G10 command
             _communicationManager.SendCommand("G90");
-            var cmd = "G10L20P0";
-            cmd += $"X{xCompensation.ToInvariantString("F3")}";
-            cmd += $"Y{yCompensation.ToInvariantString("F3")}";
+            var cmd = "G10L2P0";
+            cmd += $"X{xEdge.ToInvariantString("F3")}";
+            cmd += $"Y{yEdge.ToInvariantString("F3")}";
 
             if (IncludeZInCorner)
             {
-                var zOffset = _probeJob.CalculateZOffset();
-                cmd += $"Z{zOffset.ToInvariantString("F3")}";
+                // Same treatment for Z: the top face sits below where the probe triggered by
+                // the plate thickness, or by the stylus radius on a 3D probe.
+                var zSurface = ToSequenceUnits(_phaseResults[0].ZOffset.StringToDouble())
+                               - _probeJob.CalculateZOffset();
+                cmd += $"Z{zSurface.ToInvariantString("F3")}";
+                ProbeZResult = zSurface.ToInvariantString("F3");
             }
 
             _communicationManager.SendCommand(cmd);
 
-            ProbeStatus = $"Corner set. X:{xCompensation.ToInvariantString("F3")} Y:{yCompensation.ToInvariantString("F3")}";
+            ProbeStatus = $"Corner set. X:{xEdge.ToInvariantString("F3")} Y:{yEdge.ToInvariantString("F3")}";
         }
 
         // ========== Probe Center ==========
@@ -860,10 +885,15 @@ namespace GrbLHALSender.ViewModels
                 return;
             }
 
-            var xPos = xPosResult.XOffset.StringToDouble();
-            var xNeg = xNegResult.XOffset.StringToDouble();
-            var yPos = yPosResult.YOffset.StringToDouble();
-            var yNeg = yNegResult.YOffset.StringToDouble();
+            // Machine coordinates, converted into the unit this sequence is sending in: PRB
+            // follows $13 and these are about to be combined with a UI diameter and sent as
+            // coordinates. Left unconverted, a metric machine on an imperial display puts the
+            // centre out by 25.4x — the same fault that sent the G59.3 return to the home
+            // corner.
+            var xPos = ToSequenceUnits(xPosResult.XOffset.StringToDouble());
+            var xNeg = ToSequenceUnits(xNegResult.XOffset.StringToDouble());
+            var yPos = ToSequenceUnits(yPosResult.YOffset.StringToDouble());
+            var yNeg = ToSequenceUnits(yNegResult.YOffset.StringToDouble());
 
             // Center = midpoint (probe radius cancels out when probing both sides)
             var centerX = (xPos + xNeg) / 2.0;
@@ -883,9 +913,15 @@ namespace GrbLHALSender.ViewModels
             ProbeXResult = centerX.ToInvariantString("F3");
             ProbeYResult = centerY.ToInvariantString("F3");
 
-            // Move to computed center, then set WCS to X0 Y0
+            // Move to the computed centre, then call it X0 Y0.
+            //
+            // G53 on the move, because the centre was averaged from PRB and so is a machine
+            // coordinate. Sent without it, G0 reads those numbers in the active work system —
+            // which is offset by however far work zero sits from machine zero, so the machine
+            // rapids somewhere else entirely and then that spot gets stamped as the origin.
             _communicationManager.SendCommand("G90");
-            _communicationManager.SendCommand($"G0X{centerX.ToInvariantString("F3")}Y{centerY.ToInvariantString("F3")}");
+            _communicationManager.SendCommand(
+                $"G53G0X{centerX.ToInvariantString("F3")}Y{centerY.ToInvariantString("F3")}");
             _communicationManager.SendCommand("G10L20P0X0Y0");
 
             ProbeStatus = $"Center set. Size: {measuredWidth.ToInvariantString("F2")} x {measuredHeight.ToInvariantString("F2")}";

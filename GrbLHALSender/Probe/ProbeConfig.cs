@@ -14,5 +14,14 @@ public class ProbeConfig
     public double ProbeDistance { get; set; } = 10;
     public double LatchDistance { get; set; } = 1;
     public double ClearanceHeight { get; set; } = 5;
+
+    /// <summary>
+    /// How far below the starting height the stylus drops before probing sideways, so it is
+    /// beside the stock rather than above it. Separate from ClearanceHeight, which is the
+    /// safe height it retracts to: too shallow here and the probe passes over the edge,
+    /// too deep and it can reach the table.
+    /// </summary>
+    public double ProbeDepth { get; set; } = 5;
+
     public double ApproxSize { get; set; } = 25;
 }

@@ -222,6 +222,18 @@
 									   FontSize="13" VerticalAlignment="Center"
 									   Opacity="0.6"/>
 						</StackPanel>
+						<!-- How far below the start height the stylus drops to get beside the
+						     stock. Distinct from Clearance Height, which is what it lifts to. -->
+						<StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+							<Label Content="Probe Depth:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
+							<TextBox Text="{Binding ProbeDepthText}" FontSize="13" Width="65" Height="28"
+									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+									 Margin="0,0,2,0"
+									 ToolTip.Tip="How far below the starting height to drop before probing sideways, so the stylus is beside the stock rather than above it."/>
+							<TextBlock Text="{Binding UnitLabel}"
+									   FontSize="13" VerticalAlignment="Center"
+									   Opacity="0.6"/>
+						</StackPanel>
 					</StackPanel>
 
 					<!-- Probe Button -->
