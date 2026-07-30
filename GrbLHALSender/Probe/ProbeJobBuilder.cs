@@ -149,41 +149,51 @@ namespace GrbLHALSender.Probe
         }
 
         /// <summary>
-        /// Builds the center finder probe sequence (bore or rectangle).
-        /// Probes X+, X-, then Y+, Y- from the current position (approximate center).
-        /// Returns 4 phases: X+, X-, Y+, Y-
+        /// Builds the center finder probe sequence (bore or rectangle), starting from the
+        /// operator's approximate center. Returns 4 phases: X+, X-, Y+, Y-.
+        /// <para>
+        /// Every phase returns to the start point before probing the next direction, and it
+        /// returns there absolutely, by machine coordinate. The previous version stepped back
+        /// by ProbeDistance in G91 on the assumption that unwound the probe move — but a probe
+        /// stops early, on contact, so the step overshot past center by however far short of
+        /// ProbeDistance the wall was. Once that overshoot exceeded the radius it was a rapid
+        /// into the opposite wall, which any bore narrower than twice the probe distance would
+        /// do. Going back to the point the machine came from cannot overshoot.
+        /// </para>
+        /// <para>
+        /// Y is probed from the start X rather than the measured center X, which is exact for
+        /// a rectangle — a straight wall reads the same at any X — and for a bore leaves a
+        /// chord error of roughly x²/2r for an eyeball x off center. Run it twice if that
+        /// matters.
+        /// </para>
         /// </summary>
-        public List<List<string>> ProbeInsideCenter()
+        /// <param name="startX">Machine X the cycle began at, in the sequence's unit.</param>
+        /// <param name="startY">Machine Y the cycle began at, in the sequence's unit.</param>
+        public List<List<string>> ProbeInsideCenter(double startX, double startY)
         {
-            var phases = new List<List<string>>();
+            var x = startX.ToInvariantString("F3");
+            var y = startY.ToInvariantString("F3");
 
-            // Phase 1: Probe X+
-            phases.Add(ProbeSingleAxis("X", 1));
+            return
+            [
+                // Probing X leaves Y alone, so the first three phases only ever need X put back.
+                ProbeSingleAxis("X", 1),
+                ReturnThenProbe($"G53G0X{x}", "X", -1),
+                ReturnThenProbe($"G53G0X{x}", "Y", 1),
+                ReturnThenProbe($"G53G0Y{y}", "Y", -1)
+            ];
+        }
 
-            // Phase 2: Return to start, probe X-
-            var xNegPhase = new List<string>
-            {
-                UnitSystem,
-                "G91",
-                $"G0X-{ProbeDistance}"  // move back past start toward X-
-            };
-            xNegPhase.AddRange(ProbeSingleAxis("X", -1));
-            phases.Add(xNegPhase);
-
-            // Phase 3: Probe Y+
-            phases.Add(ProbeSingleAxis("Y", 1));
-
-            // Phase 4: Return to start, probe Y-
-            var yNegPhase = new List<string>
-            {
-                UnitSystem,
-                "G91",
-                $"G0Y-{ProbeDistance}"
-            };
-            yNegPhase.AddRange(ProbeSingleAxis("Y", -1));
-            phases.Add(yNegPhase);
-
-            return phases;
+        /// <summary>
+        /// Drives absolutely back to a known-safe point, then probes. G90 is set for the
+        /// return because G53 is only meaningful in absolute mode; ProbeSingleAxis puts the
+        /// parser back into G91 for the probe itself.
+        /// </summary>
+        private List<string> ReturnThenProbe(string returnMove, string axis, int directionSign)
+        {
+            var phase = new List<string> { UnitSystem, "G90", returnMove };
+            phase.AddRange(ProbeSingleAxis(axis, directionSign));
+            return phase;
         }
 
         /// <summary>

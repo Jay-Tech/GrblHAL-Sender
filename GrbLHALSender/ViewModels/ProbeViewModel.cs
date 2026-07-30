@@ -843,6 +843,18 @@ namespace GrbLHALSender.ViewModels
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
             if (!NumericFieldsValid()) return;
+
+            // Captured before anything moves: every phase returns here by machine coordinate
+            // rather than stepping back blindly, and the point is known to be clear because
+            // the machine is standing on it. These are already in display units, which is
+            // what the sequence sends in — see MachinePosition.
+            var start = SelectedCenterType == CenterFinderType.Boss ? null : MachinePosition();
+            if (SelectedCenterType != CenterFinderType.Boss && start == null)
+            {
+                ProbeStatus = "No machine position reported yet — cannot plan the return moves";
+                return;
+            }
+
             ClearResults();
 
             _probeJob = CreateJobBuilder();
@@ -855,7 +867,7 @@ namespace GrbLHALSender.ViewModels
             else
             {
                 ProbeStatus = $"Probing {SelectedCenterType} center...";
-                _phases = _probeJob.ProbeInsideCenter();
+                _phases = _probeJob.ProbeInsideCenter(start![0], start[1]);
             }
 
             _phaseResults = new List<ProbeState>();
@@ -985,6 +997,17 @@ namespace GrbLHALSender.ViewModels
         private void OnProbeResult(object sender, ProbeState e)
         {
             _phaseResults.Add(e);
+
+            // Stop the whole sequence on the first miss. G38.3 does not error when it fails to
+            // make contact, and nothing else here was watching, so the remaining phases went on
+            // running against a position that meant nothing — dead reckoning off a touch that
+            // never happened. The completion handlers do refuse to write an offset from a bad
+            // result, but by then the machine has already made the moves.
+            //
+            // grblHAL sends [PRB:...] ahead of the "ok" for the probe line, so aborting here
+            // unsubscribes before the ack that would have sent the next command.
+            if (!e.ProbeSuccessful)
+                AbortSequence("Probe failed — no contact, sequence stopped");
         }
 
         /// <summary>
