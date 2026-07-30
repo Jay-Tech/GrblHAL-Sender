@@ -43,13 +43,19 @@
 								  Margin="0,0,20,0"/>
 				</Grid>
 				<Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto">
+					<!-- Greyed for a touch plate, which has no stylus radius to compensate. Note it
+					     no longer affects a Z probe on either tool type — a ball meets a Z
+					     surface under its own centre — so this drives edge compensation on the
+					     corner cycle and the size readout on the centre cycles, nothing else. -->
 					<Label Grid.Column="0"
 						   Content="Diameter:"
 						   FontSize="14"
 						   HorizontalAlignment="Right"
 						   VerticalAlignment="Center"
+						   IsEnabled="{Binding !IsTouchPlate}"
 						   Margin="10,10,10,0"/>
-					<StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+					<StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+								IsEnabled="{Binding !IsTouchPlate}">
 						<TextBox Text="{Binding ProbeDiameterText}"
 								 FontSize="14"
 								 Width="65"
@@ -278,8 +284,11 @@
 						</StackPanel>
 					</StackPanel>
 
-					<!-- Parameters -->
-					<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Spacing="5">
+					<!-- Parameters. Both only apply to a boss: the inside cycle probes outward
+					     until it touches, so it needs no approximate size, and it never moves Z,
+					     so it has no use for a clearance height either. -->
+					<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Spacing="5"
+								IsEnabled="{Binding IsBossCenter}">
 						<StackPanel Orientation="Horizontal">
 							<Label Content="Approx Size:"
                                    FontSize="13"

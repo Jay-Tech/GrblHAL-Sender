@@ -188,10 +188,21 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selectedCorner, value);
         }
 
+        /// <summary>
+        /// Whether the selected centre feature is an outside one. Approx Size and Clearance
+        /// Height only do anything for a boss: the inside cycle probes outward until it touches
+        /// and never moves Z, so leaving those enabled implied they were being used.
+        /// </summary>
+        public bool IsBossCenter => SelectedCenterType == CenterFinderType.Boss;
+
         public CenterFinderType SelectedCenterType
         {
             get => _selectedCenterType;
-            set => this.RaiseAndSetIfChanged(ref _selectedCenterType, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _selectedCenterType, value);
+                this.RaisePropertyChanged(nameof(IsBossCenter));
+            }
         }
 
         public bool IncludeZInCorner
@@ -760,8 +771,12 @@ namespace GrbLHALSender.ViewModels
             // Then lift clear. The latch pass stops on contact, so without this the stylus is
             // left resting on the surface — no place to leave a probe, and it makes whatever
             // the operator does next a scrape across the work.
+            //
+            // By Latch Dist rather than Clearance Height, because Latch Dist is on the shared
+            // panel and so is visible from this tab. Clearance Height only appears on the Corner
+            // and Center tabs, which had an invisible field driving visible motion.
             _communicationManager.SendCommand("G91");
-            _communicationManager.SendCommand($"G0Z{ClearanceHeight.ToInvariantString("F3")}");
+            _communicationManager.SendCommand($"G0Z{LatchDistance.ToInvariantString("F3")}");
             _communicationManager.SendCommand("G90");
 
             ProbeStatus = $"Z set. Offset: {zOffset.ToInvariantString("F3")}";
