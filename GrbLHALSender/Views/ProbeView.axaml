@@ -50,7 +50,7 @@
 						   VerticalAlignment="Center"
 						   Margin="10,10,10,0"/>
 					<StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-						<TextBox Text="{Binding ProbeDiameter}"
+						<TextBox Text="{Binding ProbeDiameterText}"
 								 FontSize="14"
 								 Width="65"
 								 Height="30"
@@ -74,7 +74,7 @@
 							   VerticalContentAlignment="Center"
 							   VerticalAlignment="Center"
 							   Margin="0,10,10,0"/>
-						<TextBox Text="{Binding TouchPlateThickness}"
+						<TextBox Text="{Binding TouchPlateThicknessText}"
 								 FontSize="14"
 								 Width="65"
 								 Height="30"
@@ -103,7 +103,7 @@
 					   VerticalAlignment="Center"
 					   Margin="0,0,4,0"/>
 				<TextBox Grid.Row="0" Grid.Column="1"
-						 Text="{Binding SearchRate}"
+						 Text="{Binding SearchRateText}"
 						 FontSize="13"
 						 Width="65" Height="28"
 						 HorizontalContentAlignment="Center"
@@ -118,7 +118,7 @@
 					   VerticalAlignment="Center"
 					   Margin="0,0,4,0"/>
 				<TextBox Grid.Row="0" Grid.Column="4"
-						 Text="{Binding LatchRate}"
+						 Text="{Binding LatchRateText}"
 						 FontSize="13"
 						 Width="65" Height="28"
 						 HorizontalContentAlignment="Center"
@@ -135,7 +135,7 @@
 					   VerticalAlignment="Center"
 					   Margin="0,10,5,0"/>
 				<TextBox Grid.Row="1" Grid.Column="1"
-						 Text="{Binding ProbeDistance}"
+						 Text="{Binding ProbeDistanceText}"
 						 FontSize="13"
 						 Width="65" Height="28"
 						 HorizontalContentAlignment="Center"
@@ -152,7 +152,7 @@
 					   VerticalAlignment="Center"
 					   Margin="0,10,5,0"/>
 				<TextBox Grid.Row="1" Grid.Column="4"
-						 Text="{Binding LatchDistance}"
+						 Text="{Binding LatchDistanceText}"
 						 FontSize="13"
 						 Width="65" Height="28"
 						 Margin="0,10,2,0"
@@ -215,7 +215,7 @@
 								  IsChecked="{Binding IncludeZInCorner}" Margin="0,0,0,5"/>
 						<StackPanel Orientation="Horizontal">
 							<Label Content="Clearance Height:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ClearanceHeight}" FontSize="13" Width="65" Height="28"
+							<TextBox Text="{Binding ClearanceHeightText}" FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
 									 Margin="0,0,2,0"/>
 							<TextBlock Text="{Binding UnitLabel}"
@@ -264,7 +264,7 @@
                                    FontSize="13"
                                    VerticalAlignment="Center"
                                    Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ApproxSize}"
+							<TextBox Text="{Binding ApproxSizeText}"
                                      FontSize="13"
                                      Width="65"
                                      Height="28"
@@ -280,7 +280,7 @@
                                    FontSize="13"
                                    VerticalAlignment="Center"
                                    Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ClearanceHeight}"
+							<TextBox Text="{Binding ClearanceHeightText}"
                                      FontSize="13" Width="65" Height="28"
 									 HorizontalAlignment="Right"
 									 HorizontalContentAlignment="Center"

@@ -6,6 +6,8 @@ using GrbLHALSender.Utility;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -18,14 +20,14 @@ namespace GrbLHALSender.ViewModels
         private readonly MachineStateService _machineStateService;
 
         private ProbeToolType _selectedToolType = ProbeToolType.TouchPlate;
-        private double _touchPlateThickness = 1.0;
-        private double _probeDiameter = 2;
-        private double _searchRate = 100;
-        private double _latchRate = 20;
-        private double _probeDistance = 10;
-        private double _latchDistance = 1;
-        private double _clearanceHeight = 5;
-        private double _approxSize = 25;
+        private string _touchPlateThicknessText = "1";
+        private string _probeDiameterText = "2";
+        private string _searchRateText = "100";
+        private string _latchRateText = "20";
+        private string _probeDistanceText = "10";
+        private string _latchDistanceText = "1";
+        private string _clearanceHeightText = "5";
+        private string _approxSizeText = "25";
         private string _unitSystem = "G21";
 
         private CornerDirection _selectedCorner = CornerDirection.FrontLeft;
@@ -63,52 +65,90 @@ namespace GrbLHALSender.ViewModels
 
         public bool IsTouchPlate => SelectedToolType == ProbeToolType.TouchPlate;
 
-        public double TouchPlateThickness
+        // Every numeric field is bound as text and parsed at the point of use. Deliberately
+        // not bound as a double.
+        //
+        // A TextBox bound straight to a double converts on every keystroke, and not every
+        // state you pass through while editing converts. Clearing the box to retype it leaves
+        // it empty, which fails and puts an "invalidCast" over the field while the source
+        // quietly keeps the old number — so the box and the value being used disagree.
+        // Field-confirmed on the Diameter box during 3D probe testing.
+        //
+        // Note a trailing "0." parses fine in .NET, so typing a decimal is not the trigger;
+        // emptying the field is, along with a lone "-" or ".".
+        //
+        // UpdateSourceTrigger=LostFocus would hide the message but is the wrong fix here: the
+        // virtual keyboard assigns Text directly, and focus need not leave the box before
+        // Probe is pressed, so the cycle would run on the value the operator just replaced.
+        // Parsing at the point of use keeps what is on screen and what gets sent identical.
+        //
+        // The doubles stay as read-only projections so every existing caller is untouched.
+
+        public string TouchPlateThicknessText
         {
-            get => _touchPlateThickness;
-            set => this.RaiseAndSetIfChanged(ref _touchPlateThickness, value);
+            get => _touchPlateThicknessText;
+            set => SetNumericField(ref _touchPlateThicknessText, value, nameof(TouchPlateThickness));
         }
 
-        public double ProbeDiameter
+        public string ProbeDiameterText
         {
-            get => _probeDiameter;
-            set => this.RaiseAndSetIfChanged(ref _probeDiameter, value);
+            get => _probeDiameterText;
+            set => SetNumericField(ref _probeDiameterText, value, nameof(ProbeDiameter));
         }
 
-        public double SearchRate
+        public string SearchRateText
         {
-            get => _searchRate;
-            set => this.RaiseAndSetIfChanged(ref _searchRate, value);
+            get => _searchRateText;
+            set => SetNumericField(ref _searchRateText, value, nameof(SearchRate));
         }
 
-        public double LatchRate
+        public string LatchRateText
         {
-            get => _latchRate;
-            set => this.RaiseAndSetIfChanged(ref _latchRate, value);
+            get => _latchRateText;
+            set => SetNumericField(ref _latchRateText, value, nameof(LatchRate));
         }
 
-        public double ProbeDistance
+        public string ProbeDistanceText
         {
-            get => _probeDistance;
-            set => this.RaiseAndSetIfChanged(ref _probeDistance, value);
+            get => _probeDistanceText;
+            set => SetNumericField(ref _probeDistanceText, value, nameof(ProbeDistance));
         }
 
-        public double LatchDistance
+        public string LatchDistanceText
         {
-            get => _latchDistance;
-            set => this.RaiseAndSetIfChanged(ref _latchDistance, value);
+            get => _latchDistanceText;
+            set => SetNumericField(ref _latchDistanceText, value, nameof(LatchDistance));
         }
 
-        public double ClearanceHeight
+        public string ClearanceHeightText
         {
-            get => _clearanceHeight;
-            set => this.RaiseAndSetIfChanged(ref _clearanceHeight, value);
+            get => _clearanceHeightText;
+            set => SetNumericField(ref _clearanceHeightText, value, nameof(ClearanceHeight));
         }
 
-        public double ApproxSize
+        public string ApproxSizeText
         {
-            get => _approxSize;
-            set => this.RaiseAndSetIfChanged(ref _approxSize, value);
+            get => _approxSizeText;
+            set => SetNumericField(ref _approxSizeText, value, nameof(ApproxSize));
+        }
+
+        public double TouchPlateThickness => _touchPlateThicknessText.StringToDouble();
+        public double ProbeDiameter => _probeDiameterText.StringToDouble();
+        public double SearchRate => _searchRateText.StringToDouble();
+        public double LatchRate => _latchRateText.StringToDouble();
+        public double ProbeDistance => _probeDistanceText.StringToDouble();
+        public double LatchDistance => _latchDistanceText.StringToDouble();
+        public double ClearanceHeight => _clearanceHeightText.StringToDouble();
+        public double ApproxSize => _approxSizeText.StringToDouble();
+
+        private void SetNumericField(ref string field, string value, string numericName,
+            [CallerMemberName] string? textName = null)
+        {
+            if (field == value) return;
+
+            field = value;
+            this.RaisePropertyChanged(textName);
+            this.RaisePropertyChanged(numericName);
         }
 
         public string UnitSystem
@@ -280,14 +320,14 @@ namespace GrbLHALSender.ViewModels
         {
             var pc = config.ProbeConfig;
             SelectedToolType = pc.ToolType;
-            TouchPlateThickness = pc.TouchPlateThickness;
-            ProbeDiameter = pc.ProbeDiameter;
-            SearchRate = pc.SearchRate;
-            LatchRate = pc.LatchRate;
-            ProbeDistance = pc.ProbeDistance;
-            LatchDistance = pc.LatchDistance;
-            ClearanceHeight = pc.ClearanceHeight;
-            ApproxSize = pc.ApproxSize;
+            TouchPlateThicknessText = pc.TouchPlateThickness.ToInvariantString();
+            ProbeDiameterText = pc.ProbeDiameter.ToInvariantString();
+            SearchRateText = pc.SearchRate.ToInvariantString();
+            LatchRateText = pc.LatchRate.ToInvariantString();
+            ProbeDistanceText = pc.ProbeDistance.ToInvariantString();
+            LatchDistanceText = pc.LatchDistance.ToInvariantString();
+            ClearanceHeightText = pc.ClearanceHeight.ToInvariantString();
+            ApproxSizeText = pc.ApproxSize.ToInvariantString();
             UnitSystem = config.UseMetric ? "G21" : "G20";
             config?.PropertyChanged += (_, e) =>
             {
@@ -311,6 +351,44 @@ namespace GrbLHALSender.ViewModels
             pc.ClearanceHeight = ClearanceHeight;
             pc.ApproxSize = ApproxSize;
         }
+
+        /// <summary>
+        /// Refuses to start a cycle while any field is not a number, naming the offender.
+        /// <para>
+        /// Necessary because an unparseable field reads as zero rather than failing. Zero is
+        /// harmless in some places — a zero distance just fails to make contact — but a zero
+        /// diameter silently shifts a centre result by the width of the probe and then writes
+        /// that as the work offset, and a zero clearance drags the tool across the job. A
+        /// field left mid-edit is the normal way to arrive at either, so it is worth one
+        /// check rather than a wrong datum nobody notices.
+        /// </para>
+        /// </summary>
+        private bool NumericFieldsValid()
+        {
+            var bad = FirstInvalidField();
+            if (bad == null) return true;
+
+            ProbeStatus = $"{bad} is not a number — fix it before probing";
+            return false;
+        }
+
+        private string? FirstInvalidField() =>
+            !IsNumber(SearchRateText) ? "Search Rate"
+            : !IsNumber(LatchRateText) ? "Latch Rate"
+            : !IsNumber(ProbeDistanceText) ? "Distance"
+            : !IsNumber(LatchDistanceText) ? "Latch Dist"
+            : !IsNumber(ClearanceHeightText) ? "Clearance"
+            : !IsNumber(ProbeDiameterText) ? "Diameter"
+            : IsTouchPlate && !IsNumber(TouchPlateThicknessText) ? "Plate Thickness"
+            : !IsNumber(ApproxSizeText) ? "Approx Size"
+            : null;
+
+        /// <summary>
+        /// Whether a field holds something a probe can be run on. Invariant, because the
+        /// controller only ever talks dot-decimal and so do these fields.
+        /// </summary>
+        internal static bool IsNumber(string text) =>
+            double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out _);
 
         /// <summary>
         /// Notes the parser unit in force before a probe so it can be handed back.
@@ -500,6 +578,8 @@ namespace GrbLHALSender.ViewModels
             List<string>? returnMoves = null)
         {
             if (IsProbing || !CanProbe) return;
+            // Before ClearResults, which would wipe the message explaining the refusal.
+            if (!NumericFieldsValid()) return;
 
             _toolReferenceReturn = returnMoves;
             ClearResults();
@@ -626,6 +706,7 @@ namespace GrbLHALSender.ViewModels
             if (IsProbing) return;
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
+            if (!NumericFieldsValid()) return;
             ClearResults();
             ProbeStatus = "Probing Z...";
 
@@ -663,6 +744,7 @@ namespace GrbLHALSender.ViewModels
             if (IsProbing) return;
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
+            if (!NumericFieldsValid()) return;
             ClearResults();
             ProbeStatus = $"Probing corner ({SelectedCorner})...";
 
@@ -735,6 +817,7 @@ namespace GrbLHALSender.ViewModels
             if (IsProbing) return;
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
+            if (!NumericFieldsValid()) return;
             ClearResults();
 
             _probeJob = CreateJobBuilder();
