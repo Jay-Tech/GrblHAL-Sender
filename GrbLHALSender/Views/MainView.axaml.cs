@@ -50,6 +50,17 @@ public partial class MainView : UserControl
         // Must use handledEventsToo: true because TextBox handles DoubleTapped internally (word select)
         AddHandler(InputElement.DoubleTappedEvent, OnGlobalDoubleTapped, RoutingStrategies.Bubble, handledEventsToo: true);
 
+        // Kill the text context menu at the source. Nulling TextBox.ContextFlyout removed the
+        // full Cut/Copy/Paste menu most of the time but left a lone "Paste" still appearing
+        // over the fields on touch, so the property is not the only route to it.
+        //
+        // Registered for both tunnel and bubble on purpose: tunnel is what gets there before
+        // the TextBox acts on it, but the event may be declared bubble-only, in which case a
+        // tunnel handler would silently never fire. Nothing in this app wants a context menu —
+        // text entry goes through the virtual keyboard — so suppressing every route is safe.
+        AddHandler(Control.ContextRequestedEvent, OnContextRequested,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+
         // Wire the keyboard overlay: it inherits MainViewModel as DataContext
         // by default, so give it its own VM, and let ✕ hide the panel.
         KeyboardOverlay.DataContext = _keyboardViewModel;
@@ -71,6 +82,9 @@ public partial class MainView : UserControl
         AuxOutputRepeater.AddHandler(PointerCaptureLostEvent,
             (_, e) => ClearStuckTouchState(e.Source), RoutingStrategies.Tunnel, handledEventsToo: true);
     }
+
+    private static void OnContextRequested(object? sender, ContextRequestedEventArgs e) =>
+        e.Handled = true;
 
     private static void ClearStuckTouchState(object? source)
     {
