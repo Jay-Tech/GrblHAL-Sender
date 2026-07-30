@@ -199,19 +199,19 @@
 					     name corners. The row it costs is the difference between the probe
 					     button being on screen and not. -->
 					<StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,5">
-						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-							<RadioButton Content="Back Left" FontSize="14"
-										 GroupName="CornerDir" Margin="4,2"
-										 Command="{Binding SetCornerCommand}" CommandParameter="BackLeft"/>
+						<StackPanel Spacing="8" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <RadioButton Content="Front Left" FontSize="14"
+                                         GroupName="CornerDir" IsChecked="True" Margin="4,2"
+                                         Command="{Binding SetCornerCommand}" CommandParameter="FrontLeft"/>
+                            <RadioButton Content="Front Right" FontSize="14"
+                                         GroupName="CornerDir" Margin="4,2"
+                                         Command="{Binding SetCornerCommand}" CommandParameter="FrontRight"/>
+                            <RadioButton Content="Back Left" FontSize="14"
+                                         GroupName="CornerDir" Margin="4,2"
+                                         Command="{Binding SetCornerCommand}" CommandParameter="BackLeft"/>
 							<RadioButton Content="Back Right" FontSize="14"
 										 GroupName="CornerDir" Margin="4,2"
 										 Command="{Binding SetCornerCommand}" CommandParameter="BackRight"/>
-							<RadioButton Content="Front Left" FontSize="14"
-										 GroupName="CornerDir" IsChecked="True" Margin="4,2"
-										 Command="{Binding SetCornerCommand}" CommandParameter="FrontLeft"/>
-							<RadioButton Content="Front Right" FontSize="14"
-										 GroupName="CornerDir" Margin="4,2"
-										 Command="{Binding SetCornerCommand}" CommandParameter="FrontRight"/>
 						</StackPanel>
 					</StackPanel>
 
