@@ -58,7 +58,7 @@
 								IsEnabled="{Binding !IsTouchPlate}">
 						<TextBox Text="{Binding ProbeDiameterText}"
 								 FontSize="14"
-								 Width="65"
+								 Width="75"
 								 Height="30"
 								 VerticalAlignment="Center"
 								 HorizontalAlignment="Left"
@@ -82,7 +82,7 @@
 							   Margin="0,10,10,0"/>
 						<TextBox Text="{Binding TouchPlateThicknessText}"
 								 FontSize="14"
-								 Width="65"
+								 Width="75"
 								 Height="30"
                                  VerticalAlignment="Center"
                                  HorizontalAlignment="Left"
@@ -111,7 +111,7 @@
 				<TextBox Grid.Row="0" Grid.Column="1"
 						 Text="{Binding SearchRateText}"
 						 FontSize="13"
-						 Width="65" Height="28"
+						 Width="75" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
 						 Margin="0,0,2,0"/>
@@ -126,7 +126,7 @@
 				<TextBox Grid.Row="0" Grid.Column="4"
 						 Text="{Binding LatchRateText}"
 						 FontSize="13"
-						 Width="65" Height="28"
+						 Width="75" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
 						 Margin="0,0,2,0"/>
@@ -143,7 +143,7 @@
 				<TextBox Grid.Row="1" Grid.Column="1"
 						 Text="{Binding ProbeDistanceText}"
 						 FontSize="13"
-						 Width="65" Height="28"
+						 Width="75" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
 						 Margin="0,10,2,0"/>
@@ -160,7 +160,7 @@
 				<TextBox Grid.Row="1" Grid.Column="4"
 						 Text="{Binding LatchDistanceText}"
 						 FontSize="13"
-						 Width="65" Height="28"
+						 Width="75" Height="28"
 						 Margin="0,10,2,0"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"/>
@@ -264,7 +264,7 @@
 
 					<!-- Probe Button. Its own Auto row, so it is allocated height rather than
 					     handed whatever is left — which was nothing, and hid it completely. -->
-					<Button Grid.Row="4" Grid.ColumnSpan="2"
+					<Button Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="2"
                             Content="Probe Corner"
                             FontSize="18"
 							Height="46" Width="160"

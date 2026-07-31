@@ -18,19 +18,24 @@ namespace GrbLHALSender.ViewModels
         private readonly CommunicationManager _communicationManager;
         private readonly ConfigManager _configManager;
         private readonly MachineStateService _machineStateService;
-
+        private const string Inch = "G20";
+        private const string Metric = "G21";
+       
         private ProbeToolType _selectedToolType = ProbeToolType.TouchPlate;
-        private string _touchPlateThicknessText = "1";
+        // Placeholders only — LoadFromConfig replaces every one of these, either from the saved
+        // config or from ApplyUnitDefaults. Kept metric to match the unit declared just below,
+        // so nothing reads as inches while the unit says otherwise.
+        private string _touchPlateThicknessText = "12.7";
         private string _probeDiameterText = "2";
-        private string _searchRateText = "100";
-        private string _latchRateText = "20";
-        private string _probeDistanceText = "10";
-        private string _latchDistanceText = "1";
-        private string _clearanceHeightText = "5";
-        private string _probeDepthText = "5";
-        private string _approxWidthText = "25";
-        private string _approxHeightText = "25";
-        private string _unitSystem = "G21";
+        private string _searchRateText = "250";
+        private string _latchRateText = "125";
+        private string _probeDistanceText = "12";
+        private string _latchDistanceText = "6";
+        private string _clearanceHeightText = "12";
+        private string _probeDepthText = "6";
+        private string _approxWidthText = "100";
+        private string _approxHeightText = "200";
+        private string _unitSystem = Metric;
 
         private CornerDirection _selectedCorner = CornerDirection.FrontLeft;
         private CenterFinderType _selectedCenterType = CenterFinderType.Bore;
@@ -55,6 +60,9 @@ namespace GrbLHALSender.ViewModels
         // The same for a centre cycle: the inside phases return to it, and both cycles climb
         // back to its height before crossing to the measured centre.
         private double[]? _centerStart;
+        // Whether the config's unit toggle is already being watched, so the rescale can only
+        // ever be wired once.
+        private bool _watchingConfigUnits;
 
         // What to say when a probe in this cycle fails to make contact. Set per cycle because
         // the consequence differs, and on a tool reference it is the whole point: $TLR sent
@@ -359,36 +367,119 @@ namespace GrbLHALSender.ViewModels
             SetToolSetterXyCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("X0Y0", "XY"));
             SetToolSetterZCommand = ReactiveCommand.CreateFromTask(() => SetToolSetterAsync("Z0", "Z"));
 
-
             // Update IsTouchPlate when SelectedToolType changes
             this.WhenAnyValue(x => x.SelectedToolType)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(IsTouchPlate)));
+        }
+
+        /// <summary>
+        /// Seeds every field for the unit on display. Only ever runs on a config that has
+        /// never been saved: the stored defaults are one set of numbers and cannot be right
+        /// for both, so a fresh install on an imperial display would otherwise open with
+        /// millimetre values that read as inches.
+        /// </summary>
+        private void ApplyUnitDefaults()
+        {
+            var metric = UnitSystem == Metric;
+
+            // Half an inch of plate, which looks thick next to a shim but is the usual body of
+            // a combined corner-and-Z touch plate. Every pair here is the same measurement in
+            // the two units, so switching display units leaves the defaults agreeing.
+            TouchPlateThicknessText = metric ? "12.7" : ".5";
+            ProbeDiameterText = metric ? "2" : ".0787";
+            SearchRateText = metric ? "250" : "10";
+            LatchRateText = metric ? "125" : "5";
+            ProbeDistanceText = metric ? "12" : ".5";
+            LatchDistanceText = metric ? "6" : ".25";
+            ClearanceHeightText = metric ? "12" : ".5";
+            ProbeDepthText = metric ? "6" : ".25";
+            ApproxWidthText = metric ? "100" : "4";
+            ApproxHeightText = metric ? "200" : "8";
         }
 
         public void LoadFromConfig(GHalSenderConfig config)
         {
             var pc = config.ProbeConfig;
             SelectedToolType = pc.ToolType;
-            TouchPlateThicknessText = pc.TouchPlateThickness.ToInvariantString();
-            ProbeDiameterText = pc.ProbeDiameter.ToInvariantString();
-            SearchRateText = pc.SearchRate.ToInvariantString();
-            LatchRateText = pc.LatchRate.ToInvariantString();
-            ProbeDistanceText = pc.ProbeDistance.ToInvariantString();
-            LatchDistanceText = pc.LatchDistance.ToInvariantString();
-            ClearanceHeightText = pc.ClearanceHeight.ToInvariantString();
-            ProbeDepthText = pc.ProbeDepth.ToInvariantString();
-            ApproxWidthText = pc.ApproxWidth.ToInvariantString();
-            ApproxHeightText = pc.ApproxHeight.ToInvariantString();
-            UnitSystem = config.UseMetric ? "G21" : "G20";
-            config?.PropertyChanged += (_, e) =>
+
+            // Before anything reads it: the defaults below pick their values from it, and the
+            // unit labels beside every field come from it too.
+            UnitSystem = config.UseMetric ? Metric : Inch;
+
+            if (pc.Initialized)
             {
-                if (e.PropertyName == nameof(GHalSenderConfig.UseMetric))
-                {
-                    UnitSystem = config.UseMetric ? "G21" : "G20";
-                }
+                TouchPlateThicknessText = pc.TouchPlateThickness.ToInvariantString();
+                ProbeDiameterText = pc.ProbeDiameter.ToInvariantString();
+                SearchRateText = pc.SearchRate.ToInvariantString();
+                LatchRateText = pc.LatchRate.ToInvariantString();
+                ProbeDistanceText = pc.ProbeDistance.ToInvariantString();
+                LatchDistanceText = pc.LatchDistance.ToInvariantString();
+                ClearanceHeightText = pc.ClearanceHeight.ToInvariantString();
+                ProbeDepthText = pc.ProbeDepth.ToInvariantString();
+                ApproxWidthText = pc.ApproxWidth.ToInvariantString();
+                ApproxHeightText = pc.ApproxHeight.ToInvariantString();
+            }
+            else
+            {
+                ApplyUnitDefaults();
+                pc.Initialized = true;
+            }
+
+            // Guarded because the handler is no longer idempotent. It used to only set
+            // UnitSystem, which did no harm twice; it now rescales every field, so a second
+            // subscription would convert twice on one toggle and put every distance out by
+            // a factor of 645.
+            if (_watchingConfigUnits) return;
+            _watchingConfigUnits = true;
+
+            config.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName != nameof(GHalSenderConfig.UseMetric)) return;
+
+                UnitSystem = config.UseMetric ? Metric : Inch;
+                ConvertDisplayUnits();
             };
         }
 
+        /// <summary>
+        /// Rescales every field when the display unit changes, so each value keeps its physical
+        /// meaning instead of being silently reinterpreted — 10mm becoming 10 inches, and the
+        /// next probe travelling twenty-five times further than the last one.
+        /// <para>
+        /// Assigned through the properties rather than the fields. Only the setters raise
+        /// PropertyChanged, and a value that changes without the box changing with it is the
+        /// same disagreement between what is on screen and what gets sent that binding these
+        /// as text exists to prevent.
+        /// </para>
+        /// <para>
+        /// Inches are written to one more decimal place than millimetres, because a third
+        /// decimal of an inch is 0.025mm — coarse enough to visibly shift a probe setting.
+        /// The text is the stored value, so every switch re-rounds it and a little precision
+        /// goes each time; the extra digit puts that below anything settable on the machine
+        /// rather than removing it, which would need a canonical value converted only for
+        /// display.
+        /// </para>
+        /// </summary>
+        private void ConvertDisplayUnits()
+        {
+            var toInches = UnitSystem == Inch;
+            var factor = toInches ? 1 / 25.4 : 25.4;
+            var format = toInches ? "F4" : "F3";
+
+            string Rescale(string text) =>
+                (text.StringToDouble() * factor).ToInvariantString(format);
+
+            TouchPlateThicknessText = Rescale(TouchPlateThicknessText);
+            ProbeDiameterText = Rescale(ProbeDiameterText);
+            SearchRateText = Rescale(SearchRateText);
+            LatchRateText = Rescale(LatchRateText);
+            ProbeDistanceText = Rescale(ProbeDistanceText);
+            LatchDistanceText = Rescale(LatchDistanceText);
+            ClearanceHeightText = Rescale(ClearanceHeightText);
+            ProbeDepthText = Rescale(ProbeDepthText);
+            ApproxWidthText = Rescale(ApproxWidthText);
+            ApproxHeightText = Rescale(ApproxHeightText);
+        }
         public void SaveToConfig(GHalSenderConfig config)
         {
             var pc = config.ProbeConfig;

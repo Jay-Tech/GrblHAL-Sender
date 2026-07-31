@@ -4,6 +4,15 @@ namespace GrbLHALSender.Probe;
 
 public class ProbeConfig
 {
+    /// <summary>
+    /// False until these settings have been seeded for the unit the operator actually works
+    /// in. The defaults below are one fixed set of numbers and cannot suit both millimetres
+    /// and inches — 10 is a sane probe distance in one and twenty-five times too far in the
+    /// other — so the first load replaces them with a set chosen for the display unit. After
+    /// that the operator's own values win and this is never consulted again.
+    /// </summary>
+    public bool Initialized { get; set; }
+
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public ProbeToolType ToolType { get; set; } = ProbeToolType.TouchPlate;
 
