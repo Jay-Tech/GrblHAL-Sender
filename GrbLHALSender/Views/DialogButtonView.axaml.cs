@@ -77,13 +77,13 @@ public partial class DialogButtonView : UserControl
             case DialogType.Probe:
                 var probeView = new ProbeView
                 {
-                    MinHeight = 595,
+                    MinHeight = 640,
                     MinWidth = 480
                 };
                 var probeMainVm = GetMainViewModel();
                 if (probeMainVm != null)
                     probeView.DataContext = probeMainVm.ProbeViewModel;
-                return (probeView, 480, 595);
+                return (probeView, 480, 640);
 
             case DialogType.Surfacing:
                 var surfacingView = new SurfacingView
