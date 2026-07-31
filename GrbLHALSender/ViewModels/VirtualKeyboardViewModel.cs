@@ -73,11 +73,7 @@ public class VirtualKeyboardViewModel : ViewModelBase, IDialogCloseable
             Apply(text, caretIndex);
 
             // On a selection, these have done their work by removing it.
-            if (key is "BackSpace" or "Del")
-            {
-                RestoreTargetFocus();
-                return;
-            }
+            if (key is "BackSpace" or "Del") return;
         }
 
         switch (key)
@@ -117,8 +113,6 @@ public class VirtualKeyboardViewModel : ViewModelBase, IDialogCloseable
                 Apply(text.Insert(caretIndex, key), caretIndex + key.Length);
                 break;
         }
-
-        RestoreTargetFocus();
     }
 
     /// <summary>
@@ -137,27 +131,13 @@ public class VirtualKeyboardViewModel : ViewModelBase, IDialogCloseable
         _targetTextBox.CaretIndex = caret;
     }
 
-    /// <summary>
-    /// Hands focus back to the target TextBox's window after every key press.
-    /// Touching the keyboard window activates it (OS-level, we can't fully
-    /// prevent it on every WM); re-activating the main window here means the
-    /// next touch on the main screen works first time instead of needing one
-    /// touch to refocus and a second to act.
-    /// </summary>
-    private void RestoreTargetFocus()
-    {
-        if (_targetTextBox == null) return;
-
-        if (TopLevel.GetTopLevel(_targetTextBox) is Window window && !window.IsActive)
-            window.Activate();
-
-        _targetTextBox.Focus();
-
-        // Focusing a TextBox can select its contents, so the highlight came back after every
-        // key even once the double-tap's own selection had been cleared. Collapse at the caret
-        // rather than at the end, or the arrow keys would have nothing to move.
-        var caret = _targetTextBox.CaretIndex;
-        _targetTextBox.SelectionStart = caret;
-        _targetTextBox.SelectionEnd = caret;
-    }
+    // Nothing re-focuses the target after a key press, and nothing needs to. That existed for
+    // when this keyboard was its own window: touching it activated that window at the OS level,
+    // so the main one had to be activated again or the next touch was spent regaining focus.
+    // The keyboard is a panel inside MainView now and every key is Focusable="False", so focus
+    // never leaves the TextBox in the first place.
+    //
+    // Worth removing rather than leaving harmlessly in place: calling Focus() on a TextBox can
+    // reselect its contents, which put the highlight back after every single key press and was
+    // most of why the selection looked impossible to get rid of.
 }
