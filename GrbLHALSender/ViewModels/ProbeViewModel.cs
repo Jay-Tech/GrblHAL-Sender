@@ -55,6 +55,13 @@ namespace GrbLHALSender.ViewModels
         // back to its height before crossing to the measured centre.
         private double[]? _centerStart;
 
+        // What to say when a probe in this cycle fails to make contact. Set per cycle because
+        // the consequence differs, and on a tool reference it is the whole point: $TLR sent
+        // after a failed probe clears whatever reference the controller was holding, so the
+        // operator needs telling that it was not sent and their reference is intact. Since the
+        // abort happens on the probe report, it has no idea which cycle it interrupted.
+        private string _probeFailureMessage = "Probe failed — no contact, sequence stopped";
+
         // Command sequencing state
         private ProbeJobBuilder _probeJob;
         private List<List<string>> _phases;
@@ -654,6 +661,7 @@ namespace GrbLHALSender.ViewModels
             // the difference between two probes of the same surface and thickness cancels.
             // Before ClearResults, which would wipe the message explaining the refusal.
             if (!FieldsValid(CommonFields())) return;
+            _probeFailureMessage = "Probe failed — no contact, TLR not set";
 
             _toolReferenceReturn = returnMoves;
             ClearResults();
@@ -781,6 +789,7 @@ namespace GrbLHALSender.ViewModels
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
             if (!FieldsValid(ZProbeFields())) return;
+            _probeFailureMessage = "Probe failed — no contact, Z not set";
             ClearResults();
             ProbeStatus = "Probing Z...";
 
@@ -835,6 +844,7 @@ namespace GrbLHALSender.ViewModels
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
             if (!FieldsValid(CornerFields())) return;
+            _probeFailureMessage = "Probe failed — no contact, corner not set";
 
             // Where the operator left the stylus. Every approach move is planned absolutely
             // from here, so the legs cannot drift lower as they go, and it is where the cycle
@@ -945,6 +955,7 @@ namespace GrbLHALSender.ViewModels
             // Enforced here too, so the rule does not rely on the view's IsEnabled.
             if (!CanProbe) return;
             if (!FieldsValid(CenterFields())) return;
+            _probeFailureMessage = "Probe failed — no contact, centre not set";
 
             // Captured before anything moves: the inside cycle returns here by machine
             // coordinate between phases rather than stepping back blindly, and both cycles
@@ -1141,7 +1152,7 @@ namespace GrbLHALSender.ViewModels
             // grblHAL sends [PRB:...] ahead of the "ok" for the probe line, so aborting here
             // unsubscribes before the ack that would have sent the next command.
             if (!e.ProbeSuccessful)
-                AbortSequence("Probe failed — no contact, sequence stopped");
+                AbortSequence(_probeFailureMessage);
         }
 
         /// <summary>
