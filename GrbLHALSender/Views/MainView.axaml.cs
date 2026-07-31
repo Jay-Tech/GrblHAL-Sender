@@ -61,6 +61,12 @@ public partial class MainView : UserControl
         AddHandler(Control.ContextRequestedEvent, OnContextRequested,
             RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
 
+        // While the keyboard is up it follows focus, so tapping another field retargets it.
+        // Without this a single tap gave the field an accent border while the keys went on
+        // editing the previous one.
+        AddHandler(InputElement.GotFocusEvent, OnGlobalGotFocus,
+            RoutingStrategies.Bubble, handledEventsToo: true);
+
         // Wire the keyboard overlay: it inherits MainViewModel as DataContext
         // by default, so give it its own VM, and let ✕ hide the panel.
         KeyboardOverlay.DataContext = _keyboardViewModel;
@@ -155,19 +161,48 @@ public partial class MainView : UserControl
 
     public void OnGlobalDoubleTapped(object? sender, TappedEventArgs e)
     {
-        // e.Source is often the inner TextPresenter, not the TextBox itself.
-        // Walk up the visual tree to find the parent TextBox.
-        var targetTextBox = e.Source as TextBox
-            ?? (e.Source as Visual)?.FindAncestorOfType<TextBox>();
+        var targetTextBox = ResolveTextBox(e.Source);
         if (targetTextBox == null) return;
-
-        // Ignore double-taps on the keyboard's own (read-only) surfaces.
-        if (targetTextBox.FindAncestorOfType<VirtualKeyboardView>() != null) return;
 
         // The keyboard is an overlay panel inside this window — showing it is
         // just a visibility flip. No OS window, no focus/activation involved.
         _keyboardViewModel.SetTarget(targetTextBox);
         KeyboardOverlay.IsVisible = true;
+    }
+
+    /// <summary>
+    /// Retargets the open keyboard at whatever field just took focus.
+    /// <para>
+    /// A single tap focuses a field and draws its accent border, which reads as "this is the
+    /// one you are editing" — but the keyboard only retargeted on a double tap, so it went on
+    /// typing into the previous field. The operator gets a field that looks selected and values
+    /// landing somewhere else, with nothing on screen saying so.
+    /// </para>
+    /// <para>
+    /// Only while the keyboard is already up. Focus alone must not open it, or tabbing or
+    /// clicking through fields with a mouse would raise it unasked.
+    /// </para>
+    /// </summary>
+    private void OnGlobalGotFocus(object? sender, FocusChangedEventArgs e)
+    {
+        if (!KeyboardOverlay.IsVisible) return;
+
+        var targetTextBox = ResolveTextBox(e.Source);
+        if (targetTextBox == null) return;
+
+        _keyboardViewModel.SetTarget(targetTextBox);
+    }
+
+    /// <summary>
+    /// The TextBox an event belongs to, or null. The source is usually the inner TextPresenter
+    /// rather than the TextBox itself, and the keyboard's own read-only surfaces never count.
+    /// </summary>
+    private static TextBox? ResolveTextBox(object? source)
+    {
+        var textBox = source as TextBox ?? (source as Visual)?.FindAncestorOfType<TextBox>();
+        if (textBox == null) return null;
+
+        return textBox.FindAncestorOfType<VirtualKeyboardView>() != null ? null : textBox;
     }
 
     private void SetupJogButton(Button button, string axis, bool positive)
