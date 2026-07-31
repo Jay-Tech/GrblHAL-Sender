@@ -178,7 +178,5 @@ Verified on hardware:
 - G-code event injection around a tool change, including the dwell-first ordering
 - Serial connection and reconnection
 - Single instance guard on Linux
-
-Still to test:
-- The probe cycles — corner probe, center finder and workpiece Z zero, with both the touch
-  plate and 3D probe tool types
+- The probe cycles with a 3D probe — workpiece Z zero, all four corners, and centre finding
+  inside a bore and outside a boss
