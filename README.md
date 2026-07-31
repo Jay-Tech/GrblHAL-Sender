@@ -125,6 +125,72 @@ Anything the controller says in words — including `(debug, ...)` output from a
 macro — is shown in the job panel, not only in the console. A macro that stops on
 "manually unload the tool and unlock to continue" says so on screen.
 
+# Probing
+
+Every cycle probes twice: a fast pass at **Search Rate** to find the surface, then a slow one
+at **Latch Rate** to measure it. **Distance** is how far a probe may travel looking for the
+surface, and **Latch Dist** is how far it backs off between the two passes.
+
+Probe moves are commanded in whatever units the display is set to, and the parser is handed
+back the unit it was in when the cycle finishes.
+
+Only the fields a cycle actually reads stay enabled, so what is greyed out is not being used.
+
+## Probe type
+
+| | |
+|---|---|
+| **Touch plate** | Work Z zero ends up the plate's thickness below where it triggered. |
+| **3D probe** | **Diameter** compensates edge touches on the corner and centre cycles, and corrects the size they report. It plays no part in a Z probe — the ball meets a flat surface with its underside, directly beneath its centre, so where it triggers *is* the surface. |
+
+## Z height
+
+Position the probe above the surface and press **Probe Z**. Work Z zero is set at the surface,
+and the stylus lifts clear by **Latch Dist** rather than being left resting on the work.
+
+## Corner
+
+Bring the probe to the corner, above the top face, and pick the corner that matches. Each leg
+lifts to **Clearance Height**, moves clear of the stock on the axis it is about to probe while
+stepping *in* on the other, drops by **Probe Depth**, and probes back toward the face. It
+finishes lifted and standing over the corner it measured, which is now X0 Y0.
+
+> **Probe Depth is measured from where you parked the stylus, not from the top of the stock.**
+> If you sit 2mm above the face and want to touch 3mm down the side, Probe Depth is 5. Too
+> shallow and the probe sweeps over the top of the edge and touches nothing.
+
+The stand-off is Clearance Height, so Distance has to be comfortably larger than it for the
+probe to reach the face.
+
+## Center finder
+
+**Bore** and **Rectangle** work from inside a hole or pocket. Position the probe roughly in
+the middle, at the height you want it to touch at — these cycles never move Z, so Clearance
+Height and Probe Depth do nothing and are greyed out. Distance has to cover the radius plus
+however far off centre you started. Between legs the machine returns to the point you began
+at, so a generous Distance is safe.
+
+**Boss** and **Rect Boss** work from outside. Position the probe over the middle of the
+feature and above its top face. Each leg stands off by half the approximate size plus
+Clearance Height, drops by Probe Depth, and probes inward. A round boss takes one size; a
+rectangular one takes a width and a height separately.
+
+> **Keep Clearance Height larger than your eyeballing error.** Starting off centre adds to the
+> stand-off on the far side and takes it away on the near side, so being out by more than the
+> clearance puts the stylus over the feature when it drops. Under-estimating the approximate
+> size eats the same margin. Over-estimating is safe — the probe simply travels further.
+
+Y is probed from the X you started at rather than the measured centre. That is exact for a
+rectangle, where a flat face reads the same anywhere along it, and leaves a small error on a
+bore or boss if you started well off centre. Run it twice if that matters.
+
+## When a probe misses
+
+The cycle stops at the first missed contact rather than carrying on from a position that means
+nothing, and says which datum it did not set. Nothing is written on a failure. A tool length
+reference is the one worth spelling out: `$TLR` is not sent, so whatever reference the
+controller was holding is still intact.
+
 # G-code Events
 ![GcodeEvents](Media/GcodeEvents.png)
 </br>
