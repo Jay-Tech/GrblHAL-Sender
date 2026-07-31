@@ -20,9 +20,14 @@ namespace GrbLHALSender.Probe
 
     public enum CenterFinderType
     {
+        /// <summary>Inside a round hole.</summary>
         Bore,
+        /// <summary>Inside a rectangular pocket.</summary>
         Rectangle,
-        Boss
+        /// <summary>Outside a round boss.</summary>
+        Boss,
+        /// <summary>Outside a rectangular or square boss.</summary>
+        RectangularBoss
     }
 
     public class ProbeJobBuilder
@@ -210,65 +215,67 @@ namespace GrbLHALSender.Probe
         }
 
         /// <summary>
-        /// Builds the boss (outside) center finder probe sequence.
-        /// User positions above boss center. Probes from outside toward boss on each axis.
-        /// Requires approximate boss size to know how far to offset before probing inward.
-        /// Returns 4 phases: X+, X-, Y+, Y-
+        /// Builds the outside centre finder sequence, for a round boss or a rectangular one.
+        /// The operator positions the stylus above the middle of the feature. Returns 4 phases,
+        /// touching the +X, -X, +Y and -Y faces in that order — the order the results are read
+        /// back in.
+        /// <para>
+        /// Each leg lifts to safe, moves to a stand-off beside the feature, drops below its top
+        /// face, and probes inward. Every position is absolute, from the point the cycle began.
+        /// The previous version stepped relative to wherever the last probe stopped, which is
+        /// the same dead reckoning that drove the bore cycle into a wall.
+        /// </para>
+        /// <para>
+        /// Stand-off is half the approximate size plus <see cref="ClearanceHeight"/>, and the
+        /// probe then travels up to <see cref="ProbeDistance"/> to find the face. Keeping those
+        /// two apart matters: folding the probe distance into the stand-off, as this used to,
+        /// meant an over-estimated size could never be reached and an under-estimated one
+        /// dropped the stylus onto the feature, with only a narrow band of sizes working at all.
+        /// Now the size only has to be close enough that clearance covers the error.
+        /// </para>
         /// </summary>
-        public List<List<string>> ProbeBossCenter(string approxSize)
+        /// <param name="approxWidth">Rough size across X. A round boss uses it for both axes.</param>
+        /// <param name="approxHeight">Rough size across Y.</param>
+        public List<List<string>> ProbeOutsideCenter(double approxWidth, double approxHeight,
+            double startX, double startY, double startZ)
         {
-            var halfSize = (ParseInvariant(approxSize) / 2 + ParseInvariant(ProbeDistance)).ToInvariantString();
-            var phases = new List<List<string>>();
+            var clear = ParseInvariant(ClearanceHeight);
+            var safeZ = (startZ + clear).ToInvariantString("F3");
+            var probeZ = (startZ - ParseInvariant(ProbeDepth)).ToInvariantString("F3");
 
-            // Phase 1: Move to +X side, drop to probe height, probe X- (toward boss)
-            var xPosPhase = new List<string>
+            var standX = approxWidth / 2 + clear;
+            var standY = approxHeight / 2 + clear;
+
+            // Probing direction is inward, so it opposes the side being touched: the +X face is
+            // reached by standing off beyond it and probing back in the -X direction.
+            return
+            [
+                OutsideLeg(startX + standX, startY, safeZ, probeZ, "X", -1),
+                OutsideLeg(startX - standX, startY, safeZ, probeZ, "X", 1),
+                OutsideLeg(startX, startY + standY, safeZ, probeZ, "Y", -1),
+                OutsideLeg(startX, startY - standY, safeZ, probeZ, "Y", 1)
+            ];
+        }
+
+        /// <summary>
+        /// One leg of an outside centre probe. The cross-axis is held on the feature's centre
+        /// line, which a rectangle does not care about but a round boss does — touching a circle
+        /// away from its centre line reads a chord rather than the diameter.
+        /// </summary>
+        private List<string> OutsideLeg(double x, double y, string safeZ, string probeZ,
+            string axis, int probeSign)
+        {
+            var phase = new List<string>
             {
                 UnitSystem,
-                "G91",
-                $"G0X{halfSize}",
-                $"G0Z-{ClearanceHeight}"
+                "G90",
+                $"G53G0Z{safeZ}",
+                $"G53G0X{x.ToInvariantString("F3")}Y{y.ToInvariantString("F3")}",
+                $"G53G0Z{probeZ}"
             };
-            xPosPhase.AddRange(ProbeSingleAxis("X", -1));
-            phases.Add(xPosPhase);
+            phase.AddRange(ProbeSingleAxis(axis, probeSign));
 
-            // Phase 2: Retract Z, move to -X side, drop, probe X+ (toward boss)
-            var xNegPhase = new List<string>
-            {
-                UnitSystem,
-                "G91",
-                $"G0Z{ClearanceHeight}",
-                $"G0X-{(ParseInvariant(halfSize) * 2).ToInvariantString()}",
-                $"G0Z-{ClearanceHeight}"
-            };
-            xNegPhase.AddRange(ProbeSingleAxis("X", 1));
-            phases.Add(xNegPhase);
-
-            // Phase 3: Retract Z, return to center X, move to +Y side, drop, probe Y-
-            var yPosPhase = new List<string>
-            {
-                UnitSystem,
-                "G91",
-                $"G0Z{ClearanceHeight}",
-                $"G0X{halfSize}",
-                $"G0Y{halfSize}",
-                $"G0Z-{ClearanceHeight}"
-            };
-            yPosPhase.AddRange(ProbeSingleAxis("Y", -1));
-            phases.Add(yPosPhase);
-
-            // Phase 4: Retract Z, move to -Y side, drop, probe Y+
-            var yNegPhase = new List<string>
-            {
-                UnitSystem,
-                "G91",
-                $"G0Z{ClearanceHeight}",
-                $"G0Y-{(ParseInvariant(halfSize) * 2).ToInvariantString()}",
-                $"G0Z-{ClearanceHeight}"
-            };
-            yNegPhase.AddRange(ProbeSingleAxis("Y", 1));
-            phases.Add(yNegPhase);
-
-            return phases;
+            return phase;
         }
 
         /// <summary>

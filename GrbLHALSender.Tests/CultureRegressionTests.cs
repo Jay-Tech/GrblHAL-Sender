@@ -99,7 +99,7 @@ public class CultureRegressionTests
 
     [Theory]
     [InlineData("de-DE")]
-    public void ProbeJobBuilder_BossCenter_EmitsDotDecimalGcode(string culture)
+    public void ProbeJobBuilder_OutsideCenter_EmitsDotDecimalGcode(string culture)
     {
         RunInCulture(culture, () =>
         {
@@ -110,13 +110,16 @@ public class CultureRegressionTests
                 ProbeDistance = "10.5",
                 LatchDistance = "1.5",
                 ClearanceHeight = "5.0",
+                ProbeDepth = "3.0",
             };
 
-            var phases = builder.ProbeBossCenter("50.8");
+            var phases = builder.ProbeOutsideCenter(50.8, 25.4, startX: 0, startY: 0, startZ: 0);
             var allCommands = phases.SelectMany(p => p).ToList();
 
-            // halfSize = 50.8/2 + 10.5 = 35.9 -> first phase moves G0X35.9
-            Assert.Contains(allCommands, c => c.StartsWith("G0X") && c.Contains("35.9"));
+            // Stand-off across X is 50.8/2 + 5.0 = 30.4, so the first leg goes out to +30.4.
+            Assert.Contains(allCommands, c => c.Contains("X30.400"));
+            // And across Y, 25.4/2 + 5.0 = 17.7.
+            Assert.Contains(allCommands, c => c.Contains("Y17.700"));
             // No emitted command may contain a comma-decimal — grblHAL would reject/misread it
             Assert.All(allCommands, c => Assert.DoesNotContain(",", c));
         });

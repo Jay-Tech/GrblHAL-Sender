@@ -28,7 +28,8 @@ namespace GrbLHALSender.ViewModels
         private string _latchDistanceText = "1";
         private string _clearanceHeightText = "5";
         private string _probeDepthText = "5";
-        private string _approxSizeText = "25";
+        private string _approxWidthText = "25";
+        private string _approxHeightText = "25";
         private string _unitSystem = "G21";
 
         private CornerDirection _selectedCorner = CornerDirection.FrontLeft;
@@ -146,10 +147,16 @@ namespace GrbLHALSender.ViewModels
             set => SetNumericField(ref _probeDepthText, value, nameof(ProbeDepth));
         }
 
-        public string ApproxSizeText
+        public string ApproxWidthText
         {
-            get => _approxSizeText;
-            set => SetNumericField(ref _approxSizeText, value, nameof(ApproxSize));
+            get => _approxWidthText;
+            set => SetNumericField(ref _approxWidthText, value, nameof(ApproxWidth));
+        }
+
+        public string ApproxHeightText
+        {
+            get => _approxHeightText;
+            set => SetNumericField(ref _approxHeightText, value, nameof(ApproxHeight));
         }
 
         public double TouchPlateThickness => _touchPlateThicknessText.StringToDouble();
@@ -160,7 +167,8 @@ namespace GrbLHALSender.ViewModels
         public double LatchDistance => _latchDistanceText.StringToDouble();
         public double ClearanceHeight => _clearanceHeightText.StringToDouble();
         public double ProbeDepth => _probeDepthText.StringToDouble();
-        public double ApproxSize => _approxSizeText.StringToDouble();
+        public double ApproxWidth => _approxWidthText.StringToDouble();
+        public double ApproxHeight => _approxHeightText.StringToDouble();
 
         private void SetNumericField(ref string field, string value, string numericName,
             [CallerMemberName] string? textName = null)
@@ -196,11 +204,19 @@ namespace GrbLHALSender.ViewModels
         }
 
         /// <summary>
-        /// Whether the selected centre feature is an outside one. Approx Size and Clearance
-        /// Height only do anything for a boss: the inside cycle probes outward until it touches
-        /// and never moves Z, so leaving those enabled implied they were being used.
+        /// Whether the selected centre feature is an outside one. The approximate sizes and the
+        /// approach heights only do anything out here: an inside cycle probes outward until it
+        /// touches and never moves Z, so leaving those enabled implied they were being used.
         /// </summary>
-        public bool IsBossCenter => SelectedCenterType == CenterFinderType.Boss;
+        public bool IsOutsideCenter =>
+            SelectedCenterType is CenterFinderType.Boss or CenterFinderType.RectangularBoss;
+
+        /// <summary>
+        /// Whether the two approximate sizes are independent. A round boss is the same across
+        /// both axes, so it takes the width and leaves the height greyed rather than inviting
+        /// two numbers that have to agree.
+        /// </summary>
+        public bool HasTwoApproxSizes => SelectedCenterType == CenterFinderType.RectangularBoss;
 
         public CenterFinderType SelectedCenterType
         {
@@ -208,7 +224,8 @@ namespace GrbLHALSender.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _selectedCenterType, value);
-                this.RaisePropertyChanged(nameof(IsBossCenter));
+                this.RaisePropertyChanged(nameof(IsOutsideCenter));
+                this.RaisePropertyChanged(nameof(HasTwoApproxSizes));
             }
         }
 
@@ -360,7 +377,8 @@ namespace GrbLHALSender.ViewModels
             LatchDistanceText = pc.LatchDistance.ToInvariantString();
             ClearanceHeightText = pc.ClearanceHeight.ToInvariantString();
             ProbeDepthText = pc.ProbeDepth.ToInvariantString();
-            ApproxSizeText = pc.ApproxSize.ToInvariantString();
+            ApproxWidthText = pc.ApproxWidth.ToInvariantString();
+            ApproxHeightText = pc.ApproxHeight.ToInvariantString();
             UnitSystem = config.UseMetric ? "G21" : "G20";
             config?.PropertyChanged += (_, e) =>
             {
@@ -383,7 +401,8 @@ namespace GrbLHALSender.ViewModels
             pc.LatchDistance = LatchDistance;
             pc.ClearanceHeight = ClearanceHeight;
             pc.ProbeDepth = ProbeDepth;
-            pc.ApproxSize = ApproxSize;
+            pc.ApproxWidth = ApproxWidth;
+            pc.ApproxHeight = ApproxHeight;
         }
 
         /// <summary>
@@ -453,10 +472,12 @@ namespace GrbLHALSender.ViewModels
         {
             var fields = CommonFields();
             if (!IsTouchPlate) fields.Add(("Diameter", ProbeDiameterText));
-            if (SelectedCenterType == CenterFinderType.Boss)
+            if (IsOutsideCenter)
             {
-                fields.Add(("Approx Size", ApproxSizeText));
+                fields.Add(("Approx Width", ApproxWidthText));
+                if (HasTwoApproxSizes) fields.Add(("Approx Height", ApproxHeightText));
                 fields.Add(("Clearance Height", ClearanceHeightText));
+                fields.Add(("Probe Depth", ProbeDepthText));
             }
             return fields;
         }
@@ -973,10 +994,17 @@ namespace GrbLHALSender.ViewModels
 
             _probeJob = CreateJobBuilder();
 
-            if (SelectedCenterType == CenterFinderType.Boss)
+            if (IsOutsideCenter)
             {
-                ProbeStatus = "Probing boss center...";
-                _phases = _probeJob.ProbeBossCenter(ApproxSize.ToInvariantString());
+                // A round boss is the same size across both axes, so it takes the width twice
+                // rather than asking for two numbers that would have to agree.
+                var height = HasTwoApproxSizes ? ApproxHeight : ApproxWidth;
+
+                ProbeStatus = HasTwoApproxSizes
+                    ? "Probing rectangular boss center..."
+                    : "Probing boss center...";
+                _phases = _probeJob.ProbeOutsideCenter(ApproxWidth, height,
+                    _centerStart[0], _centerStart[1], _centerStart[2]);
             }
             else
             {
@@ -1025,16 +1053,12 @@ namespace GrbLHALSender.ViewModels
             var centerX = (xPos + xNeg) / 2.0;
             var centerY = (yPos + yNeg) / 2.0;
 
-            // Measured size (distance between contact points + probe diameter)
-            var measuredWidth = Math.Abs(xPos - xNeg) + ProbeDiameter;
-            var measuredHeight = Math.Abs(yPos - yNeg) + ProbeDiameter;
-
-            if (SelectedCenterType == CenterFinderType.Boss)
-            {
-                // Boss: measured size = distance between contacts - probe diameter
-                measuredWidth = Math.Abs(xPos - xNeg) - ProbeDiameter;
-                measuredHeight = Math.Abs(yPos - yNeg) - ProbeDiameter;
-            }
+            // The stylus centre stops a radius short of each face, so the two contacts sit a
+            // whole diameter inside an outside feature and a whole diameter outside an inside
+            // one. Which way to correct therefore depends on which side of the wall we were on.
+            var diameter = IsOutsideCenter ? -ProbeDiameter : ProbeDiameter;
+            var measuredWidth = Math.Abs(xPos - xNeg) + diameter;
+            var measuredHeight = Math.Abs(yPos - yNeg) + diameter;
 
             ProbeXResult = centerX.ToInvariantString("F3");
             ProbeYResult = centerY.ToInvariantString("F3");

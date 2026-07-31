@@ -23,5 +23,12 @@ public class ProbeConfig
     /// </summary>
     public double ProbeDepth { get; set; } = 5;
 
-    public double ApproxSize { get; set; } = 25;
+    /// <summary>
+    /// Rough size of an outside feature across X, used to work out how far to stand off before
+    /// dropping beside it. A round boss uses this for both axes.
+    /// </summary>
+    public double ApproxWidth { get; set; } = 25;
+
+    /// <summary>Rough size of an outside feature across Y.</summary>
+    public double ApproxHeight { get; set; } = 25;
 }
