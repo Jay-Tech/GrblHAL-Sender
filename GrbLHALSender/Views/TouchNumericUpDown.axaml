@@ -18,8 +18,10 @@
     </UserControl.Styles>
 
     <Grid ColumnDefinitions="Auto,*,Auto">
+        <!-- Plain hyphen, not U+2212. The typographic minus is another glyph that may not be
+             in the font, and it was paired with an ASCII plus, so the two never matched. -->
         <RepeatButton Name="DecreaseButton" Grid.Column="0" Classes="spin"
-                      Content="&#x2212;" Margin="0,0,4,0"/>
+                      Content="-" Margin="0,0,4,0"/>
         <TextBox Name="ValueText" Grid.Column="1"
                  HorizontalContentAlignment="Center"
                  VerticalContentAlignment="Center"/>

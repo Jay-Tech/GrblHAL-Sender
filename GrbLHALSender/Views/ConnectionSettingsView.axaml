@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="GrbLHALSender.Views.ConnectionSettingsView"
              x:DataType="viewModels:ConnectionViewModel"
              Width="300">
@@ -36,7 +37,10 @@
           <ComboBox Grid.Column="0" ItemsSource="{Binding AvailablePorts}"
                     SelectedItem="{Binding SerialPort}"
                     HorizontalAlignment="Stretch" FontSize="14"/>
-          <Button Grid.Column="1" Content="&#x21BB;" Margin="5,0,0,0" FontSize="16"
+          <!-- Drawn, for the same reason as the keyboard's close: U+21BB is not in the Pi's
+               default font either, and a missing glyph on the port refresh is easy to miss. -->
+          <Button Grid.Column="1" Margin="5,0,0,0"
+                  Content="{icons:MaterialIconExt Kind=Refresh, IconSize=18}"
                   Width="35" Height="32" HorizontalContentAlignment="Center"
                   Command="{Binding RefreshPortsCommand}"/>
         </Grid>

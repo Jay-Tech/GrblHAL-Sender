@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="770" d:DesignHeight="280"
              x:Class="GrbLHALSender.Views.VirtualKeyboardView"
              x:DataType="vm:VirtualKeyboardViewModel"
@@ -78,7 +79,11 @@
             <Button Classes="kb" Content="0"  CommandParameter="0"  Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="-"  CommandParameter="-"  Command="{Binding KeyPressCommand}"/>
             <Button Classes="kb" Content="+"  CommandParameter="+"  Command="{Binding KeyPressCommand}"/>
-            <Button Classes="kb" Content="&#x2715;" Foreground="{DynamicResource AlertBrush}"
+            <!-- A drawn icon, not a ✕ character. U+2715 is missing from the Pi's default font
+                 and rendered as a tofu box; Material.Icons carries its own font, so it looks
+                 the same everywhere. An ASCII X would render but reads as the letter key. -->
+            <Button Classes="kb" Foreground="{DynamicResource AlertBrush}"
+                    Content="{icons:MaterialIconExt Kind=Close, IconSize=22}"
                     Command="{Binding CloseCommand}"/>
         </UniformGrid>
 
