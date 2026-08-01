@@ -1,0 +1,69 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             mc:Ignorable="d"
+             d:DesignWidth="300" d:DesignHeight="246"
+             x:Class="GrbLHALSender.Views.WcsPanelView"
+             x:DataType="viewModels:MainViewModel">
+
+	<!-- Work coordinate system selection. Its own component because the portrait canvas
+	     lifts it out of the DRO panel and into the control block's middle column, which
+	     both fills that space and shortens the panel. -->
+		<Grid
+	  Margin="0,2"
+	  RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+	<Label Grid.Row="0"  Content="WCS"
+		   HorizontalContentAlignment="Center"
+		   FontSize="{DynamicResource DetailFontSize}"
+		   VerticalContentAlignment="Center"
+		   HorizontalAlignment ="Stretch"
+		   VerticalAlignment="Stretch"
+		   Height="30"></Label>
+	<Button Grid.Row="1"
+			CornerRadius="6"
+			HorizontalContentAlignment="Center"
+			VerticalContentAlignment="Center"
+			FontSize="{DynamicResource BaseFontSize}"
+			Margin="0,2"
+			Content="G54" Height="50"
+			HorizontalAlignment ="Stretch"
+			VerticalAlignment="Stretch"
+			Command="{Binding WcsCommand}"
+			CommandParameter="G54"></Button>
+	<Button Grid.Row="2"
+			CornerRadius="6"
+			FontSize="{DynamicResource BaseFontSize}"
+			Margin="0,2" Content="G55"
+			HorizontalContentAlignment="Center"
+			VerticalContentAlignment="Center"
+			HorizontalAlignment ="Stretch"
+			VerticalAlignment="Stretch"
+			Height="50"
+			Command="{Binding WcsCommand}"
+			CommandParameter="G55"></Button>
+	<Button Grid.Row="3"
+			CornerRadius="6"
+			FontSize="{DynamicResource BaseFontSize}"
+			Margin="0,2"
+			Content="G56"
+			HorizontalContentAlignment="Center"
+			VerticalContentAlignment="Center"
+			HorizontalAlignment ="Stretch"
+			VerticalAlignment="Stretch"  Height="50"
+			Command="{Binding WcsCommand}"
+			CommandParameter="G56"></Button>
+	<Button Grid.Row="4"
+			CornerRadius="6"
+			FontSize="{DynamicResource BaseFontSize}" Margin="0,2"
+			Content="G57"
+			HorizontalContentAlignment="Center"
+			VerticalContentAlignment="Center"
+			HorizontalAlignment ="Stretch"
+			VerticalAlignment="Stretch"
+			Height="50"
+			Command="{Binding WcsCommand}"
+			CommandParameter="G57"></Button>
+		</Grid>
+</UserControl>

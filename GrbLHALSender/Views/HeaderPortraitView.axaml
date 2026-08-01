@@ -1,0 +1,183 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+			 mc:Ignorable="d"
+			 d:DesignWidth="1080" d:DesignHeight="90"
+			 x:Class="GrbLHALSender.Views.HeaderPortraitView"
+			 x:DataType="viewModels:MainViewModel">
+
+	<!-- The same values as HeaderView, in two 45px rows instead of one.
+	The landscape strip cannot be reflowed for this canvas: its fixed columns total
+	1205px before the two Auto ones, so it overflows 1080 before any content is
+	considered. Row 0 carries what identifies the machine's state, row 1 the jog and
+	unit readouts plus the signal LEDs. -->
+	<Grid RowDefinitions="45,45">
+
+		<!-- Row 0: connect, state, WCS, tool, jog step and feed, alarm, unlock/close.
+		Auto rather than the landscape strip's fixed widths, which reserve 475px for
+		roughly 360px of text — affordable at 1920 and not at 1080, where the whole row
+		including an active alarm comes to about 1050. Auto also collapses each label to
+		nothing while disconnected, since they are all bound to Connected. The star
+		spacer keeps alarm and unlock hard right. -->
+		<Grid Grid.Row="0" ColumnDefinitions="Auto,100,*,125,Auto,Auto">
+			<StackPanel Grid.Column="0" Orientation="Horizontal">
+				<Button  Margin="3,0,0,0"
+						 HorizontalAlignment="Left"
+						 VerticalAlignment="Center"
+						 VerticalContentAlignment="Center"
+						 HorizontalContentAlignment="Center"
+						 Height="40"  FontSize="24"
+						 Content="Connect" x:Name="ConnectButton"
+						 Command="{Binding ConnectCommand}"/>
+
+				<Label Classes.active="{Binding Connected, FallbackValue=false}"
+					   Classes.inactive="{Binding !Connected, FallbackValue=true}"
+					   HorizontalContentAlignment="Center"
+					   VerticalContentAlignment="Center"
+					   HorizontalAlignment="Left"
+					   CornerRadius="0,3,3,0"
+					   VerticalAlignment="Center"
+					   Width="10"
+					   Height="40"/>
+			</StackPanel>
+            <!--     -->
+            <Label Grid.Column="1"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   Margin="10,0,0,0"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Content="{Binding GrblHalState}" />
+
+            <ItemsRepeater Grid.Column="2"
+                           IsVisible="{Binding Connected}"
+                           ClipToBounds="True"
+                           Margin="0,0,57.5,0"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Stretch"
+                           ItemsSource="{Binding SignalList}">
+                <ItemsRepeater.Layout>
+                    <StackLayout Orientation="Horizontal" Spacing="3"/>
+                </ItemsRepeater.Layout >
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate>
+                        <Label Classes="led"
+                               Classes.triggered="{Binding Triggered}"
+                               VerticalAlignment="Center"
+                               ClipToBounds="True"
+                               VerticalContentAlignment="Center"
+                               HorizontalAlignment="Center"
+                               CornerRadius="45"
+                               HorizontalContentAlignment="Center"
+                               Margin="3 0"
+                               Height="30" Width="30" FontWeight="Bold"
+                               FontSize="{DynamicResource DetailFontSize}"
+                               Content="{Binding Path=Id }"/>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+
+			<Button Grid.Column="3"
+					x:Name="AlButton"
+					IsVisible="{Binding AlarmActive}"
+					Height="40"
+					Content="{Binding SubState,StringFormat={}Alarm{0}}"
+                    FontSize="{DynamicResource DetailFontSizeLarge}"
+					Width="115"
+					VerticalAlignment="Center"
+					HorizontalAlignment="Right"
+					HorizontalContentAlignment="Center"
+					VerticalContentAlignment="Center"
+					Command="{Binding ClearAlarmCommand}"
+					Margin="10,0"
+					Classes="danger">
+			</Button>
+
+			<Button Grid.Column="4"
+					Height="40"
+					Content="Unlock"
+					FontSize="{DynamicResource BaseFontSize}"
+					Margin="5,0"
+					VerticalAlignment="Center"
+					HorizontalAlignment="Right"
+					VerticalContentAlignment="Center"
+					HorizontalContentAlignment="Center"
+					Command="{Binding UnLockCommand}"
+					Width="115" />
+			
+            <Button Grid.Column="5"
+                    Height="40"
+                    Content="Close"
+                    IsVisible="{Binding IsFullScreen}"
+                    FontSize="{DynamicResource BaseFontSize}"
+                    Padding="5,2"
+                    Margin="5,0"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Right"
+                    VerticalContentAlignment="Center"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding CloseCommand}"
+                    Width="115" />
+		</Grid>
+
+		<!-- Row 1: units, then the signal LEDs.
+		Only two labels here, both Auto, so the repeater's star column takes everything
+		else — roughly 800px. That matters because a real machine reports more than the
+		eight signals a bench setup shows: the list unions the axes, the H/S/R/E
+		defaults, probe, and whatever the firmware's SIGNALS line adds, with no cap.
+		Shortening the unit labels to in/mm bought about 125px of it. -->
+		<Grid Grid.Row="1" ColumnDefinitions="225,225,145,120,150,*">
+            <Label Grid.Column="0"
+                   x:Name="DisplayUnitLabel"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   Margin="5,0,0,0"
+                   HorizontalAlignment="Left" 
+                   VerticalAlignment="Center"
+                   Classes.metric="{Binding UseMetric}"
+                   Classes.imperial="{Binding !UseMetric}"
+                   IsVisible="{Binding Connected}"/>
+            <Label Grid.Column="1"
+                   x:Name="MachineUnitLabel"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   Margin="0"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Classes.machineMetric="{Binding MachineSettings.ReportInMetric}"
+                   Classes.machineImperial="{Binding !MachineSettings.ReportInMetric}"
+                   IsVisible="{Binding Connected}"/>
+            <Label Grid.Column="2"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   Margin="3,0,0,0"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Content="{Binding WcsDisplay, StringFormat={}WCS:{0}}"
+                   IsVisible="{Binding Connected}"/>
+            <Label Grid.Column="3"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   Margin="0"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Content="{Binding ToolDisplay, StringFormat={}Tool:{0}}"
+                   IsVisible="{Binding Connected}"/>
+            <Label Grid.Column="4"
+                   x:Name="JogStepLabel"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   MinWidth="130"
+                   Margin="0"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Content="{Binding JogStep, StringFormat={}Step:{0}}"
+                   IsVisible="{Binding Connected}"/>
+            <Label Grid.Column="5"
+                   x:Name="JogFeedLabel"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   MinWidth="150"
+                   Margin="0"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Content="{Binding JogRate, StringFormat={}Feed:{0}}"
+                   IsVisible="{Binding Connected}"/>
+		</Grid>
+	</Grid>
+</UserControl>

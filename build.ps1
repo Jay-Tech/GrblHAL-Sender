@@ -55,24 +55,37 @@ switch ($platform) {
             Write-Host "Install from: https://jrsoftware.org/isinfo.php" -ForegroundColor Yellow
         }
     }
+    # The packaging steps below need Unix tooling, so cross-building from Windows publishes
+    # the binaries and stops there — same as the Inno Setup branch above. No chmod: the
+    # scripts are run as "bash <script>", which does not care about the executable bit, and
+    # chmod does not exist on Windows.
     "linux" {
         $debArch = if ($Runtime -eq "linux-x64") { "amd64" } else { "arm64" }
         $script = Join-Path (Join-Path (Join-Path $RepoRoot "installer") "linux") "build-deb.sh"
-        if (Test-Path $script) {
+        $haveTools = (Get-Command bash -ErrorAction SilentlyContinue) -and
+                     (Get-Command dpkg-deb -ErrorAction SilentlyContinue)
+        if ((Test-Path $script) -and $haveTools) {
             Write-Host "Building .deb package..." -ForegroundColor Cyan
-            chmod +x $script
             & bash $script $Version $debArch $PublishDir
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        } elseif (Test-Path $script) {
+            Write-Host "bash/dpkg-deb not found - skipping .deb packaging" -ForegroundColor Yellow
+            Write-Host "Binaries are in $PublishDir. Copy that folder to the target and run" -ForegroundColor Yellow
+            Write-Host "GrbLHALSender.Desktop, or build the package on a Linux machine." -ForegroundColor Yellow
         }
     }
     "osx" {
         $arch = $Runtime.Replace("osx-", "")
         $script = Join-Path (Join-Path (Join-Path $RepoRoot "installer") "macos") "build-dmg.sh"
-        if (Test-Path $script) {
+        $haveTools = (Get-Command bash -ErrorAction SilentlyContinue) -and
+                     (Get-Command hdiutil -ErrorAction SilentlyContinue)
+        if ((Test-Path $script) -and $haveTools) {
             Write-Host "Building .dmg package..." -ForegroundColor Cyan
-            chmod +x $script
             & bash $script $Version $arch $PublishDir
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        } elseif (Test-Path $script) {
+            Write-Host "bash/hdiutil not found - skipping .dmg packaging" -ForegroundColor Yellow
+            Write-Host "Binaries are in $PublishDir; build the .dmg on macOS." -ForegroundColor Yellow
         }
     }
 }

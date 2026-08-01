@@ -247,4 +247,52 @@
 		<Setter Property="FontFamily" Value="{DynamicResource MonoFontFamily}"/>
 	</Style>
 
+	<!-- ===================== Machine state indicators ===================== -->
+
+	<!-- These live app-wide rather than on a single view because the controls that
+	     wear them are split across HeaderView, DroPanelView and WorkspacePanelView,
+	     and each canvas that arranges those panels would otherwise need its own copy. -->
+
+	<Style Selector="Label.inactive">
+		<Setter Property="Background" Value="{DynamicResource AlertBrush}" />
+	</Style>
+	<Style Selector="Label.active">
+		<Setter Property="Background" Value="{DynamicResource OkBrush}" />
+	</Style>
+
+	<!-- Signal LEDs and the aux-output active ring. These are style classes
+	     rather than value converters on purpose: a converter returns a brush
+	     snapshot and only re-runs when its bound value changes, so switching
+	     theme left the LEDs painted in the old palette until the next signal
+	     edge. DynamicResource repaints them immediately. -->
+	<Style Selector="Label.led">
+		<Setter Property="Background" Value="{DynamicResource LedIdleBrush}" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+	</Style>
+	<Style Selector="Label.led.triggered">
+		<Setter Property="Background" Value="{DynamicResource AlertBrush}" />
+		<Setter Property="Foreground" Value="{DynamicResource AlertForegroundBrush}" />
+	</Style>
+
+	<Style Selector="Border.auxRing">
+		<Setter Property="BorderBrush" Value="Transparent" />
+	</Style>
+	<Style Selector="Border.auxRing.active">
+		<Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+	</Style>
+
+	<Style Selector="Label.metric">
+		<Setter Property="Content" Value= "Display:Metric"/>
+	</Style>
+	<Style Selector="Label.imperial">
+		<Setter Property="Content" Value="Display:Imperial"/>
+	</Style>
+
+	<Style Selector="Label.machineMetric">
+		<Setter Property="Content" Value= "Machine:Metric"/>
+	</Style>
+	<Style Selector="Label.machineImperial">
+		<Setter Property="Content" Value="Machine:Imperial"/>
+	</Style>
+
 </Styles>

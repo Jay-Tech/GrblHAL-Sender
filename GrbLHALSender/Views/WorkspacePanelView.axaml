@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             xmlns:views="clr-namespace:GrbLHALSender.Views"
+             mc:Ignorable="d"
+             d:DesignWidth="1290" d:DesignHeight="1035"
+             x:Class="GrbLHALSender.Views.WorkspacePanelView"
+             x:DataType="viewModels:MainViewModel">
+
+	<!-- Tabbed work area: 3D render plus job/g-code overlays, GrblHAL settings, reference,
+	     and the macro bar that sits alongside the tab strip.
+	     Placement and sizing belong to whichever canvas hosts this, not here. -->
+	<Grid>
+		<TabControl  TabStripPlacement="Top"  >
+			<TabItem Padding="8,0"
+					 HorizontalContentAlignment="Center"
+					 VerticalContentAlignment="Center"
+					 FontSize="{DynamicResource BaseFontSize}"
+					 x:Name="HomeTab"
+					 Header="Home">
+				<Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*,Auto" >
+					<!-- Render control: created by MainViewModel based on Renderer config setting.
+						 Only the selected renderer is instantiated (Software=Skia or Hardware=OpenGL). -->
+					<ContentControl Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
+									Content="{Binding RenderControl}"
+									HorizontalAlignment="Stretch"
+									VerticalAlignment="Stretch"
+									HorizontalContentAlignment="Stretch"
+									VerticalContentAlignment="Stretch"/>
+					<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
+							HorizontalAlignment="Stretch"
+							IsVisible="{Binding #HomeTab.IsSelected}"
+							Background="Transparent"
+							VerticalAlignment="Stretch">
+						<views:JobButtonView DataContext="{Binding JobViewModel}"/>
+					</Border>
+
+					<Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
+							HorizontalAlignment="Right"
+							VerticalAlignment="Stretch"
+							IsVisible="{Binding JobViewModel.ShowGCodeConsole}">
+						<views:GcodeOutputView DataContext="{Binding JobViewModel}" />
+					</Border>
+
+					<Border Grid.Row="2" Grid.ColumnSpan="3" Grid.Column="0"
+							VerticalAlignment="Bottom"
+							HorizontalAlignment="Center">
+						<views:DialogButtonView DataContext="{Binding DialogViewModel}" />
+					</Border>
+
+					<Border Grid.Row="0" Grid.RowSpan="2"  Grid.Column="0"
+							VerticalAlignment="Bottom" IsEnabled="{Binding Connected}"
+							HorizontalAlignment="Left"
+							Margin="10,0,0,10">
+							<ItemsRepeater ItemsSource="{Binding AppConfigViewModel.AuxOutputViewModel.AuxOutputItems}"
+										   x:Name="AuxOutputRepeater" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+								<ItemsRepeater.Layout>
+									<UniformGridLayout   ItemsJustification="End" Orientation="Vertical"/>
+								</ItemsRepeater.Layout>
+								<ItemsRepeater.ItemTemplate>
+									<DataTemplate>
+										<!-- Active-state border lives on a wrapper, not the Button
+										     itself: the Fluent theme repaints the Button's own border
+										     on :pointerover/:pressed (which stick after touch), hiding
+										     the bound state color until focus moved elsewhere. -->
+										<Border Classes="auxRing"
+												Classes.active="{Binding IsActive}"
+												BorderThickness="2"
+												CornerRadius="5"
+												Margin="2"
+												VerticalAlignment="Bottom"
+												HorizontalAlignment="Left">
+											<Button Classes="touch" Width="100"
+													Content="{Binding Name}"
+													BorderThickness="0"
+													Command="{Binding ToggleCommand}"/>
+										</Border>
+									</DataTemplate>
+								</ItemsRepeater.ItemTemplate>
+							</ItemsRepeater>
+					</Border>
+				</Grid>
+			</TabItem>
+			<TabItem Padding="8,0"
+					 FontWeight="DemiBold"
+					 IsEnabled="{Binding Connected}"
+					 HorizontalContentAlignment="Center"
+					 VerticalContentAlignment="Center"
+					 FontSize="{DynamicResource BaseFontSize}" x:Name="SettingTab"
+					 Header="GrblHAL Settings">
+				<views:SettingView HorizontalAlignment="Stretch"
+								   DataContext="{Binding SettingsViewModel}"
+								   VerticalAlignment="Stretch"></views:SettingView>
+			</TabItem>
+			<TabItem Padding="8,0"
+					 FontWeight="DemiBold"
+					 HorizontalContentAlignment="Center"
+					 VerticalContentAlignment="Center"
+					 FontSize="{DynamicResource BaseFontSize}" x:Name="ReferenceTab"
+					 Header="Reference">
+				<views:CheatSheetView HorizontalAlignment="Stretch"
+									  DataContext="{Binding CheatSheetViewModel}"
+									  VerticalAlignment="Stretch"/>
+			</TabItem>
+		</TabControl>
+		<!-- END Tab Control -->
+
+		<!-- START Header Macro Button Control -->
+		<Grid x:Name="MacroBarRow" ColumnDefinitions="Auto,*"
+			  HorizontalAlignment="Stretch"
+			  VerticalAlignment="Top">
+			<!-- Spacer tracks the tab strip width so the macro bar starts
+			     after the last tab instead of overlapping the headers. It stays here rather
+			     than moving into MacroBarView: the width binds to ReferenceTab, which lives
+			     in this namescope. -->
+			<Border Grid.Column="0" Width="{Binding #ReferenceTab.Bounds.Right}"/>
+			<views:MacroBarView Grid.Column="1" />
+		</Grid>
+		<!--END Header Macro Button Control-->
+	</Grid>
+</UserControl>

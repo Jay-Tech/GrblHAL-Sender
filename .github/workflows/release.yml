@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - 'v*'
+  # Manual runs, for building a branch without cutting a release. Pick the branch in the
+  # "Run workflow" dropdown; the installers arrive as run artifacts and the release job is
+  # skipped. Note GitHub only offers the button once this trigger exists on the default
+  # branch — a workflow_dispatch that lives only on a feature branch is never listed.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version stamped into the build. Defaults to Directory.Build.props plus -dev.<run number>.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -29,11 +39,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract version from tag
+      - name: Determine version
         id: version
         run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
-          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            if [ -z "$VERSION" ]; then
+              # No tag to read on a manual run, so fall back to the props file and mark the
+              # build as a one-off so it is never mistaken for a released version.
+              PROPS_VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props | head -n1)
+              VERSION="${PROPS_VERSION}-dev.${{ github.run_number }}"
+            fi
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       # The published binaries take their version from the tag (-p:Version, below), so
       # this check is not about them. Directory.Build.props is what a local build reports
@@ -41,6 +62,7 @@ jobs:
       # drifts behind, a freshly built app announces an update it already has. Fail here
       # rather than ship a release the props file disagrees with.
       - name: Verify Directory.Build.props matches the tag
+        if: github.event_name == 'push'
         run: |
           TAG_VERSION="${{ steps.version.outputs.version }}"
           # Prerelease tags (v1.1.0-beta) carry a suffix the props file does not, and the
@@ -211,6 +233,9 @@ jobs:
   release:
     needs: [prepare, build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
+    # Tag pushes only. A manual run is for testing a branch, so it stops at the uploaded
+    # artifacts rather than publishing a public release from unreleased code.
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout
         uses: actions/checkout@v4

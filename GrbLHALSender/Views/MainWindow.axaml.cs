@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using Avalonia.VisualTree;
@@ -39,14 +40,60 @@ public partial class MainWindow : Window
             layerManager.EnableTextSelectorLayer = false;
     }
 
+    /// <summary>
+    /// The two canvases every view is authored against. The app does not reflow: the whole
+    /// canvas is scaled to fit the window, so each orientation gets its own fixed design size
+    /// and its own root view.
+    /// </summary>
+    private static readonly Size LandscapeCanvas = new(1920, 1080);
+    private static readonly Size PortraitCanvas = new(1080, 1920);
+
+    /// <summary>
+    /// Which canvas <see cref="CanvasHost"/> currently holds, or null before the first layout
+    /// pass. Latched so ordinary resizes never rebuild the root view — rebuilding would tear
+    /// down and recreate the 3D viewport.
+    /// </summary>
+    private bool? _isPortrait;
+
+    private Size _canvas = LandscapeCanvas;
+
+    /// <summary>
+    /// Chooses the canvas for the window's orientation and scales it to fit, uniformly on both
+    /// axes so nothing is distorted.
+    /// <para>
+    /// The smaller of the two ratios is used, which letterboxes a window that is not the design
+    /// aspect ratio rather than stretching to fill it.
+    /// </para>
+    /// </summary>
     private void Control_OnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        double xScale = e.NewSize.Height / 1080;
-        double yScale = e.NewSize.Width / 1920;
-        var diff = Math.Abs(xScale - yScale) / 2;
-        double value = Math.Min(xScale, yScale);
-        var s = (double)OnCoerceScaleValue(value);
-        TransformControl.LayoutTransform = new ScaleTransform(xScale, value);
+        if (e.NewSize.Width <= 0 || e.NewSize.Height <= 0)
+            return;
+
+        SetCanvasOrientation(e.NewSize.Height > e.NewSize.Width);
+
+        double scale = OnCoerceScaleValue(Math.Min(e.NewSize.Width / _canvas.Width,
+                                                   e.NewSize.Height / _canvas.Height));
+        TransformControl.LayoutTransform = new ScaleTransform(scale, scale);
+    }
+
+    /// <summary>
+    /// Swaps in the root view for the given orientation, building it only when the orientation
+    /// actually changes. Only one root view is ever alive: both bind to the same MainViewModel,
+    /// so keeping a spare would double every subscription behind it.
+    /// </summary>
+    /// <remarks>
+    /// DataContext is deliberately not set here. The host is in the visual tree, so the view
+    /// inherits the window's MainViewModel — the same instance either orientation would get.
+    /// </remarks>
+    private void SetCanvasOrientation(bool isPortrait)
+    {
+        if (_isPortrait == isPortrait)
+            return;
+
+        _isPortrait = isPortrait;
+        _canvas = isPortrait ? PortraitCanvas : LandscapeCanvas;
+        CanvasHost.Content = isPortrait ? new MainPortraitView() : new MainView();
     }
 
     private double OnCoerceScaleValue(double value)
