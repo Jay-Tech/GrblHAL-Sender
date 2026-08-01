@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -15,8 +15,13 @@
 	     unit readouts plus the signal LEDs. -->
 	<Grid RowDefinitions="45,45">
 
-		<!-- Row 0: connect, state, WCS, tool, alarm, unlock/close -->
-		<Grid Grid.Row="0" ColumnDefinitions="125,100,130,120,*,Auto,Auto">
+		<!-- Row 0: connect, state, WCS, tool, jog step and feed, alarm, unlock/close.
+		     Auto rather than the landscape strip's fixed widths, which reserve 475px for
+		     roughly 360px of text — affordable at 1920 and not at 1080, where the whole row
+		     including an active alarm comes to about 1050. Auto also collapses each label to
+		     nothing while disconnected, since they are all bound to Connected. The star
+		     spacer keeps alarm and unlock hard right. -->
+		<Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto,Auto">
 			<StackPanel Grid.Column="0" Orientation="Horizontal">
 				<Button  Margin="3,0,0,0"
 						 HorizontalAlignment="Left"
@@ -46,22 +51,50 @@
 				   Content="{Binding GrblHalState}" />
 			<Label Grid.Column="2"
 				   FontSize="{DynamicResource BaseFontSize}"
+				   Margin="0,0,12,0"
 				   VerticalAlignment="Center"
 				   HorizontalAlignment="Left"
 				   Content="{Binding WcsDisplay, StringFormat={}WCS:{0}}"
 				   IsVisible="{Binding Connected}"/>
 			<Label Grid.Column="3"
 				   FontSize="{DynamicResource BaseFontSize}"
+				   Margin="0,0,12,0"
 				   VerticalAlignment="Center"
 				   HorizontalAlignment="Left"
-				   Content="{Binding ToolDisplay, StringFormat={} Tool:{0}}"
+				   Content="{Binding ToolDisplay, StringFormat={}Tool:{0}}"
 				   IsVisible="{Binding Connected}"/>
 
-			<Button Grid.Column="5"
+			<!-- Step and Feed sit up here with the rest of the machine state, which reads more
+			     balanced than hanging them off the units row.
+			     MinWidth, not a fixed width: Step is the value that changes width most often,
+			     cycling 1 / 0.01 / 0.001 as the operator jogs, and a bare Auto column resized on
+			     every change shunts the alarm and unlock buttons sideways with it. A floor at the
+			     worst case holds the column steady, while Auto still grows rather than clipping if
+			     a value ever exceeds it. Sized for "Step:0.001" and "Feed:12000". -->
+			<Label Grid.Column="4"
+				   x:Name="JogStepLabel"
+				   FontSize="{DynamicResource BaseFontSize}"
+				   MinWidth="130"
+				   Margin="0,0,12,0"
+				   VerticalAlignment="Center"
+				   HorizontalAlignment="Left"
+				   Content="{Binding JogStep, StringFormat={}Step:{0}}"
+				   IsVisible="{Binding Connected}"/>
+			<Label Grid.Column="5"
+				   x:Name="JogFeedLabel"
+				   FontSize="{DynamicResource BaseFontSize}"
+				   MinWidth="150"
+				   Margin="0,0,12,0"
+				   VerticalAlignment="Center"
+				   HorizontalAlignment="Left"
+				   Content="{Binding JogRate, StringFormat={}Feed:{0}}"
+				   IsVisible="{Binding Connected}"/>
+
+			<Button Grid.Column="7"
 					x:Name="AlButton"
 					IsVisible="{Binding AlarmActive}"
 					Height="40"
-					Content="{Binding SubState,StringFormat={} Alarm{0}}"
+					Content="{Binding SubState,StringFormat={}Alarm{0}}"
 					FontSize="18"
 					Width="100"
 					VerticalAlignment="Center"
@@ -72,7 +105,7 @@
 					Margin="2,0"
 					Classes="danger">
 			</Button>
-			<Grid Grid.Column="6" ColumnDefinitions="Auto,Auto">
+			<Grid Grid.Column="8" ColumnDefinitions="Auto,Auto">
 				<Button Grid.Column="0"
 						Height="40"
 						Content="Unlock"
@@ -100,32 +133,25 @@
 			</Grid>
 		</Grid>
 
-		<!-- Row 1: jog step and feed, units, signal LEDs -->
-		<Grid Grid.Row="1" ColumnDefinitions="150,150,215,215,*">
+		<!-- Row 1: units, then the signal LEDs.
+		     Only two labels here, both Auto, so the repeater's star column takes everything
+		     else — roughly 800px. That matters because a real machine reports more than the
+		     eight signals a bench setup shows: the list unions the axes, the H/S/R/E
+		     defaults, probe, and whatever the firmware's SIGNALS line adds, with no cap.
+		     Shortening the unit labels to in/mm bought about 125px of it. -->
+		<Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*">
 			<Label Grid.Column="0"
-				   x:Name="JogStepLabel"
 				   FontSize="{DynamicResource BaseFontSize}"
-				   Margin="10,0,0,0"
-				   VerticalAlignment="Center"
-				   HorizontalAlignment="Left"
-				   Content="{Binding JogStep, StringFormat={} Step:{0}}"
-				   IsVisible="{Binding Connected}"/>
-			<Label Grid.Column="1"
-				   FontSize="{DynamicResource BaseFontSize}"
-				   VerticalAlignment="Center"
-				   HorizontalAlignment="Left" x:Name="JogFeedLabel"
-				   Content="{Binding JogRate, StringFormat={} Feed:{0}}"
-				   IsVisible="{Binding Connected}"/>
-			<Label Grid.Column="2"
-				   FontSize="{DynamicResource BaseFontSize}"
+				   Margin="10,0,12,0"
 				   VerticalAlignment="Center"
 				   Classes.metric="{Binding UseMetric}"
 				   Classes.imperial="{Binding !UseMetric}"
 				   HorizontalAlignment="Left" x:Name="DisplayUnitLabel"
 				   IsVisible="{Binding Connected}">
 			</Label>
-			<Label Grid.Column="3"
+			<Label Grid.Column="1"
 				   FontSize="{DynamicResource BaseFontSize}"
+				   Margin="0,0,12,0"
 				   VerticalAlignment="Center"
 				   Classes.machineMetric="{Binding MachineSettings.ReportInMetric}"
 				   Classes.machineImperial="{Binding !MachineSettings.ReportInMetric}"
@@ -133,7 +159,7 @@
 				   IsVisible="{Binding Connected}">
 			</Label>
 
-			<ItemsRepeater Grid.Column="4"
+			<ItemsRepeater Grid.Column="2"
 						   IsVisible="{Binding Connected}"
 						   ClipToBounds="True"
 						   HorizontalAlignment="Stretch"

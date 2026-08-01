@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using GrbLHALSender.ViewModels;
@@ -14,11 +14,16 @@ namespace GrbLHALSender.Views;
 /// </summary>
 public partial class MacroGridView : UserControl
 {
-    // Narrower than the landscape bar's 115 so three fit across a ~360px column:
-    // 3 * (105 + 8) = 339. At 115 only two fit and the third wraps.
-    private const double ButtonWidth = 105;
+    // Sized so three still fit across: the column is 340, not the 360 the canvas third
+    // suggests, because the centre border insets 10px a side. 3 * (108 + 4) = 336.
+    // The tight padding matters as much as the width — Fluent's default button padding is
+    // ~12px a side, so a 105px button had only ~81px of content area and clipped a 87px name
+    // like "WCSG54" despite looking wide enough. At 110 with 4px padding there is ~102px to
+    // draw in, which also leaves room for Linux font metrics to differ from Windows.
+    private const double ButtonWidth = 108;
     private const double ButtonHeight = 40;
-    private static readonly Thickness ItemMargin = new(0, 0, 8, 8);
+    private static readonly Thickness ItemMargin = new(0, 0, 4, 8);
+    private static readonly Thickness ButtonPadding = new(4, 0);
 
     private MacroViewModel? _macroViewModel;
 
@@ -83,6 +88,7 @@ public partial class MacroGridView : UserControl
                 Height = ButtonHeight,
                 FontSize = Resource("DetailFontSizeLarge", 22),
                 CornerRadius = new CornerRadius(6),
+                Padding = ButtonPadding,
                 Margin = ItemMargin,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center

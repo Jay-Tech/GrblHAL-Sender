@@ -282,17 +282,17 @@
 	</Style>
 
 	<Style Selector="Label.metric">
-		<Setter Property="Content" Value= "Display:Metric"/>
+		<Setter Property="Content" Value= "Display:mm"/>
 	</Style>
 	<Style Selector="Label.imperial">
-		<Setter Property="Content" Value="Display:Imperial"/>
+		<Setter Property="Content" Value="Display:in"/>
 	</Style>
 
 	<Style Selector="Label.machineMetric">
-		<Setter Property="Content" Value= "Machine:Metric"/>
+		<Setter Property="Content" Value= "Machine:mm"/>
 	</Style>
 	<Style Selector="Label.machineImperial">
-		<Setter Property="Content" Value="Machine:Imperial"/>
+		<Setter Property="Content" Value="Machine:in"/>
 	</Style>
 
 </Styles>
