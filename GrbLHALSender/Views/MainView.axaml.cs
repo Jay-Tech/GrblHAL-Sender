@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using GrbLHALSender.ViewModels;
 using System;
@@ -15,15 +14,6 @@ namespace GrbLHALSender.Views;
 public partial class MainView : UserControl
 {
     private MainViewModel _viewModel;
-    private DispatcherTimer? _longPressTimer;
-    private bool _longPressTriggered;
-    private Flyout? _connectionFlyout;
-
-    // Jog press-and-hold state
-    private DispatcherTimer? _jogHoldTimer;
-    private bool _jogHoldActive;
-    private string? _jogHoldAxis;
-    private bool _jogHoldPositive;
 
     // Virtual keyboard — overlay panel inside this window, single VM instance
     private readonly VirtualKeyboardViewModel _keyboardViewModel = new();
@@ -32,19 +22,6 @@ public partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
-
-        // Create the flyout programmatically — NOT on the Button.Flyout property
-        // so it does NOT auto-show on every click
-        var connectionSettingsView = new ConnectionSettingsView();
-        _connectionFlyout = new Flyout
-        {
-            Placement = PlacementMode.BottomEdgeAlignedLeft,
-            Content = connectionSettingsView
-        };
-
-        // Set up long-press on Connect button
-        ConnectButton.AddHandler(PointerPressedEvent, ConnectButton_PointerPressed, handledEventsToo: true);
-        ConnectButton.AddHandler(PointerReleasedEvent, ConnectButton_PointerReleased, handledEventsToo: true);
 
         // Global handler: double-tap on any TextBox opens the virtual keyboard
         // Must use handledEventsToo: true because TextBox handles DoubleTapped internally (word select)
@@ -71,36 +48,10 @@ public partial class MainView : UserControl
         // by default, so give it its own VM, and let ✕ hide the panel.
         KeyboardOverlay.DataContext = _keyboardViewModel;
         _keyboardViewModel.CloseAction = () => KeyboardOverlay.IsVisible = false;
-
-        // Set up press-and-hold for continuous jog on all jog buttons
-        SetupJogButton(XDown, "X", false);
-        SetupJogButton(Xup, "X", true);
-        SetupJogButton(YUp, "Y", true);
-        SetupJogButton(YDown, "Y", false);
-        SetupJogButton(ZUp, "Z", true);
-        SetupJogButton(ZDown, "Z", false);
-
-        // Touch can leave :pressed/:pointerover stuck on aux output buttons
-        // (no pointer-leave event after a finger lifts), which masks their
-        // state styling. Clear both when the pointer really has gone away.
-        AuxOutputRepeater.AddHandler(PointerReleasedEvent,
-            (_, e) => ClearStuckTouchState(e.Source), RoutingStrategies.Tunnel, handledEventsToo: true);
-        AuxOutputRepeater.AddHandler(PointerCaptureLostEvent,
-            (_, e) => ClearStuckTouchState(e.Source), RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
     private static void OnContextRequested(object? sender, ContextRequestedEventArgs e) =>
         e.Handled = true;
-
-    private static void ClearStuckTouchState(object? source)
-    {
-        if (source is not Visual v) return;
-        var button = v as Button ?? v.FindAncestorOfType<Button>();
-        if (button == null) return;
-        var pseudo = (IPseudoClasses)button.Classes;
-        pseudo.Set(":pressed", false);
-        pseudo.Set(":pointerover", false);
-    }
 
     IDisposable? _selectFilesInteractionDisposable;
 
@@ -113,50 +64,8 @@ public partial class MainView : UserControl
             _viewModel = vm;
             _selectFilesInteractionDisposable =
                 vm.JobViewModel.SelectFilesInteraction.RegisterHandler(InteractionHandler);
-            _viewModel?.ConnectionViewModel?.OnCloseRequested += OnCloseRequested;
-
-            // Bind the flyout's ConnectionSettingsView to the ConnectionViewModel
-            if (_connectionFlyout?.Content is ConnectionSettingsView csv)
-                csv.DataContext = vm.ConnectionViewModel;
         }
         base.OnDataContextChanged(e);
-    }
-
-    private void ConnectButton_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        _longPressTriggered = false;
-
-        _longPressTimer?.Stop();
-        _longPressTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(500)
-        };
-        _longPressTimer.Tick += (_, _) =>
-        {
-            _longPressTimer.Stop();
-            _longPressTriggered = true;
-
-            // Show the connection settings flyout
-            _connectionFlyout?.ShowAt(ConnectButton);
-        };
-        _longPressTimer.Start();
-    }
-
-    private void ConnectButton_PointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        _longPressTimer?.Stop();
-
-        if (_longPressTriggered)
-        {
-            // Long-press was triggered — flyout is open, don't fire ConnectCommand
-            e.Handled = true;
-        }
-    }
-
-    private void OnCloseRequested()
-    {
-        // Hide the flyout
-        _connectionFlyout?.Hide();
     }
 
     public void OnGlobalDoubleTapped(object? sender, TappedEventArgs e)
@@ -203,63 +112,6 @@ public partial class MainView : UserControl
         if (textBox == null) return null;
 
         return textBox.FindAncestorOfType<VirtualKeyboardView>() != null ? null : textBox;
-    }
-
-    private void SetupJogButton(Button button, string axis, bool positive)
-    {
-        button.AddHandler(PointerPressedEvent, (_, e) => JogButton_PointerPressed(axis, positive), RoutingStrategies.Tunnel);
-        button.AddHandler(PointerReleasedEvent, (_, e) => JogButton_PointerReleased(e), RoutingStrategies.Tunnel);
-        button.AddHandler(PointerCaptureLostEvent, (_, _) => JogButton_CaptureLost(), RoutingStrategies.Tunnel);
-    }
-
-    private void JogButton_PointerPressed(string axis, bool positive)
-    {
-        _jogHoldActive = false;
-        _jogHoldAxis = axis;
-        _jogHoldPositive = positive;
-
-        _jogHoldTimer?.Stop();
-        _jogHoldTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
-        _jogHoldTimer.Tick += (_, _) =>
-        {
-            _jogHoldTimer!.Stop();
-            _jogHoldActive = true;
-
-            if (_jogHoldPositive)
-                _viewModel?.JogContinuousPos(_jogHoldAxis!);
-            else
-                _viewModel?.JogContinuousNeg(_jogHoldAxis!);
-        };
-        _jogHoldTimer.Start();
-    }
-
-    private void JogButton_PointerReleased(PointerReleasedEventArgs e)
-    {
-        _jogHoldTimer?.Stop();
-
-        if (_jogHoldActive)
-        {
-            _viewModel?.JogCancel();
-            _jogHoldActive = false;
-            e.Handled = true;
-        }
-    }
-
-    private void JogButton_CaptureLost()
-    {
-        _jogHoldTimer?.Stop();
-
-        if (_jogHoldActive)
-        {
-            _viewModel?.JogCancel();
-            _jogHoldActive = false;
-        }
-    }
-
-    private void ToolLb_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        e.Handled = true;
-        SplitB.Flyout?.Hide();
     }
 
     private async Task<IReadOnlyList<IStorageFile>?> InteractionHandler(string input)

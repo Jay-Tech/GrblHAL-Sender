@@ -2,6 +2,7 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 x:Class="GrbLHALSender.App"
 			 RequestedThemeVariant="Dark"
+			 xmlns:convertors="clr-namespace:GrbLHALSender.Convertors"
 			 xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
 			 xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
@@ -15,6 +16,12 @@
 		     Only theme-independent values belong in this block. -->
 
 		<FontFamily x:Key="MonoFontFamily">Cascadia Mono,Consolas,Menlo,DejaVu Sans Mono,monospace</FontFamily>
+
+		<!-- Declared app-wide, not on a view. A StaticResource is resolved while the
+		     control is being constructed, before it is attached to a parent, so a view
+		     that is built as a component cannot see a converter held by its eventual
+		     host. Only an application-level key is reachable from anywhere. -->
+		<convertors:EnumMatch x:Key="EnumMatch"/>
 
 		<sys:Double x:Key="TinyFontSize">12</sys:Double>
 		<sys:Double x:Key="SmallFontSize">18</sys:Double>

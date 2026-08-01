@@ -39,14 +39,25 @@ public partial class MainWindow : Window
             layerManager.EnableTextSelectorLayer = false;
     }
 
+    /// <summary>The canvas every view is authored against. The whole app is scaled to fit the window.</summary>
+    private const double DesignWidth = 1920;
+    private const double DesignHeight = 1080;
+
+    /// <summary>
+    /// Scales the design canvas to fit the window, uniformly on both axes so nothing is distorted.
+    /// <para>
+    /// The smaller of the two ratios is used, which letterboxes a window that is not the design
+    /// aspect ratio rather than stretching to fill it.
+    /// </para>
+    /// </summary>
     private void Control_OnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        double xScale = e.NewSize.Height / 1080;
-        double yScale = e.NewSize.Width / 1920;
-        var diff = Math.Abs(xScale - yScale) / 2;
-        double value = Math.Min(xScale, yScale);
-        var s = (double)OnCoerceScaleValue(value);
-        TransformControl.LayoutTransform = new ScaleTransform(xScale, value);
+        if (e.NewSize.Width <= 0 || e.NewSize.Height <= 0)
+            return;
+
+        double scale = OnCoerceScaleValue(Math.Min(e.NewSize.Width / DesignWidth,
+                                                   e.NewSize.Height / DesignHeight));
+        TransformControl.LayoutTransform = new ScaleTransform(scale, scale);
     }
 
     private double OnCoerceScaleValue(double value)

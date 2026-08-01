@@ -1,0 +1,183 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             xmlns:views="clr-namespace:GrbLHALSender.Views"
+             mc:Ignorable="d"
+             d:DesignWidth="300" d:DesignHeight="1035"
+             x:Class="GrbLHALSender.Views.DroPanelView"
+             x:DataType="viewModels:MainViewModel">
+
+	<!-- Home, DRO readouts, WCS selection and MDI.
+	     Placement and sizing (Grid.Column, Margin, Min/MaxWidth) belong to whichever
+	     canvas hosts this, not here, so landscape and portrait can arrange it
+	     differently without forking the contents. -->
+	<Grid RowDefinitions="Auto,Auto,Auto,Auto,*"  IsEnabled="{Binding !JobViewModel.JobRunning}">
+		<Grid Grid.ColumnDefinitions="*,Auto" >
+			<Button Grid.Column="0"
+					FontSize="{DynamicResource BaseFontSize}"
+					CornerRadius="6,0,0,6"
+					Height="40"
+					Content="Home All"
+					HorizontalContentAlignment="Center"
+					VerticalContentAlignment="Center"
+					VerticalAlignment="Center"
+					HorizontalAlignment="Stretch"
+					Command="{Binding HomeCommand}"/>
+			<Label Grid.Column="1" Grid.Row="0"
+				   Classes.active="{Binding HomeState}"
+				   Classes.inactive="{Binding !HomeState, FallbackValue=true}"
+				   HorizontalContentAlignment="Center"
+				   VerticalContentAlignment="Center"
+				   HorizontalAlignment="Center"
+				   VerticalAlignment="Center"
+				   CornerRadius="0,3,3,0"
+				   Width="10"
+				   Height="40">
+			</Label>
+		</Grid>
+		<!--END Home Control -->
+
+		<!--START DRO Control -->
+		<ItemsControl Grid.Row="1"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      ItemsSource="{Binding AxisCollection}">
+			<ItemsControl.ItemTemplate>
+				<DataTemplate>
+					<Grid HorizontalAlignment="Stretch" ColumnDefinitions="Auto,*,Auto"
+								VerticalAlignment="Stretch">
+						<TextBlock Grid.Row="0" Text="{Binding Name}"
+								   HorizontalAlignment="Stretch"
+								   VerticalAlignment="Stretch"
+								   FontSize="35"
+								   Margin="2,0,2,0"></TextBlock>
+						<Border Grid.Column="1" BorderThickness="1" >
+							<StackPanel>
+								<Grid ColumnDefinitions="*,Auto">
+									<Label Grid.Row="0"  x:Name="WcoLabel"
+                                           Focusable="False"
+										   Content="{Binding Path=Position.Wco,StringFormat=F3}"
+										   FontSize="32"
+                                           MinWidth="175"
+                                           Height="45"
+										   VerticalContentAlignment="Center"
+										   HorizontalContentAlignment="Left"
+										   HorizontalAlignment ="Stretch"
+										   VerticalAlignment="Stretch"/>
+									<TextBlock Grid.Column="1"
+											   Text="{Binding $parent[ItemsControl].((viewModels:MainViewModel)DataContext).UnitText}"
+											   FontSize="18"
+											   VerticalAlignment="Center"
+											   HorizontalAlignment="Right"
+											   Opacity="0.6" />
+								</Grid>
+								<Label  Focusable="False"
+										Content="{Binding Path=Position.MPos,StringFormat=F3}"
+										FontSize="18" MinWidth="175" Height="25"
+										VerticalContentAlignment="Center"
+										HorizontalContentAlignment="Left"
+										HorizontalAlignment ="Stretch"
+										Margin="5,0,0,0"
+										VerticalAlignment="Stretch"/>
+							</StackPanel>
+						</Border>
+						<Button Grid.Column="2"  Name ="{Binding Name}"
+								 CornerRadius="6"
+								 Content="{Binding Name,
+								 StringFormat={}{0}0}"
+								 FontSize="{DynamicResource BaseFontSize}"
+								 Height="60"
+								 HorizontalAlignment="Right"
+								 HorizontalContentAlignment="Center"
+								 VerticalAlignment="Stretch"
+								 VerticalContentAlignment="Center"
+								 Margin="2,2,0,2"
+								 Width="55" Focusable="False"
+								 Command="{Binding ZeroWcsCommand}"
+								 CommandParameter="{Binding Name}"></Button>
+					</Grid>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+		<Button Grid.Row="2"
+				FontSize="{DynamicResource BaseFontSize}"
+				Content="Zero All"
+				Height="40"
+				HorizontalContentAlignment="Center"
+				VerticalContentAlignment="Center"
+				HorizontalAlignment="Stretch"
+				Command="{Binding ZeroAllCommand}" />
+		<!-- END  DRO Control-->
+
+		<!-- START WCS Control-->
+		<Grid Grid.Row="3"
+			  Margin="0,2"
+			  RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+			<Label Grid.Row="0"  Content="WCS"
+				   HorizontalContentAlignment="Center"
+				   FontSize="{DynamicResource DetailFontSize}"
+				   VerticalContentAlignment="Center"
+				   HorizontalAlignment ="Stretch"
+				   VerticalAlignment="Stretch"
+				   Height="30"></Label>
+			<Button Grid.Row="1"
+					CornerRadius="6"
+					HorizontalContentAlignment="Center"
+					VerticalContentAlignment="Center"
+					FontSize="{DynamicResource BaseFontSize}"
+					Margin="0,2"
+					Content="G54" Height="50"
+					HorizontalAlignment ="Stretch"
+					VerticalAlignment="Stretch"
+					Command="{Binding WcsCommand}"
+					CommandParameter="G54"></Button>
+			<Button Grid.Row="2"
+					CornerRadius="6"
+					FontSize="{DynamicResource BaseFontSize}"
+					Margin="0,2" Content="G55"
+					HorizontalContentAlignment="Center"
+					VerticalContentAlignment="Center"
+					HorizontalAlignment ="Stretch"
+					VerticalAlignment="Stretch"
+					Height="50"
+					Command="{Binding WcsCommand}"
+					CommandParameter="G55"></Button>
+			<Button Grid.Row="3"
+					CornerRadius="6"
+					FontSize="{DynamicResource BaseFontSize}"
+					Margin="0,2"
+					Content="G56"
+					HorizontalContentAlignment="Center"
+					VerticalContentAlignment="Center"
+					HorizontalAlignment ="Stretch"
+					VerticalAlignment="Stretch"  Height="50"
+					Command="{Binding WcsCommand}"
+					CommandParameter="G56"></Button>
+			<Button Grid.Row="4"
+					CornerRadius="6"
+					FontSize="{DynamicResource BaseFontSize}" Margin="0,2"
+					Content="G57"
+					HorizontalContentAlignment="Center"
+					VerticalContentAlignment="Center"
+					HorizontalAlignment ="Stretch"
+					VerticalAlignment="Stretch"
+					Height="50"
+					Command="{Binding WcsCommand}"
+					CommandParameter="G57"></Button>
+		</Grid>
+		<!--END WCS Control -->
+
+		<!--START MDI Control-->
+		<!--IsEnabled lives on this wrapper, not on MdiView itself: MdiView
+		    re-points DataContext at the MdiViewModel, so a binding there
+		    could not see CanUseMdi on the MainViewModel.-->
+		<Grid Grid.Row="4" IsEnabled="{Binding CanUseMdi}"
+			  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+			<views:MdiView HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+						   DataContext="{Binding MdiViewModel}"></views:MdiView>
+		</Grid>
+		<!--END MDI Control-->
+	</Grid>
+</UserControl>
