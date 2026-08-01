@@ -73,7 +73,15 @@ public partial class GpioOutputConfig : ObservableObject
     /// </summary>
     [ObservableProperty] private bool _activeHigh = true;
 
-    [ObservableProperty] private GpioFollowSource _follow = GpioFollowSource.None;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FollowsSpindle))]
+    [NotifyPropertyChangedFor(nameof(HasFollow))]
+    private GpioFollowSource _follow = GpioFollowSource.None;
+
+    /// <summary>Gates the editor fields that only mean something for a given source.</summary>
+    [JsonIgnore] public bool FollowsSpindle => Follow == GpioFollowSource.Spindle;
+
+    [JsonIgnore] public bool HasFollow => Follow != GpioFollowSource.None;
 
     /// <summary>
     /// Spindle speed at or above which <see cref="GpioFollowSource.Spindle"/> counts as

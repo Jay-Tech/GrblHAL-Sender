@@ -511,6 +511,12 @@ public class GpioOutputTests
         Assert.Contains("\"Spindle\"", json);
         Assert.Contains("\"Auto\"", json);
 
+        // The editor-gating properties are computed from Follow. System.Text.Json
+        // serialises getter-only properties by default, so without [JsonIgnore] they would
+        // land in a hand-editable config file as settings that do nothing.
+        Assert.DoesNotContain("FollowsSpindle", json);
+        Assert.DoesNotContain("HasFollow", json);
+
         var restored = System.Text.Json.JsonSerializer.Deserialize<GpioConfig>(json);
 
         Assert.NotNull(restored);

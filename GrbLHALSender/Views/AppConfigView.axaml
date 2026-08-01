@@ -1005,17 +1005,21 @@
 														  VerticalAlignment="Center"
 														  HorizontalAlignment="Stretch"
 														  ToolTip.Tip="What the Auto mode tracks. Spindle uses the controller's A: field."/>
+												<!-- Greyed rather than hidden when it does not apply, matching how
+												     the probe panel handles fields a cycle does not read. -->
 												<TextBox Grid.Column="4"
 														 Text="{Binding MinSpindleRpm}"
 														 FontSize="16"
 														 Margin="0,0,4,0"
 														 VerticalAlignment="Center"
+														 IsEnabled="{Binding FollowsSpindle}"
 														 ToolTip.Tip="Only used when Follows is Spindle. Spindle speed at or above which this counts as running; 0 means any spindle-on state. Set it above your ATC's tool-change speed so swapping a holder does not trigger the output."/>
 												<TextBox Grid.Column="5"
 														 Text="{Binding OffDelaySeconds}"
 														 FontSize="16"
 														 Margin="0,0,4,0"
 														 VerticalAlignment="Center"
+														 IsEnabled="{Binding HasFollow}"
 														 ToolTip.Tip="Only used when Follows is set. Seconds to stay on after the source goes inactive — clears the hose and stops a contactor cycling on every tool change"/>
 												<Button Grid.Column="6"
 														Content="Remove"
