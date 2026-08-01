@@ -21,7 +21,7 @@
 		including an active alarm comes to about 1050. Auto also collapses each label to
 		nothing while disconnected, since they are all bound to Connected. The star
 		spacer keeps alarm and unlock hard right. -->
-		<Grid Grid.Row="0" ColumnDefinitions="Auto,100,225,250,*,Auto,Auto">
+		<Grid Grid.Row="0" ColumnDefinitions="Auto,100,*,125,Auto,Auto">
 			<StackPanel Grid.Column="0" Orientation="Horizontal">
 				<Button  Margin="3,0,0,0"
 						 HorizontalAlignment="Left"
@@ -50,26 +50,35 @@
                    VerticalAlignment="Center"
                    Content="{Binding GrblHalState}" />
 
-            <Label Grid.Column="2"
-                   FontSize="{DynamicResource BaseFontSize}"
-                   Margin="0,0,0,0"
-                   VerticalAlignment="Center"
-                   Classes.metric="{Binding UseMetric}"
-                   Classes.imperial="{Binding !UseMetric}"
-                   HorizontalAlignment="Left" x:Name="DisplayUnitLabel"
-                   IsVisible="{Binding Connected}">
-            </Label>
-            <Label Grid.Column="3"
-                   FontSize="{DynamicResource BaseFontSize}"
-                   Margin="0,0,0,0"
-                   VerticalAlignment="Center"
-                   Classes.machineMetric="{Binding MachineSettings.ReportInMetric}"
-                   Classes.machineImperial="{Binding !MachineSettings.ReportInMetric}"
-                   HorizontalAlignment="Left" x:Name="MachineUnitLabel"
-                   IsVisible="{Binding Connected}">
-            </Label>
+            <ItemsRepeater Grid.Column="2"
+                           IsVisible="{Binding Connected}"
+                           ClipToBounds="True"
+                           Margin="0,0,57.5,0"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Stretch"
+                           ItemsSource="{Binding SignalList}">
+                <ItemsRepeater.Layout>
+                    <StackLayout Orientation="Horizontal" Spacing="3"/>
+                </ItemsRepeater.Layout >
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate>
+                        <Label Classes="led"
+                               Classes.triggered="{Binding Triggered}"
+                               VerticalAlignment="Center"
+                               ClipToBounds="True"
+                               VerticalContentAlignment="Center"
+                               HorizontalAlignment="Center"
+                               CornerRadius="45"
+                               HorizontalContentAlignment="Center"
+                               Margin="3 0"
+                               Height="30" Width="30" FontWeight="Bold"
+                               FontSize="{DynamicResource DetailFontSize}"
+                               Content="{Binding Path=Id }"/>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
 
-			<Button Grid.Column="4"
+			<Button Grid.Column="3"
 					x:Name="AlButton"
 					IsVisible="{Binding AlarmActive}"
 					Height="40"
@@ -85,7 +94,7 @@
 					Classes="danger">
 			</Button>
 
-			<Button Grid.Column="5"
+			<Button Grid.Column="4"
 					Height="40"
 					Content="Unlock"
 					FontSize="{DynamicResource BaseFontSize}"
@@ -97,7 +106,7 @@
 					Command="{Binding UnLockCommand}"
 					Width="115" />
 			
-            <Button Grid.Column="6"
+            <Button Grid.Column="5"
                     Height="40"
                     Content="Close"
                     IsVisible="{Binding IsFullScreen}"
@@ -110,7 +119,6 @@
                     HorizontalContentAlignment="Center"
                     Command="{Binding CloseCommand}"
                     Width="115" />
-
 		</Grid>
 
 		<!-- Row 1: units, then the signal LEDs.
@@ -119,25 +127,40 @@
 		eight signals a bench setup shows: the list unions the axes, the H/S/R/E
 		defaults, probe, and whatever the firmware's SIGNALS line adds, with no cap.
 		Shortening the unit labels to in/mm bought about 125px of it. -->
-		<Grid Grid.Row="1" ColumnDefinitions="150,150,150,175,*">
-            
+		<Grid Grid.Row="1" ColumnDefinitions="225,225,145,120,150,*">
             <Label Grid.Column="0"
+                   x:Name="DisplayUnitLabel"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   Margin="5,0,0,0"
+                   HorizontalAlignment="Left" 
+                   VerticalAlignment="Center"
+                   Classes.metric="{Binding UseMetric}"
+                   Classes.imperial="{Binding !UseMetric}"
+                   IsVisible="{Binding Connected}"/>
+            <Label Grid.Column="1"
+                   x:Name="MachineUnitLabel"
+                   FontSize="{DynamicResource BaseFontSize}"
+                   Margin="0"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Classes.machineMetric="{Binding MachineSettings.ReportInMetric}"
+                   Classes.machineImperial="{Binding !MachineSettings.ReportInMetric}"
+                   IsVisible="{Binding Connected}"/>
+            <Label Grid.Column="2"
                    FontSize="{DynamicResource BaseFontSize}"
                    Margin="3,0,0,0"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Left"
                    Content="{Binding WcsDisplay, StringFormat={}WCS:{0}}"
                    IsVisible="{Binding Connected}"/>
-			
-            <Label Grid.Column="1"
+            <Label Grid.Column="3"
                    FontSize="{DynamicResource BaseFontSize}"
                    Margin="0"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Left"
                    Content="{Binding ToolDisplay, StringFormat={}Tool:{0}}"
                    IsVisible="{Binding Connected}"/>
-
-            <Label Grid.Column="2"
+            <Label Grid.Column="4"
                    x:Name="JogStepLabel"
                    FontSize="{DynamicResource BaseFontSize}"
                    MinWidth="130"
@@ -146,8 +169,7 @@
                    HorizontalAlignment="Left"
                    Content="{Binding JogStep, StringFormat={}Step:{0}}"
                    IsVisible="{Binding Connected}"/>
-           
-            <Label Grid.Column="3"
+            <Label Grid.Column="5"
                    x:Name="JogFeedLabel"
                    FontSize="{DynamicResource BaseFontSize}"
                    MinWidth="150"
@@ -156,34 +178,6 @@
                    HorizontalAlignment="Left"
                    Content="{Binding JogRate, StringFormat={}Feed:{0}}"
                    IsVisible="{Binding Connected}"/>
-			
-            <ItemsRepeater Grid.Column="4"
-                           IsVisible="{Binding Connected}"
-                           ClipToBounds="True"
-                           HorizontalAlignment="Left"
-                           Margin="10,0"
-                           VerticalAlignment="Stretch"
-                           ItemsSource="{Binding SignalList}">
-				<ItemsRepeater.Layout>
-					<StackLayout Orientation="Horizontal" Spacing="3"/>
-				</ItemsRepeater.Layout >
-				<ItemsRepeater.ItemTemplate>
-					<DataTemplate>
-						<Label Classes="led"
-							   Classes.triggered="{Binding Triggered}"
-							   VerticalAlignment="Center"
-							   ClipToBounds="True"
-							   VerticalContentAlignment="Center"
-							   HorizontalAlignment="Center"
-							   CornerRadius="45"
-							   HorizontalContentAlignment="Center"
-							   Margin="3 0"
-							   Height="30" Width="30" FontWeight="Bold"
-							   FontSize="{DynamicResource DetailFontSize}"
-							   Content="{Binding Path=Id }"/>
-					</DataTemplate>
-				</ItemsRepeater.ItemTemplate>
-			</ItemsRepeater>
 		</Grid>
 	</Grid>
 </UserControl>
