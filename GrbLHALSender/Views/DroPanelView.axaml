@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -112,61 +112,7 @@
 		<!-- END  DRO Control-->
 
 		<!-- START WCS Control-->
-		<Grid Grid.Row="3"
-			  Margin="0,2"
-			  RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-			<Label Grid.Row="0"  Content="WCS"
-				   HorizontalContentAlignment="Center"
-				   FontSize="{DynamicResource DetailFontSize}"
-				   VerticalContentAlignment="Center"
-				   HorizontalAlignment ="Stretch"
-				   VerticalAlignment="Stretch"
-				   Height="30"></Label>
-			<Button Grid.Row="1"
-					CornerRadius="6"
-					HorizontalContentAlignment="Center"
-					VerticalContentAlignment="Center"
-					FontSize="{DynamicResource BaseFontSize}"
-					Margin="0,2"
-					Content="G54" Height="50"
-					HorizontalAlignment ="Stretch"
-					VerticalAlignment="Stretch"
-					Command="{Binding WcsCommand}"
-					CommandParameter="G54"></Button>
-			<Button Grid.Row="2"
-					CornerRadius="6"
-					FontSize="{DynamicResource BaseFontSize}"
-					Margin="0,2" Content="G55"
-					HorizontalContentAlignment="Center"
-					VerticalContentAlignment="Center"
-					HorizontalAlignment ="Stretch"
-					VerticalAlignment="Stretch"
-					Height="50"
-					Command="{Binding WcsCommand}"
-					CommandParameter="G55"></Button>
-			<Button Grid.Row="3"
-					CornerRadius="6"
-					FontSize="{DynamicResource BaseFontSize}"
-					Margin="0,2"
-					Content="G56"
-					HorizontalContentAlignment="Center"
-					VerticalContentAlignment="Center"
-					HorizontalAlignment ="Stretch"
-					VerticalAlignment="Stretch"  Height="50"
-					Command="{Binding WcsCommand}"
-					CommandParameter="G56"></Button>
-			<Button Grid.Row="4"
-					CornerRadius="6"
-					FontSize="{DynamicResource BaseFontSize}" Margin="0,2"
-					Content="G57"
-					HorizontalContentAlignment="Center"
-					VerticalContentAlignment="Center"
-					HorizontalAlignment ="Stretch"
-					VerticalAlignment="Stretch"
-					Height="50"
-					Command="{Binding WcsCommand}"
-					CommandParameter="G57"></Button>
-		</Grid>
+		<views:WcsPanelView Grid.Row="3" x:Name="WcsSection" />
 		<!--END WCS Control -->
 
 		<!--START MDI Control-->

@@ -37,18 +37,16 @@ public partial class DialogButtonView : UserControl
     }
 
     /// <summary>
-    /// Gets the MainViewModel from the parent MainView's DataContext.
+    /// Gets the MainViewModel from the hosting canvas's DataContext.
     /// </summary>
-    private MainViewModel? GetMainViewModel()
-    {
-        var mainView = this.FindAncestorOfType<MainView>();
-        return mainView?.DataContext as MainViewModel;
-    }
+    private MainViewModel? GetMainViewModel() => (GetCanvas() as Control)?.DataContext as MainViewModel;
 
     /// <summary>
-    /// Gets the parent MainView instance.
+    /// The root canvas hosting this view — <see cref="MainView"/> in landscape,
+    /// <see cref="MainPortraitView"/> in portrait. Matched by interface rather than by concrete
+    /// type: searching for one of them left every dialog silently doing nothing on the other.
     /// </summary>
-    private MainView? GetMainView() => this.FindAncestorOfType<MainView>();
+    private IDialogCanvas? GetCanvas() => this.FindAncestorOfType<IDialogCanvas>();
 
     private (Control content, double width, double height) CreateDialogContent(DialogType dialogType)
     {
@@ -130,26 +128,26 @@ public partial class DialogButtonView : UserControl
 
     private void OnCloseDialogRequested(DialogType dialogType)
     {
-        var mainView = GetMainView();
-        if (mainView == null) return;
+        var canvas = GetCanvas();
+        if (canvas == null) return;
 
         // CloseHost runs the dialog's onClosed callback, which handles
         // MarkDialogClosed and any per-dialog cleanup/save side effects.
-        var host = dialogType == DialogType.Console ? mainView.ConsoleHost : mainView.DialogHost;
+        var host = dialogType == DialogType.Console ? canvas.ConsoleDialogHost : canvas.ToolDialogHost;
         host.CloseHost();
     }
 
     private void OnOpenDialogRequested(DialogType dialogType)
     {
-        var mainView = GetMainView();
-        if (mainView == null) return;
+        var canvas = GetCanvas();
+        if (canvas == null) return;
 
         var (content, width, height) = CreateDialogContent(dialogType);
 
         // Console gets its own host so it can stay open for monitoring while
         // a tool dialog (probe, macro, ...) is up. Everything else shares the
         // single-slot host: opening one closes whichever was open.
-        var host = dialogType == DialogType.Console ? mainView.ConsoleHost : mainView.DialogHost;
+        var host = dialogType == DialogType.Console ? canvas.ConsoleDialogHost : canvas.ToolDialogHost;
 
         // Wire up CloseAction for any dialog whose ViewModel implements IDialogCloseable
         if (content.DataContext is IDialogCloseable closeable)

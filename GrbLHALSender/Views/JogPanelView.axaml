@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:behaviors="clr-namespace:GrbLHALSender.Behaviors"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -16,7 +16,7 @@
 	<Grid  x:Name="Grid"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
 		   HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 		<Grid  x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
-			   VerticalAlignment="Stretch" ColumnDefinitions="80,80,80,80">
+			   VerticalAlignment="Stretch" ColumnDefinitions="*,*,*,*">
 			<Label Grid.Column="0"
 				   FontSize="24"
 				   Content="Feed"
@@ -141,7 +141,7 @@
 			  Margin="0,20,0,0"
 			  HorizontalAlignment="Stretch"
 			  VerticalAlignment="Stretch"
-			  ColumnDefinitions="80,80,80,80">
+			  ColumnDefinitions="*,*,*,*">
 			<Label Grid.Column="0"
 				   FontSize="24"
 				   Content="Step"
@@ -307,97 +307,7 @@
 		<!--END Tool Control-->
 
 		<!--START Spindle Control-->
-		<Grid Grid.Row="4" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" 
-                          Grid.ColumnDefinitions="*,*">
-			
-                        <Label Grid.Row="0" Grid.Column="0"
-                               Content="Spindle"
-                               Margin="0,5,0,0"
-                               Grid.ColumnSpan="2"
-                               HorizontalContentAlignment="Center"
-                               VerticalContentAlignment="Center"
-                               FontSize="{DynamicResource DetailFontSize}" />
-			<!-- Buttons, not RadioButtons: a RadioButton checks itself on click,
-			     so it would light up on a command the controller went on to
-			     refuse. These carry no state of their own — the highlight comes
-			     from the reported SpindleDirection via Classes.active. -->
-			<Button Classes="touch stateToggle" Grid.Column="0" Grid.Row="1"
-					Classes.active="{Binding SpindleDirection,
-						Converter={StaticResource EnumMatch}, ConverterParameter=CW}"
-					Content="CW"
-					Margin="5,5,5,0"
-					Command="{Binding SpindleCWCommand}"/>
-			<Button Classes="touch stateToggle" Grid.Column="1" Grid.Row="1"
-					Classes.active="{Binding SpindleDirection,
-						Converter={StaticResource EnumMatch}, ConverterParameter=CCW}"
-					Content="CCW"
-					Margin="5,5,5,0"
-					Command="{Binding SpindleCCWCommand}"/>
-			<Button Classes="touch stateToggle" Grid.Column="0"
-					Grid.Row="2"
-					Grid.ColumnSpan="2"
-					Margin="5,10,5,0"
-					Classes.active="{Binding SpindleDirection,
-						Converter={StaticResource EnumMatch}, ConverterParameter=Off}"
-					Content="Spindle Off"
-					Command="{Binding SpindleOffCommand}" />
-
-			<views:TouchNumericUpDown Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
-						   FontSize="24"
-						   MinHeight="48"
-						   Margin="5,10,10,0"
-						   Increment="100"
-						   FormatString="0"
-						   Value="{Binding SpindleSetRpm, FallbackValue=1000}"
-						   Minimum="0" Maximum="30000"/>
-			
-                        <TextBlock  Grid.Row="4" Grid.Column="1"
-                                    Text="{Binding ActualRpm, StringFormat={}RPM:{0}, FallbackValue=0}"
-                                    Margin="3,10,3,0"
-                                    TextAlignment="Left"
-                                    FontSize="{DynamicResource DetailFontSizeLarge}" 
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center"  />
-                       
-                        <Button Classes="touch" Grid.Row="4" Grid.Column="0"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                Content="Set Speed"
-                                Margin="5,10,5,0"
-                                Command="{Binding SpindleSetSpeedCommand }"/>
-			
-                        <Grid  Grid.Row="5"  Grid.Column="0" Grid.ColumnSpan="2" 
-                               HorizontalAlignment="Stretch"
-                               VerticalAlignment="Center" 
-                               ColumnDefinitions="*,*,*,*">
-				
-                            <Button Classes="touch" Grid.Column="0"
-                                    Content="{icons:MaterialIconExt Kind=PlusThick,  IconSize=50}"
-                                    Margin="5,10,5,0"
-                                    Command="{Binding SpindleIncreaseCommand}" />
-				<Button Classes="touch" Grid.Column="1"
-						Content="{icons:MaterialIconExt Kind=MinusThick,  IconSize=45}"
-						VerticalAlignment="Center"
-						Margin="5,10,5,0"
-						Command="{Binding SpindleDecreaseCommand}" />
-                            <Button Grid.Column="2"
-                                    CornerRadius="6,6,6,6"
-                                    Height="40"
-                                    Content="{icons:MaterialIconExt Kind=Cached,  IconSize=40}"
-                                    Margin="5,10,0,0"
-                                    Command="{Binding SpindleResetCommand }" />
-                            <TextBlock Grid.Column="3"
-                                       Text="{Binding SpindleOverRide, StringFormat={}%{0}, FallbackValue=0}"
-                                       Margin="5,10,5,0"
-                                       TextAlignment="Left"
-                                       FontSize="{DynamicResource DetailFontSizeLarge}"
-                                       HorizontalAlignment="Left"
-                                       VerticalAlignment="Center"/>	
-			</Grid>
-			
-                     
-
-		</Grid>
+		<views:SpindlePanelView Grid.Row="4" x:Name="SpindleSection" />
 		<!--END Spindle Control-->
 
 		<!--START OverRide Control-->

@@ -1,0 +1,96 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             xmlns:views="clr-namespace:GrbLHALSender.Views"
+			 d:DesignWidth="1080" d:DesignHeight="1920"
+			 x:Class="GrbLHALSender.Views.MainPortraitView"
+			 x:DataType="viewModels:MainViewModel">
+
+	<!-- Portrait canvas: 1080x1920. Arranges the same panels as MainView, stacked instead of
+	     in three columns. The panels' own contents are untouched — both side panels are
+	     authored tall and narrow, which is exactly what a bottom control block wants. -->
+	<!-- 700 for the control block: the jog panel is the tallest thing in it at 684 once the
+	     spindle block moves to the middle column, leaving a little headroom. Every row in that
+	     panel is Auto with no give, so if it ever outgrows this the overrides drop off the
+	     bottom silently rather than scrolling. -->
+	<Grid x:Name="MainGrid" RowDefinitions="90,*,700" Background="{DynamicResource AppBackgroundBrush}">
+
+		<!-- Two 45px rows rather than one: see HeaderPortraitView. -->
+		<Border x:Name="HeaderBorder" Grid.Row="0" BorderThickness="1">
+			<views:HeaderPortraitView />
+		</Border>
+
+		<!-- Tabs and the 3D view take whatever the header and controls leave, ~830px. -->
+		<Border Grid.Row="1">
+			<views:WorkspacePanelView />
+		</Border>
+
+		<!-- Control block. The height is fixed rather than Auto on purpose: DroPanelView's MDI
+		     sits in a star row, and an Auto-height parent would collapse it to nothing. -->
+		<!-- Even thirds rather than the landscape canvas's Auto,*,Auto. There is 1080px for
+		     three panels that only need 295+465+325, so pinning the side panels to their
+		     landscape widths just banked the surplus as gaps. Splitting evenly spends it on
+		     touch targets instead. -->
+		<Grid Grid.Row="2" ColumnDefinitions="*,*,*">
+			<!-- No top margin on either panel here. The landscape canvas offsets both to clear
+			     its header; on this one the control block is a row of its own. No Min/MaxWidth
+			     either — those are landscape's column widths, and they would cap the split. -->
+			<Border Grid.Column="0"
+					IsEnabled="{Binding Connected}"
+					Name="DroBorder"
+					VerticalAlignment="Stretch">
+				<views:DroPanelView ShowWcs="False" />
+			</Border>
+
+			<!-- WCS and spindle are lifted out of the side panels and stacked here. Landscape
+			     keeps them inline; moving them for portrait fills what was 460px of dead space
+			     and shortens both panels, which is what buys the render its extra height. -->
+			<Border Grid.Column="1"
+					IsEnabled="{Binding Connected}"
+					Name="CentreControlBorder"
+					Margin="10,0"
+					VerticalAlignment="Stretch">
+				<!-- Centred, not top-aligned: this column holds less than the jog panel beside
+				     it, and the leftover reads as an intentional inset when it is split top and
+				     bottom rather than left as a hole underneath. -->
+				<Grid RowDefinitions="Auto,Auto" VerticalAlignment="Center">
+					<views:WcsPanelView Grid.Row="0" />
+					<views:SpindlePanelView Grid.Row="1" Margin="0,20,0,0" />
+				</Grid>
+			</Border>
+
+			<Border Grid.Column="2"
+					IsEnabled="{Binding Connected}"
+					Name="JogBorder"
+					VerticalAlignment="Stretch">
+				<views:JogPanelView ShowSpindle="False" />
+			</Border>
+		</Grid>
+
+		<!-- Overlays sit over the workspace rather than the whole canvas, so a dialog never
+		     covers the DRO or the jog pad. Same in-window panel approach as the landscape
+		     canvas — no child windows, so Wayland positioning is never involved. -->
+		<views:DialogHostView x:Name="DialogHost"
+							  Grid.Row="1"
+							  HorizontalAlignment="Center"
+							  VerticalAlignment="Bottom"
+							  Margin="0,0,0,10"
+							  ZIndex="900"/>
+		<views:DialogHostView x:Name="ConsoleHost"
+							  Grid.Row="1"
+							  HorizontalAlignment="Right"
+							  VerticalAlignment="Bottom"
+							  Margin="0,0,15,10"
+							  ZIndex="890"/>
+
+		<views:VirtualKeyboardView x:Name="KeyboardOverlay"
+								   Grid.Row="0" Grid.RowSpan="3"
+								   Width="750"
+								   HorizontalAlignment="Center"
+								   VerticalAlignment="Bottom"
+								   Margin="0,0,0,60"
+								   ZIndex="1000"
+								   IsVisible="False"/>
+	</Grid>
+</UserControl>

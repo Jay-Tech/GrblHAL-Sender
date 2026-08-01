@@ -17,7 +17,10 @@
 							UseLayoutRounding="True"
 							ClipToBounds="True"
 							SizeChanged="Control_OnSizeChanged"  >
-		<views:MainView />
+		<!-- The root view is chosen in code-behind, not declared here: landscape and
+		     portrait are two separately authored canvases and only the one matching the
+		     screen is ever instantiated. See MainWindow.axaml.cs. -->
+		<ContentControl x:Name="CanvasHost" />
 	</LayoutTransformControl>
 </Window>
 

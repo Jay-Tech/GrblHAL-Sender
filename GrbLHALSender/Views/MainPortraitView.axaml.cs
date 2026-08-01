@@ -5,10 +5,11 @@ using System;
 namespace GrbLHALSender.Views;
 
 /// <summary>
-/// The landscape canvas, 1920x1080: header across the top, then DRO, workspace and jog panels
-/// in three columns. <see cref="MainPortraitView"/> arranges the same panels for 1080x1920.
+/// The portrait canvas, 1080x1920: a two-row header, the workspace, then the DRO and jog panels
+/// side by side in a control block along the bottom. <see cref="MainView"/> arranges the same
+/// panels for 1920x1080.
 /// </summary>
-public partial class MainView : UserControl, IDialogCanvas
+public partial class MainPortraitView : UserControl, IDialogCanvas
 {
     private readonly RootCanvasBehaviour _behaviour;
 
@@ -16,7 +17,7 @@ public partial class MainView : UserControl, IDialogCanvas
     DialogHostView IDialogCanvas.ToolDialogHost => DialogHost;
     DialogHostView IDialogCanvas.ConsoleDialogHost => ConsoleHost;
 
-    public MainView()
+    public MainPortraitView()
     {
         InitializeComponent();
         _behaviour = new RootCanvasBehaviour(this, KeyboardOverlay);

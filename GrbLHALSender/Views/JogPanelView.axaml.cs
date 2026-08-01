@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -13,6 +14,20 @@ namespace GrbLHALSender.Views;
 /// </summary>
 public partial class JogPanelView : UserControl
 {
+    /// <summary>
+    /// Whether the spindle block is shown. The portrait canvas turns it off and hosts
+    /// <see cref="SpindlePanelView"/> in its control block instead, which fills the space
+    /// between the two side panels and shortens this one by roughly 300px.
+    /// </summary>
+    public static readonly StyledProperty<bool> ShowSpindleProperty =
+        AvaloniaProperty.Register<JogPanelView, bool>(nameof(ShowSpindle), defaultValue: true);
+
+    public bool ShowSpindle
+    {
+        get => GetValue(ShowSpindleProperty);
+        set => SetValue(ShowSpindleProperty, value);
+    }
+
     private MainViewModel? _viewModel;
 
     // Jog press-and-hold state
@@ -32,12 +47,24 @@ public partial class JogPanelView : UserControl
         SetupJogButton(YDown, "Y", false);
         SetupJogButton(ZUp, "Z", true);
         SetupJogButton(ZDown, "Z", false);
+
+        SpindleSection.IsVisible = ShowSpindle;
     }
 
     protected override void OnDataContextChanged(EventArgs e)
     {
         _viewModel = DataContext as MainViewModel;
         base.OnDataContextChanged(e);
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        // Applied here rather than by binding: the section is a named child of this control,
+        // so a compiled binding would have to reach back out through the MainViewModel context.
+        if (change.Property == ShowSpindleProperty)
+            SpindleSection.IsVisible = ShowSpindle;
     }
 
     private void SetupJogButton(Button button, string axis, bool positive)
