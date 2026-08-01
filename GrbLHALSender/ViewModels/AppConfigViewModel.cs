@@ -52,6 +52,7 @@ namespace GrbLHALSender.ViewModels
         private bool _suppressThemePreview;
 
         public AuxOutputViewModel AuxOutputViewModel { get; }
+        public GpioOutputViewModel GpioOutputViewModel { get; }
         public GcodeEventViewModel GcodeEventViewModel { get; }
         public bool EnableCutLines
         {
@@ -285,11 +286,13 @@ namespace GrbLHALSender.ViewModels
 
         public AppConfigViewModel(ConfigManager configManager,
             AuxOutputViewModel  auxOutputViewModel,
+            GpioOutputViewModel gpioOutputViewModel,
             GcodeEventViewModel gcodeEventViewModel,
             ThemeService themeService,
             FileUploadService fileUploadService)
         {
             AuxOutputViewModel = auxOutputViewModel;
+            GpioOutputViewModel = gpioOutputViewModel;
             GcodeEventViewModel = gcodeEventViewModel;
             _configManager = configManager;
             _themeService = themeService;
@@ -406,6 +409,7 @@ namespace GrbLHALSender.ViewModels
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
              AuxOutputViewModel.Save();
+            GpioOutputViewModel.Save();
             GcodeEventViewModel.Save();
             _appConfig.UseAntiAlias = UseAntiAlias;
             _appConfig.SpindleImagePath = SpindleImagePath;

@@ -5,6 +5,7 @@ using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.Gcode;
+using GrbLHALSender.Gpio;
 using GrbLHALSender.SdCard;
 using GrbLHALSender.States;
 using GrbLHALSender.Theming;
@@ -38,6 +39,11 @@ public partial class App : Application
         // afterwards would miss the event and leave the app on the startup palette.
         services.GetRequiredService<ThemeService>();
 
+        // Same reason as ThemeService: it builds its outputs off ConfigManager's load
+        // event, which MainViewModel's constructor raises. Resolved later it would come
+        // up with no outputs until the next save.
+        services.GetRequiredService<GpioOutputService>();
+
         var vm = services.GetRequiredService<MainViewModel>();
 
 
@@ -69,6 +75,7 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<CommunicationManager>();
         collection.AddSingleton<MachineStateService>();
         collection.AddSingleton<GamepadService>();
+        collection.AddSingleton<GpioOutputService>();
         collection.AddSingleton<FileUploadService>();
         collection.AddSingleton<WebServerService>();
         collection.AddSingleton<SdCardService>();
@@ -87,6 +94,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<AppConfigViewModel>();
         collection.AddTransient<SdCardViewModel>();
         collection.AddTransient<AuxOutputViewModel>();
+        collection.AddTransient<GpioOutputViewModel>();
         collection.AddTransient<GcodeEventViewModel>();
         collection.AddTransient<SurfacingViewModel>();
     }

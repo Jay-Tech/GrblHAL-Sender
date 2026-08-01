@@ -242,7 +242,103 @@ output change to the right moment:
 Aux output buttons follow these commands wherever they come from, so a rule that toggles a
 pin moves the matching button too.
 
-### Testing status
+# Shop Outputs (Raspberry Pi GPIO)
+
+On a Pi, the sender can switch relays wired to the GPIO header — shop lights, dust
+collection, anything you would otherwise reach over and flip. Configured under
+**Utility → GPIO**, and off by default: no pin is touched until you enable it.
+
+This is for convenience, not safety. E-stop and safety door belong hardwired to the
+controller, where they do not depend on a userland app being responsive. Nothing here is
+time-critical either — the outputs settle in the second or so after the machine state
+changes, which is fine for a vacuum and useless for an interlock.
+
+## Off / Auto / On
+
+Each output is a button in the bottom-left of the workspace, above the controller's aux
+output buttons. Tapping it cycles the mode. The ring around the button shows whether the
+relay is actually energised, which is not the same thing as the mode — an output sitting in
+Auto reads `AUTO` whether or not it happens to be on right now.
+
+| Mode | Behaviour |
+|---|---|
+| **Auto** | Follows the machine. Skipped in the cycle for outputs with no follow source. |
+| **On** | Held on regardless of the machine. This is the one for cleanup before and after a job. |
+| **Off** | Held off. Takes effect immediately — it does not wait out the off delay. |
+
+Unlike the aux output buttons these stay live while the controller is disconnected, because
+running the vacuum with the machine idle or unplugged is most of the point of the manual mode.
+
+## What Auto follows
+
+| Follows | Source |
+|---|---|
+| **Spindle** | The controller's accessory (`A:`) field |
+| **Connected** | Whether the controller is connected — reasonable for lighting |
+| **None** | Manual only; the output has no Auto mode |
+
+Spindle state is taken from the status report rather than by watching for `M3`/`M5` in the
+stream, so it reflects what the machine is actually doing. It picks up a spindle you started
+by hand from the console, and it stays honest when a job aborts part way through, where the
+file position tells you nothing useful.
+
+## Off delay
+
+An output in Auto stays on for **Off Delay** seconds after its source goes inactive. This is
+doing two jobs. It clears the hose of chips still in flight after a cut, and — more
+importantly — it stops a program full of tool changes and `M5`/`M3` pairs from dropping and
+re-closing a contactor every few seconds. Any fresh demand inside the window cancels the
+pending switch-off, so a run of tool changes collapses into one continuous run.
+
+Fifteen seconds is a sensible starting point. An explicit **Off** ignores the delay entirely.
+
+## Wiring
+
+Pins are **BCM numbers**, 2–27. Avoid 2/3 (I²C, permanently pulled up), 7–11 (SPI) and 14/15
+(UART); 17, 22, 23, 24, 25, 27 are all clean, and the **Add Output** button hands out unused
+ones in that order.
+
+**Prefer an active-high relay board.** BCM 9–27 boot with a pull-down, so an active-high
+board reads *off* while the Pi boots, while the app is starting, and after it exits or
+crashes — the fail-safe state costs nothing. An active-low board inverts all of that and
+wants an external pull-up to stay safe. Set **Active Hi** to match whichever you have.
+
+Do not drive a relay coil from a pin directly; use an opto-isolated module, a MOSFET driver
+or an SSR. And size the switching for the load — a shop vacuum's inrush will weld the
+contacts of a generic 10 A relay board sooner or later, so drive a proper contactor with it.
+
+## Pi setup
+
+The header GPIO is reached through libgpiod. Installing the tools package pulls the right
+runtime library whichever release you are on, which matters because the library package was
+renamed between Debian releases (`libgpiod2` on Bookworm, `libgpiod3` on Trixie):
+
+```
+sudo apt install gpiod
+sudo usermod -aG gpio $USER
+```
+
+Log out and back in for the group to take effect. `gpiodetect` should report the 40-pin
+header as `gpiochip0 [pinctrl-rp1]` on a Pi 5.
+
+If the app cannot reach the hardware it says so on the GPIO config tab rather than failing
+silently or crashing — the message is the underlying error, so it will tell you whether it is
+a driver or a permissions problem. On Windows and macOS the outputs appear and toggle but
+switch nothing, which keeps the app usable for development.
+
+## Behaviour worth knowing
+
+Losing the connection drops any output following the spindle. Status reports stop arriving
+when the link goes down, so the last known spindle state is stale — left alone, a spindle
+that happened to be running at that moment would hold the dust collector on indefinitely.
+
+Closing the app drives every output off before it exits, so quitting cannot leave the vacuum
+running. The mode each output was left in is saved, with one exception: an output that
+follows something never comes back **On** after a restart. Returning from a power cut with
+the dust collector latched on is not what anyone means by remembering a setting. Manual-only
+outputs do restore On, so shop lights come back as you left them.
+
+# Testing status
 
 Runs on Windows and on Linux including the Pi 5, on landscape and portrait displays.
 
@@ -259,6 +355,8 @@ Verified on hardware:
   the probe started from
 - Changing `$341` while connected — the controls follow without a reconnect
 - G-code event injection around a tool change, including the dwell-first ordering
+- GPIO shop outputs on a Pi 5 — a relay on BCM 17 following the spindle in Auto, and the
+  manual On/Off override
 - Serial connection and reconnection
 - Single instance guard on Linux
 - The probe cycles with a 3D probe — workpiece Z zero, all four corners, and centre finding
