@@ -76,7 +76,7 @@ public class GpioOutputService : IDisposable
         if (!config.Enabled) return;
 
         _backend = CreateBackend();
-        _controller = new GpioOutputController(_backend, IsSourceActive);
+        _controller = new GpioOutputController(_backend, IsSourceActive, () => _machineState.SpindleRpm);
 
         var usedPins = new HashSet<int>();
         foreach (var cfg in config.Outputs)
@@ -120,7 +120,7 @@ public class GpioOutputService : IDisposable
         foreach (var o in config.Outputs)
             sb.Append(o.Pin).Append(':').Append(o.Name).Append(':')
               .Append(o.ActiveHigh).Append(':').Append(o.Follow).Append(':')
-              .Append(o.OffDelaySeconds).Append(';');
+              .Append(o.OffDelaySeconds).Append(':').Append(o.MinSpindleRpm).Append(';');
         return sb.ToString();
     }
 
@@ -146,6 +146,15 @@ public class GpioOutputService : IDisposable
         switch (e.PropertyName)
         {
             case nameof(MachineStateService.SpindleDirection):
+                _controller.EvaluateFollow(GpioFollowSource.Spindle, now);
+                break;
+
+            // Speed has to be watched as well as direction. An ATC macro turns the spindle
+            // at a low speed to swap the holder and the program then raises it to cutting
+            // speed with the spindle never stopping — the direction never changes across
+            // that, so a threshold that only re-evaluated on direction would stay latched
+            // at whatever it decided during the tool change.
+            case nameof(MachineStateService.SpindleRpm):
                 _controller.EvaluateFollow(GpioFollowSource.Spindle, now);
                 break;
 

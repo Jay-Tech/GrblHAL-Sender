@@ -78,7 +78,7 @@ public class GpioOutputTests
     {
         var backend = new FakeBackend();
         var spindleOn = false;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig());
 
         // Opening must leave the relay de-energised, whatever the register held.
@@ -96,7 +96,7 @@ public class GpioOutputTests
     {
         var backend = new FakeBackend();
         var spindleOn = false;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var config = VacConfig();
         config.ActiveHigh = false;
         var output = controller.Add(config);
@@ -116,7 +116,7 @@ public class GpioOutputTests
     {
         var backend = new FakeBackend { FailOpen = true };
         var spindleOn = true;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig());
 
         controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
@@ -133,7 +133,7 @@ public class GpioOutputTests
     {
         var backend = new FakeBackend();
         var spindleOn = true;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig(delay: 15));
 
         controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
@@ -159,7 +159,7 @@ public class GpioOutputTests
         // pull back in on every change.
         var backend = new FakeBackend();
         var spindleOn = true;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig(delay: 15));
 
         controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
@@ -181,7 +181,7 @@ public class GpioOutputTests
     {
         var backend = new FakeBackend();
         var spindleOn = true;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig(delay: 15));
 
         controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
@@ -202,7 +202,7 @@ public class GpioOutputTests
     {
         var backend = new FakeBackend();
         var spindleOn = true;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig(delay: 0));
 
         controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
@@ -220,7 +220,7 @@ public class GpioOutputTests
         // Someone tapping Off wants it off now, not in fifteen seconds.
         var backend = new FakeBackend();
         var spindleOn = true;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig(delay: 15));
 
         controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
@@ -239,7 +239,7 @@ public class GpioOutputTests
         // The cleanup case: vac running with the spindle stopped, and it must stay running.
         var backend = new FakeBackend();
         var spindleOn = false;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig());
 
         output.Mode = GpioOutputMode.On;
@@ -257,7 +257,7 @@ public class GpioOutputTests
     {
         var backend = new FakeBackend();
         var spindleOn = true;
-        var controller = new GpioOutputController(backend, _ => spindleOn);
+        var controller = new GpioOutputController(backend, _ => spindleOn, () => 0);
         var output = controller.Add(VacConfig());
 
         output.Mode = GpioOutputMode.Off;
@@ -272,7 +272,7 @@ public class GpioOutputTests
     public void CycleMode_PersistsTheChoiceIntoConfig()
     {
         var backend = new FakeBackend();
-        var controller = new GpioOutputController(backend, _ => false);
+        var controller = new GpioOutputController(backend, _ => false, () => 0);
         var config = VacConfig();
         var output = controller.Add(config);
 
@@ -290,7 +290,7 @@ public class GpioOutputTests
         // SpindleDirection freezes at its last value when status reports stop, so the
         // source getter lies. Without the forced drop the vac would run indefinitely.
         var backend = new FakeBackend();
-        var controller = new GpioOutputController(backend, _ => true);
+        var controller = new GpioOutputController(backend, _ => true, () => 0);
         var output = controller.Add(VacConfig(delay: 15));
 
         controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
@@ -310,7 +310,7 @@ public class GpioOutputTests
         // Returning from a restart or a power cut with the dust collector latched on is
         // not what anyone means by "remember my setting".
         var backend = new FakeBackend();
-        var controller = new GpioOutputController(backend, _ => false);
+        var controller = new GpioOutputController(backend, _ => false, () => 0);
         var config = VacConfig();
         config.Mode = GpioOutputMode.On;
 
@@ -324,7 +324,7 @@ public class GpioOutputTests
     {
         // Shop lights left on should still be on after a restart.
         var backend = new FakeBackend();
-        var controller = new GpioOutputController(backend, _ => false);
+        var controller = new GpioOutputController(backend, _ => false, () => 0);
         var config = new GpioOutputConfig
         {
             Name = "Lights",
@@ -338,6 +338,147 @@ public class GpioOutputTests
 
         Assert.Equal(GpioOutputMode.On, output.Mode);
         Assert.True(output.IsOn);
+    }
+
+    // --- Spindle RPM threshold (ATC tool changes) ---
+
+    [Fact]
+    public void BelowThreshold_SpindleOnDoesNotEnergise()
+    {
+        // A RapidChange ATC turns the spindle slowly to thread the holder. That is a
+        // spindle-on state with no cutting and no chips, and it happens at every tool
+        // change — without the threshold the dust collector fires each time.
+        var backend = new FakeBackend();
+        var rpm = 800;
+        var controller = new GpioOutputController(backend, _ => true, () => rpm);
+        var config = VacConfig();
+        config.MinSpindleRpm = 2500;
+        var output = controller.Add(config);
+
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+
+        Assert.False(output.IsOn);
+        Assert.Empty(backend.Writes);
+    }
+
+    [Fact]
+    public void RisingThroughThreshold_EnergisesWithoutDirectionChanging()
+    {
+        // The tool change ends and the program comes back up to cutting speed with the
+        // spindle never stopping. Direction is unchanged across that, so this only works
+        // because speed is watched too.
+        var backend = new FakeBackend();
+        var rpm = 800;
+        var controller = new GpioOutputController(backend, _ => true, () => rpm);
+        var config = VacConfig();
+        config.MinSpindleRpm = 2500;
+        var output = controller.Add(config);
+
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+        Assert.False(output.IsOn);
+
+        rpm = 18000;
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+
+        Assert.True(output.IsOn);
+    }
+
+    [Fact]
+    public void DroppingUnderThreshold_UsesTheOffDelay()
+    {
+        // Falling back to ATC speed mid-job is the same shape as the spindle stopping, so
+        // it goes through the delay rather than dropping the contactor instantly.
+        var backend = new FakeBackend();
+        var rpm = 18000;
+        var controller = new GpioOutputController(backend, _ => true, () => rpm);
+        var config = VacConfig(delay: 15);
+        config.MinSpindleRpm = 2500;
+        var output = controller.Add(config);
+
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+        Assert.True(output.IsOn);
+
+        rpm = 800;
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+        Assert.True(output.IsOn);
+
+        controller.Tick(T0.AddSeconds(15));
+        Assert.False(output.IsOn);
+    }
+
+    [Fact]
+    public void ToolChangeInsideTheDelayWindow_NeverCyclesTheRelay()
+    {
+        // The whole point, end to end: cutting, drop to ATC speed to swap the holder, back
+        // to cutting — all inside the off-delay. The relay must not move.
+        var backend = new FakeBackend();
+        var rpm = 18000;
+        var controller = new GpioOutputController(backend, _ => true, () => rpm);
+        var config = VacConfig(delay: 15);
+        config.MinSpindleRpm = 2500;
+        var output = controller.Add(config);
+
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+
+        rpm = 800;
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0.AddSeconds(1));
+        controller.Tick(T0.AddSeconds(5));
+
+        rpm = 18000;
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0.AddSeconds(8));
+        controller.Tick(T0.AddSeconds(30));
+
+        Assert.True(output.IsOn);
+        Assert.Single(backend.Writes);
+    }
+
+    [Fact]
+    public void ThresholdIsInclusive()
+    {
+        var backend = new FakeBackend();
+        var rpm = 2500;
+        var controller = new GpioOutputController(backend, _ => true, () => rpm);
+        var config = VacConfig();
+        config.MinSpindleRpm = 2500;
+        var output = controller.Add(config);
+
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+
+        Assert.True(output.IsOn);
+    }
+
+    [Fact]
+    public void ZeroThreshold_AcceptsAnySpindleOnState()
+    {
+        // The default, and what every pre-threshold config deserialises to.
+        var backend = new FakeBackend();
+        var controller = new GpioOutputController(backend, _ => true, () => 1);
+        var output = controller.Add(VacConfig());
+
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+
+        Assert.True(output.IsOn);
+    }
+
+    [Fact]
+    public void ThresholdIsPerOutput_NotPerSource()
+    {
+        var backend = new FakeBackend();
+        var controller = new GpioOutputController(backend, _ => true, () => 800);
+
+        var vacConfig = VacConfig();
+        vacConfig.MinSpindleRpm = 2500;
+        var vac = controller.Add(vacConfig);
+
+        var lightConfig = VacConfig();
+        lightConfig.Name = "Spindle lamp";
+        lightConfig.Pin = 22;
+        var lamp = controller.Add(lightConfig);
+
+        controller.EvaluateFollow(GpioFollowSource.Spindle, T0);
+
+        Assert.False(vac.IsOn);
+        Assert.True(lamp.IsOn);
     }
 
     // --- Config persistence ---
@@ -360,6 +501,7 @@ public class GpioOutputTests
                     ActiveHigh = false,
                     Follow = GpioFollowSource.Spindle,
                     OffDelaySeconds = 20,
+                    MinSpindleRpm = 2500,
                     Mode = GpioOutputMode.Auto,
                 },
             ],
@@ -379,6 +521,7 @@ public class GpioOutputTests
         Assert.False(output.ActiveHigh);
         Assert.Equal(GpioFollowSource.Spindle, output.Follow);
         Assert.Equal(20, output.OffDelaySeconds);
+        Assert.Equal(2500, output.MinSpindleRpm);
         Assert.Equal(GpioOutputMode.Auto, output.Mode);
     }
 
@@ -386,7 +529,7 @@ public class GpioOutputTests
     public void AllOff_DeEnergisesEverythingAndClearsPendingDelays()
     {
         var backend = new FakeBackend();
-        var controller = new GpioOutputController(backend, _ => true);
+        var controller = new GpioOutputController(backend, _ => true, () => 0);
         var vac = controller.Add(VacConfig());
         var lights = controller.Add(new GpioOutputConfig
         {

@@ -282,6 +282,30 @@ stream, so it reflects what the machine is actually doing. It picks up a spindle
 by hand from the console, and it stays honest when a job aborts part way through, where the
 file position tells you nothing useful.
 
+## Spindle threshold — for ATC tool changes
+
+**Min RPM** is the speed at or above which the spindle counts as running. Leave it at `0` and
+any spindle-on state qualifies.
+
+It exists for automatic tool changers. A RapidChange ATC and similar turn the spindle at a
+low speed to thread and unthread the holder — a genuine spindle-on state with no cutting and
+no chips. Without a threshold the dust collector fires at every tool change. Set Min RPM
+above your changer's speed and below your cutting speed, and tool changes stop triggering it.
+
+The comparison uses the *programmed* speed — the `S` word from the status report — not tacho
+feedback. That steps cleanly when a macro commands a speed, rather than sweeping through the
+threshold on every spin-up and spin-down.
+
+Speed is watched as well as direction, which matters at the end of a change: the program
+returns to cutting speed with the spindle never stopping, so the direction does not change
+across it. Dropping back under the threshold mid-job behaves like the spindle stopping and
+goes through the off delay, so a change that fits inside the delay window never moves the
+relay at all.
+
+> The threshold reads whatever `S` value is currently in force, so a tool change macro that
+> sets a low `S` and does not restore it will hold the output off until the program commands
+> a speed again.
+
 ## Off delay
 
 An output in Auto stays on for **Off Delay** seconds after its source goes inactive. This is

@@ -17,13 +17,33 @@ internal sealed class GpioOutputController
 {
     private readonly IGpioBackend _backend;
     private readonly Func<GpioFollowSource, bool> _isSourceActive;
+    private readonly Func<int> _spindleRpm;
 
     public List<GpioOutput> Outputs { get; } = new();
 
-    public GpioOutputController(IGpioBackend backend, Func<GpioFollowSource, bool> isSourceActive)
+    public GpioOutputController(
+        IGpioBackend backend,
+        Func<GpioFollowSource, bool> isSourceActive,
+        Func<int> spindleRpm)
     {
         _backend = backend;
         _isSourceActive = isSourceActive;
+        _spindleRpm = spindleRpm;
+    }
+
+    /// <summary>
+    /// Whether one output's follow source currently counts as active, applying its spindle
+    /// speed threshold if it has one.
+    /// </summary>
+    private bool IsActiveFor(GpioOutputConfig config)
+    {
+        if (!_isSourceActive(config.Follow)) return false;
+        if (config.Follow != GpioFollowSource.Spindle) return true;
+        if (config.MinSpindleRpm <= 0) return true;
+
+        // Threshold flap is absorbed by the off delay: dropping under it starts the
+        // countdown, coming back over cancels it.
+        return _spindleRpm() >= config.MinSpindleRpm;
     }
 
     /// <summary>
@@ -56,12 +76,13 @@ internal sealed class GpioOutputController
     /// </summary>
     public void EvaluateFollow(GpioFollowSource source, DateTime now, bool forceInactive = false)
     {
-        var active = !forceInactive && _isSourceActive(source);
         foreach (var output in Outputs)
         {
             if (output.Config.Follow != source) continue;
             if (output.Mode != GpioOutputMode.Auto) continue;
-            RequestState(output, active, now);
+            // Evaluated per output, not once for the source: the spindle threshold is a
+            // per-output setting, so two outputs on the same source can disagree.
+            RequestState(output, !forceInactive && IsActiveFor(output.Config), now);
         }
     }
 
@@ -100,7 +121,7 @@ internal sealed class GpioOutputController
                 break;
 
             case GpioOutputMode.Auto:
-                RequestState(output, _isSourceActive(output.Config.Follow), now);
+                RequestState(output, IsActiveFor(output.Config), now);
                 break;
         }
     }

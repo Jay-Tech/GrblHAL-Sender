@@ -76,6 +76,22 @@ public partial class GpioOutputConfig : ObservableObject
     [ObservableProperty] private GpioFollowSource _follow = GpioFollowSource.None;
 
     /// <summary>
+    /// Spindle speed at or above which <see cref="GpioFollowSource.Spindle"/> counts as
+    /// running. 0 disables the check, so any spindle-on state qualifies.
+    /// <para>
+    /// Exists for ATC systems — a RapidChange and similar turn the spindle at a low speed
+    /// to thread and unthread the holder, which is a spindle-on state with no cutting and
+    /// no chips. Without a threshold the dust collector fires on every tool change.
+    /// </para>
+    /// <para>
+    /// Compared against the *programmed* speed (the S word), not tacho feedback: it steps
+    /// cleanly when the macro commands a speed instead of ramping through the threshold on
+    /// every spin-up and spin-down.
+    /// </para>
+    /// </summary>
+    [ObservableProperty] private int _minSpindleRpm;
+
+    /// <summary>
     /// Seconds to keep the output on after its follow source goes inactive.
     /// <para>
     /// Two jobs: it clears the hose of chips still in flight after a cut, and it stops
