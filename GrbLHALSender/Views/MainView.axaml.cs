@@ -20,7 +20,6 @@ public partial class MainView : UserControl, IDialogCanvas
     {
         InitializeComponent();
         _behaviour = new RootCanvasBehaviour(this, KeyboardOverlay);
-
     }
 
     protected override void OnDataContextChanged(EventArgs e)

@@ -13,9 +13,25 @@ namespace GrbLHALSender.Views;
 /// </summary>
 public partial class WorkspacePanelView : UserControl
 {
+    /// <summary>
+    /// Whether the macro bar is shown alongside the tab strip. The portrait canvas turns it off
+    /// and hosts <see cref="MacroBarView"/> in its control block instead, which gives the tab
+    /// headers the full width — they are tight at 1080.
+    /// </summary>
+    public static readonly StyledProperty<bool> ShowMacroBarProperty =
+        AvaloniaProperty.Register<WorkspacePanelView, bool>(nameof(ShowMacroBar), defaultValue: true);
+
+    public bool ShowMacroBar
+    {
+        get => GetValue(ShowMacroBarProperty);
+        set => SetValue(ShowMacroBarProperty, value);
+    }
+
     public WorkspacePanelView()
     {
         InitializeComponent();
+
+        MacroBarRow.IsVisible = ShowMacroBar;
 
         // Touch can leave :pressed/:pointerover stuck on aux output buttons
         // (no pointer-leave event after a finger lifts), which masks their
@@ -24,6 +40,16 @@ public partial class WorkspacePanelView : UserControl
             (_, e) => ClearStuckTouchState(e.Source), RoutingStrategies.Tunnel, handledEventsToo: true);
         AuxOutputRepeater.AddHandler(PointerCaptureLostEvent,
             (_, e) => ClearStuckTouchState(e.Source), RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        // Applied here rather than by binding: the row is a named child of this control, so a
+        // compiled binding would have to reach back out through the MainViewModel context.
+        if (change.Property == ShowMacroBarProperty)
+            MacroBarRow.IsVisible = ShowMacroBar;
     }
 
     private static void ClearStuckTouchState(object? source)

@@ -21,9 +21,11 @@
 			<views:HeaderPortraitView />
 		</Border>
 
-		<!-- Tabs and the 3D view take whatever the header and controls leave, ~830px. -->
+		<!-- Tabs and the 3D view take whatever the header and controls leave, ~1130px.
+		     The macro bar moves to the control block below, so the tab headers get the full
+		     width here rather than sharing the row. -->
 		<Border Grid.Row="1">
-			<views:WorkspacePanelView />
+			<views:WorkspacePanelView ShowMacroBar="False" />
 		</Border>
 
 		<!-- Control block. The height is fixed rather than Auto on purpose: DroPanelView's MDI
@@ -51,12 +53,17 @@
 					Name="CentreControlBorder"
 					Margin="10,0"
 					VerticalAlignment="Stretch">
-				<!-- Centred, not top-aligned: this column holds less than the jog panel beside
-				     it, and the leftover reads as an intentional inset when it is split top and
-				     bottom rather than left as a hole underneath. -->
-				<Grid RowDefinitions="Auto,Auto" VerticalAlignment="Center">
+				<!-- Stacked from the top, so WCS starts level with "Home All" and "Feed" either
+				     side. This column's content is ~120px shorter than the jog panel, and that
+				     surplus collects in the empty star row at the bottom. -->
+				<Grid RowDefinitions="Auto,Auto,*">
 					<views:WcsPanelView Grid.Row="0" />
 					<views:SpindlePanelView Grid.Row="1" Margin="0,20,0,0" />
+					<!-- Fills whatever the WCS and spindle blocks leave, and scrolls rather than
+					     clipping if the macros outgrow it. No cap: the Macro dialog edits macros
+					     but cannot run them, so a button that is not shown is a macro that
+					     cannot be triggered at all. -->
+					<views:MacroGridView Grid.Row="2" Margin="0,15,0,0" />
 				</Grid>
 			</Border>
 

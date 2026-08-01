@@ -1,0 +1,26 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
+             mc:Ignorable="d"
+             d:DesignWidth="360" d:DesignHeight="120"
+             x:Class="GrbLHALSender.Views.MacroGridView"
+             x:DataType="viewModels:MainViewModel"
+             IsEnabled="{Binding MacroViewModel.CanRunMacro}">
+
+	<!-- Macros for a narrow column. The buttons fill across, then wrap down, and the
+	     "MACROS:" caption is simply the first item in that flow rather than a label beside
+	     it — in a ~360px column a caption sharing the row leaves space for one button.
+	     <para>
+	     A WrapPanel with the caption as its first child rather than an ItemsRepeater: a
+	     UniformGridLayout only arranges the items it generates, so the caption could never
+	     take part in the flow. Children are built in code-behind for the same reason.
+	     </para>
+	     Scrolls rather than clipping, so adding macros never silently removes the only way
+	     to run one — the Macro dialog edits them, it does not run them. -->
+	<ScrollViewer VerticalScrollBarVisibility="Auto"
+				  HorizontalScrollBarVisibility="Disabled">
+		<WrapPanel x:Name="Flow" Orientation="Horizontal" />
+	</ScrollViewer>
+</UserControl>

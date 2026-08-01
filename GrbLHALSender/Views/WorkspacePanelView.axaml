@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -108,48 +108,15 @@
 		<!-- END Tab Control -->
 
 		<!-- START Header Macro Button Control -->
-		<Grid ColumnDefinitions="Auto,Auto,*"
+		<Grid x:Name="MacroBarRow" ColumnDefinitions="Auto,*"
 			  HorizontalAlignment="Stretch"
 			  VerticalAlignment="Top">
 			<!-- Spacer tracks the tab strip width so the macro bar starts
-			     after the last tab instead of overlapping the headers. -->
+			     after the last tab instead of overlapping the headers. It stays here rather
+			     than moving into MacroBarView: the width binds to ReferenceTab, which lives
+			     in this namescope. -->
 			<Border Grid.Column="0" Width="{Binding #ReferenceTab.Bounds.Right}"/>
-			<Label Grid.Column="1"
-				   Margin="25,5,10,0"
-				   Content="MACROS:"
-				   VerticalAlignment="Bottom"
-				   VerticalContentAlignment="Center"
-				   FontSize="{DynamicResource BaseFontSize}"
-				   IsVisible="{Binding MacroViewModel.MacroList.Count }"/>
-			<!--IsEnabled on the repeater rather than the templated button:
-			    it propagates to the children, and inside the template the
-			    DataContext is a Macro item, not the view model.-->
-			<ItemsRepeater Grid.Column="2" x:Name="MacroRepeater"
-						   HorizontalAlignment="Left"
-						   VerticalAlignment="Bottom"
-						   IsEnabled="{Binding MacroViewModel.CanRunMacro}"
-						   ItemsSource="{Binding MacroViewModel.MacroList}"
-						   Margin="0,0">
-				<ItemsRepeater.Layout>
-					<UniformGridLayout MinColumnSpacing="10"></UniformGridLayout>
-				</ItemsRepeater.Layout>
-				<ItemsRepeater.ItemTemplate>
-					<DataTemplate>
-						<Button Content="{Binding   Path=Id}"
-								Width="115" Height="40"
-								HorizontalAlignment="Left"
-								VerticalAlignment="Bottom"
-								HorizontalContentAlignment="Center"
-								VerticalContentAlignment="Center"
-								CornerRadius="6,6,6,6"
-								Margin="0,0,0,0"
-								CommandParameter="{Binding  Id}"
-								FontSize="{DynamicResource DetailFontSizeLarge}"
-								Command="{Binding #MacroRepeater.((viewModels:MainViewModel)DataContext).MacroViewModel.RunMacroCommand}">
-						</Button>
-					</DataTemplate>
-				</ItemsRepeater.ItemTemplate>
-			</ItemsRepeater>
+			<views:MacroBarView Grid.Column="1" />
 		</Grid>
 		<!--END Header Macro Button Control-->
 	</Grid>
