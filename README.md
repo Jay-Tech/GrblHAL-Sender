@@ -7,6 +7,21 @@ The goal was an application that runs on a cheap mini PC, with a UI designed to 
 ---
 ![Home Screen](Media/HomeScreen.png)
 </br>
+## Runs on a portrait monitor as well as a landscape one
+<img src="Media/PortraitScreen.png" alt="Portrait Screen" width="420">
+</br>
+The layout follows the screen's orientation on its own — a 1920x1080 monitor gets the
+landscape arrangement, a 1080x1920 one gets a portrait layout built for that shape. There is
+nothing to set; rotate the display and restart.
+
+Portrait is a different arrangement rather than a squeezed copy. The status strip splits over
+two rows, the 3D view takes the full width, and the controls gather into a block along the
+bottom — DRO and MDI on the left, work offsets, spindle and macros in the middle, jog pad on
+the right — so everything sits within thumb reach on a rotated touchscreen.
+
+Both layouts are assembled from the same panels, so a change to the jog pad or the DRO turns
+up in both.
+</br>
 ## GrblHAL Setting supports export and import 
 ![Settings Screen](Media/Setting.png)
 </br>
@@ -229,9 +244,11 @@ pin moves the matching button too.
 
 ### Testing status
 
-Runs on Windows and on Linux including the Pi 5.
+Runs on Windows and on Linux including the Pi 5, on landscape and portrait displays.
 
 Verified on hardware:
+- The portrait layout on a 1080x1920 screen, and the landscape one after the panels were
+  refactored to be shared between the two
 - Tool change streaming — the job holds at the `M6`, survives jogging during the pause, and
   resumes cleanly on **Start**
 - Manual touch off (`$341=1` / `2`) — the **Touch Off** button and `$TPW`, including jogging
