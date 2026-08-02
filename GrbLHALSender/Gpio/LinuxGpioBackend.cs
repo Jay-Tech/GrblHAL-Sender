@@ -30,6 +30,9 @@ internal sealed class LinuxGpioBackend : IGpioBackend
         }
     }
 
+    // 0/1 are the HAT ID EEPROM, 28+ are off the 40-pin header.
+    public bool IsValidPin(int pin) => pin >= 2 && pin <= 27;
+
     public bool TryOpenOutput(int pin, bool initialValue)
     {
         var controller = _controller;

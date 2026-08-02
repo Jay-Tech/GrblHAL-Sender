@@ -27,6 +27,33 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
     private readonly ConfigManager _configManager;
     private readonly GpioOutputService _service;
     private bool _isEnabled;
+    private GpioDeviceType _device;
+    private string _portName = "";
+
+    public IReadOnlyList<GpioDeviceType> DeviceTypes { get; } = Enum.GetValues<GpioDeviceType>();
+
+    public GpioDeviceType Device
+    {
+        get => _device;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _device, value);
+            this.RaisePropertyChanged(nameof(NeedsPort));
+        }
+    }
+
+    /// <summary>Gates the port picker; only a USB device has one.</summary>
+    public bool NeedsPort => Device == GpioDeviceType.UsbSerial;
+
+    public string PortName
+    {
+        get => _portName;
+        set => this.RaiseAndSetIfChanged(ref _portName, value);
+    }
+
+    public ObservableCollection<string> AvailablePorts { get; } = [];
+
+    public ICommand RefreshPortsCommand { get; }
 
     /// <summary>Live outputs — what the workspace buttons bind to.</summary>
     public ObservableCollection<GpioOutput> Outputs => _service.Outputs;
@@ -70,6 +97,7 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
 
         AddOutputCommand = ReactiveCommand.Create(AddOutput);
         RemoveOutputCommand = ReactiveCommand.Create<GpioOutputConfig>(RemoveOutput);
+        RefreshPortsCommand = ReactiveCommand.Create(RefreshPorts);
 
         _configManager.OnConfigLoaded += OnConfigLoaded;
         _service.OutputsRebuilt += OnOutputsRebuilt;
@@ -85,10 +113,36 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
     private void LoadFrom(GpioConfig config)
     {
         IsEnabled = config.Enabled;
+        Device = config.Device;
+        PortName = config.PortName;
         EditableOutputs.Clear();
         foreach (var output in config.Outputs)
             EditableOutputs.Add(output);
+        RefreshPorts();
         UpdateStatus();
+    }
+
+    /// <summary>
+    /// Lists ports for the picker only. Nothing is opened or probed here — the controller
+    /// is on one of these, and it must not be written to.
+    /// </summary>
+    private void RefreshPorts()
+    {
+        AvailablePorts.Clear();
+        try
+        {
+            foreach (var port in System.IO.Ports.SerialPort.GetPortNames())
+                AvailablePorts.Add(port);
+        }
+        catch (Exception)
+        {
+            // Serial enumeration is not available on every platform.
+        }
+
+        // Keep a configured port visible even when it is currently unplugged, so the
+        // selection is not silently lost.
+        if (!string.IsNullOrWhiteSpace(PortName) && !AvailablePorts.Contains(PortName))
+            AvailablePorts.Add(PortName);
     }
 
     private void OnOutputsRebuilt(object? sender, EventArgs e)
@@ -148,6 +202,8 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
 
         config.Gpio ??= new GpioConfig();
         config.Gpio.Enabled = IsEnabled;
+        config.Gpio.Device = Device;
+        config.Gpio.PortName = PortName ?? "";
         config.Gpio.Outputs = EditableOutputs.ToList();
     }
 }

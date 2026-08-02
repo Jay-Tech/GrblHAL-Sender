@@ -36,8 +36,31 @@ public enum GpioOutputMode
     On,
 }
 
+/// <summary>Where the outputs physically live.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum GpioDeviceType
+{
+    /// <summary>The Raspberry Pi's own 40-pin header. No extra hardware, Pi only.</summary>
+    PiHeader,
+
+    /// <summary>
+    /// A PICOGPIO microcontroller on USB, which works on any host the app runs on.
+    /// See <c>docs/pico-gpio-protocol.md</c>.
+    /// </summary>
+    UsbSerial,
+}
+
 public class GpioConfig
 {
+    public GpioDeviceType Device { get; set; } = GpioDeviceType.PiHeader;
+
+    /// <summary>
+    /// Serial port for <see cref="GpioDeviceType.UsbSerial"/>. Always explicit — the app
+    /// never scans, because a grblHAL controller and a Pico are indistinguishable by port
+    /// name and an identify string sent at the controller is noise in its console.
+    /// </summary>
+    public string PortName { get; set; } = "";
+
     /// <summary>
     /// Off by default. Nothing touches a GPIO pin until the user opts in, so a
     /// non-Pi machine (or a Pi wired for something else) is never poked at startup.

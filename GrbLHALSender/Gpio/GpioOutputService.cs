@@ -31,10 +31,6 @@ namespace GrbLHALSender.Gpio;
 /// </summary>
 public class GpioOutputService : IDisposable
 {
-    // 0/1 are the HAT ID EEPROM, 28+ are off the 40-pin header.
-    private const int MinPin = 2;
-    private const int MaxPin = 27;
-
     private readonly ConfigManager _configManager;
     private readonly MachineStateService _machineState;
 
@@ -75,13 +71,13 @@ public class GpioOutputService : IDisposable
 
         if (!config.Enabled) return;
 
-        _backend = CreateBackend();
+        _backend = CreateBackend(config);
         _controller = new GpioOutputController(_backend, IsSourceActive, () => _machineState.SpindleRpm);
 
         var usedPins = new HashSet<int>();
         foreach (var cfg in config.Outputs)
         {
-            if (cfg.Pin < MinPin || cfg.Pin > MaxPin) continue;
+            if (!_backend.IsValidPin(cfg.Pin)) continue;
             // A pin listed twice would give two buttons fighting over one relay.
             if (!usedPins.Add(cfg.Pin)) continue;
 
@@ -97,10 +93,14 @@ public class GpioOutputService : IDisposable
         OutputsRebuilt?.Invoke(this, EventArgs.Empty);
     }
 
-    private static IGpioBackend CreateBackend()
+    private static IGpioBackend CreateBackend(GpioConfig config)
     {
+        if (config.Device == GpioDeviceType.UsbSerial)
+            return new PicoGpioBackend(config.PortName);
+
         if (!OperatingSystem.IsLinux())
-            return new NullGpioBackend("GPIO outputs need Linux — this build is running elsewhere.");
+            return new NullGpioBackend(
+                "The Pi header needs Linux. On this machine, use a USB GPIO device instead.");
 
         if (!File.Exists("/dev/gpiochip0"))
             return new NullGpioBackend("No /dev/gpiochip0 — this machine has no GPIO header.");
@@ -116,7 +116,8 @@ public class GpioOutputService : IDisposable
     private static string BuildSignature(GpioConfig config)
     {
         var sb = new StringBuilder();
-        sb.Append(config.Enabled).Append('|');
+        sb.Append(config.Enabled).Append('|')
+          .Append(config.Device).Append('|').Append(config.PortName).Append('|');
         foreach (var o in config.Outputs)
             sb.Append(o.Pin).Append(':').Append(o.Name).Append(':')
               .Append(o.ActiveHigh).Append(':').Append(o.Follow).Append(':')

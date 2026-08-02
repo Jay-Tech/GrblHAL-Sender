@@ -933,9 +933,29 @@
 				<Grid RowDefinitions="Auto,Auto,*" Margin="10">
 					<Border Grid.Row="0" BorderBrush="AntiqueWhite" BorderThickness="1" Padding="10" Margin="0,5,0,10">
 						<StackPanel>
-							<CheckBox Content="Enable Raspberry Pi GPIO outputs"
+							<CheckBox Content="Enable shop outputs"
 									  FontSize="16"
 									  IsChecked="{Binding GpioOutputViewModel.IsEnabled}"/>
+							<StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+								<Label Content="Device:" FontSize="14" VerticalAlignment="Center"
+									   Foreground="{DynamicResource TextMutedBrush}"/>
+								<ComboBox ItemsSource="{Binding GpioOutputViewModel.DeviceTypes}"
+										  SelectedItem="{Binding GpioOutputViewModel.Device}"
+										  FontSize="14" Width="130" Margin="6,0,0,0"
+										  ToolTip.Tip="PiHeader drives the Pi's own 40-pin header. UsbSerial drives a PICOGPIO microcontroller over USB, which works on any host."/>
+								<!-- Greyed for the Pi header, which has no port. -->
+								<Label Content="Port:" FontSize="14" VerticalAlignment="Center" Margin="14,0,0,0"
+									   Foreground="{DynamicResource TextMutedBrush}"/>
+								<ComboBox ItemsSource="{Binding GpioOutputViewModel.AvailablePorts}"
+										  SelectedItem="{Binding GpioOutputViewModel.PortName}"
+										  IsEnabled="{Binding GpioOutputViewModel.NeedsPort}"
+										  FontSize="14" Width="160" Margin="6,0,0,0"
+										  ToolTip.Tip="Pick the GPIO device's port explicitly. The app never scans — your controller is on one of these ports and must not be written to."/>
+								<Button Content="Refresh"
+										FontSize="14" Height="30" Margin="6,0,0,0"
+										IsEnabled="{Binding GpioOutputViewModel.NeedsPort}"
+										Command="{Binding GpioOutputViewModel.RefreshPortsCommand}"/>
+							</StackPanel>
 							<TextBlock Text="{Binding GpioOutputViewModel.StatusText}"
 									   Foreground="{DynamicResource TextMutedBrush}"
 									   FontSize="14"

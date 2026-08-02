@@ -22,6 +22,8 @@ public class GpioOutputTests
         public bool IsAvailable => true;
         public string? UnavailableReason => null;
 
+        public bool IsValidPin(int pin) => pin >= 2 && pin <= 27;
+
         public bool TryOpenOutput(int pin, bool initialValue)
         {
             if (FailOpen) return false;
