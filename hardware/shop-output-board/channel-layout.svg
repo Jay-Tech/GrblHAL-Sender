@@ -119,16 +119,20 @@
 <text x="684.0" y="144.0" font-size="10" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="ui-sans-serif, system-ui, sans-serif">R105  470R</text>
 <circle cx="638.0" cy="140.0" r="9" fill="#2563eb"/>
 <text x="638.0" y="144.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">1</text>
-<rect x="635.8" y="176.2" width="58.5" height="80.6" rx="3" fill="#fff" stroke="#334155" stroke-width="1.8" />
-<rect x="649.6" y="178.2" width="8" height="8" fill="#2563eb" rx="1"/>
-<rect x="649.6" y="246.8" width="8" height="8" fill="#b45309" rx="1"/>
-<rect x="672.4" y="178.2" width="8" height="8" fill="#2563eb" rx="1"/>
-<rect x="672.4" y="246.8" width="8" height="8" fill="#b45309" rx="1"/>
-<text x="758.0" y="172.0" font-size="10" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="ui-sans-serif, system-ui, sans-serif">U1  PC817  (DIP-4)</text>
+<rect x="631.2" y="198.1" width="67.5" height="36.9" rx="3" fill="#fff" stroke="#334155" stroke-width="1.8" />
+<line x1="653.6" y1="174.3" x2="653.6" y2="198.1" stroke="#64748b" stroke-width="1.6" stroke-linecap="round" />
+<rect x="649.6" y="170.3" width="8" height="8" fill="#2563eb" rx="1"/>
+<line x1="653.6" y1="258.7" x2="653.6" y2="234.9" stroke="#64748b" stroke-width="1.6" stroke-linecap="round" />
+<rect x="649.6" y="254.7" width="8" height="8" fill="#b45309" rx="1"/>
+<line x1="676.4" y1="174.3" x2="676.4" y2="198.1" stroke="#64748b" stroke-width="1.6" stroke-linecap="round" />
+<rect x="672.4" y="170.3" width="8" height="8" fill="#2563eb" rx="1"/>
+<line x1="676.4" y1="258.7" x2="676.4" y2="234.9" stroke="#64748b" stroke-width="1.6" stroke-linecap="round" />
+<rect x="672.4" y="254.7" width="8" height="8" fill="#b45309" rx="1"/>
+<text x="758.0" y="172.0" font-size="10" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="ui-sans-serif, system-ui, sans-serif">U1  LTV-817S  (SOP-4)</text>
 <text x="758.0" y="185.0" font-size="9" fill="#b91c1c" text-anchor="start" font-weight="normal" font-family="ui-sans-serif, system-ui, sans-serif">the only part crossing the barrier</text>
-<line x1="697.2" y1="182.2" x2="754.0" y2="176.0" stroke="#cbd5e1" stroke-width="1" stroke-linecap="round" />
-<circle cx="617.8" cy="182.2" r="9" fill="#2563eb"/>
-<text x="617.8" y="186.2" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">2</text>
+<line x1="701.8" y1="174.3" x2="754.0" y2="176.0" stroke="#cbd5e1" stroke-width="1" stroke-linecap="round" />
+<circle cx="613.2" cy="174.3" r="9" fill="#2563eb"/>
+<text x="613.2" y="178.3" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">2</text>
 <rect x="656.0" y="296.4" width="18.0" height="11.2" rx="2" fill="#fff" stroke="#b45309" stroke-width="1.6" />
 <rect x="653.0" y="296.4" width="3.0" height="11.2" rx="0" fill="#cbd5e1" stroke="none" stroke-width="1" />
 <rect x="674.0" y="296.4" width="3.0" height="11.2" rx="0" fill="#cbd5e1" stroke="none" stroke-width="1" />

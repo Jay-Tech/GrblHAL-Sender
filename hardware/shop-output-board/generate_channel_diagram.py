@@ -15,13 +15,18 @@ COL_X = 15.0            # channel 1 column centre, mm
 BARRIER_TOP = 38.0
 BARRIER_BOT = 43.0
 OPTO_CENTRE = 40.5
-DIP_ROW = 7.62
+# Gull-wing SOP-4. The leads splay well outside the body, so the pad rows are 9.38mm apart
+# against the DIP-4's 7.62mm — the SMD part bridges the barrier better than the through-hole
+# one does.
+OPTO_PAD_SPAN = 9.38
+OPTO_BODY_W = 7.5
+OPTO_BODY_H = 4.1
 
 # Part Y positions within the column (mm)
 Y = {
     "R5": 32.0,
-    "U_logic": OPTO_CENTRE - DIP_ROW / 2,      # 36.69
-    "U_iso": OPTO_CENTRE + DIP_ROW / 2,        # 44.31
+    "U_logic": OPTO_CENTRE - OPTO_PAD_SPAN / 2,      # 35.81
+    "U_iso": OPTO_CENTRE + OPTO_PAD_SPAN / 2,        # 45.19
     "R2": 50.0,
     "D": 56.0,
     "Q": 62.0,
@@ -261,15 +266,20 @@ part(Y["R5"], 2.0, 1.25, "R105  470R", C_LOGIC, 1)
 ux, _ = px(COL_X, OPTO_CENTRE)
 _, uy_top = px(0, Y["U_logic"])
 _, uy_bot = px(0, Y["U_iso"])
-body_w = 6.5 * SCALE
-rect(ux - body_w / 2, uy_top - 6, body_w, (uy_bot - uy_top) + 12, fill="#fff", stroke="#334155", sw=1.8, rx=3)
+body_w = OPTO_BODY_W * SCALE
+body_h = OPTO_BODY_H * SCALE
+_, ucy = px(0, OPTO_CENTRE)
+# Body sits between the pad rows; the gull-wing leads reach out past it to either side.
+rect(ux - body_w / 2, ucy - body_h / 2, body_w, body_h, fill="#fff", stroke="#334155", sw=1.8, rx=3)
 for dx in (-1.27, 1.27):
     for yy, col in ((uy_top, C_LOGIC), (uy_bot, C_ISO)):
+        line(ux + dx * SCALE, yy, ux + dx * SCALE,
+             ucy - body_h / 2 if yy < ucy else ucy + body_h / 2, "#64748b", 1.6)
         out.append(f'<rect x="{ux + dx*SCALE - 4:.1f}" y="{yy-4:.1f}" width="8" height="8" fill="{col}" rx="1"/>')
 # Right-hand annotations are stacked deliberately: opto above the barrier, barrier label at
 # its centre, V+ rail below. They are only ~20 px apart at this scale and will collide if
 # any of them moves.
-text(bot_x + 12, by_top - 22, "U1  PC817  (DIP-4)", size=10)
+text(bot_x + 12, by_top - 22, "U1  LTV-817S  (SOP-4)", size=10)
 text(bot_x + 12, by_top - 9, "the only part crossing the barrier", size=9, fill="#b91c1c")
 line(ux + body_w / 2 + 3, uy_top, bot_x + 8, by_top - 18, "#cbd5e1", 1)
 badge(ux - body_w / 2 - 18, uy_top, 2, C_LOGIC)

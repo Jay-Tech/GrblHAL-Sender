@@ -50,10 +50,11 @@ kicad-cli pcb export drill --output fab/ --format excellon --excellon-separate-t
 
 That is everything needed for a **bare board**. Zip the contents of `fab/` and upload the zip.
 
-For **assembly**, two more files:
+For **SMT assembly**, two more files. Note `--exclude-fp-th`: it leaves the connectors out
+of the position file, so the machine places only the parts you are paying it to place.
 
 ```
-kicad-cli pcb export pos --output fab/positions.csv --format csv --units mm --side both shop-output-board.kicad_pcb
+kicad-cli pcb export pos --output fab/positions.csv --format csv --units mm --side both --exclude-fp-th shop-output-board.kicad_pcb
 kicad-cli sch export bom --output fab/bom.csv --fields "Reference,Value,Footprint" --group-by "Value" shop-output-board.kicad_sch
 ```
 
@@ -61,26 +62,46 @@ The position file tells the machine where each part goes; the BOM says what each
 Both need real manufacturer part numbers added to the BOM — "100k, 0805" is not orderable, a
 specific part number is.
 
-## Step 3 — bare board or assembled?
+## Step 3 — how much do you assemble?
 
-This is the decision that matters most, and it is worth understanding before you pick a vendor.
+The board is deliberately **79 SMD parts and 5 through-hole**. The through-hole parts are the
+three screw terminals and the two Pico socket strips — everything a machine would find
+awkward and you would find easy.
 
-**Bare board** — they make the PCB, you solder the parts. Roughly $5–30 for five boards plus
-shipping. Needs only Gerbers and drill files.
+| Option | What you get | Cost shape |
+|---|---|---|
+| **Bare board** | PCB only, you solder all 84 parts | Cheapest board, most labour |
+| **Partial assembly (SMT only)** | Machine places all 79 SMD parts; you solder the 5 connectors | Board + setup + per-part fees |
+| **Full turnkey** | Everything placed, including through-hole | Most expensive; through-hole placement carries its own charge |
 
-**Assembled (PCBA)** — they source and place everything. Hundreds of dollars for a small run,
-because there is a setup cost per part type regardless of quantity, and this board has twelve.
+**Partial assembly is the right fit here** and is a standard service — PCBWay and JLCPCB both
+call it SMT assembly, with through-hole left to the customer by default. Nothing about the
+design needs changing for it. The optocouplers are gull-wing SOP-4 rather than DIP precisely
+so that no SMD part is left stranded on a through-hole package.
 
-For a first board I would order **bare** and hand-solder, for two reasons beyond cost. You can
-populate one channel, test it, and only then do the other seven — so a design mistake costs
-one channel instead of eight. And when something does not work, a board you soldered yourself
-is one you can probe and rework.
+What assembly needs beyond the Gerbers:
 
-The parts are hand-solderable: 0805 is comfortable with a fine tip and flux, SOT-23 and
-SOD-123 are small but fine, and the optos and terminals are through-hole. 41 resistors is
-tedious, not difficult.
+- **A position file with the connectors excluded**, so the machine does not try to place them:
+  `kicad-cli pcb export pos --exclude-fp-th ...` (the flag exists for exactly this)
+- **A BOM with real manufacturer part numbers.** "100k, 0805" is not orderable. Every line
+  needs an actual MPN the assembler can buy
+- **Awareness that unique part types drive the price.** There is a setup charge per distinct
+  component regardless of how many are placed, so this board's twelve types cost about the
+  same to set up whether it is one board or ten. That is why Q9 was made the same AO3401A as
+  the channels rather than a different MOSFET
 
-Order the parts separately from Digi-Key, Mouser or LCSC using the BOM.
+## Cost sequencing that avoids waste
+
+Assembly is worth paying for once the circuit is proven, and wasteful before that. So:
+
+1. **Breadboard one channel.** No PCB involved. Confirms the gate clamp works at 5 V and 24 V
+2. **Order bare boards**, five of them, and hand-solder one channel plus the input protection.
+   Confirms the *layout* — footprints, orientations, the barrier
+3. **Then order the assembled run**, with confidence that neither the circuit nor the board is
+   going to need a respin
+
+Skipping to step 3 risks paying assembly charges on a board with a footprint error, and the
+parts are not recoverable once placed.
 
 ## Step 4 — the vendors you mentioned
 

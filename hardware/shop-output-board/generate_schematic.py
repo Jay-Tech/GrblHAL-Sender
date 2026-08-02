@@ -51,9 +51,12 @@ FOOTPRINTS = {
     "Device:D_TVS": "Diode_SMD:D_SMA",
     "Device:Polyfuse": "Fuse:Fuse_1206_3216Metric",
     "Transistor_FET:AO3401A": "Package_TO_SOT_SMD:SOT-23",
-    # DIP-4 rather than the SMD option: the wider body buys creepage across the isolation
-    # barrier, which is the one place on this board where spacing is load-bearing.
-    "Isolator:PC817": "Package_DIP:DIP-4_W7.62mm",
+    # Gull-wing SOP-4, not the DIP. Counter-intuitively this is the better part for the
+    # barrier: the leads splay outward, giving a 9.38mm pad row span against the DIP-4's
+    # 7.62mm, so the 5mm gap ends up with 1.39mm of pad clearance instead of 0.51mm.
+    # It also leaves the through-hole parts as only the terminals and the Pico sockets,
+    # which is what makes SMT-only partial assembly practical.
+    "Isolator:PC817": "Package_SO:SOP-4_7.5x4.1mm_P2.54mm",
     "Connector_Generic:Conn_01x02":
         "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal",
     "Connector_Generic:Conn_01x06":
@@ -404,7 +407,7 @@ def main():
         net(p, "1", gate, f"R{n}02", "up")
         net(p, "2", optoc, f"R{n}02", "down")
 
-        p = place(f"U{n}", "Isolator:PC817", "PC817B", cx, TOP + 55)
+        p = place(f"U{n}", "Isolator:PC817", "LTV-817S (CTR B)", cx, TOP + 55)
         net(p, "1", leda, f"U{n}", "left")
         net(p, "2", "PICO_GND", f"U{n}", "left")
         net(p, "3", "ISO_GND", f"U{n}", "right")

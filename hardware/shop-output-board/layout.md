@@ -13,8 +13,9 @@ Everything above it is the Pico's domain; everything below it is the field domai
 wrong and you have a board that passed ERC, passed the netlist check, and still has a ground
 loop between the host PC and whatever the relays are bolted to.
 
-Only the optocouplers cross it. That is why they are DIP-4 on a 7.62 mm pin span — the body
-bridges the gap and the two pin rows land on opposite sides.
+Only the optocouplers cross it. They are gull-wing SOP-4, whose leads splay outward to a
+9.38 mm pad span — wider than the DIP-4 equivalent, so the SMD part bridges the barrier more
+comfortably than the through-hole one and leaves the board SMT-only apart from the connectors.
 
 ```
   y=0    ┌─────────────────────────────────────────────┐
@@ -24,11 +25,11 @@ bridges the gap and the two pin rows land on opposite sides.
          │        │      Pico socket          │        │   rows at y=7.00, y=24.78
   y=28   │        └───────────────────────────┘        │   (17.78 mm apart)
          │   R501  R502  R503 ... R508                 │   470R, one per channel
-  y=36.7 │   ▄▄     ▄▄     ▄▄         ▄▄               │   opto pins 1,2  (LOGIC)
+  y=35.8 │   ▄▄     ▄▄     ▄▄         ▄▄               │   opto pins 1,2  (LOGIC)
   y=38   ╞═════════════════════════════════════════════╡  ← barrier starts
          ║        N O   C O P P E R   —   5 mm         ║     optos centred y=40.5
   y=43   ╞═════════════════════════════════════════════╡  ← barrier ends
-  y=44.3 │   ▀▀     ▀▀     ▀▀         ▀▀               │   opto pins 3,4  (ISOLATED)
+  y=45.2 │   ▀▀     ▀▀     ▀▀         ▀▀               │   opto pins 3,4  (ISOLATED)
          │   R2  D  Q  R1  R3  R4  LED  ×8 channels    │
   y=75   │                                             │
          │   F1  Q9  R6  D9  TVS1  C1  C2              │   input protection
@@ -41,9 +42,10 @@ bridges the gap and the two pin rows land on opposite sides.
 
 ### Why 5 mm, and why not more
 
-DIP-4 pin rows are 7.62 mm apart with roughly 1.6 mm pads, leaving about 6 mm of clear span
-between pad edges. A 5 mm gap centred on the optos puts every pad ~0.5 mm outside the barrier
-— the widest gap that still lets the part bridge it.
+SOP-4 pad rows are 9.38 mm apart with roughly 1.6 mm pads, leaving about 7.8 mm of clear
+span. A 5 mm gap centred on the optos puts every pad **1.39 mm** outside the barrier. The
+package would allow up to 7.8 mm, but the extra pad clearance is worth more here than a wider
+gap — 5 mm is already far beyond what 24 V needs.
 
 Electrically this is enormous. Neither side is mains, so this is functional isolation and 24 V
 needs well under a millimetre of creepage. The 5 mm is buying noise separation and physical
@@ -68,8 +70,8 @@ Each column, top to bottom, matching the schematic so the two read the same way:
 | Y | Part |
 |---|---|
 | 32 | R5*n* (470R) — logic side |
-| 36.69 | opto pins 1, 2 |
-| 44.31 | opto pins 3, 4 |
+| 35.81 | opto pins 1, 2 |
+| 45.19 | opto pins 3, 4 |
 | 50 | R2*n* (4k7) |
 | 56 | D*n* (Zener, SOD-123) |
 | 62 | Q*n* (AO3401A, SOT-23) |

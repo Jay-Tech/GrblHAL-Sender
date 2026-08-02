@@ -111,7 +111,7 @@ Quantities for one board. Parts chosen for wide availability in assembly-house c
 | Ref | Qty | Part | Notes |
 |---|---|---|---|
 | Q1–Q8 | 8 | AO3401A, SOT-23 | P-MOSFET, −30V, −4A, logic level |
-| U1–U8 | 8 | PC817B or EL357N-C | Opto, CTR ranked ≥100% |
+| U1–U8 | 8 | LTV-817S (SOP-4), CTR rank B | Opto, CTR ≥100%. Gull-wing SMD: pad rows 9.38 mm apart, *wider* than the DIP-4's 7.62 mm, so it bridges the barrier better than the through-hole part. |
 | D1–D8 | 8 | MMSZ5237B, SOD-123 | 8.2V Zener, gate clamp. Two-pin package so pins map to pads; a SOT-23 Zener has three. |
 | R1 | 8 | 100k, 0805 | Gate pull-up |
 | R2 | 8 | 4k7, 0805, 0.25W | Opto collector load |
@@ -135,8 +135,8 @@ Pico supplies its own USB-C. Nothing on the isolated side is powered from USB.
 **The isolation barrier is a layout problem, not a schematic one.** Getting the schematic
 right and the layout wrong gives you a board that looks isolated and is not:
 
-- Keep a clear gap between the two ground pours — 3mm is comfortable at these voltages, and a
-  routed slot under the optos is better still
+- Keep a clear gap between the two ground pours — the 5 mm used here leaves 1.39 mm from
+  each opto pad to the barrier edge, and a routed slot under the optos is better still
 - No traces, no pour, no stitching vias cross the barrier except the optos themselves
 - The optos are the only components straddling it
 

@@ -3721,7 +3721,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "PC817B"
+		(property "Value" "LTV-817S (CTR B)"
 			(at 36.83 90.17 0)
 			(effects
 				(font
@@ -3730,7 +3730,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DIP:DIP-4_W7.62mm"
+		(property "Footprint" "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 			(at 30.48 90.17 0)
 			(hide yes)
 			(effects
@@ -4690,7 +4690,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "PC817B"
+		(property "Value" "LTV-817S (CTR B)"
 			(at 104.14 90.17 0)
 			(effects
 				(font
@@ -4699,7 +4699,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DIP:DIP-4_W7.62mm"
+		(property "Footprint" "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 			(at 97.79 90.17 0)
 			(hide yes)
 			(effects
@@ -5659,7 +5659,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "PC817B"
+		(property "Value" "LTV-817S (CTR B)"
 			(at 172.72 90.17 0)
 			(effects
 				(font
@@ -5668,7 +5668,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DIP:DIP-4_W7.62mm"
+		(property "Footprint" "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 			(at 166.37 90.17 0)
 			(hide yes)
 			(effects
@@ -6628,7 +6628,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "PC817B"
+		(property "Value" "LTV-817S (CTR B)"
 			(at 240.03 90.17 0)
 			(effects
 				(font
@@ -6637,7 +6637,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DIP:DIP-4_W7.62mm"
+		(property "Footprint" "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 			(at 233.68 90.17 0)
 			(hide yes)
 			(effects
@@ -7597,7 +7597,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "PC817B"
+		(property "Value" "LTV-817S (CTR B)"
 			(at 308.61 90.17 0)
 			(effects
 				(font
@@ -7606,7 +7606,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DIP:DIP-4_W7.62mm"
+		(property "Footprint" "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 			(at 302.26 90.17 0)
 			(hide yes)
 			(effects
@@ -8566,7 +8566,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "PC817B"
+		(property "Value" "LTV-817S (CTR B)"
 			(at 375.92 90.17 0)
 			(effects
 				(font
@@ -8575,7 +8575,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DIP:DIP-4_W7.62mm"
+		(property "Footprint" "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 			(at 369.57 90.17 0)
 			(hide yes)
 			(effects
@@ -9535,7 +9535,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "PC817B"
+		(property "Value" "LTV-817S (CTR B)"
 			(at 444.5 90.17 0)
 			(effects
 				(font
@@ -9544,7 +9544,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DIP:DIP-4_W7.62mm"
+		(property "Footprint" "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 			(at 438.15 90.17 0)
 			(hide yes)
 			(effects
@@ -10504,7 +10504,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "PC817B"
+		(property "Value" "LTV-817S (CTR B)"
 			(at 511.81 90.17 0)
 			(effects
 				(font
@@ -10513,7 +10513,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DIP:DIP-4_W7.62mm"
+		(property "Footprint" "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 			(at 505.46 90.17 0)
 			(hide yes)
 			(effects
