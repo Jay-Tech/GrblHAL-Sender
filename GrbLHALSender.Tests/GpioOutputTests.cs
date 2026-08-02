@@ -322,6 +322,40 @@ public class GpioOutputTests
     }
 
     [Fact]
+    public void NewManualOnlyOutput_ComesUpOff_NotAuto()
+    {
+        // A new output is created with Mode=Auto, but Auto means nothing without a source
+        // to follow and the cycle skips it. Left uncorrected the button read AUTO until the
+        // first tap, advertising a mode it did not have.
+        var backend = new FakeBackend();
+        var controller = new GpioOutputController(backend, _ => true, () => 0);
+        var config = new GpioOutputConfig
+        {
+            Name = "Lights",
+            Pin = 22,
+            Follow = GpioFollowSource.None,
+            Mode = GpioOutputMode.Auto,
+        };
+
+        var output = controller.Add(config);
+
+        Assert.Equal(GpioOutputMode.Off, output.Mode);
+        Assert.False(output.IsOn);
+    }
+
+    [Fact]
+    public void ClearingTheFollowSource_CollapsesAutoToOff()
+    {
+        // Editing an output from Spindle to None leaves Mode=Auto in the saved config; the
+        // rebuild has to settle it rather than carrying a mode the button cannot reach.
+        var config = VacConfig();
+        config.Mode = GpioOutputMode.Auto;
+        config.Follow = GpioFollowSource.None;
+
+        Assert.Equal(GpioOutputMode.Off, GpioOutputController.NormaliseMode(config));
+    }
+
+    [Fact]
     public void SavedOnMode_IsRestored_ForAManualOnlyOutput()
     {
         // Shop lights left on should still be on after a restart.

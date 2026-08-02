@@ -182,6 +182,22 @@ public class GpioOutputService : IDisposable
 
     public void CycleMode(GpioOutput output) => _controller?.CycleMode(output, DateTime.UtcNow);
 
+    /// <summary>
+    /// Rebuilds against the current config even though nothing in it changed.
+    /// <para>
+    /// Opening a device can fail for reasons that clear up on their own — an IDE still
+    /// holding the serial port, a USB device not enumerated yet, a cable moved to another
+    /// socket. Without this the first failure was permanent, because the signature check
+    /// correctly saw identical config and skipped the rebuild, so the only ways out were
+    /// editing a setting or restarting the app.
+    /// </para>
+    /// </summary>
+    public void Reconnect()
+    {
+        _appliedSignature = "";
+        Apply(_configManager.GHalSenderConfig?.Gpio ?? new GpioConfig());
+    }
+
     private void StartTicking()
     {
         if (_tickTimer != null || Outputs.Count == 0) return;

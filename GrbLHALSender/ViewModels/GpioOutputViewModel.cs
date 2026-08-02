@@ -54,6 +54,7 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
     public ObservableCollection<string> AvailablePorts { get; } = [];
 
     public ICommand RefreshPortsCommand { get; }
+    public ICommand ReconnectCommand { get; }
 
     /// <summary>Live outputs — what the workspace buttons bind to.</summary>
     public ObservableCollection<GpioOutput> Outputs => _service.Outputs;
@@ -98,6 +99,7 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
         AddOutputCommand = ReactiveCommand.Create(AddOutput);
         RemoveOutputCommand = ReactiveCommand.Create<GpioOutputConfig>(RemoveOutput);
         RefreshPortsCommand = ReactiveCommand.Create(RefreshPorts);
+        ReconnectCommand = ReactiveCommand.Create(Reconnect);
 
         _configManager.OnConfigLoaded += OnConfigLoaded;
         _service.OutputsRebuilt += OnOutputsRebuilt;
@@ -194,6 +196,18 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
     }
 
     private void RemoveOutput(GpioOutputConfig output) => EditableOutputs.Remove(output);
+
+    /// <summary>
+    /// Retries the device without needing a config edit or an app restart — for when the
+    /// port was busy at startup (an IDE holding it is the usual cause) or the device has
+    /// been unplugged and put back.
+    /// </summary>
+    private void Reconnect()
+    {
+        RefreshPorts();
+        _service.Reconnect();
+        UpdateStatus();
+    }
 
     public void Save()
     {

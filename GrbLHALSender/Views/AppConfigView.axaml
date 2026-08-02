@@ -955,6 +955,10 @@
 										FontSize="14" Height="30" Margin="6,0,0,0"
 										IsEnabled="{Binding GpioOutputViewModel.NeedsPort}"
 										Command="{Binding GpioOutputViewModel.RefreshPortsCommand}"/>
+								<Button Content="Reconnect"
+										FontSize="14" Height="30" Margin="6,0,0,0"
+										Command="{Binding GpioOutputViewModel.ReconnectCommand}"
+										ToolTip.Tip="Retry the device. Use this if the port was busy when the app started — an IDE holding it is the usual cause — or after unplugging and reconnecting."/>
 							</StackPanel>
 							<TextBlock Text="{Binding GpioOutputViewModel.StatusText}"
 									   Foreground="{DynamicResource TextMutedBrush}"

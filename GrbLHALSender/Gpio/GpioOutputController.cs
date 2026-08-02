@@ -57,11 +57,7 @@ internal sealed class GpioOutputController
         {
             Config = config,
             Name = string.IsNullOrWhiteSpace(config.Name) ? $"GPIO {config.Pin}" : config.Name,
-            // An output that follows something never comes back On after a restart;
-            // see GpioOutputConfig.Mode.
-            Mode = config.Mode == GpioOutputMode.On && config.Follow != GpioFollowSource.None
-                ? GpioOutputMode.Auto
-                : config.Mode,
+            Mode = NormaliseMode(config),
         };
 
         output.IsPinReady = _backend.TryOpenOutput(config.Pin, PinLevelFor(config, on: false));
@@ -96,6 +92,26 @@ internal sealed class GpioOutputController
         // this runs on every button tap and SaveConfig writes and fsyncs the whole file.
         // The shutdown handler persists it.
         output.Config.Mode = output.Mode;
+    }
+
+    /// <summary>
+    /// Settles the stored mode against the follow source, which may have been changed since
+    /// the mode was saved — or never have matched it in the first place.
+    /// </summary>
+    internal static GpioOutputMode NormaliseMode(GpioOutputConfig config)
+    {
+        if (config.Follow == GpioFollowSource.None)
+        {
+            // Auto has no meaning with nothing to follow, and the cycle skips it. A new
+            // output is created as Auto, so without this it came up showing AUTO on a
+            // button that only ever has On and Off — and the label only corrected itself
+            // once you tapped it.
+            return config.Mode == GpioOutputMode.On ? GpioOutputMode.On : GpioOutputMode.Off;
+        }
+
+        // An output that follows something never comes back On after a restart;
+        // see GpioOutputConfig.Mode.
+        return config.Mode == GpioOutputMode.On ? GpioOutputMode.Auto : config.Mode;
     }
 
     internal static GpioOutputMode NextMode(GpioOutputMode current, bool hasFollow) => current switch
