@@ -21,6 +21,10 @@ internal sealed class PicoGpioBackend : IGpioBackend
 {
     private const int HandshakeTimeoutMs = 1500;
 
+    // Claims are answered immediately by a healthy device; this only has to cover USB
+    // scheduling, not the device thinking about it.
+    private const int AckTimeoutMs = 500;
+
     private readonly object _lock = new();
     private readonly HashSet<int> _claimed = new();
 
@@ -127,7 +131,12 @@ internal sealed class PicoGpioBackend : IGpioBackend
 
         // Level is part of the claim so the pin is never briefly at whatever the register
         // held — long enough to click a relay.
-        if (!Send($"C {pin.ToString(CultureInfo.InvariantCulture)} {(initialValue ? 1 : 0)}"))
+        //
+        // Unlike a plain switch this waits for the device to confirm. It runs once per
+        // output at config time, so the round trip costs nothing noticeable, and it is what
+        // decides whether the workspace button is enabled — a button that looks live but
+        // drives a pin the device rejected is worse than one that is greyed out.
+        if (!SendAndExpectOk($"C {pin.ToString(CultureInfo.InvariantCulture)} {(initialValue ? 1 : 0)}"))
             return false;
 
         lock (_lock) _claimed.Add(pin);
@@ -171,6 +180,53 @@ internal sealed class PicoGpioBackend : IGpioBackend
             {
                 // The cable went away mid-write. Tear down rather than retrying: the device
                 // watchdog will drop the outputs on its own, and the config screen shows why.
+                UnavailableReason = $"GPIO device write failed: {ex.Message}";
+                Teardown();
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes a command and waits for the device to answer <c>ok</c>.
+    /// <para>
+    /// Safe against the heartbeat interleaving because both paths take the same lock, so
+    /// the next line on the wire is this command's response.
+    /// </para>
+    /// </summary>
+    private bool SendAndExpectOk(string command)
+    {
+        lock (_lock)
+        {
+            var port = _port;
+            if (port == null) return false;
+
+            try
+            {
+                DrainResponses(port);
+                port.WriteLine(command);
+
+                var previousTimeout = port.ReadTimeout;
+                port.ReadTimeout = AckTimeoutMs;
+                try
+                {
+                    var reply = port.ReadLine().Trim();
+                    return reply.Equals("ok", StringComparison.OrdinalIgnoreCase);
+                }
+                finally
+                {
+                    port.ReadTimeout = previousTimeout;
+                }
+            }
+            catch (TimeoutException)
+            {
+                // Answered nothing in time. Treated as a failed claim rather than assumed
+                // good, so the button greys instead of lying about being connected.
+                UnavailableReason = "GPIO device did not acknowledge; check the firmware.";
+                return false;
+            }
+            catch (Exception ex)
+            {
                 UnavailableReason = $"GPIO device write failed: {ex.Message}";
                 Teardown();
                 return false;

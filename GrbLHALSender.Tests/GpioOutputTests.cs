@@ -114,6 +114,19 @@ public class GpioOutputTests
     }
 
     [Fact]
+    public void RejectedClaim_LeavesTheOutputNotReady()
+    {
+        // A device that refuses the pin must leave the button greyed. A control that looks
+        // live and switches nothing is worse than one that is visibly unavailable.
+        var backend = new FakeBackend { FailOpen = true };
+        var controller = new GpioOutputController(backend, _ => true, () => 0);
+
+        var output = controller.Add(VacConfig());
+
+        Assert.False(output.IsPinReady);
+    }
+
+    [Fact]
     public void UnclaimablePin_NeverWrites()
     {
         var backend = new FakeBackend { FailOpen = true };

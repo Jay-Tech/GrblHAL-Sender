@@ -103,6 +103,7 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
 
         _configManager.OnConfigLoaded += OnConfigLoaded;
         _service.OutputsRebuilt += OnOutputsRebuilt;
+        _service.DeviceStateChanged += (_, _) => UpdateStatus();
 
         // The service is a singleton resolved before this view model, so its outputs may
         // already exist by the time we get here.
@@ -179,7 +180,10 @@ public class GpioOutputViewModel : ViewModelBase, ISavableViewModel
             return;
         }
 
-        StatusText = $"{_service.Outputs.Count} output(s) active.";
+        var ready = _service.Outputs.Count(o => o.IsPinReady);
+        StatusText = ready == _service.Outputs.Count
+            ? $"{ready} output(s) active."
+            : $"{ready} of {_service.Outputs.Count} output(s) active — the rest were rejected by the device.";
     }
 
     private void AddOutput()

@@ -48,6 +48,9 @@ public class GpioOutputService : IDisposable
     /// <summary>Fires when outputs are rebuilt, so the view model can re-attach commands.</summary>
     public event EventHandler? OutputsRebuilt;
 
+    /// <summary>Fires when the device is lost mid-session, so the status line can follow.</summary>
+    public event EventHandler? DeviceStateChanged;
+
     public GpioOutputService(ConfigManager configManager, MachineStateService machineState)
     {
         _configManager = configManager;
@@ -209,7 +212,37 @@ public class GpioOutputService : IDisposable
         _tickTimer.Start();
     }
 
-    private void OnTick(object? sender, EventArgs e) => _controller?.Tick(DateTime.UtcNow);
+    private void OnTick(object? sender, EventArgs e)
+    {
+        _controller?.Tick(DateTime.UtcNow);
+        CheckDeviceHealth();
+    }
+
+    /// <summary>
+    /// Greys the buttons if the device has gone since startup — a USB adapter unplugged, or
+    /// a write that failed and tore the connection down.
+    /// <para>
+    /// Readiness was previously decided once at startup and never revisited, which left the
+    /// buttons looking live while they switched nothing. A control that appears to work and
+    /// does not is worse than one that is visibly unavailable.
+    /// </para>
+    /// </summary>
+    private void CheckDeviceHealth()
+    {
+        if (_controller == null || _backend.IsAvailable) return;
+
+        var changed = false;
+        foreach (var output in Outputs)
+        {
+            if (!output.IsPinReady) continue;
+            output.IsPinReady = false;
+            // The relay is not ours to command any more; the device's own watchdog drops it.
+            output.IsOn = false;
+            changed = true;
+        }
+
+        if (changed) DeviceStateChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     private void TearDown()
     {
