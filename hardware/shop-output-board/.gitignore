@@ -1,0 +1,6 @@
+# Regenerated on demand by kicad-cli; not worth versioning
+*.kicad_prl
+erc.rpt
+netlist.net
+svgout/
+*-backups/
