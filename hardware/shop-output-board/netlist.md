@@ -35,12 +35,12 @@ Everything else:
 | | | 2 | `ISO_GND` |
 | F1 | Polyfuse 1.1A hold | 1 | `VIN_RAW` |
 | | | 2 | `VIN_F` |
-| Q9 | P-MOSFET, −30V, ≥3A | D (drain) | `VIN_F` |
-| | | S (source) | `V+` |
-| | | G (gate) | `Q9GATE` |
+| Q9 | AO3401A | 3 (drain) | `VIN_F` |
+| | | 2 (source) | `V+` |
+| | | 1 (gate) | `Q9GATE` |
 | R6 | 100k | 1 | `Q9GATE` |
 | | | 2 | `ISO_GND` |
-| D9 | BZX84C8V2 | cathode | `V+` |
+| D9 | MMSZ5237B | cathode | `V+` |
 | | | anode | `Q9GATE` |
 | TVS1 | SMAJ30A | 1 | `V+` |
 | | | 2 | `ISO_GND` |
@@ -84,11 +84,11 @@ free for a serial console, and GP23/24/25/29 are reserved by the Pico itself.
 | | | 2 | `OPTOCn` |
 | R1n | 100k | 1 | `V+` |
 | | | 2 | `GATEn` |
-| Dn | BZX84C8V2 | cathode | `V+` |
+| Dn | MMSZ5237B | cathode | `V+` |
 | | | anode | `GATEn` |
-| Qn | AO3401A | S (source) | `V+` |
-| | | G (gate) | `GATEn` |
-| | | D (drain) | `OUTn` |
+| Qn | AO3401A | 2 (source) | `V+` |
+| | | 1 (gate) | `GATEn` |
+| | | 3 (drain) | `OUTn` |
 | R3n | 10k | 1 | `OUTn` |
 | | | 2 | `ISO_GND` |
 | R4n | 2k2 | 1 | `OUTn` |

@@ -30,11 +30,36 @@ NEEDED = {
     "Device:D_Zener": ("Device", "D_Zener"),
     "Device:D_TVS": ("Device", "D_TVS"),
     "Device:Polyfuse": ("Device", "Polyfuse"),
-    "Device:Q_PMOS": ("Device", "Q_PMOS"),
+    # The real part rather than Device:Q_PMOS. The generic symbol numbers its pins G/D/S,
+    # which cannot map to a SOT-23 footprint's numeric pads — the board would not import.
+    # AO3401A inherits 1=G, 2=S, 3=D from its parent, matching the physical package.
+    "Transistor_FET:AO3401A": ("Transistor_FET", "AO3401A"),
     "Isolator:PC817": ("Isolator", "PC817"),
     "Connector_Generic:Conn_01x02": ("Connector_Generic", "Conn_01x02"),
     "Connector_Generic:Conn_01x06": ("Connector_Generic", "Conn_01x06"),
     "Connector_Generic:Conn_01x20": ("Connector_Generic", "Conn_01x20"),
+}
+
+# Every symbol needs one, or the netlist cannot become a board. Pin numbers and pad names
+# must agree, which is why the Zener is a 2-pin SOD-123 rather than a 3-pad SOT-23 part.
+FOOTPRINTS = {
+    "Device:R": "Resistor_SMD:R_0805_2012Metric",
+    "Device:C": "Capacitor_SMD:C_0805_2012Metric",
+    "Device:C_Polarized": "Capacitor_SMD:CP_Elec_8x10.5",
+    "Device:LED": "LED_SMD:LED_0805_2012Metric",
+    "Device:D_Zener": "Diode_SMD:D_SOD-123",
+    "Device:D_TVS": "Diode_SMD:D_SMA",
+    "Device:Polyfuse": "Fuse:Fuse_1206_3216Metric",
+    "Transistor_FET:AO3401A": "Package_TO_SOT_SMD:SOT-23",
+    # DIP-4 rather than the SMD option: the wider body buys creepage across the isolation
+    # barrier, which is the one place on this board where spacing is load-bearing.
+    "Isolator:PC817": "Package_DIP:DIP-4_W7.62mm",
+    "Connector_Generic:Conn_01x02":
+        "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal",
+    "Connector_Generic:Conn_01x06":
+        "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1-6-3.81_1x06_P3.81mm_Horizontal",
+    "Connector_Generic:Conn_01x20":
+        "Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical",
 }
 
 
@@ -108,25 +133,68 @@ def find_symbol(lib_text, name):
     raise KeyError(name)
 
 
-def collect_pins(node, acc=None):
-    """Pin number -> (x, y, angle), in symbol-local coordinates."""
+def collect_pins(node, acc=None, names=None):
+    """Pin number -> (x, y, angle), in symbol-local coordinates.
+
+    Also builds a pin-name -> pin-number map, so placement code can say "G" and "D" and
+    still emit the numeric pins a footprint's pads are named after.
+    """
     if acc is None:
         acc = {}
+    if names is None:
+        names = {}
     for child in node:
         if not isinstance(child, list):
             continue
         if child[0] == "pin":
-            at = num = None
+            at = num = nm = None
             for g in child:
                 if isinstance(g, list) and g[0] == "at":
                     at = (float(g[1]), float(g[2]), float(g[3]) if len(g) > 3 else 0.0)
                 if isinstance(g, list) and g[0] == "number":
                     num = g[1].strip('"')
+                if isinstance(g, list) and g[0] == "name":
+                    nm = g[1].strip('"')
             if at and num is not None:
                 acc[num] = at
+                if nm:
+                    names.setdefault(nm, num)
         else:
-            collect_pins(child, acc)
-    return acc
+            collect_pins(child, acc, names)
+    return acc, names
+
+
+def flatten_extends(lib_text, node, lib_id):
+    """Resolves an (extends "PARENT") symbol into a self-contained definition.
+
+    Real part symbols usually inherit their graphics and pins from a generic parent and
+    override only the properties. A schematic's lib_symbols has to stand alone, so the
+    parent's body is merged in and its unit sub-symbols renamed to match the child.
+    """
+    parent_name = None
+    for c in node:
+        if isinstance(c, list) and c[0] == "extends":
+            parent_name = c[1].strip('"')
+    if parent_name is None:
+        return node
+
+    parent = find_symbol(lib_text, parent_name)
+    child_props = {c[1] for c in node if isinstance(c, list) and c[0] == "property"}
+
+    merged = [c for c in node if not (isinstance(c, list) and c[0] == "extends")]
+    short = lib_id.split(":", 1)[1]
+    for c in parent:
+        if not isinstance(c, list):
+            continue
+        if c[0] == "property" and c[1] in child_props:
+            continue                       # the child's own value wins
+        if c[0] == "symbol":
+            c = list(c)
+            # Unit sub-symbols are named "<PARENT>_0_1"; rename so they belong to the child.
+            c[1] = '"' + short + c[1].strip('"')[len(parent_name):] + '"'
+        if c[0] in ("property", "symbol", "pin_numbers", "pin_names"):
+            merged.append(c)
+    return merged
 
 
 # --- Deterministic UUIDs ---------------------------------------------------------------
@@ -163,9 +231,11 @@ def snap(v):
     return round(round(v / GRID) * GRID, 2)
 
 
-def place(ref, lib_id, value, x, y, footprint=""):
+def place(ref, lib_id, value, x, y, footprint=None):
     """Puts a symbol at (x, y) and records absolute pin positions."""
     x, y = snap(x), snap(y)
+    if footprint is None:
+        footprint = FOOTPRINTS[lib_id]
     pins = SYMBOL_PINS[lib_id]
     abs_pins = {}
     for numb, (px, py, ang) in pins.items():
@@ -268,8 +338,15 @@ def no_connect(x, y, seed):
 STUB = 2.54
 
 
-def net(pins, numb, name, ref, direction="up"):
-    """Stubs a pin out and labels it. Direction picks which way the stub runs."""
+def net(pins, numb, name, ref, direction="up", lib_id=None):
+    """Stubs a pin out and labels it. Direction picks which way the stub runs.
+
+    `numb` may be a pin name ("G", "D") as well as a number; names are resolved so the
+    placement code stays readable while the emitted schematic uses the numeric pins that
+    footprint pads are named after.
+    """
+    if numb not in pins and lib_id:
+        numb = SYMBOL_PIN_NAMES[lib_id].get(numb, numb)
     x, y, _ = pins[numb]
     dx, dy, ang = {
         "up": (0, -STUB, 90),
@@ -285,16 +362,19 @@ def net(pins, numb, name, ref, direction="up"):
 
 SYMBOL_DEFS = {}
 SYMBOL_PINS = {}
+SYMBOL_PIN_NAMES = {}
 
 for lib_id, (lib, name) in NEEDED.items():
     path = os.path.join(SYMBOL_DIR, f"{lib}.kicad_sym")
     with open(path, encoding="utf-8") as fh:
         text = fh.read()
-    node = find_symbol(text, name)
+    node = flatten_extends(text, find_symbol(text, name), lib_id)
     node = list(node)
     node[1] = f'"{lib_id}"'          # lib_symbols keys are fully qualified
     SYMBOL_DEFS[lib_id] = dump(node, indent=2)
-    SYMBOL_PINS[lib_id] = collect_pins(node)
+    SYMBOL_PINS[lib_id], SYMBOL_PIN_NAMES[lib_id] = collect_pins(node)
+    if not SYMBOL_PINS[lib_id]:
+        raise SystemExit(f"{lib_id}: no pins resolved — check the extends chain")
 
 
 def main():
@@ -316,7 +396,7 @@ def main():
         net(p, "1", "V+", f"R{n}01", "up")
         net(p, "2", gate, f"R{n}01", "down")
 
-        p = place(f"D{n}", "Device:D_Zener", "BZX84C8V2", cx + 25, TOP)
+        p = place(f"D{n}", "Device:D_Zener", "MMSZ5237B 8V2", cx + 25, TOP)
         net(p, "1", "V+", f"D{n}", "up")       # pin 1 = K
         net(p, "2", gate, f"D{n}", "down")     # pin 2 = A
 
@@ -334,10 +414,11 @@ def main():
         net(p, "1", gp, f"R{n}05", "up")
         net(p, "2", leda, f"R{n}05", "down")
 
-        p = place(f"Q{n}", "Device:Q_PMOS", "AO3401A", cx, TOP + 90)
-        net(p, "S", "V+", f"Q{n}", "up")
-        net(p, "G", gate, f"Q{n}", "left")
-        net(p, "D", out, f"Q{n}", "down")
+        QFET = "Transistor_FET:AO3401A"
+        p = place(f"Q{n}", QFET, "AO3401A", cx, TOP + 90)
+        net(p, "S", "V+", f"Q{n}", "up", QFET)
+        net(p, "G", gate, f"Q{n}", "left", QFET)
+        net(p, "D", out, f"Q{n}", "down", QFET)
 
         p = place(f"R{n}03", "Device:R", "10k", cx, TOP + 120)
         net(p, "1", out, f"R{n}03", "up")
@@ -362,16 +443,18 @@ def main():
     net(p, "1", "VIN_RAW", "F1", "up")
     net(p, "2", "VIN_F", "F1", "down")
 
-    p = place("Q9", "Device:Q_PMOS", "reverse-polarity", ix + 75, iy)
-    net(p, "D", "VIN_F", "Q9", "up")
-    net(p, "S", "V+", "Q9", "down")
-    net(p, "G", "Q9GATE", "Q9", "left")
+    # Same part as the channels. At 4A it has ample margin over the whole board's draw, and
+    # it keeps the BOM to one MOSFET line.
+    p = place("Q9", "Transistor_FET:AO3401A", "AO3401A", ix + 75, iy)
+    net(p, "D", "VIN_F", "Q9", "up", "Transistor_FET:AO3401A")
+    net(p, "S", "V+", "Q9", "down", "Transistor_FET:AO3401A")
+    net(p, "G", "Q9GATE", "Q9", "left", "Transistor_FET:AO3401A")
 
     p = place("R6", "Device:R", "100k", ix + 110, iy)
     net(p, "1", "Q9GATE", "R6", "up")
     net(p, "2", "ISO_GND", "R6", "down")
 
-    p = place("D9", "Device:D_Zener", "BZX84C8V2", ix + 140, iy)
+    p = place("D9", "Device:D_Zener", "MMSZ5237B 8V2", ix + 140, iy)
     net(p, "1", "V+", "D9", "up")
     net(p, "2", "Q9GATE", "D9", "down")
 

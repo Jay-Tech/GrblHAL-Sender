@@ -112,18 +112,18 @@ Quantities for one board. Parts chosen for wide availability in assembly-house c
 |---|---|---|---|
 | Q1–Q8 | 8 | AO3401A, SOT-23 | P-MOSFET, −30V, −4A, logic level |
 | U1–U8 | 8 | PC817B or EL357N-C | Opto, CTR ranked ≥100% |
-| D1–D8 | 8 | BZX84C8V2, SOT-23 | 8.2V Zener, gate clamp |
+| D1–D8 | 8 | MMSZ5237B, SOD-123 | 8.2V Zener, gate clamp. Two-pin package so pins map to pads; a SOT-23 Zener has three. |
 | R1 | 8 | 100k, 0805 | Gate pull-up |
 | R2 | 8 | 4k7, 0805, 0.25W | Opto collector load |
 | R3 | 8 | 10k, 0805 | Output pull-down |
 | R4 | 8 | 2k2, 0805 | LED series |
 | R5 | 8 | 470R, 0805 | Opto LED series |
 | LED1–8 | 8 | High-efficiency, 0805 | Output state |
-| Q9 | 1 | P-MOSFET, −30V, ≥3A | Reverse polarity |
+| Q9 | 1 | AO3401A, SOT-23 | Reverse polarity. Same part as the channels — 4A is ample for the whole board and it keeps one MOSFET line in the BOM. |
 | F1 | 1 | Polyfuse 1.1A | |
 | TVS1 | 1 | SMAJ30A | |
 | C1 | 1 | 100µF / 50V electrolytic | |
-| C2–C4 | 3 | 100nF, 0805 | |
+| C2 | 1 | 100nF, 0805 | |
 | J1 | 1 | 2-way screw terminal, 5.08mm | V+ / GND in |
 | J2, J3 | 2 | 6-way screw terminal, 3.81mm | 4× OUT + 2× GND each |
 | — | 2 | 20-pin 2.54mm socket strip | Pico, socketed for reflashing |
