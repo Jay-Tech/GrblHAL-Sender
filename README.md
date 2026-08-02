@@ -242,16 +242,34 @@ output change to the right moment:
 Aux output buttons follow these commands wherever they come from, so a rule that toggles a
 pin moves the matching button too.
 
-# Shop Outputs (Raspberry Pi GPIO)
-
-On a Pi, the sender can switch relays wired to the GPIO header — shop lights, dust
-collection, anything you would otherwise reach over and flip. Configured under
-**Utility → GPIO**, and off by default: no pin is touched until you enable it.
+# Shop Outputs
+![GpioOutputs](Media/GpioOutputs.png)
+</br>
+The sender can switch relays for shop lights, dust collection — anything you would otherwise
+reach over and flip. Configured under **Utility → GPIO**, and off by default: nothing is
+driven until you enable it.
 
 This is for convenience, not safety. E-stop and safety door belong hardwired to the
 controller, where they do not depend on a userland app being responsive. Nothing here is
 time-critical either — the outputs settle in the second or so after the machine state
 changes, which is fine for a vacuum and useless for an interlock.
+
+Worth knowing why this exists alongside the controller's own aux outputs: those are driven by
+`M62`/`M64`, which grblHAL executes when it *parses* them, well ahead of the cutting point
+during a job. That is why the [G-code Events](#getting-the-timing-right-in-a-job) section
+needs dwell-first ordering. A shop output is not in the g-code stream at all, so "run the vac
+while the spindle is cutting, then for fifteen seconds after" needs no such trickery.
+
+## Where the outputs live
+
+| Device | Needs | Notes |
+|---|---|---|
+| **PiHeader** | A Raspberry Pi | The Pi's own 40-pin header. No extra hardware. |
+| **UsbSerial** | A microcontroller on USB | Works on any host the app runs on — mini PC, Mac, or a Pi. |
+
+The USB option exists because the header option only ever serves installs that run on a Pi.
+Both behave identically once configured; everything below applies to either unless it says
+otherwise.
 
 ## Off / Auto / On
 
@@ -318,9 +336,12 @@ Fifteen seconds is a sensible starting point. An explicit **Off** ignores the de
 
 ## Wiring
 
-Pins are **BCM numbers**, 2–27. Avoid 2/3 (I²C, permanently pulled up), 7–11 (SPI) and 14/15
-(UART); 17, 22, 23, 24, 25, 27 are all clean, and the **Add Output** button hands out unused
-ones in that order.
+On a Pi, pins are **BCM numbers**, 2–27. Avoid 2/3 (I²C, permanently pulled up), 7–11 (SPI)
+and 14/15 (UART); 17, 22, 23, 24, 25, 27 are all clean, and the **Add Output** button hands
+out unused ones in that order.
+
+On a USB device, pins are that board's own numbering — `GP` numbers on a Pico — and the valid
+range is reported by the device itself rather than assumed.
 
 **Prefer an active-high relay board.** BCM 9–27 boot with a pull-down, so an active-high
 board reads *off* while the Pi boots, while the app is starting, and after it exits or
@@ -331,7 +352,7 @@ Do not drive a relay coil from a pin directly; use an opto-isolated module, a MO
 or an SSR. And size the switching for the load — a shop vacuum's inrush will weld the
 contacts of a generic 10 A relay board sooner or later, so drive a proper contactor with it.
 
-## Pi setup
+## Pi header setup
 
 The header GPIO is reached through libgpiod. Installing the tools package pulls the right
 runtime library whichever release you are on, which matters because the library package was
@@ -347,8 +368,43 @@ header as `gpiochip0 [pinctrl-rp1]` on a Pi 5.
 
 If the app cannot reach the hardware it says so on the GPIO config tab rather than failing
 silently or crashing — the message is the underlying error, so it will tell you whether it is
-a driver or a permissions problem. On Windows and macOS the outputs appear and toggle but
-switch nothing, which keeps the app usable for development.
+a driver or a permissions problem. With no device reachable the outputs still appear and
+toggle but switch nothing, which keeps the app usable for development.
+
+## USB device setup
+
+The device runs the PICOGPIO protocol, specified in
+[docs/pico-gpio-protocol.md](docs/pico-gpio-protocol.md). A MicroPython reference
+implementation for a Raspberry Pi Pico is in [firmware/pico/main.py](firmware/pico/main.py) —
+about a hundred lines, and enough to use in earnest.
+
+Flash MicroPython onto the board, then copy the script to it as `main.py` so it runs on boot
+and owns the USB serial port instead of the REPL:
+
+```
+pip install mpremote
+mpremote connect COM10 fs cp firmware/pico/main.py :main.py
+mpremote connect COM10 reset
+```
+
+Then pick **Device: UsbSerial** and select the port. **Close any IDE connected to the board
+first** — a serial port can only be held by one program, and Thonny in particular keeps the
+handle after you disconnect, which shows up as "access is denied". **Reconnect** retries
+without restarting the app, and also covers unplugging the device mid-session.
+
+The app never scans ports. A grblHAL controller and a Pico both enumerate as `/dev/ttyACM*`
+on Linux and are indistinguishable by name, so the port is always chosen explicitly and
+nothing is written until the device identifies itself.
+
+### The device watchdog
+
+The protocol requires the device to drive every output inactive if the host stops talking to
+it — five seconds in the reference implementation. This covers what the app cannot: the
+application crashing, the cable being pulled, or the host sleeping while USB power stays up.
+A host-side "turn everything off on exit" only works when the exit is orderly.
+
+That makes a USB device arguably safer than the Pi header, where an app that dies leaves the
+pins to their boot-time pull-down.
 
 ## Behaviour worth knowing
 
@@ -380,7 +436,9 @@ Verified on hardware:
 - Changing `$341` while connected — the controls follow without a reconnect
 - G-code event injection around a tool change, including the dwell-first ordering
 - GPIO shop outputs on a Pi 5 — a relay on BCM 17 following the spindle in Auto, and the
-  manual On/Off override
+  manual On/Off override, with no spurious activation across two boot cycles
+- Shop outputs over USB — a Pico running the MicroPython reference firmware, driven from a
+  Windows host: identify handshake, pin claim and switching
 - Serial connection and reconnection
 - Single instance guard on Linux
 - The probe cycles with a 3D probe — workpiece Z zero, all four corners, and centre finding
