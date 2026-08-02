@@ -54,6 +54,13 @@ here; a copper gap is sufficient for what this board does.
 
 ## Channel placement
 
+![One channel, schematic and board](channel-layout.svg)
+
+[channel-layout.svg](channel-layout.svg) draws a single channel both ways with the parts
+numbered the same in each, which is the quickest way to see how the schematic becomes copper.
+Regenerate it with `python generate_channel_diagram.py` — it reads the constants below, so it
+cannot drift from this plan.
+
 Eight columns on a **16 mm pitch starting at x = 15**: 15, 31, 47, 63, 79, 95, 111, 127.
 
 Each column, top to bottom, matching the schematic so the two read the same way:

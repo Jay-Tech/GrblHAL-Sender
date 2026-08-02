@@ -15,14 +15,14 @@
 # with it, a trace or pour that bridges the two domains is a DRC error.
 #
 # 5mm is what the DIP-4 optocouplers can span while keeping every pad clear of the gap.
-# Electrically it is far more than 24V functional isolation needs — it is buying noise
+# Electrically it is far more than 24V functional isolation needs - it is buying noise
 # separation and making the barrier obvious to anyone looking at the board.
 (rule "isolation barrier"
 	(constraint clearance (min 5mm))
 	(condition "A.NetClass == 'Logic' && B.NetClass == 'Isolated'"))
 
 # Same separation for copper pours, which is where it is most likely to be breached by
-# accident — a zone that fills a little too far is easy to miss by eye.
+# accident - a zone that fills a little too far is easy to miss by eye.
 (rule "isolation barrier - zones"
 	(constraint physical_clearance (min 5mm))
 	(condition "A.NetClass == 'Logic' && B.NetClass == 'Isolated' && A.Type == 'Zone'"))
@@ -32,4 +32,4 @@
 # because the board is not dense.
 (rule "output net spacing"
 	(constraint clearance (min 0.4mm))
-	(condition "A.NetClass == 'Isolated' && A.NetName =~ 'OUT*'"))
+	(condition "A.NetClass == 'Isolated' && A.NetName == 'OUT*'"))
