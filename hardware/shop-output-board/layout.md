@@ -83,6 +83,35 @@ Each column, top to bottom, matching the schematic so the two read the same way:
 Keep the LEDs on that one row so they read as a bank of eight indicators rather than
 scattered. They are the only thing on this board a person looks at while it is running.
 
+## Input power section
+
+![Input power section](power-layout.svg)
+
+[power-layout.svg](power-layout.svg) draws this section both ways, same conventions as the
+channel diagram. Regenerate with `python generate_power_diagram.py`.
+
+Unlike a channel this is a **series chain**, so place the parts in the order current travels
+through them and it stays readable:
+
+| Part | X | Y | Note |
+|---|---|---|---|
+| J1 | 16 | 103 | Input terminal, bottom edge |
+| F1 | 28 | 92 | Polyfuse |
+| Q9 | 38 | 92 | Reverse polarity. **Drain to input, source to output** — opposite to the channel MOSFETs |
+| R6 | 34 | 82 | Q9 gate satellites, own row just above it |
+| D9 | 46 | 82 | |
+| TVS1 | 50 | 92 | |
+| C1 | 62 | 92 | 8 mm electrolytic, needs the space |
+| C2 | 72 | 92 | Last part before the rail |
+
+The **V+ riser at x = 71** carries the rail up from the chain to y = 47. That X is chosen
+because it falls in the gap between channel columns 4 (x=63) and 5 (x=79) — a riser inside a
+column would have to fight its way past R2, D and Q.
+
+`TVS1`, `C1` and `C2` are **not in the chain.** Each one sits from `V+` down to the ground
+pour, so they are three vias rather than three traces. Only `J1 → F1 → Q9` carries current in
+a line.
+
 ## Net classes and design rules
 
 Set two net classes, because they drive the DRC rule that enforces the barrier:
