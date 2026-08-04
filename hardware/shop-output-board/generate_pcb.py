@@ -85,6 +85,9 @@ def load_netlist(path="netlist.net"):
 
 
 ap = argparse.ArgumentParser()
+ap.add_argument("--force", action="store_true",
+                help="Overwrite an existing board. Refused by default: once you have routed "
+                     "in Pcbnew the board file is yours, and regenerating discards that work.")
 ap.add_argument("--route", action="store_true",
                 help="Also emit traces. INCOMPLETE - DRC still reports shorts and crossings; "
                      "the routing here is a work in progress, not a finished board.")
@@ -400,6 +403,19 @@ pcb = f'''(kicad_pcb
 '''
 
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shop-output-board.kicad_pcb")
+
+# Once the board has been opened and routed in Pcbnew it is no longer a generated
+# artefact — it holds work this script cannot reproduce. Regenerating over it would
+# discard that silently, so it has to be asked for.
+if os.path.exists(path) and not ARGS.force:
+    existing = open(path, encoding="utf-8").read()
+    routed = existing.count("(segment")
+    if routed:
+        sys.exit(
+            f"{os.path.basename(path)} already has {routed} routed segments. "
+            "Regenerating would discard them. Back it up, then pass --force if you "
+            "really mean to start the layout again.")
+
 open(path, "w", encoding="utf-8").write(pcb)
 print(f"wrote {path}")
 print(f"{len(COMPS)} footprints, {len(tracks)} track/via elements, {len(NETS)} nets")
