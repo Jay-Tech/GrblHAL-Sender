@@ -98,8 +98,8 @@ through them and it stays readable:
 | J1 | 16 | 103 | Input terminal, bottom edge |
 | F1 | 28 | 92 | Polyfuse |
 | Q9 | 38 | 92 | Reverse polarity. **Drain to input, source to output** — opposite to the channel MOSFETs |
-| R6 | 34 | 82 | Q9 gate satellites, own row just above it |
-| D9 | 46 | 82 | |
+| R6 | 34 | 86 | Q9 gate satellites, own row just above it |
+| D9 | 46 | 86 | |
 | TVS1 | 50 | 92 | |
 | C1 | 62 | 92 | 8 mm electrolytic, needs the space |
 | C2 | 72 | 92 | Last part before the rail |

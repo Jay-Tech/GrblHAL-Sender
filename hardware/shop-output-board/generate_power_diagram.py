@@ -18,8 +18,8 @@ P = {
     "J1":   (16.0, 103.0),
     "F1":   (28.0, 92.0),
     "Q9":   (38.0, 92.0),
-    "R6":   (34.0, 82.0),      # Q9's gate satellites, on their own row just above it
-    "D9":   (46.0, 82.0),
+    "R6":   (34.0, 86.0),      # Q9's gate satellites, on their own row just above it
+    "D9":   (46.0, 86.0),
     "TVS1": (50.0, 92.0),
     "C1":   (62.0, 92.0),      # 8 mm electrolytic, needs the room
     "C2":   (72.0, 92.0),

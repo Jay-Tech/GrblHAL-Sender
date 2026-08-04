@@ -4,3 +4,6 @@ erc.rpt
 netlist.net
 svgout/
 *-backups/
+drc.rpt
+board.svg
+fab/

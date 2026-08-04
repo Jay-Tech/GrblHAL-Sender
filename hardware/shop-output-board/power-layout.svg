@@ -94,14 +94,14 @@
 <circle cx="733.8" cy="457.5" r="9" fill="#b45309"/>
 <text x="733.8" y="461.5" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">3</text>
 <text x="733.8" y="488.9" font-size="9" fill="#0f172a" text-anchor="middle" font-weight="600" font-family="ui-sans-serif, system-ui, sans-serif">Q9</text>
-<rect x="713.3" y="429.6" width="8.2" height="5.1" rx="2" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
-<circle cx="717.4" cy="416.6" r="9" fill="#b45309"/>
-<text x="717.4" y="420.6" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">4</text>
-<text x="717.4" y="403.6" font-size="9" fill="#0f172a" text-anchor="middle" font-weight="600" font-family="ui-sans-serif, system-ui, sans-serif">R6</text>
-<rect x="759.0" y="428.9" width="15.2" height="6.6" rx="2" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
-<circle cx="766.6" cy="415.9" r="9" fill="#b45309"/>
-<text x="766.6" y="419.9" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">5</text>
-<text x="766.6" y="402.9" font-size="9" fill="#0f172a" text-anchor="middle" font-weight="600" font-family="ui-sans-serif, system-ui, sans-serif">D9</text>
+<rect x="713.3" y="446.0" width="8.2" height="5.1" rx="2" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
+<circle cx="717.4" cy="433.0" r="9" fill="#b45309"/>
+<text x="717.4" y="437.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">4</text>
+<text x="717.4" y="420.0" font-size="9" fill="#0f172a" text-anchor="middle" font-weight="600" font-family="ui-sans-serif, system-ui, sans-serif">R6</text>
+<rect x="759.0" y="445.3" width="15.2" height="6.6" rx="2" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
+<circle cx="766.6" cy="432.3" r="9" fill="#b45309"/>
+<text x="766.6" y="436.3" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">5</text>
+<text x="766.6" y="419.3" font-size="9" fill="#0f172a" text-anchor="middle" font-weight="600" font-family="ui-sans-serif, system-ui, sans-serif">D9</text>
 <rect x="772.8" y="467.9" width="20.5" height="10.7" rx="2" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
 <circle cx="783.0" cy="454.9" r="9" fill="#b45309"/>
 <text x="783.0" y="458.9" font-size="11" fill="#fff" text-anchor="middle" font-weight="700" font-family="ui-sans-serif, system-ui, sans-serif">6</text>
