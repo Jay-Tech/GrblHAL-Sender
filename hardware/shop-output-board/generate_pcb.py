@@ -17,7 +17,8 @@ import math
 import os
 import sys
 
-from generate_schematic import tokenize, parse, dump, uid
+from generate_schematic import (tokenize, parse, dump, uid,
+                                CHANNEL_GP, GP_TO_PICO_PIN)
 
 FOOTPRINT_DIR = r"C:\Program Files\KiCad\10.0\share\kicad\footprints"
 BOARD_W, BOARD_H = 150.0, 115.0
@@ -39,18 +40,25 @@ POWER = {"J1": (16.0, 103.0), "F1": (28.0, 92.0), "Q9": (38.0, 92.0),
          "C1": (62.0, 92.0), "C2": (72.0, 92.0)}
 
 # Pico sockets run along X, so they are rotated. J4 carries GP2..GP9.
-PICO_J4 = (50.87, 24.78, -90.0)
-PICO_J5 = (50.87, 7.00, -90.0)
+PICO_J4 = (50.87, 24.78, 90.0)
+PICO_J5 = (50.87, 7.00, 90.0)
 
 TERM_J2 = (95.0, 103.0, 0.0)
 TERM_J3 = (125.0, 103.0, 0.0)
 
 
 def rotate(px, py, deg):
-    """KiCad footprint pad transform for a footprint placed at angle `deg`."""
+    """KiCad footprint pad transform for a footprint placed at angle `deg`.
+
+    Note the signs: KiCad rotates counter-clockwise on screen, and screen Y grows
+    downward, so this is *not* the textbook rotation matrix. Getting it backwards puts
+    every rotated part's pads on the wrong side, which on this board means the optos'
+    isolated pins land in the logic zone. Verified against KiCad's own IPC-D-356 export
+    by verify_pcb.py — do not "fix" these signs without re-running it.
+    """
     a = math.radians(deg)
-    return (px * math.cos(a) - py * math.sin(a),
-            px * math.sin(a) + py * math.cos(a))
+    return (px * math.cos(a) + py * math.sin(a),
+            -px * math.sin(a) + py * math.cos(a))
 
 
 # --- Load the netlist ------------------------------------------------------------------
@@ -91,15 +99,15 @@ for n in range(1, 9):
     cx = CH_X0 + (n - 1) * CH_PITCH
     PLACE[f"R{n}05"] = (cx, CY["R5"], 0.0)
     # 90 degrees: the SOP-4's 9.38mm isolation span is along X in the footprint, so
-    # unrotated it would straddle a *vertical* barrier. Rotated, pins 1/2 land at
+    # unrotated it would straddle a *vertical* barrier. At 270 the pins 1/2 land at
     # y=35.81 (logic) and 3/4 at y=45.19 (isolated), matching layout.md.
-    PLACE[f"U{n}"] = (cx, CY["U"], 90.0)
+    PLACE[f"U{n}"] = (cx, CY["U"], 270.0)
     # 180: puts pad 1 (GATE) on the right, where the gate rail runs.
     PLACE[f"R{n}02"] = (cx, CY["R2"], 180.0)
     PLACE[f"D{n}"] = (cx, CY["D"], 0.0)
-    # 90: source to top-left (V+ rail), gate to top-right (gate rail), drain to
+    # 270: source to top-left (V+ rail), gate to top-right (gate rail), drain to
     # bottom-centre so OUT leaves straight down towards its terminal.
-    PLACE[f"Q{n}"] = (cx, CY["Q"], 90.0)
+    PLACE[f"Q{n}"] = (cx, CY["Q"], 270.0)
     PLACE[f"R{n}01"] = (cx, CY["R1"], 0.0)
     PLACE[f"R{n}03"] = (cx, CY["R3"], 0.0)
     PLACE[f"R{n}04"] = (cx, CY["R4"], 0.0)
@@ -225,11 +233,11 @@ if ARGS.route:
 
     for n in range(1, 9):
         cx = CH_X0 + (n - 1) * CH_PITCH
-        gp = f"GP{n + 1}"
+        gp = f"GP{CHANNEL_GP[n - 1]}"
 
         # Pico pin -> R5. Straight to the column X, then down. Monotonic pin-to-channel
         # assignment means these eight fan out without crossing each other.
-        pico_pin = P[("J4", str([4, 5, 6, 7, 9, 10, 11, 12][n - 1]))]
+        pico_pin = P[("J4", str(GP_TO_PICO_PIN[CHANNEL_GP[n - 1]]))]
         r5a, r5b = P[(f"R{n}05", "1")], P[(f"R{n}05", "2")]
         route([pico_pin, (pico_pin[0], 28.5), (cx, 28.5), r5a], gp)
 

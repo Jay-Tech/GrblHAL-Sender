@@ -3817,7 +3817,7 @@
 	(footprint "Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "52a397f2-8062-4d2a-aae9-fc1ffdf545c1")
-		(at 50.87 24.78 270)
+		(at 50.87 24.78 90)
 		(property "Reference" "J4"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -3973,7 +3973,7 @@
 			"1"
 			thru_hole
 			rect
-			(at 0 0 270)
+			(at 0 0 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -3984,7 +3984,7 @@
 			"2"
 			thru_hole
 			circle
-			(at 0 2.54 270)
+			(at 0 2.54 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -3995,7 +3995,7 @@
 			"3"
 			thru_hole
 			circle
-			(at 0 5.08 270)
+			(at 0 5.08 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4006,7 +4006,7 @@
 			"4"
 			thru_hole
 			circle
-			(at 0 7.62 270)
+			(at 0 7.62 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4017,7 +4017,7 @@
 			"5"
 			thru_hole
 			circle
-			(at 0 10.16 270)
+			(at 0 10.16 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4028,7 +4028,7 @@
 			"6"
 			thru_hole
 			circle
-			(at 0 12.7 270)
+			(at 0 12.7 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4039,7 +4039,7 @@
 			"7"
 			thru_hole
 			circle
-			(at 0 15.24 270)
+			(at 0 15.24 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4050,7 +4050,7 @@
 			"8"
 			thru_hole
 			circle
-			(at 0 17.78 270)
+			(at 0 17.78 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4061,7 +4061,7 @@
 			"9"
 			thru_hole
 			circle
-			(at 0 20.32 270)
+			(at 0 20.32 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4072,7 +4072,7 @@
 			"10"
 			thru_hole
 			circle
-			(at 0 22.86 270)
+			(at 0 22.86 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4083,7 +4083,7 @@
 			"11"
 			thru_hole
 			circle
-			(at 0 25.4 270)
+			(at 0 25.4 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4094,7 +4094,7 @@
 			"12"
 			thru_hole
 			circle
-			(at 0 27.94 270)
+			(at 0 27.94 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4105,7 +4105,7 @@
 			"13"
 			thru_hole
 			circle
-			(at 0 30.48 270)
+			(at 0 30.48 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4116,7 +4116,7 @@
 			"14"
 			thru_hole
 			circle
-			(at 0 33.02 270)
+			(at 0 33.02 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4127,7 +4127,7 @@
 			"15"
 			thru_hole
 			circle
-			(at 0 35.56 270)
+			(at 0 35.56 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4138,7 +4138,7 @@
 			"16"
 			thru_hole
 			circle
-			(at 0 38.1 270)
+			(at 0 38.1 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4149,7 +4149,7 @@
 			"17"
 			thru_hole
 			circle
-			(at 0 40.64 270)
+			(at 0 40.64 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4160,7 +4160,7 @@
 			"18"
 			thru_hole
 			circle
-			(at 0 43.18 270)
+			(at 0 43.18 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4171,7 +4171,7 @@
 			"19"
 			thru_hole
 			circle
-			(at 0 45.72 270)
+			(at 0 45.72 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4182,7 +4182,7 @@
 			"20"
 			thru_hole
 			circle
-			(at 0 48.26 270)
+			(at 0 48.26 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4206,7 +4206,7 @@
 	(footprint "Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "4887cc89-a09f-47c2-ae90-712b464dad89")
-		(at 50.87 7.0 270)
+		(at 50.87 7.0 90)
 		(property "Reference" "J5"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -4362,7 +4362,7 @@
 			"1"
 			thru_hole
 			rect
-			(at 0 0 270)
+			(at 0 0 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4373,7 +4373,7 @@
 			"2"
 			thru_hole
 			circle
-			(at 0 2.54 270)
+			(at 0 2.54 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4384,7 +4384,7 @@
 			"3"
 			thru_hole
 			circle
-			(at 0 5.08 270)
+			(at 0 5.08 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4395,7 +4395,7 @@
 			"4"
 			thru_hole
 			circle
-			(at 0 7.62 270)
+			(at 0 7.62 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4406,7 +4406,7 @@
 			"5"
 			thru_hole
 			circle
-			(at 0 10.16 270)
+			(at 0 10.16 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4417,7 +4417,7 @@
 			"6"
 			thru_hole
 			circle
-			(at 0 12.7 270)
+			(at 0 12.7 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4428,7 +4428,7 @@
 			"7"
 			thru_hole
 			circle
-			(at 0 15.24 270)
+			(at 0 15.24 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4439,7 +4439,7 @@
 			"8"
 			thru_hole
 			circle
-			(at 0 17.78 270)
+			(at 0 17.78 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4450,7 +4450,7 @@
 			"9"
 			thru_hole
 			circle
-			(at 0 20.32 270)
+			(at 0 20.32 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4461,7 +4461,7 @@
 			"10"
 			thru_hole
 			circle
-			(at 0 22.86 270)
+			(at 0 22.86 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4472,7 +4472,7 @@
 			"11"
 			thru_hole
 			circle
-			(at 0 25.4 270)
+			(at 0 25.4 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4483,7 +4483,7 @@
 			"12"
 			thru_hole
 			circle
-			(at 0 27.94 270)
+			(at 0 27.94 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4494,7 +4494,7 @@
 			"13"
 			thru_hole
 			circle
-			(at 0 30.48 270)
+			(at 0 30.48 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4505,7 +4505,7 @@
 			"14"
 			thru_hole
 			circle
-			(at 0 33.02 270)
+			(at 0 33.02 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4516,7 +4516,7 @@
 			"15"
 			thru_hole
 			circle
-			(at 0 35.56 270)
+			(at 0 35.56 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4527,7 +4527,7 @@
 			"16"
 			thru_hole
 			circle
-			(at 0 38.1 270)
+			(at 0 38.1 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4538,7 +4538,7 @@
 			"17"
 			thru_hole
 			circle
-			(at 0 40.64 270)
+			(at 0 40.64 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4549,7 +4549,7 @@
 			"18"
 			thru_hole
 			circle
-			(at 0 43.18 270)
+			(at 0 43.18 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4560,7 +4560,7 @@
 			"19"
 			thru_hole
 			circle
-			(at 0 45.72 270)
+			(at 0 45.72 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -4571,7 +4571,7 @@
 			"20"
 			thru_hole
 			circle
-			(at 0 48.26 270)
+			(at 0 48.26 90)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -5683,7 +5683,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "16e33dc0-8092-4503-aa52-c71aee1ad124")
-		(at 15.0 62.0 90)
+		(at 15.0 62.0 270)
 		(property "Reference" "Q1"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -5939,7 +5939,7 @@
 			"1"
 			smd
 			roundrect
-			(at -0.9375 -0.95 90)
+			(at -0.9375 -0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -5949,7 +5949,7 @@
 			"2"
 			smd
 			roundrect
-			(at -0.9375 0.95 90)
+			(at -0.9375 0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -5959,7 +5959,7 @@
 			"3"
 			smd
 			roundrect
-			(at 0.9375 0 90)
+			(at 0.9375 0 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -5982,7 +5982,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "af17a42a-fce5-45de-a622-288ddee7f61b")
-		(at 31.0 62.0 90)
+		(at 31.0 62.0 270)
 		(property "Reference" "Q2"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -6238,7 +6238,7 @@
 			"1"
 			smd
 			roundrect
-			(at -0.9375 -0.95 90)
+			(at -0.9375 -0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6248,7 +6248,7 @@
 			"2"
 			smd
 			roundrect
-			(at -0.9375 0.95 90)
+			(at -0.9375 0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6258,7 +6258,7 @@
 			"3"
 			smd
 			roundrect
-			(at 0.9375 0 90)
+			(at 0.9375 0 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6281,7 +6281,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "65f67bc6-c742-415a-a90f-0f56f8a20a65")
-		(at 47.0 62.0 90)
+		(at 47.0 62.0 270)
 		(property "Reference" "Q3"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -6537,7 +6537,7 @@
 			"1"
 			smd
 			roundrect
-			(at -0.9375 -0.95 90)
+			(at -0.9375 -0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6547,7 +6547,7 @@
 			"2"
 			smd
 			roundrect
-			(at -0.9375 0.95 90)
+			(at -0.9375 0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6557,7 +6557,7 @@
 			"3"
 			smd
 			roundrect
-			(at 0.9375 0 90)
+			(at 0.9375 0 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6580,7 +6580,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "8c612164-be32-4bca-aba4-2252751178de")
-		(at 63.0 62.0 90)
+		(at 63.0 62.0 270)
 		(property "Reference" "Q4"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -6836,7 +6836,7 @@
 			"1"
 			smd
 			roundrect
-			(at -0.9375 -0.95 90)
+			(at -0.9375 -0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6846,7 +6846,7 @@
 			"2"
 			smd
 			roundrect
-			(at -0.9375 0.95 90)
+			(at -0.9375 0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6856,7 +6856,7 @@
 			"3"
 			smd
 			roundrect
-			(at 0.9375 0 90)
+			(at 0.9375 0 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -6879,7 +6879,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "23608409-b01a-4796-a177-9d5dd11974f5")
-		(at 79.0 62.0 90)
+		(at 79.0 62.0 270)
 		(property "Reference" "Q5"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -7135,7 +7135,7 @@
 			"1"
 			smd
 			roundrect
-			(at -0.9375 -0.95 90)
+			(at -0.9375 -0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7145,7 +7145,7 @@
 			"2"
 			smd
 			roundrect
-			(at -0.9375 0.95 90)
+			(at -0.9375 0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7155,7 +7155,7 @@
 			"3"
 			smd
 			roundrect
-			(at 0.9375 0 90)
+			(at 0.9375 0 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7178,7 +7178,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "26bb2bcb-d3ad-459e-a5e6-94f97a991513")
-		(at 95.0 62.0 90)
+		(at 95.0 62.0 270)
 		(property "Reference" "Q6"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -7434,7 +7434,7 @@
 			"1"
 			smd
 			roundrect
-			(at -0.9375 -0.95 90)
+			(at -0.9375 -0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7444,7 +7444,7 @@
 			"2"
 			smd
 			roundrect
-			(at -0.9375 0.95 90)
+			(at -0.9375 0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7454,7 +7454,7 @@
 			"3"
 			smd
 			roundrect
-			(at 0.9375 0 90)
+			(at 0.9375 0 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7477,7 +7477,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "bfd195c0-f69a-47a9-a4ca-caa0a14928e6")
-		(at 111.0 62.0 90)
+		(at 111.0 62.0 270)
 		(property "Reference" "Q7"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -7733,7 +7733,7 @@
 			"1"
 			smd
 			roundrect
-			(at -0.9375 -0.95 90)
+			(at -0.9375 -0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7743,7 +7743,7 @@
 			"2"
 			smd
 			roundrect
-			(at -0.9375 0.95 90)
+			(at -0.9375 0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7753,7 +7753,7 @@
 			"3"
 			smd
 			roundrect
-			(at 0.9375 0 90)
+			(at 0.9375 0 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -7776,7 +7776,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "30f6d13f-ea8d-41fe-a181-671932d2f0ad")
-		(at 127.0 62.0 90)
+		(at 127.0 62.0 270)
 		(property "Reference" "Q8"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -8032,7 +8032,7 @@
 			"1"
 			smd
 			roundrect
-			(at -0.9375 -0.95 90)
+			(at -0.9375 -0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -8042,7 +8042,7 @@
 			"2"
 			smd
 			roundrect
-			(at -0.9375 0.95 90)
+			(at -0.9375 0.95 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -8052,7 +8052,7 @@
 			"3"
 			smd
 			roundrect
-			(at 0.9375 0 90)
+			(at 0.9375 0 270)
 			(size 1.475 0.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12372,7 +12372,7 @@
 	(footprint "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 		(layer "F.Cu")
 		(uuid "7119138c-6a9c-4c61-a044-b262d25dd905")
-		(at 15.0 40.5 90)
+		(at 15.0 40.5 270)
 		(property "Reference" "U1"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -12583,7 +12583,7 @@
 			"1"
 			smd
 			roundrect
-			(at -4.6875 -1.27 90)
+			(at -4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12593,7 +12593,7 @@
 			"2"
 			smd
 			roundrect
-			(at -4.6875 1.27 90)
+			(at -4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12603,7 +12603,7 @@
 			"3"
 			smd
 			roundrect
-			(at 4.6875 1.27 90)
+			(at 4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12613,7 +12613,7 @@
 			"4"
 			smd
 			roundrect
-			(at 4.6875 -1.27 90)
+			(at 4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12636,7 +12636,7 @@
 	(footprint "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 		(layer "F.Cu")
 		(uuid "5a8b4a8f-7890-4395-aef6-5f4d54767cdf")
-		(at 31.0 40.5 90)
+		(at 31.0 40.5 270)
 		(property "Reference" "U2"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -12847,7 +12847,7 @@
 			"1"
 			smd
 			roundrect
-			(at -4.6875 -1.27 90)
+			(at -4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12857,7 +12857,7 @@
 			"2"
 			smd
 			roundrect
-			(at -4.6875 1.27 90)
+			(at -4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12867,7 +12867,7 @@
 			"3"
 			smd
 			roundrect
-			(at 4.6875 1.27 90)
+			(at 4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12877,7 +12877,7 @@
 			"4"
 			smd
 			roundrect
-			(at 4.6875 -1.27 90)
+			(at 4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -12900,7 +12900,7 @@
 	(footprint "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 		(layer "F.Cu")
 		(uuid "034a053c-9053-4ebf-a2be-46c62cfe3a52")
-		(at 47.0 40.5 90)
+		(at 47.0 40.5 270)
 		(property "Reference" "U3"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -13111,7 +13111,7 @@
 			"1"
 			smd
 			roundrect
-			(at -4.6875 -1.27 90)
+			(at -4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13121,7 +13121,7 @@
 			"2"
 			smd
 			roundrect
-			(at -4.6875 1.27 90)
+			(at -4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13131,7 +13131,7 @@
 			"3"
 			smd
 			roundrect
-			(at 4.6875 1.27 90)
+			(at 4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13141,7 +13141,7 @@
 			"4"
 			smd
 			roundrect
-			(at 4.6875 -1.27 90)
+			(at 4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13164,7 +13164,7 @@
 	(footprint "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 		(layer "F.Cu")
 		(uuid "8bf6af8e-79f5-4a49-a1e6-cb83c16350fc")
-		(at 63.0 40.5 90)
+		(at 63.0 40.5 270)
 		(property "Reference" "U4"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -13375,7 +13375,7 @@
 			"1"
 			smd
 			roundrect
-			(at -4.6875 -1.27 90)
+			(at -4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13385,7 +13385,7 @@
 			"2"
 			smd
 			roundrect
-			(at -4.6875 1.27 90)
+			(at -4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13395,7 +13395,7 @@
 			"3"
 			smd
 			roundrect
-			(at 4.6875 1.27 90)
+			(at 4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13405,7 +13405,7 @@
 			"4"
 			smd
 			roundrect
-			(at 4.6875 -1.27 90)
+			(at 4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13428,7 +13428,7 @@
 	(footprint "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 		(layer "F.Cu")
 		(uuid "4b2a8ab5-e5db-4cbb-a262-5626b6f1e232")
-		(at 79.0 40.5 90)
+		(at 79.0 40.5 270)
 		(property "Reference" "U5"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -13639,7 +13639,7 @@
 			"1"
 			smd
 			roundrect
-			(at -4.6875 -1.27 90)
+			(at -4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13649,7 +13649,7 @@
 			"2"
 			smd
 			roundrect
-			(at -4.6875 1.27 90)
+			(at -4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13659,7 +13659,7 @@
 			"3"
 			smd
 			roundrect
-			(at 4.6875 1.27 90)
+			(at 4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13669,7 +13669,7 @@
 			"4"
 			smd
 			roundrect
-			(at 4.6875 -1.27 90)
+			(at 4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13692,7 +13692,7 @@
 	(footprint "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 		(layer "F.Cu")
 		(uuid "954f099e-576d-4cc0-a07a-468a024256df")
-		(at 95.0 40.5 90)
+		(at 95.0 40.5 270)
 		(property "Reference" "U6"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -13903,7 +13903,7 @@
 			"1"
 			smd
 			roundrect
-			(at -4.6875 -1.27 90)
+			(at -4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13913,7 +13913,7 @@
 			"2"
 			smd
 			roundrect
-			(at -4.6875 1.27 90)
+			(at -4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13923,7 +13923,7 @@
 			"3"
 			smd
 			roundrect
-			(at 4.6875 1.27 90)
+			(at 4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13933,7 +13933,7 @@
 			"4"
 			smd
 			roundrect
-			(at 4.6875 -1.27 90)
+			(at 4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -13956,7 +13956,7 @@
 	(footprint "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 		(layer "F.Cu")
 		(uuid "17b7a09b-a72d-4b2b-a007-803fd3e0e439")
-		(at 111.0 40.5 90)
+		(at 111.0 40.5 270)
 		(property "Reference" "U7"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -14167,7 +14167,7 @@
 			"1"
 			smd
 			roundrect
-			(at -4.6875 -1.27 90)
+			(at -4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -14177,7 +14177,7 @@
 			"2"
 			smd
 			roundrect
-			(at -4.6875 1.27 90)
+			(at -4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -14187,7 +14187,7 @@
 			"3"
 			smd
 			roundrect
-			(at 4.6875 1.27 90)
+			(at 4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -14197,7 +14197,7 @@
 			"4"
 			smd
 			roundrect
-			(at 4.6875 -1.27 90)
+			(at 4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -14220,7 +14220,7 @@
 	(footprint "Package_SO:SOP-4_7.5x4.1mm_P2.54mm"
 		(layer "F.Cu")
 		(uuid "2b0bc070-1b22-479f-add2-dc9ff254b2b7")
-		(at 127.0 40.5 90)
+		(at 127.0 40.5 270)
 		(property "Reference" "U8"
 			(at 0 -2 0)
 			(layer "F.SilkS")
@@ -14431,7 +14431,7 @@
 			"1"
 			smd
 			roundrect
-			(at -4.6875 -1.27 90)
+			(at -4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -14441,7 +14441,7 @@
 			"2"
 			smd
 			roundrect
-			(at -4.6875 1.27 90)
+			(at -4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -14451,7 +14451,7 @@
 			"3"
 			smd
 			roundrect
-			(at 4.6875 1.27 90)
+			(at 4.6875 1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -14461,7 +14461,7 @@
 			"4"
 			smd
 			roundrect
-			(at 4.6875 -1.27 90)
+			(at 4.6875 -1.27 270)
 			(size 1.825 0.65)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)

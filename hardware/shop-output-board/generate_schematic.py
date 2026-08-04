@@ -40,6 +40,20 @@ NEEDED = {
     "Connector_Generic:Conn_01x20": ("Connector_Generic", "Conn_01x20"),
 }
 
+# Which Pico GPIO drives which channel. Single source of truth: generate_pcb.py imports
+# this, so the schematic and the board can never disagree about it.
+#
+# The default is monotonic (channel 1 -> GP2 ... channel 8 -> GP9) so the eight traces fan
+# out from the Pico without crossing. If you reorder these to suit the layout, the app's
+# GPIO config must use the matching pin numbers — the firmware takes whatever pin the host
+# names, so nothing else needs changing.
+CHANNEL_GP = [2, 3, 4, 5, 6, 7, 8, 9]
+
+# Pico header pin for each GPn, for the socket footprint.
+GP_TO_PICO_PIN = {0: 1, 1: 2, 2: 4, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 12,
+                  10: 14, 11: 15, 12: 16, 13: 17, 14: 19, 15: 20, 16: 21, 17: 22,
+                  18: 24, 19: 25, 20: 26, 21: 27, 22: 29}
+
 # Every symbol needs one, or the netlist cannot become a board. Pin numbers and pad names
 # must agree, which is why the Zener is a 2-pin SOD-123 rather than a 3-pad SOT-23 part.
 FOOTPRINTS = {
@@ -390,7 +404,7 @@ def main():
 
     for n in range(1, 9):
         cx = COL0 + (n - 1) * COLW
-        gp = f"GP{n + 1}"                     # channel 1 -> GP2 ... channel 8 -> GP9
+        gp = f"GP{CHANNEL_GP[n - 1]}"
         gate, optoc, out = f"GATE{n}", f"OPTOC{n}", f"OUT{n}"
         ledk = f"LEDK{n}"
         leda = f"LEDA{n}"
@@ -485,9 +499,9 @@ def main():
     # --- Pico socket --------------------------------------------------------------------
     # No Pico module symbol ships with KiCad, and the board really is two 20-way sockets,
     # so that is what this shows. Only the pins actually used are labelled.
-    pico_left = {3: "PICO_GND", 4: "GP2", 5: "GP3", 6: "GP4", 7: "GP5",
-                 8: "PICO_GND", 9: "GP6", 10: "GP7", 11: "GP8", 12: "GP9",
-                 13: "PICO_GND", 18: "PICO_GND"}
+    pico_left = {3: "PICO_GND", 8: "PICO_GND", 13: "PICO_GND", 18: "PICO_GND"}
+    for gp_num in CHANNEL_GP:
+        pico_left[GP_TO_PICO_PIN[gp_num]] = f"GP{gp_num}"
     p = place("J4", "Connector_Generic:Conn_01x20", "Pico 1-20", ix + 420, iy)
     for i in range(1, 21):
         if i in pico_left:
