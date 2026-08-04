@@ -10,12 +10,13 @@ uploading anything anywhere.
 | Schematic | done, ERC clean, netlist verified |
 | Footprints assigned | done, checked |
 | Layout plan and DRC rules | done |
+| Board placed | done — 84 parts positioned, DRC clean, 0 violations |
 | **Board routed** | **not started — this is the blocker** |
 | Gerbers | cannot exist until routing is done |
 
-A manufacturer needs a *routed* board: actual copper traces joining the pads. Right now there
-is a schematic that says what should connect and a plan for where things go. Nothing to order
-yet.
+A manufacturer needs a *routed* board: actual copper traces joining the pads. The board is
+placed — every part is where it should be and the ratsnest is correct — but the traces are
+not drawn. Nothing to order yet.
 
 Also, before any of this: **breadboard one channel.** The whole design rests on a gate clamp
 nobody has watched work. Finding out it needs a different Zener costs an evening on a
@@ -25,19 +26,18 @@ breadboard and a board respin if you skip it.
 
 Open the project, then in Pcbnew:
 
-1. **Update PCB from Schematic** (F8). All 84 footprints appear in a heap beside the board
-   area, with thin "ratsnest" lines showing what must connect.
-2. **Draw the board outline** on the `Edge.Cuts` layer — a 150 × 115 mm rectangle.
-3. **Set net classes** (Board Setup → Net Classes) as listed in [layout.md](layout.md), then
+Open `shop-output-board.kicad_pcb`. Placement, board outline, barrier markings and both
+ground zones are already there, so most of steps 1–4 of a normal first board are done.
+
+1. **Set net classes** (Board Setup → Net Classes) as listed in [layout.md](layout.md), then
    confirm Board Setup → Design Rules → Custom Rules has picked up the `.kicad_dru` file.
-4. **Place the parts** following the plan. Terminals first, then the Pico socket, then the
-   eight optos on the barrier centreline.
-5. **Route.** Interactive router, default hotkey `X`. Follow the ratsnest.
-6. **Add the two ground pours**, one per domain, neither entering the barrier.
-7. **DRC** (Inspect → Design Rules Checker) until it is clean. The custom rule means a trace
+2. **Route.** Interactive router, default hotkey `X`. Follow the ratsnest. Per channel that
+   is two real traces — GATE and OUT — plus taps to the V+ rail; everything marked
+   `ISO_GND` or `PICO_GND` is a via into a pour.
+3. **DRC** (Inspect → Design Rules Checker) until it is clean. The custom rule means a trace
    bridging the two domains shows up here as an error rather than as a surprise later.
 
-This is real work — expect a few evenings for a first board, and that is normal.
+Routing is still real work — expect a few evenings for a first board, and that is normal.
 
 ## Step 2 — export
 

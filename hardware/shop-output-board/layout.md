@@ -1,7 +1,12 @@
 # Shop Output Board — layout plan
 
-To be applied in Pcbnew after **Update PCB from Schematic** (F8), which imports all 84
-footprints with the netlist. This is the part KiCad cannot do for you.
+`shop-output-board.kicad_pcb` is generated from this plan and is already placed — open it in
+Pcbnew and all 84 parts are positioned, rotated and net-assigned, with the board outline,
+barrier markings and both ground zones. **Routing is the part left to do.**
+
+Regenerate placement with `python generate_pcb.py`; check it with `python verify_pcb.py`,
+which compares against KiCad's own resolved pad coordinates rather than trusting the
+generator's arithmetic.
 
 Board: **150 × 115 mm, 2 layers, 1oz copper.** Two layers is the cheap option at every
 fab and there is nothing here that needs four.
@@ -111,6 +116,35 @@ column would have to fight its way past R2, D and Q.
 `TVS1`, `C1` and `C2` are **not in the chain.** Each one sits from `V+` down to the ground
 pour, so they are three vias rather than three traces. Only `J1 → F1 → Q9` carries current in
 a line.
+
+## Part rotations — these matter
+
+Three parts are rotated, and not for tidiness. Getting any of them wrong produces a board
+that looks plausible and is wired to the wrong places.
+
+| Part | Rotation | Why |
+|---|---|---|
+| U1–U8 | **270°** | The SOP-4's 9.38 mm isolation span runs along X in the footprint. Unrotated it would straddle a *vertical* barrier. At 270° pins 1/2 land at y=35.81 (logic) and 3/4 at y=45.19 (isolated). |
+| Q1–Q8 | **270°** | Puts source top-left (V+ rail), gate top-right (gate rail), drain bottom-centre so OUT leaves straight down. SOT-23 has gate and source on the same side, so the orientation decides which rail goes which side. |
+| R2*n* | 180° | Puts pad 1 (GATE) on the right, where the gate rail runs. |
+| J4, J5 | 90° | Socket strips run along X. |
+
+> KiCad rotates counter-clockwise on screen with Y growing *downward*, so its pad transform
+> is not the textbook rotation matrix. Using the textbook signs mirrors every rotated part —
+> which on this board put the optocouplers' isolated pins in the logic zone, and looked
+> perfectly fine until someone opened Pcbnew and read the pad names. `verify_pcb.py` exists
+> to catch exactly that.
+
+## Which GPIO drives which channel
+
+`CHANNEL_GP` in `generate_schematic.py` is the single source of truth; `generate_pcb.py`
+imports it, so the schematic and the board cannot disagree. The default is monotonic
+(channel 1 → GP2 … channel 8 → GP9) so the eight traces fan out from the Pico without
+crossing each other.
+
+Reorder it to suit your routing if you need to. Nothing else in the design cares — the
+firmware drives whatever pin the host names — but **the app's GPIO config must use the
+matching pin numbers**, since that is what tells the Pico which pin is which output.
 
 ## Net classes and design rules
 

@@ -149,7 +149,9 @@ board edge where you can see them.
 I designed this; I have not verified it. There is no simulation behind it, no breadboard, no
 bench measurement. Specifically unverified:
 
-- Every footprint against its actual part
+- Every footprint against its actual part. Pin-to-pad mapping *is* checked automatically,
+  and pad positions are checked against KiCad's own numbers — but nobody has held a real
+  AO3401A against the SOT-23 land pattern
 - The gate drive under real load and switching (the Zener clamp is sound in principle; I have
   not scoped it)
 - Opto CTR margin at end-of-life — optos degrade, and 4.5 mA of LED current is not generous
