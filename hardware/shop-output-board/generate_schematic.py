@@ -85,13 +85,17 @@ MPN = {
     # the ordering code and is easy to lose when someone "helpfully" substitutes.
     "LTV-817S (CTR B)":  ("LTV-817S-TA1-B",    "Lite-On"),
 
-    # See the note in design.md: a 1206 polyfuse rated for 24V is not a given.
-    "1.1A":              ("VERIFY - see design.md", "-"),
+    # 1812. Vmax and Ihold trade off against each other within a package, and at 1.1A hold
+    # the best 1206 any vendor offers is 16V — Littelfuse and Eaton both stop there. This
+    # part is 1.1A hold / 2.2A trip / 24V, AEC-Q200, and stocked. Settled 2026-08-05.
+    "1.1A":              ("MF-MSMF110/24X-2",  "Bourns"),
 
     # Through-hole, hand-soldered, so these are for your ordering rather than the assembler.
     "V+ IN 5-24V":       ("1729128",           "Phoenix Contact"),  # MKDS 1,5/2-5,08
-    "OUT 1-4":           ("1727010",           "Phoenix Contact"),  # MKDS 1/6-3,81
-    "OUT 5-8":           ("1727010",           "Phoenix Contact"),
+    # 1727052 is the 6-way MKDS 1/6-3,81. Do not substitute 1727010 — that is the 2-way part
+    # of the same family, and it was wrong here until 2026-08-05.
+    "OUT 1-4":           ("1727052",           "Phoenix Contact"),  # MKDS 1/6-3,81
+    "OUT 5-8":           ("1727052",           "Phoenix Contact"),
     "Pico 1-20":         ("PPTC201LFBN-RC",    "Sullins"),          # 1x20 2.54mm socket
     "Pico 21-40":        ("PPTC201LFBN-RC",    "Sullins"),
 }
@@ -105,7 +109,9 @@ FOOTPRINTS = {
     "Device:LED": "LED_SMD:LED_0805_2012Metric",
     "Device:D_Zener": "Diode_SMD:D_SOD-123",
     "Device:D_TVS": "Diode_SMD:D_SMA",
-    "Device:Polyfuse": "Fuse:Fuse_1206_3216Metric",
+    # 1812, not 1206: at 1.1A hold there is no 1206 part rated above 16V from any vendor.
+    # See design.md — this is a package-size limit, not a sourcing problem.
+    "Device:Polyfuse": "Fuse:Fuse_1812_4532Metric",
     "Transistor_FET:AO3401A": "Package_TO_SOT_SMD:SOT-23",
     # Gull-wing SOP-4, not the DIP. Counter-intuitively this is the better part for the
     # barrier: the leads splay outward, giving a 9.38mm pad row span against the DIP-4's

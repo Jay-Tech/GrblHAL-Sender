@@ -99,30 +99,50 @@ On the V+ terminal, in order:
 
 | Part | Purpose |
 |---|---|
-| Polyfuse, 1.1A hold | Limits a wiring fault to something that resets itself. **Check its voltage rating — see below.** |
+| Polyfuse, 1.1A hold, 24V | Limits a wiring fault to something that resets itself. 1812, not 1206 — see below. |
 | P-MOSFET reverse-polarity block | Lossless, unlike a series Schottky — a 0.4V drop matters at 5V |
 | TVS, SMAJ30A | Surge clamp. 30V standoff so a 24V supply with ripple does not sit on it |
 | 100µF / 50V electrolytic + 100nF ceramic | Bulk and local decoupling for coil inrush |
 
-### F1's voltage rating is the one spec to check before ordering
+### F1 is 1812, because 1206 cannot do this job — settled 2026-08-05
 
-A polyfuse's voltage rating is the maximum it can safely interrupt **when it trips**. Plenty
-of 1206 polyfuses are rated 6V or 16V, and this board's rail goes to 24V. A 16V part on a 24V
-supply may fail rather than open at exactly the moment it is needed — which is the one moment
-it exists for.
+A polyfuse's voltage rating is the maximum it can safely interrupt **when it trips**. A 16V
+part on a 24V supply may fail rather than open at exactly the moment it is needed — which is
+the one moment it exists for. This board's rail goes to 24V, so F1 must be rated for it.
 
-So before ordering F1, confirm the part you pick is rated **at least 24V** at a 1.1A hold
-current. Three ways out, in order of preference:
+The original note here suggested "find a 1206 part rated ≥24V" as the preferred fix. **There
+is no such part.** Within a package, voltage rating and hold current trade off against each
+other, and 1206 runs out well before this design's operating point. Both major vendors stop
+at the same place:
 
-1. **Find a 1206 part rated ≥24V.** They exist but are not the default; most search results
-   at this hold current will be low-voltage. Filter on voltage explicitly
-2. **Cap the supply** at whatever the part is rated for, and say so on the silkscreen and in
-   the docs. Fine if you are running 12V anyway
-3. **Respin F1 to an 1812 footprint**, where 24V+ parts are common. This is a board change,
-   so it means new Gerbers — worth it only if the first two fail
+| I_hold | Littelfuse 1206L | Eaton PTS1206 |
+|---|---|---|
+| 0.16 A | 30 V | 30 V |
+| **0.20 A** | **24 V** | **24 V** |
+| 0.25 A | 16 V | 16 V |
+| 0.50 A | 15 V | 15 V |
+| **1.10 A** | **6 V** (16 V max as `1206L110/16WR`) | **6 V** |
 
-This is flagged rather than fixed because the board is already routed and exported, and
-changing the footprint invalidates that. It is a decision, not a defect.
+The most current available at ≥24V in a 1206 is **0.20 A** — and the board draws about
+130 mA on its own with all eight channels on at 24V, before anything is connected to a
+terminal. A 0.20 A part would nuisance-trip on the board alone. So F1 is an **1812**:
+
+> **Bourns MF-MSMF110/24X-2** — 1.1 A hold, 2.2 A trip, 24 V, 20 A max, AEC-Q200.
+
+The awkward part of the requirement is that current demand and voltage rating pull in
+opposite directions across the supply range. Relay coils draw the *most* at 5V (~80 mA each,
+so ~650 mA for eight) and the *least* at 24V (~25 mA each), while the voltage rating is only
+under pressure at the top of the range. One part has to cover both ends, which is what rules
+out the low-current 24V options as well as the high-current 6V ones.
+
+Eaton's `PTS181224V110` is the same specification in the same package and would drop in, but
+it is discontinued — treat it as a fallback if the Bourns part is ever short, not a first
+choice.
+
+The board was re-routed and re-exported for this. F1's pads moved from ±1.4 mm to
+±2.1375 mm and the `VIN_RAW` and `VIN_F` traces were extended to meet them; DRC is clean at
+0 violations and 0 unconnected. Nearest neighbour is 8.5 mm away, so the larger body cost
+nothing in layout.
 
 ## Bill of materials
 
@@ -140,7 +160,7 @@ Quantities for one board. Parts chosen for wide availability in assembly-house c
 | R5 | 8 | 470R, 0805 | Opto LED series |
 | LED1–8 | 8 | High-efficiency, 0805 | Output state |
 | Q9 | 1 | AO3401A, SOT-23 | Reverse polarity. Same part as the channels — 4A is ample for the whole board and it keeps one MOSFET line in the BOM. |
-| F1 | 1 | Polyfuse 1.1A | |
+| F1 | 1 | Bourns MF-MSMF110/24X-2, **1812** | Polyfuse, 1.1A hold / 2.2A trip / 24V. 1812 because no 1206 part reaches 24V at this hold current — see above. |
 | TVS1 | 1 | SMAJ30A | |
 | C1 | 1 | 100µF / 50V electrolytic | |
 | C2 | 1 | 100nF, 0805 | |
