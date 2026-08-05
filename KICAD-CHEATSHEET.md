@@ -211,6 +211,94 @@ script checking it was using the same wrong maths.
 **Check rotations against KiCad's own output**, not your own arithmetic:
 `kicad-cli pcb export ipcd356` gives resolved pad coordinates straight from KiCad.
 
+### A mounting hole is a copper clearance problem, not a hole
+
+DRC has no concept of a screw head, so it will pass a board that a screwdriver destroys.
+
+On the v2 board the three M3 holes had copper within 0.34–0.50 mm of their edges — the
+`min_copper_edge_clearance` default and nothing more. Every standard M3 head reaches further
+than that: socket cap 2.75 mm, pan head 2.80, countersunk 3.00, and 3.50 with a flat washer,
+all measured from the hole centre. So any screw would sit on the pour.
+
+That only becomes serious because of *which* pours. Two holes were in `PICO_GND` and one in
+`ISO_GND`. Metal standoffs into a metal panel connect all three, which shorts the two ground
+domains together through the chassis and undoes the whole point of an isolated board.
+
+**Give every mounting hole a copper keepout sized for the hardware, not for the hole.** Ø7.6
+covers an M3 with a washer. And measure it on a zone-refilled plot
+(`kicad-cli pcb export gerbers --check-zones`) — the fill data stored in the board file goes
+stale the moment you move anything, and will happily tell you copper is somewhere it is not.
+
+Also: **Ø3.0 is not an M3 clearance hole.** An M3's major diameter is 3.0 mm. Use Ø3.2.
+
+### Net classes missing means every custom rule silently passes
+
+Worth stating twice, because it cost a board review. `.kicad_dru` rules match on net class
+names. If those classes do not exist, the rules match nothing, and DRC reports a clean board
+with total confidence.
+
+The v2 board reported **0 violations. After setting the classes it reported 19.** Nothing had
+changed but the project file.
+
+**Prove the rule is armed rather than assuming it.** Copy the board somewhere scratch, inject
+a trace that deliberately violates the rule, and confirm DRC catches it:
+
+```
+[clearance]: Clearance violation (rule 'isolation barrier' clearance 5.0000 mm; actual 0.1250 mm)
+```
+
+A rule you have never seen fire is a rule you do not know you have.
+
+### KiCad's `Device:LED` is pin 1 = K, pin 2 = A
+
+Backwards from how it reads, and backwards from most people's assumption. Wire the node that
+sits at the higher potential to **pin 2**.
+
+On this board every indicator LED was connected the other way round, so all eight were
+reverse-biased and could never light. Nothing caught it: ERC passed (a passive two-pin part
+has no polarity opinion), DRC passed (the copper was fine), the netlist check passed —
+because that check had been written to assert the same wrong thing it existed to catch. Only
+reading the symbol library found it.
+
+**When a verifier and the thing it verifies were written from the same misunderstanding, the
+verifier ratifies the bug.** Check polarity conventions against the symbol library itself, not
+against what the generator does.
+
+The fix on a routed board is cheap if the land is symmetric: swap the two pads' nets *and*
+rotate the footprint 180°. The pads physically swap to meet the traces already there, so no
+re-route, and on a symmetric 0805 the copper comes out geometrically identical — only the
+silkscreen polarity marker moves.
+
+### Part rotation in a position file is a *convention*, not a fact
+
+The angle in `positions.csv` only means something relative to the datum the assembler uses,
+and the tools disagree. Exporting the same board two ways gave eighteen differences — the
+Fabrication Toolkit plugin (with AUTO TRANSLATE, which corrects towards JLCPCB) against plain
+`kicad-cli pcb export pos`:
+
+| Parts | Plugin | kicad-cli | Delta |
+|---|---|---|---|
+| C1, Q9 | 180° | 0° | 180° |
+| Q1–Q8 (SOT-23) | 90° | −90° | 180° |
+| U1–U8 (SOP-4) | 180° | −90° | 270° |
+
+Every part in that list is polarized, so picking the wrong convention means a fully populated
+board of backwards MOSFETs and optocouplers — and it passes every check you can run at home,
+because nothing about the *board* is wrong. Confirm the convention with the assembler and
+say in the docs which one the file is in. Two-terminal passives never show the problem, which
+is exactly why it survives a casual look.
+
+### A generator script that does its work at import time cannot be imported
+
+`generate_pcb.py` computed everything at module level and wrote the board at the bottom. Once
+a guard was added to stop it clobbering a routed board, `verify_pcb.py` — which imports the
+module purely to read its `PADS` table — started dying on that guard's `sys.exit()`. The
+verifier was unrunnable on exactly the boards worth verifying, and it looked like the
+verifier's fault.
+
+Put the side effects behind `if __name__ == "__main__":` so importing gives you the data and
+running gives you the artefact.
+
 ---
 
 ## Reading DRC output
@@ -246,13 +334,20 @@ kicad-cli pcb drc --refill-zones --output drc.rpt --severity-error --severity-wa
 kicad-cli pcb export ipcd356 --output pads.d356 board.kicad_pcb
 kicad-cli pcb export svg --output board.svg --layers "F.Cu,B.Cu,F.SilkS,Edge.Cuts" board.kicad_pcb
 
-kicad-cli pcb export gerbers --output fab/ board.kicad_pcb
+kicad-cli pcb export gerbers --output fab/ --no-protel-ext --layers "F.Cu,B.Cu,F.Mask,B.Mask,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,Edge.Cuts" board.kicad_pcb
 kicad-cli pcb export drill --output fab/ --format excellon --excellon-separate-th board.kicad_pcb
 kicad-cli pcb export pos --output fab/positions.csv --format csv --units mm --side both --exclude-fp-th board.kicad_pcb
 ```
 
 `--exclude-fp-th` on the position file leaves through-hole parts out, so an assembly house
 places only the SMD parts you're paying it to place.
+
+**The two Gerber flags are not optional.** Bare `export gerbers` plots Courtyard, Fab,
+Adhesive, Comments, Drawings and Margin along with the real layers — internal documentation
+that should never reach a fab — and names everything with Protel extensions (`.gtl`, `.gbl`,
+`.gts`). Re-exporting into a directory that already holds a `.gbr` set therefore leaves two
+complete generations of Gerbers side by side, with nothing but timestamps to say which is
+current. Pin the layer list and pass `--no-protel-ext`.
 
 DRC and ERC exit non-zero when anything is reported, including expected unconnected items on
 a part-routed board. Read the output rather than the exit code.
