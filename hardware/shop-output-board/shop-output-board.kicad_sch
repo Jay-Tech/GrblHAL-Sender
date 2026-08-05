@@ -4496,27 +4496,7 @@
 	)
 	(wire
 		(pts
-			(xy 50.8 180.34) (xy 50.8 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "86eed59e-a1c5-4a1c-ac83-89bbb6160848")
-	)
-	(label "LEDK1"
-		(at 50.8 177.8 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "ae7396d8-bf19-4973-a749-bc77cfb44840")
-	)
-	(wire
-		(pts
-			(xy 58.42 180.34) (xy 58.42 182.88)
+			(xy 58.42 180.34) (xy 58.42 177.8)
 		)
 		(stroke
 			(width 0)
@@ -4524,8 +4504,8 @@
 		)
 		(uuid "6364e2f5-ef5a-433b-a1a1-308ad06c0cf6")
 	)
-	(label "ISO_GND"
-		(at 58.42 182.88 90)
+	(label "LEDK1"
+		(at 58.42 177.8 90)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -4533,6 +4513,26 @@
 			(justify left bottom)
 		)
 		(uuid "974e0546-b9fa-44c9-addc-9e25f46c35ec")
+	)
+	(wire
+		(pts
+			(xy 50.8 180.34) (xy 50.8 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "86eed59e-a1c5-4a1c-ac83-89bbb6160848")
+	)
+	(label "ISO_GND"
+		(at 50.8 182.88 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "ae7396d8-bf19-4973-a749-bc77cfb44840")
 	)
 	(symbol
 		(lib_id "Device:R")
@@ -5627,27 +5627,7 @@
 	)
 	(wire
 		(pts
-			(xy 119.38 180.34) (xy 119.38 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d548995f-a2cb-4ad5-ae52-42426bab19a5")
-	)
-	(label "LEDK2"
-		(at 119.38 177.8 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "8514eb06-0941-47e8-afd9-08bf4b2ecedd")
-	)
-	(wire
-		(pts
-			(xy 127.0 180.34) (xy 127.0 182.88)
+			(xy 127.0 180.34) (xy 127.0 177.8)
 		)
 		(stroke
 			(width 0)
@@ -5655,8 +5635,8 @@
 		)
 		(uuid "c802dbbc-0351-4b09-a79e-093aa4dc4433")
 	)
-	(label "ISO_GND"
-		(at 127.0 182.88 90)
+	(label "LEDK2"
+		(at 127.0 177.8 90)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -5664,6 +5644,26 @@
 			(justify left bottom)
 		)
 		(uuid "1896f69d-71f7-4f5e-a4c1-eef4902a44f1")
+	)
+	(wire
+		(pts
+			(xy 119.38 180.34) (xy 119.38 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d548995f-a2cb-4ad5-ae52-42426bab19a5")
+	)
+	(label "ISO_GND"
+		(at 119.38 182.88 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "8514eb06-0941-47e8-afd9-08bf4b2ecedd")
 	)
 	(symbol
 		(lib_id "Device:R")
@@ -6758,27 +6758,7 @@
 	)
 	(wire
 		(pts
-			(xy 186.69 180.34) (xy 186.69 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "df34b0b5-d7e7-4ef1-af4b-09f9239259d3")
-	)
-	(label "LEDK3"
-		(at 186.69 177.8 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "900469cb-07fb-415d-a202-b6766e276c26")
-	)
-	(wire
-		(pts
-			(xy 194.31 180.34) (xy 194.31 182.88)
+			(xy 194.31 180.34) (xy 194.31 177.8)
 		)
 		(stroke
 			(width 0)
@@ -6786,8 +6766,8 @@
 		)
 		(uuid "263d0a24-0069-4db7-aa16-3cc02a36acde")
 	)
-	(label "ISO_GND"
-		(at 194.31 182.88 90)
+	(label "LEDK3"
+		(at 194.31 177.8 90)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6795,6 +6775,26 @@
 			(justify left bottom)
 		)
 		(uuid "b1952509-a379-4cf1-a38f-e6eaf3a6a72b")
+	)
+	(wire
+		(pts
+			(xy 186.69 180.34) (xy 186.69 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "df34b0b5-d7e7-4ef1-af4b-09f9239259d3")
+	)
+	(label "ISO_GND"
+		(at 186.69 182.88 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "900469cb-07fb-415d-a202-b6766e276c26")
 	)
 	(symbol
 		(lib_id "Device:R")
@@ -7889,27 +7889,7 @@
 	)
 	(wire
 		(pts
-			(xy 255.27 180.34) (xy 255.27 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a1f09c8a-131b-40e9-ac1d-993347453842")
-	)
-	(label "LEDK4"
-		(at 255.27 177.8 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "9d033df6-d93c-4501-ac4b-a49b4d488ed7")
-	)
-	(wire
-		(pts
-			(xy 262.89 180.34) (xy 262.89 182.88)
+			(xy 262.89 180.34) (xy 262.89 177.8)
 		)
 		(stroke
 			(width 0)
@@ -7917,8 +7897,8 @@
 		)
 		(uuid "da5b9429-2867-48de-a1b2-69be3bbf64ab")
 	)
-	(label "ISO_GND"
-		(at 262.89 182.88 90)
+	(label "LEDK4"
+		(at 262.89 177.8 90)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7926,6 +7906,26 @@
 			(justify left bottom)
 		)
 		(uuid "9f3e2fad-7cdf-4222-a1dd-a06572bf0c5f")
+	)
+	(wire
+		(pts
+			(xy 255.27 180.34) (xy 255.27 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a1f09c8a-131b-40e9-ac1d-993347453842")
+	)
+	(label "ISO_GND"
+		(at 255.27 182.88 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "9d033df6-d93c-4501-ac4b-a49b4d488ed7")
 	)
 	(symbol
 		(lib_id "Device:R")
@@ -9020,27 +9020,7 @@
 	)
 	(wire
 		(pts
-			(xy 322.58 180.34) (xy 322.58 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "464d1765-b213-4f3c-a1a3-8609077da355")
-	)
-	(label "LEDK5"
-		(at 322.58 177.8 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "d2c85f82-2bb0-4e69-a450-dd8d989366ec")
-	)
-	(wire
-		(pts
-			(xy 330.2 180.34) (xy 330.2 182.88)
+			(xy 330.2 180.34) (xy 330.2 177.8)
 		)
 		(stroke
 			(width 0)
@@ -9048,8 +9028,8 @@
 		)
 		(uuid "e6fce3b6-4a0c-44d3-a489-68f16e34c5c7")
 	)
-	(label "ISO_GND"
-		(at 330.2 182.88 90)
+	(label "LEDK5"
+		(at 330.2 177.8 90)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -9057,6 +9037,26 @@
 			(justify left bottom)
 		)
 		(uuid "ded05cf1-a56d-496e-a947-86d8dc6e0f18")
+	)
+	(wire
+		(pts
+			(xy 322.58 180.34) (xy 322.58 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "464d1765-b213-4f3c-a1a3-8609077da355")
+	)
+	(label "ISO_GND"
+		(at 322.58 182.88 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "d2c85f82-2bb0-4e69-a450-dd8d989366ec")
 	)
 	(symbol
 		(lib_id "Device:R")
@@ -10151,27 +10151,7 @@
 	)
 	(wire
 		(pts
-			(xy 391.16 180.34) (xy 391.16 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "3657fd6b-5252-464c-ab5e-c9fbadcda2a9")
-	)
-	(label "LEDK6"
-		(at 391.16 177.8 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "12c068ff-6954-498b-a27e-19b7fd0d684e")
-	)
-	(wire
-		(pts
-			(xy 398.78 180.34) (xy 398.78 182.88)
+			(xy 398.78 180.34) (xy 398.78 177.8)
 		)
 		(stroke
 			(width 0)
@@ -10179,8 +10159,8 @@
 		)
 		(uuid "9a5a1e36-c6d1-4cf2-a7ab-6313d21ea49e")
 	)
-	(label "ISO_GND"
-		(at 398.78 182.88 90)
+	(label "LEDK6"
+		(at 398.78 177.8 90)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -10188,6 +10168,26 @@
 			(justify left bottom)
 		)
 		(uuid "a266647b-4885-440d-aa78-aac897f15b1f")
+	)
+	(wire
+		(pts
+			(xy 391.16 180.34) (xy 391.16 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3657fd6b-5252-464c-ab5e-c9fbadcda2a9")
+	)
+	(label "ISO_GND"
+		(at 391.16 182.88 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "12c068ff-6954-498b-a27e-19b7fd0d684e")
 	)
 	(symbol
 		(lib_id "Device:R")
@@ -11282,27 +11282,7 @@
 	)
 	(wire
 		(pts
-			(xy 459.74 180.34) (xy 459.74 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "60ac370a-f77a-4294-a80f-5677249abd37")
-	)
-	(label "LEDK7"
-		(at 459.74 177.8 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "00b629e5-08d5-40eb-a690-2c7d8fb7dc38")
-	)
-	(wire
-		(pts
-			(xy 467.36 180.34) (xy 467.36 182.88)
+			(xy 467.36 180.34) (xy 467.36 177.8)
 		)
 		(stroke
 			(width 0)
@@ -11310,8 +11290,8 @@
 		)
 		(uuid "3a9ab7e8-b04a-4d65-ae7e-1ab82898073e")
 	)
-	(label "ISO_GND"
-		(at 467.36 182.88 90)
+	(label "LEDK7"
+		(at 467.36 177.8 90)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -11319,6 +11299,26 @@
 			(justify left bottom)
 		)
 		(uuid "110b943e-8b85-40e9-aa10-7023032b28c6")
+	)
+	(wire
+		(pts
+			(xy 459.74 180.34) (xy 459.74 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "60ac370a-f77a-4294-a80f-5677249abd37")
+	)
+	(label "ISO_GND"
+		(at 459.74 182.88 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "00b629e5-08d5-40eb-a690-2c7d8fb7dc38")
 	)
 	(symbol
 		(lib_id "Device:R")
@@ -12413,27 +12413,7 @@
 	)
 	(wire
 		(pts
-			(xy 527.05 180.34) (xy 527.05 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a6c0373f-2b78-4030-a178-b2d75c68c978")
-	)
-	(label "LEDK8"
-		(at 527.05 177.8 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "4b57ff0d-85dc-4d79-a2fa-a98e5c636cd1")
-	)
-	(wire
-		(pts
-			(xy 534.67 180.34) (xy 534.67 182.88)
+			(xy 534.67 180.34) (xy 534.67 177.8)
 		)
 		(stroke
 			(width 0)
@@ -12441,8 +12421,8 @@
 		)
 		(uuid "38ac61bc-3427-4e22-a782-f98f926fe9cc")
 	)
-	(label "ISO_GND"
-		(at 534.67 182.88 90)
+	(label "LEDK8"
+		(at 534.67 177.8 90)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -12450,6 +12430,26 @@
 			(justify left bottom)
 		)
 		(uuid "bf3f7861-b1ac-4db0-a7e5-3e47b64617e0")
+	)
+	(wire
+		(pts
+			(xy 527.05 180.34) (xy 527.05 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a6c0373f-2b78-4030-a178-b2d75c68c978")
+	)
+	(label "ISO_GND"
+		(at 527.05 182.88 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "4b57ff0d-85dc-4d79-a2fa-a98e5c636cd1")
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
@@ -12596,7 +12596,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Fuse:Fuse_1206_3216Metric"
+		(property "Footprint" "Fuse:Fuse_1812_4532Metric"
 			(at 69.85 234.95 0)
 			(hide yes)
 			(effects
@@ -12614,7 +12614,7 @@
 				)
 			)
 		)
-		(property "MPN" "VERIFY - see design.md"
+		(property "MPN" "MF-MSMF110/24X-2"
 			(at 69.85 234.95 0)
 			(hide yes)
 			(effects
@@ -12623,7 +12623,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "-"
+		(property "Manufacturer" "Bourns"
 			(at 69.85 234.95 0)
 			(hide yes)
 			(effects
@@ -13463,7 +13463,7 @@
 				)
 			)
 		)
-		(property "MPN" "1727010"
+		(property "MPN" "1727052"
 			(at 320.04 234.95 0)
 			(hide yes)
 			(effects
@@ -13673,7 +13673,7 @@
 				)
 			)
 		)
-		(property "MPN" "1727010"
+		(property "MPN" "1727052"
 			(at 379.73 234.95 0)
 			(hide yes)
 			(effects

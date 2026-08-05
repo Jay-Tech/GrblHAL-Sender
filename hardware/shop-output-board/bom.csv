@@ -1,19 +1,19 @@
-Reference,Value,MPN,Manufacturer,Footprint,QUANTITY
-C1,100uF/50V,EEE-FK1H101P,Panasonic,Capacitor_SMD:CP_Elec_8x10.5,1
-C2,100nF,CL21B104KBCNNNC,Samsung,Capacitor_SMD:C_0805_2012Metric,1
-D1-D9,MMSZ5237B 8V2,MMSZ5237B-7-F,Diodes Inc,Diode_SMD:D_SOD-123,9
-F1,1.1A,VERIFY - see design.md,-,Fuse:Fuse_1206_3216Metric,1
-J1,V+ IN 5-24V,1729128,Phoenix Contact,"TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal",1
-J2,OUT 1-4,1727052               1727010,Phoenix Contact,TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1-6-3.81_1x06_P3.81mm_Horizontal,1
-J3,OUT 5-8,1727052               1727010,Phoenix Contact,TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1-6-3.81_1x06_P3.81mm_Horizontal,1
-J4,Pico 1-20,PPTC201LFBN-RC,Sullins,Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical,1
-J5,Pico 21-40,PPTC201LFBN-RC,Sullins,Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical,1
-LED1-LED8,GRN,LTST-C170KGKT,Lite-On,LED_SMD:LED_0805_2012Metric,8
-Q1-Q9,AO3401A,AO3401A,Alpha & Omega,Package_TO_SOT_SMD:SOT-23,9
-"R6,R101,R201,R301,R401,R501,R601,R701,R801",100k,RC0805FR-07100KL,Yageo,Resistor_SMD:R_0805_2012Metric,9
-"R102,R202,R302,R402,R502,R602,R702,R802",4k7,RC0805FR-074K7L,Yageo,Resistor_SMD:R_0805_2012Metric,8
-"R103,R203,R303,R403,R503,R603,R703,R803",10k,RC0805FR-0710KL,Yageo,Resistor_SMD:R_0805_2012Metric,8
-"R104,R204,R304,R404,R504,R604,R704,R804",2k2,RC0805FR-072K2L,Yageo,Resistor_SMD:R_0805_2012Metric,8
-"R105,R205,R305,R405,R505,R605,R705,R805",470R,RC0805FR-07470RL,Yageo,Resistor_SMD:R_0805_2012Metric,8
-TVS1,SMAJ30A,SMAJ30A,Littelfuse,Diode_SMD:D_SMA,1
-U1-U8,LTV-817S (CTR B),LTV-817S-TA1-B,Lite-On,Package_SO:SOP-4_7.5x4.1mm_P2.54mm,8
+"Reference","Value","MPN","Manufacturer","Footprint","QUANTITY"
+"C1","100uF/50V","EEE-FK1H101P","Panasonic","Capacitor_SMD:CP_Elec_8x10.5","1"
+"C2","100nF","CL21B104KBCNNNC","Samsung","Capacitor_SMD:C_0805_2012Metric","1"
+"D1-D9","MMSZ5237B 8V2","MMSZ5237B-7-F","Diodes Inc","Diode_SMD:D_SOD-123","9"
+"F1","1.1A","MF-MSMF110/24X-2","Bourns","Fuse:Fuse_1812_4532Metric","1"
+"J1","V+ IN 5-24V","1729128","Phoenix Contact","TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal","1"
+"J2","OUT 1-4","1727052","Phoenix Contact","TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1-6-3.81_1x06_P3.81mm_Horizontal","1"
+"J3","OUT 5-8","1727052","Phoenix Contact","TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1-6-3.81_1x06_P3.81mm_Horizontal","1"
+"J4","Pico 1-20","PPTC201LFBN-RC","Sullins","Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical","1"
+"J5","Pico 21-40","PPTC201LFBN-RC","Sullins","Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical","1"
+"LED1-LED8","GRN","LTST-C170KGKT","Lite-On","LED_SMD:LED_0805_2012Metric","8"
+"Q1-Q9","AO3401A","AO3401A","Alpha & Omega","Package_TO_SOT_SMD:SOT-23","9"
+"R6,R101,R201,R301,R401,R501,R601,R701,R801","100k","RC0805FR-07100KL","Yageo","Resistor_SMD:R_0805_2012Metric","9"
+"R102,R202,R302,R402,R502,R602,R702,R802","4k7","RC0805FR-074K7L","Yageo","Resistor_SMD:R_0805_2012Metric","8"
+"R103,R203,R303,R403,R503,R603,R703,R803","10k","RC0805FR-0710KL","Yageo","Resistor_SMD:R_0805_2012Metric","8"
+"R104,R204,R304,R404,R504,R604,R704,R804","2k2","RC0805FR-072K2L","Yageo","Resistor_SMD:R_0805_2012Metric","8"
+"R105,R205,R305,R405,R505,R605,R705,R805","470R","RC0805FR-07470RL","Yageo","Resistor_SMD:R_0805_2012Metric","8"
+"TVS1","SMAJ30A","SMAJ30A","Littelfuse","Diode_SMD:D_SMA","1"
+"U1-U8","LTV-817S (CTR B)","LTV-817S-TA1-B","Lite-On","Package_SO:SOP-4_7.5x4.1mm_P2.54mm","8"
