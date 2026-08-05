@@ -404,20 +404,24 @@ pcb = f'''(kicad_pcb
 
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shop-output-board.kicad_pcb")
 
-# Once the board has been opened and routed in Pcbnew it is no longer a generated
-# artefact — it holds work this script cannot reproduce. Regenerating over it would
-# discard that silently, so it has to be asked for.
-if os.path.exists(path) and not ARGS.force:
-    existing = open(path, encoding="utf-8").read()
-    routed = existing.count("(segment")
-    if routed:
-        sys.exit(
-            f"{os.path.basename(path)} already has {routed} routed segments. "
-            "Regenerating would discard them. Back it up, then pass --force if you "
-            "really mean to start the layout again.")
+# Only write when run as a script. verify_pcb.py imports this module for PADS and the
+# barrier constants, and an import must not have side effects — before this guard, importing
+# a routed board's generator hit the sys.exit below and took the verifier down with it.
+if __name__ == "__main__":
+    # Once the board has been opened and routed in Pcbnew it is no longer a generated
+    # artefact — it holds work this script cannot reproduce. Regenerating over it would
+    # discard that silently, so it has to be asked for.
+    if os.path.exists(path) and not ARGS.force:
+        existing = open(path, encoding="utf-8").read()
+        routed = existing.count("(segment")
+        if routed:
+            sys.exit(
+                f"{os.path.basename(path)} already has {routed} routed segments. "
+                "Regenerating would discard them. Back it up, then pass --force if you "
+                "really mean to start the layout again.")
 
-open(path, "w", encoding="utf-8").write(pcb)
-print(f"wrote {path}")
-print(f"{len(COMPS)} footprints, {len(tracks)} track/via elements, {len(NETS)} nets")
-if not ARGS.route:
-    print("placement only - route interactively in Pcbnew, the ratsnest is already correct")
+    open(path, "w", encoding="utf-8").write(pcb)
+    print(f"wrote {path}")
+    print(f"{len(COMPS)} footprints, {len(tracks)} track/via elements, {len(NETS)} nets")
+    if not ARGS.route:
+        print("placement only - route interactively in Pcbnew, the ratsnest is already correct")
