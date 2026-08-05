@@ -15,6 +15,7 @@ lighting — on hosts that have no GPIO header of their own.
 | See how one channel becomes copper | [channel-layout.svg](channel-layout.svg) |
 | See how the input power section becomes copper | [power-layout.svg](power-layout.svg) |
 | Route the board | [layout.md](layout.md) |
+| **Test it on a breadboard — do this first** | [bench-test.md](bench-test.md) |
 | Order it | [fabrication.md](fabrication.md) |
 | Check connectivity without any CAD tool | [netlist.md](netlist.md) |
 | Write or flash device firmware | [../../docs/pico-gpio-protocol.md](../../docs/pico-gpio-protocol.md) |
@@ -30,8 +31,15 @@ lighting — on hosts that have no GPIO header of their own.
 | Routing | done by hand in Pcbnew — 348 segments, 25 vias |
 | DRC | **0 violations, 0 unconnected** |
 | Gerbers | exported, validated, tracked in `ShopOutput_Gerber/` |
-| BOM | 84 parts with MPNs; F1 needs its voltage rating settled |
+| BOM | 84 parts, every line with an MPN; F1 settled as an 1812 24V part |
+| Assembly files | `production/` — BOM grouped by value, positions exclude through-hole |
 | **Bench verification** | **none — this is what is left** |
+
+> **Part rotations in `production/positions.csv` are in KiCad's native convention and have
+> not been translated for any assembler.** Eighteen parts — C1, Q1–Q9, U1–U8, all of them
+> polarized — sit at a different angle under JLCPCB's convention than under KiCad's. Settle
+> this with whoever does the placement *before* an assembled run. It does not affect bare
+> boards, which is the next order anyway.
 
 ## Regenerating
 
@@ -51,6 +59,13 @@ kicad-cli pcb drc --refill-zones --output drc.rpt --severity-error shop-output-b
 ```
 
 Diagrams: `python generate_channel_diagram.py`, `python generate_power_diagram.py`.
+Assembly BOM: `python generate_production_bom.py`.
+
+> **`verify_pcb.py` reports D9's pads swapped, and that is expected.** D9 was rotated 180° by
+> hand during routing. Rotation preserves pin-to-net mapping, so the circuit is unaffected —
+> what it means is that the board is now hand-owned and `generate_pcb.py`'s `PADS` no longer
+> mirrors it. The barrier checks in the same script still hold, and DRC is the authority on
+> connectivity.
 
 > **PDF export is flaky when KiCad has the project open.** `kicad-cli sch export pdf` will
 > report `Plotted to ...` and `Done.`, exit non-zero, and leave a **0-byte file**. Close KiCad
@@ -84,3 +99,8 @@ names.
 
 Breadboard one channel and confirm it switches cleanly at 5 V and 24 V. Everything verified
 so far is topology and geometry — nobody has yet watched the gate clamp work.
+
+**[bench-test.md](bench-test.md) is the procedure**, with the expected voltage at every node
+and what each failure mode looks like. The headline numbers: `Vgs` should be −4.8 V at 5 V and
+−8.2 V at 24 V, and if it ever goes past −12 V the clamp is not working and the MOSFET is
+being destroyed. One channel draws ~16 mA at 24 V; all eight draw ~126 mA.
