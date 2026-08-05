@@ -3448,6 +3448,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 30.48 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 30.48 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "a0d6f814-c126-4012-aa0a-857bc6b77af9")
 		)
@@ -3540,6 +3558,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 54.61 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 54.61 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
 			(at 54.61 35.56 0)
 			(hide yes)
 			(effects
@@ -3648,6 +3684,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-074K7L"
+			(at 30.48 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 30.48 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ff0c1d96-52e2-4651-a922-4a7c1941eb4d")
 		)
@@ -3740,6 +3794,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 30.48 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "LTV-817S-TA1-B"
+			(at 30.48 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
 			(at 30.48 90.17 0)
 			(hide yes)
 			(effects
@@ -3894,6 +3966,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07470RL"
+			(at 59.69 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 59.69 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "f8e0fddb-f98c-41cf-aced-ac6815681422")
 		)
@@ -3986,6 +4076,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 30.48 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 30.48 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 30.48 124.46 0)
 			(hide yes)
 			(effects
@@ -4117,6 +4225,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-0710KL"
+			(at 30.48 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 30.48 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "6a601c0b-fb79-401d-a6b0-c43f8a6233d7")
 		)
@@ -4209,6 +4335,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 54.61 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-072K2L"
+			(at 54.61 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 54.61 154.94 0)
 			(hide yes)
 			(effects
@@ -4317,6 +4461,24 @@
 				)
 			)
 		)
+		(property "MPN" "LTST-C170KGKT"
+			(at 54.61 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
+			(at 54.61 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "31794936-519f-4ade-a7ce-84eae8345442")
 		)
@@ -4409,6 +4571,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 97.79 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 97.79 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 97.79 35.56 0)
 			(hide yes)
 			(effects
@@ -4517,6 +4697,24 @@
 				)
 			)
 		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 123.19 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
+			(at 123.19 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "7e312880-062e-44ad-a701-cac3628cdbe5")
 		)
@@ -4617,6 +4815,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-074K7L"
+			(at 97.79 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 97.79 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "bea93482-a106-4f80-ad63-cc7768a18e1b")
 		)
@@ -4709,6 +4925,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 97.79 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "LTV-817S-TA1-B"
+			(at 97.79 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
 			(at 97.79 90.17 0)
 			(hide yes)
 			(effects
@@ -4863,6 +5097,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07470RL"
+			(at 128.27 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 128.27 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "4e965694-2f20-4dab-a7da-51478ea87c8c")
 		)
@@ -4955,6 +5207,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 97.79 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 97.79 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 97.79 124.46 0)
 			(hide yes)
 			(effects
@@ -5086,6 +5356,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-0710KL"
+			(at 97.79 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 97.79 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "a2ef0893-969f-4007-aa69-032b52056100")
 		)
@@ -5178,6 +5466,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 123.19 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-072K2L"
+			(at 123.19 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 123.19 154.94 0)
 			(hide yes)
 			(effects
@@ -5286,6 +5592,24 @@
 				)
 			)
 		)
+		(property "MPN" "LTST-C170KGKT"
+			(at 123.19 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
+			(at 123.19 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "8c0c97a2-3439-4b59-a79b-bdb93e54576e")
 		)
@@ -5378,6 +5702,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 166.37 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 166.37 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 166.37 35.56 0)
 			(hide yes)
 			(effects
@@ -5486,6 +5828,24 @@
 				)
 			)
 		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 190.5 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
+			(at 190.5 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "e0cc6f33-ac4c-48be-a21f-9766a93618db")
 		)
@@ -5586,6 +5946,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-074K7L"
+			(at 166.37 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 166.37 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "86355f09-57a3-4c9c-a805-7e33a281b3db")
 		)
@@ -5678,6 +6056,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 166.37 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "LTV-817S-TA1-B"
+			(at 166.37 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
 			(at 166.37 90.17 0)
 			(hide yes)
 			(effects
@@ -5832,6 +6228,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07470RL"
+			(at 195.58 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 195.58 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "66f89769-2d28-45ed-a341-fcf609b3a7dc")
 		)
@@ -5924,6 +6338,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 166.37 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 166.37 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 166.37 124.46 0)
 			(hide yes)
 			(effects
@@ -6055,6 +6487,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-0710KL"
+			(at 166.37 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 166.37 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "44549e9a-4000-41c9-a149-1d5f4381d540")
 		)
@@ -6147,6 +6597,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 190.5 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-072K2L"
+			(at 190.5 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 190.5 154.94 0)
 			(hide yes)
 			(effects
@@ -6255,6 +6723,24 @@
 				)
 			)
 		)
+		(property "MPN" "LTST-C170KGKT"
+			(at 190.5 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
+			(at 190.5 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "a4868c04-41e4-48a5-ac73-0f6f56a9a3de")
 		)
@@ -6347,6 +6833,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 233.68 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 233.68 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 233.68 35.56 0)
 			(hide yes)
 			(effects
@@ -6455,6 +6959,24 @@
 				)
 			)
 		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 259.08 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
+			(at 259.08 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "4a8cda82-abea-4d6b-a4d4-a5f6eaa23373")
 		)
@@ -6555,6 +7077,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-074K7L"
+			(at 233.68 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 233.68 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "c8ee31bf-1059-492f-a0b7-a0e7256bd451")
 		)
@@ -6647,6 +7187,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 233.68 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "LTV-817S-TA1-B"
+			(at 233.68 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
 			(at 233.68 90.17 0)
 			(hide yes)
 			(effects
@@ -6801,6 +7359,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07470RL"
+			(at 264.16 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 264.16 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "07574bdd-13fd-48da-a9ea-4c0b83d24976")
 		)
@@ -6893,6 +7469,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 233.68 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 233.68 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 233.68 124.46 0)
 			(hide yes)
 			(effects
@@ -7024,6 +7618,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-0710KL"
+			(at 233.68 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 233.68 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "3ed58784-185b-4dba-a280-9c35486c0abe")
 		)
@@ -7116,6 +7728,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 259.08 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-072K2L"
+			(at 259.08 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 259.08 154.94 0)
 			(hide yes)
 			(effects
@@ -7224,6 +7854,24 @@
 				)
 			)
 		)
+		(property "MPN" "LTST-C170KGKT"
+			(at 259.08 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
+			(at 259.08 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "db2f911e-8552-410f-a535-9b22348539a3")
 		)
@@ -7316,6 +7964,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 302.26 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 302.26 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 302.26 35.56 0)
 			(hide yes)
 			(effects
@@ -7424,6 +8090,24 @@
 				)
 			)
 		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 326.39 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
+			(at 326.39 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "b07ae099-8bf2-4c7a-ad13-f0369551593a")
 		)
@@ -7524,6 +8208,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-074K7L"
+			(at 302.26 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 302.26 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ea837e49-4cf1-4cde-a879-fbd0c1e14721")
 		)
@@ -7616,6 +8318,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 302.26 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "LTV-817S-TA1-B"
+			(at 302.26 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
 			(at 302.26 90.17 0)
 			(hide yes)
 			(effects
@@ -7770,6 +8490,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07470RL"
+			(at 331.47 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 331.47 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "66605918-4bbc-49ae-acf9-0dc09538a469")
 		)
@@ -7862,6 +8600,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 302.26 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 302.26 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 302.26 124.46 0)
 			(hide yes)
 			(effects
@@ -7993,6 +8749,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-0710KL"
+			(at 302.26 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 302.26 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "dc1b07f2-7b53-4519-a705-c1f9daf8315f")
 		)
@@ -8085,6 +8859,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 326.39 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-072K2L"
+			(at 326.39 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 326.39 154.94 0)
 			(hide yes)
 			(effects
@@ -8193,6 +8985,24 @@
 				)
 			)
 		)
+		(property "MPN" "LTST-C170KGKT"
+			(at 326.39 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
+			(at 326.39 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "6eec7726-ab71-485b-ace3-9fdb8b87a7bd")
 		)
@@ -8285,6 +9095,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 369.57 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 369.57 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 369.57 35.56 0)
 			(hide yes)
 			(effects
@@ -8393,6 +9221,24 @@
 				)
 			)
 		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 394.97 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
+			(at 394.97 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ecfc5b25-ba5e-4ec7-ad19-03d74906baca")
 		)
@@ -8493,6 +9339,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-074K7L"
+			(at 369.57 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 369.57 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "19065d8e-8cf0-482a-a856-38df22b58733")
 		)
@@ -8585,6 +9449,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 369.57 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "LTV-817S-TA1-B"
+			(at 369.57 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
 			(at 369.57 90.17 0)
 			(hide yes)
 			(effects
@@ -8739,6 +9621,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07470RL"
+			(at 400.05 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 400.05 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "856720b6-ea27-4059-a0fe-91359ccc5760")
 		)
@@ -8831,6 +9731,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 369.57 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 369.57 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 369.57 124.46 0)
 			(hide yes)
 			(effects
@@ -8962,6 +9880,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-0710KL"
+			(at 369.57 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 369.57 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "35764bfd-2a2d-4d4d-a6ed-44ba89955969")
 		)
@@ -9054,6 +9990,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 394.97 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-072K2L"
+			(at 394.97 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 394.97 154.94 0)
 			(hide yes)
 			(effects
@@ -9162,6 +10116,24 @@
 				)
 			)
 		)
+		(property "MPN" "LTST-C170KGKT"
+			(at 394.97 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
+			(at 394.97 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "d0eba926-7dc2-4533-aadd-938c29daba34")
 		)
@@ -9254,6 +10226,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 438.15 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 438.15 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 438.15 35.56 0)
 			(hide yes)
 			(effects
@@ -9362,6 +10352,24 @@
 				)
 			)
 		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 463.55 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
+			(at 463.55 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "8af3af0e-6efe-444c-a8bb-df8ebc8b62de")
 		)
@@ -9462,6 +10470,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-074K7L"
+			(at 438.15 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 438.15 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ef887cc6-9be2-4875-aea6-a1d1bea2a185")
 		)
@@ -9554,6 +10580,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 438.15 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "LTV-817S-TA1-B"
+			(at 438.15 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
 			(at 438.15 90.17 0)
 			(hide yes)
 			(effects
@@ -9708,6 +10752,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07470RL"
+			(at 468.63 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 468.63 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "0a2f8fad-211d-41b0-ad20-e837a723fe2f")
 		)
@@ -9800,6 +10862,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 438.15 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 438.15 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 438.15 124.46 0)
 			(hide yes)
 			(effects
@@ -9931,6 +11011,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-0710KL"
+			(at 438.15 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 438.15 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "2a251c19-1d6e-45ae-a2e7-34e5ad96bade")
 		)
@@ -10023,6 +11121,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 463.55 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-072K2L"
+			(at 463.55 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 463.55 154.94 0)
 			(hide yes)
 			(effects
@@ -10131,6 +11247,24 @@
 				)
 			)
 		)
+		(property "MPN" "LTST-C170KGKT"
+			(at 463.55 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
+			(at 463.55 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "e9e0e77c-94f5-4902-af02-a93a6148271f")
 		)
@@ -10223,6 +11357,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 505.46 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 505.46 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 505.46 35.56 0)
 			(hide yes)
 			(effects
@@ -10331,6 +11483,24 @@
 				)
 			)
 		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 530.86 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
+			(at 530.86 35.56 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "7e741ebd-2850-4ae2-a9b3-1a20c5e3bb74")
 		)
@@ -10431,6 +11601,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-074K7L"
+			(at 505.46 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 505.46 59.69 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "2dd96eae-5d41-4940-aa84-5b0e4e96ae21")
 		)
@@ -10523,6 +11711,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 505.46 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "LTV-817S-TA1-B"
+			(at 505.46 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
 			(at 505.46 90.17 0)
 			(hide yes)
 			(effects
@@ -10677,6 +11883,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07470RL"
+			(at 535.94 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 535.94 90.17 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "f3185bf9-37c2-4486-a97f-9e8d7b8c366f")
 		)
@@ -10769,6 +11993,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 505.46 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 505.46 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 505.46 124.46 0)
 			(hide yes)
 			(effects
@@ -10900,6 +12142,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-0710KL"
+			(at 505.46 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 505.46 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "3b03abfb-8367-4318-a69a-fc44710f34da")
 		)
@@ -10992,6 +12252,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 530.86 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-072K2L"
+			(at 530.86 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
 			(at 530.86 154.94 0)
 			(hide yes)
 			(effects
@@ -11100,6 +12378,24 @@
 				)
 			)
 		)
+		(property "MPN" "LTST-C170KGKT"
+			(at 530.86 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Lite-On"
+			(at 530.86 180.34 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "7c701943-39f9-48be-a6c5-c6172e950865")
 		)
@@ -11192,6 +12488,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 30.48 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "1729128"
+			(at 30.48 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Phoenix Contact"
 			(at 30.48 234.95 0)
 			(hide yes)
 			(effects
@@ -11300,6 +12614,24 @@
 				)
 			)
 		)
+		(property "MPN" "VERIFY - see design.md"
+			(at 69.85 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "-"
+			(at 69.85 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "8bd52501-a0de-40ec-a4fd-0f67843dfeb4")
 		)
@@ -11392,6 +12724,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 105.41 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "AO3401A"
+			(at 105.41 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Alpha & Omega"
 			(at 105.41 234.95 0)
 			(hide yes)
 			(effects
@@ -11523,6 +12873,24 @@
 				)
 			)
 		)
+		(property "MPN" "RC0805FR-07100KL"
+			(at 139.7 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Yageo"
+			(at 139.7 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "54f1b6b1-7a29-47ef-a6a5-951e864beeec")
 		)
@@ -11615,6 +12983,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 170.18 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "MMSZ5237B-7-F"
+			(at 170.18 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Inc"
 			(at 170.18 234.95 0)
 			(hide yes)
 			(effects
@@ -11723,6 +13109,24 @@
 				)
 			)
 		)
+		(property "MPN" "SMAJ30A"
+			(at 204.47 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Littelfuse"
+			(at 204.47 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ac8e66d4-8568-4b9c-ad84-5af4674a45f0")
 		)
@@ -11815,6 +13219,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 240.03 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "EEE-FK1H101P"
+			(at 240.03 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Panasonic"
 			(at 240.03 234.95 0)
 			(hide yes)
 			(effects
@@ -11923,6 +13345,24 @@
 				)
 			)
 		)
+		(property "MPN" "CL21B104KBCNNNC"
+			(at 270.51 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Samsung"
+			(at 270.51 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "f2970ef0-227b-4a38-a24c-0709fddcee30")
 		)
@@ -12015,6 +13455,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 320.04 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "1727010"
+			(at 320.04 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Phoenix Contact"
 			(at 320.04 234.95 0)
 			(hide yes)
 			(effects
@@ -12215,6 +13673,24 @@
 				)
 			)
 		)
+		(property "MPN" "1727010"
+			(at 379.73 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Phoenix Contact"
+			(at 379.73 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "88770be3-9cf3-4de3-ad1a-256b09abc3ea")
 		)
@@ -12399,6 +13875,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 449.58 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "PPTC201LFBN-RC"
+			(at 449.58 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Sullins"
 			(at 449.58 234.95 0)
 			(hide yes)
 			(effects
@@ -12785,6 +14279,24 @@
 			)
 		)
 		(property "Datasheet" "~"
+			(at 510.54 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "PPTC201LFBN-RC"
+			(at 510.54 234.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Sullins"
 			(at 510.54 234.95 0)
 			(hide yes)
 			(effects

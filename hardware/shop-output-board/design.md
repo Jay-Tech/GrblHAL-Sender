@@ -99,10 +99,30 @@ On the V+ terminal, in order:
 
 | Part | Purpose |
 |---|---|
-| Polyfuse, 1.1A hold | Limits a wiring fault to something that resets itself |
+| Polyfuse, 1.1A hold | Limits a wiring fault to something that resets itself. **Check its voltage rating — see below.** |
 | P-MOSFET reverse-polarity block | Lossless, unlike a series Schottky — a 0.4V drop matters at 5V |
 | TVS, SMAJ30A | Surge clamp. 30V standoff so a 24V supply with ripple does not sit on it |
 | 100µF / 50V electrolytic + 100nF ceramic | Bulk and local decoupling for coil inrush |
+
+### F1's voltage rating is the one spec to check before ordering
+
+A polyfuse's voltage rating is the maximum it can safely interrupt **when it trips**. Plenty
+of 1206 polyfuses are rated 6V or 16V, and this board's rail goes to 24V. A 16V part on a 24V
+supply may fail rather than open at exactly the moment it is needed — which is the one moment
+it exists for.
+
+So before ordering F1, confirm the part you pick is rated **at least 24V** at a 1.1A hold
+current. Three ways out, in order of preference:
+
+1. **Find a 1206 part rated ≥24V.** They exist but are not the default; most search results
+   at this hold current will be low-voltage. Filter on voltage explicitly
+2. **Cap the supply** at whatever the part is rated for, and say so on the silkscreen and in
+   the docs. Fine if you are running 12V anyway
+3. **Respin F1 to an 1812 footprint**, where 24V+ parts are common. This is a board change,
+   so it means new Gerbers — worth it only if the first two fail
+
+This is flagged rather than fixed because the board is already routed and exported, and
+changing the footprint invalidates that. It is a decision, not a defect.
 
 ## Bill of materials
 

@@ -54,6 +54,48 @@ GP_TO_PICO_PIN = {0: 1, 1: 2, 2: 4, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 12,
                   10: 14, 11: 15, 12: 16, 13: 17, 14: 19, 15: 20, 16: 21, 17: 22,
                   18: 24, 19: 25, 20: 26, 21: 27, 22: 29}
 
+# Orderable part numbers, keyed by the schematic Value. An assembly house cannot buy "100k";
+# it needs a manufacturer part number, so these end up in the BOM as an MPN column.
+#
+# NONE of these have been checked against live distributor stock. Confirm availability and
+# the exact ordering suffix (tape/reel, tolerance, CTR rank) with whoever is assembling the
+# board before you commit to a run — suffixes in particular vary by packaging.
+MPN = {
+    # Resistors: Yageo 0805 thick film, 1%. Any equivalent 0805 will do; assemblers usually
+    # substitute from their own basic library, which is cheaper than a specified part.
+    "100k":              ("RC0805FR-07100KL",  "Yageo"),
+    "4k7":               ("RC0805FR-074K7L",   "Yageo"),
+    "10k":               ("RC0805FR-0710KL",   "Yageo"),
+    "2k2":               ("RC0805FR-072K2L",   "Yageo"),
+    "470R":              ("RC0805FR-07470RL",  "Yageo"),
+
+    "100nF":             ("CL21B104KBCNNNC",   "Samsung"),      # 0805 X7R 50V
+    "100uF/50V":         ("EEE-FK1H101P",      "Panasonic"),    # verify body against 8x10.5 land
+
+    "MMSZ5237B 8V2":     ("MMSZ5237B-7-F",     "Diodes Inc"),   # 8.2V Zener, SOD-123
+    "SMAJ30A":           ("SMAJ30A",           "Littelfuse"),   # already an MPN
+    "AO3401A":           ("AO3401A",           "Alpha & Omega"),# already an MPN
+
+    # Green 0805. Brightness matters here — this LED runs at ~1.4 mA at a 5V supply, so a
+    # high-efficiency part is the difference between a usable indicator and a dark one.
+    "GRN":               ("LTST-C170KGKT",     "Lite-On"),
+
+    # CTR rank B (130-260%) is required, not optional: the design needs at least 100% CTR
+    # for the opto to sink R2's current from 4.5 mA of LED drive. The rank is a suffix on
+    # the ordering code and is easy to lose when someone "helpfully" substitutes.
+    "LTV-817S (CTR B)":  ("LTV-817S-TA1-B",    "Lite-On"),
+
+    # See the note in design.md: a 1206 polyfuse rated for 24V is not a given.
+    "1.1A":              ("VERIFY - see design.md", "-"),
+
+    # Through-hole, hand-soldered, so these are for your ordering rather than the assembler.
+    "V+ IN 5-24V":       ("1729128",           "Phoenix Contact"),  # MKDS 1,5/2-5,08
+    "OUT 1-4":           ("1727010",           "Phoenix Contact"),  # MKDS 1/6-3,81
+    "OUT 5-8":           ("1727010",           "Phoenix Contact"),
+    "Pico 1-20":         ("PPTC201LFBN-RC",    "Sullins"),          # 1x20 2.54mm socket
+    "Pico 21-40":        ("PPTC201LFBN-RC",    "Sullins"),
+}
+
 # Every symbol needs one, or the netlist cannot become a board. Pin numbers and pad names
 # must agree, which is why the Zener is a 2-pin SOD-123 rather than a 3-pad SOT-23 part.
 FOOTPRINTS = {
@@ -253,6 +295,7 @@ def place(ref, lib_id, value, x, y, footprint=None):
     x, y = snap(x), snap(y)
     if footprint is None:
         footprint = FOOTPRINTS[lib_id]
+    mpn, mfr = MPN.get(value, ("", ""))
     pins = SYMBOL_PINS[lib_id]
     abs_pins = {}
     for numb, (px, py, ang) in pins.items():
@@ -300,6 +343,24 @@ def place(ref, lib_id, value, x, y, footprint=None):
 \t\t\t)
 \t\t)
 \t\t(property "Datasheet" "~"
+\t\t\t(at {x} {y} 0)
+\t\t\t(hide yes)
+\t\t\t(effects
+\t\t\t\t(font
+\t\t\t\t\t(size 1.27 1.27)
+\t\t\t\t)
+\t\t\t)
+\t\t)
+\t\t(property "MPN" "{mpn}"
+\t\t\t(at {x} {y} 0)
+\t\t\t(hide yes)
+\t\t\t(effects
+\t\t\t\t(font
+\t\t\t\t\t(size 1.27 1.27)
+\t\t\t\t)
+\t\t\t)
+\t\t)
+\t\t(property "Manufacturer" "{mfr}"
 \t\t\t(at {x} {y} 0)
 \t\t\t(hide yes)
 \t\t\t(effects
