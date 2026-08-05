@@ -13,7 +13,10 @@ uploading anything anywhere.
 | Board placed | done — 84 parts positioned |
 | Board routed | **done** — 348 segments, 25 vias, DRC 0 violations, 0 unconnected |
 | Gerbers | exported and tracked in `ShopOutput_Gerber/` |
-| BOM | 84 parts with MPNs — except F1, see design.md |
+| BOM | 84 parts, every line with an MPN |
+| F1 voltage rating | **settled** — 1812, Bourns MF-MSMF110/24X-2, 1.1A / 24V |
+| Assembly files | `production/` — BOM grouped by value, positions exclude through-hole |
+| Part rotations for assembly | **not settled** — see the warning below |
 | **Bench verification** | **none — this is what is left** |
 
 The board is routed and the Gerbers are exported. What has *not* happened is any bench
@@ -21,7 +24,12 @@ verification: **breadboard one channel** before committing to a run. The design 
 gate clamp nobody has watched work, and finding out it wants a different Zener costs an
 evening on a breadboard versus a board respin.
 
-Also settle F1's voltage rating first — see [design.md](design.md).
+> **Rotations in `production/positions.csv` have not been translated for any assembler.**
+> They are KiCad's native angles. Under JLCPCB's convention eighteen parts sit differently —
+> C1 and Q1–Q9 by 180°, U1–U8 by 270° — and every one of them is polarized, so getting this
+> wrong means a board of backwards MOSFETs and optocouplers. Confirm the convention with
+> whoever does the placement and re-export to match. **Bare boards do not use this file**, so
+> it does not block the next order.
 
 ## Step 1 — route the board in KiCad
 
@@ -45,23 +53,31 @@ Routing is still real work — expect a few evenings for a first board, and that
 From this directory, once `shop-output-board.kicad_pcb` exists and DRC is clean:
 
 ```
-kicad-cli pcb export gerbers --output fab/ shop-output-board.kicad_pcb
-kicad-cli pcb export drill --output fab/ --format excellon --excellon-separate-th shop-output-board.kicad_pcb
+kicad-cli pcb export gerbers --output ShopOutput_Gerber/ --no-protel-ext --layers "F.Cu,B.Cu,F.Mask,B.Mask,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,Edge.Cuts" shop-output-board.kicad_pcb
+kicad-cli pcb export drill --output ShopOutput_Gerber/ --format excellon --excellon-separate-th shop-output-board.kicad_pcb
 ```
 
-That is everything needed for a **bare board**. Zip the contents of `fab/` and upload the zip.
+That is everything needed for a **bare board** — 12 files. Zip the contents and upload the zip.
+
+Both flags matter. Without `--layers`, KiCad also plots Courtyard, Fab, Adhesive, Comments,
+Drawings and Margin: internal documentation layers that have no business going to a fab and
+that some vendors will silently try to make. Without `--no-protel-ext` the files come out as
+`.gtl`/`.gbl`/`.gts` instead of `.gbr`, which — if the directory already holds a `.gbr` set —
+leaves two generations of Gerbers side by side with nothing to say which is current.
 
 For **SMT assembly**, two more files. Note `--exclude-fp-th`: it leaves the connectors out
 of the position file, so the machine places only the parts you are paying it to place.
 
 ```
-kicad-cli pcb export pos --output fab/positions.csv --format csv --units mm --side both --exclude-fp-th shop-output-board.kicad_pcb
-kicad-cli sch export bom --output fab/bom.csv --fields "Reference,Value,Footprint" --group-by "Value" shop-output-board.kicad_sch
+kicad-cli pcb export pos --output production/positions.csv --format csv --units mm --side both --exclude-fp-th shop-output-board.kicad_pcb
+python generate_production_bom.py
 ```
 
 The position file tells the machine where each part goes; the BOM says what each part is.
-Both need real manufacturer part numbers added to the BOM — "100k, 0805" is not orderable, a
-specific part number is.
+`--exclude-fp-th` leaves the five connectors out of the position file, and
+`generate_production_bom.py` leaves the same five out of the BOM — the two must agree, or the
+machine is either told to place a part it has no reel for, or handed a reel for a part it is
+not placing.
 
 ## Step 3 — how much do you assemble?
 
@@ -86,8 +102,12 @@ What assembly needs beyond the Gerbers:
   `kicad-cli pcb export pos --exclude-fp-th ...` (the flag exists for exactly this)
 - **A BOM with real manufacturer part numbers.** "100k, 0805" is not orderable. Every line
   needs an actual MPN the assembler can buy
+- **A BOM grouped by value, not by footprint.** This sounds pedantic and is not: grouping by
+  footprint alone collapses C2, all eight LEDs and every resistor value into one "0805 × 50"
+  row, which is either rejected or — worse — placed. `generate_production_bom.py` groups by
+  (value, footprint) and refuses to emit a line without an MPN
 - **Awareness that unique part types drive the price.** There is a setup charge per distinct
-  component regardless of how many are placed, so this board's twelve types cost about the
+  component regardless of how many are placed, so this board's thirteen types cost about the
   same to set up whether it is one board or ten. That is why Q9 was made the same AO3401A as
   the channels rather than a different MOSFET
 
