@@ -7,3 +7,7 @@ svgout/
 drc.rpt
 board.svg
 fab/
+
+# The Gerber folder is tracked; the zip of it is not — it is just an upload wrapper
+../shop-output-board.zip
+*.zip
