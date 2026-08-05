@@ -49,6 +49,17 @@ kicad-cli pcb drc --refill-zones --output drc.rpt --severity-error shop-output-b
 
 Diagrams: `python generate_channel_diagram.py`, `python generate_power_diagram.py`.
 
+> **PDF export is flaky when KiCad has the project open.** `kicad-cli sch export pdf` will
+> report `Plotted to ...` and `Done.`, exit non-zero, and leave a **0-byte file**. Close KiCad
+> and Pcbnew first, or export somewhere else and move it in:
+>
+> ```
+> kicad-cli sch export pdf --output %TEMP%\sob.pdf shop-output-board.kicad_sch
+> move %TEMP%\sob.pdf shop-output-board.pdf
+> ```
+>
+> Always check the file size afterwards. SVG export does not have this problem.
+
 > **`generate_pcb.py` writes placement only.** `--route` also emits traces, but that routing
 > is incomplete — down from 191 DRC violations to 113, still with shorts and crossings. A
 > half-routed board is worse to inherit than an unrouted one, so it is not the default.

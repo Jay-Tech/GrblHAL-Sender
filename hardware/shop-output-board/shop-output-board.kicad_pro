@@ -537,7 +537,7 @@
     "last_paths": {
       "idf": "",
       "netlist": "netlist.net",
-      "plot": "",
+      "plot": "./ShopOutput_Gerber",
       "specctra_dsn": "",
       "step": "",
       "vrml": ""
