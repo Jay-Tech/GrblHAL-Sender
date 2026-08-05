@@ -114,7 +114,10 @@ for n in range(1, 9):
     PLACE[f"R{n}01"] = (cx, CY["R1"], 0.0)
     PLACE[f"R{n}03"] = (cx, CY["R3"], 0.0)
     PLACE[f"R{n}04"] = (cx, CY["R4"], 0.0)
-    PLACE[f"LED{n}"] = (cx, CY["LED"], 0.0)
+    # 180: pad 2 is the anode and must sit where the IND trace from R4 arrives. The 0805
+    # land is symmetric (pads at +/-0.9375), so this rotation changes no copper at all --
+    # only the silkscreen polarity marker, which is exactly what should change.
+    PLACE[f"LED{n}"] = (cx, CY["LED"], 180.0)
 for ref, (x, y) in POWER.items():
     PLACE[ref] = (x, y, 0.0)
 PLACE["J4"], PLACE["J5"] = PICO_J4, PICO_J5

@@ -140,6 +140,11 @@ Worth checking against this before it goes to layout:
 
 - [ ] `PICO_GND` and `ISO_GND` appear in no rule together, and no component bridges them except U1–U8
 - [ ] Every Zener is cathode-to-`V+`, anode-to-gate — reversed, it clamps nothing and shorts the gate
+- [ ] **Every indicator LED is anode-to-`R4`, cathode-to-`ISO_GND`.** KiCad's `Device:LED` is
+      pin 1 = K and pin 2 = A, which is the opposite order to how it reads, and the generator
+      had these swapped until 2026-08-05 — every indicator was reverse-biased and could never
+      light. `verify_netlist.py` asserted the wrong version, so nothing caught it. The board
+      fix was a 180° footprint rotation, which on a symmetric 0805 land changes no copper
 - [ ] Q9 drain to `VIN_F`, source to `V+` — not the other way round
 - [ ] Qn source to `V+`, drain to `OUTn` — the channels are the opposite orientation to Q9,
       which is correct but looks wrong at a glance

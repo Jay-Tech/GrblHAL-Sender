@@ -117,7 +117,9 @@ def main():
         expect(f"GATE{n}", {f"R{n}01.2", f"D{n}.2", f"Q{n}.{FET_G}", f"R{n}02.1"})
         expect(f"OPTOC{n}", {f"R{n}02.2", f"U{n}.4"})
         expect(f"LEDA{n}", {f"R{n}05.2", f"U{n}.1"})
-        expect(f"LEDK{n}", {f"R{n}04.2", f"LED{n}.1"})
+        # Anode (pin 2) faces R4/OUT, cathode (pin 1) to ground. This assertion had the
+        # two swapped and so ratified the bug it existed to catch.
+        expect(f"LEDK{n}", {f"R{n}04.2", f"LED{n}.2"})
         expect(f"GP{n + 1}", {f"R{n}05.1", "J4." + str(n + 3 if n <= 4 else n + 4)})
 
         terminal = "J2" if n <= 4 else "J3"
@@ -127,7 +129,7 @@ def main():
         # Zener cathode and MOSFET source both to V+; anode and gate to GATEn. Reversed,
         # the clamp does nothing and the gate is shorted.
         expect("V+", {f"D{n}.1", f"Q{n}.{FET_S}", f"R{n}01.1"}, exact=False)
-        expect("ISO_GND", {f"R{n}03.2", f"LED{n}.2"}, exact=False)
+        expect("ISO_GND", {f"R{n}03.2", f"LED{n}.1"}, exact=False)
 
     # --- Input protection ---------------------------------------------------------------
     expect("VIN_RAW", {"J1.1", "F1.1"})

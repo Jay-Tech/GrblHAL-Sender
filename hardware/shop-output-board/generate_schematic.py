@@ -512,9 +512,13 @@ def main():
         net(p, "1", out, f"R{n}04", "up")
         net(p, "2", ledk, f"R{n}04", "down")
 
+        # KiCad's Device:LED is pin 1 = K, pin 2 = A. The node from R4 sits at OUT potential,
+        # so it must land on the ANODE. Until 2026-08-05 these were swapped, which
+        # reverse-biases the indicator: it never lights. netlist.md always specified it
+        # correctly and verify_netlist.py asserted the wrong version, so nothing caught it.
         p = place(f"LED{n}", "Device:LED", "GRN", cx + 25, TOP + 145)
-        net(p, "1", ledk, f"LED{n}", "up")     # pin 1 = K
-        net(p, "2", "ISO_GND", f"LED{n}", "down")
+        net(p, "2", ledk, f"LED{n}", "up")     # pin 2 = A, to R4 / OUT
+        net(p, "1", "ISO_GND", f"LED{n}", "down")   # pin 1 = K, to ground
 
     # --- Input protection ---------------------------------------------------------------
     ix, iy = 30.0, 235.0
