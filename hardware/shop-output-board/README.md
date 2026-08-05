@@ -26,9 +26,12 @@ lighting — on hosts that have no GPIO header of their own.
 | Schematic | generated, ERC clean (0 violations) |
 | Netlist | 78 nets, 84 parts, all assertions pass |
 | Footprints | assigned; pad-to-pin mapping checked |
-| Board placement | generated, DRC clean (0 violations) |
-| **Routing** | **not done — this is what is left** |
-| Bench verification | none |
+| Board placement | generated, DRC clean |
+| Routing | done by hand in Pcbnew — 348 segments, 25 vias |
+| DRC | **0 violations, 0 unconnected** |
+| Gerbers | exported, validated, tracked in `ShopOutput_Gerber/` |
+| BOM | 84 parts with MPNs; F1 needs its voltage rating settled |
+| **Bench verification** | **none — this is what is left** |
 
 ## Regenerating
 

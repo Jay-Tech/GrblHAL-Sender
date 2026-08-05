@@ -1,0 +1,11 @@
+﻿Designator,Footprint,Quantity,Value,LCSC Part #
+C1,CP_Elec_8x10.5,1,,
+"C2, LED1, LED2, LED3, LED4, LED5, LED6, LED7, LED8, R101, R102, R103, R104, R105, R201, R202, R203, R204, R205, R301, R302, R303, R304, R305, R401, R402, R403, R404, R405, R501, R502, R503, R504, R505, R6, R601, R602, R603, R604, R605, R701, R702, R703, R704, R705, R801, R802, R803, R804, R805",0805,50,,
+"D1, D2, D3, D4, D5, D6, D7, D8, D9",D_SOD-123,9,,
+F1,1206,1,,
+J1,"TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal",1,,
+"J2, J3",TerminalBlock_Phoenix_MKDS-1-6-3.81_1x06_P3.81mm_Horizontal,2,,
+"J4, J5",PinSocket_1x20_P2.54mm_Vertical,2,,
+"Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9",SOT-23,9,,
+TVS1,D_SMA,1,,
+"U1, U2, U3, U4, U5, U6, U7, U8",SOP-4_7.5x4.1mm_P2.54mm,8,,

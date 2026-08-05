@@ -10,17 +10,18 @@ uploading anything anywhere.
 | Schematic | done, ERC clean, netlist verified |
 | Footprints assigned | done, checked |
 | Layout plan and DRC rules | done |
-| Board placed | done — 84 parts positioned, DRC clean, 0 violations |
-| **Board routed** | **not started — this is the blocker** |
-| Gerbers | cannot exist until routing is done |
+| Board placed | done — 84 parts positioned |
+| Board routed | **done** — 348 segments, 25 vias, DRC 0 violations, 0 unconnected |
+| Gerbers | exported and tracked in `ShopOutput_Gerber/` |
+| BOM | 84 parts with MPNs — except F1, see design.md |
+| **Bench verification** | **none — this is what is left** |
 
-A manufacturer needs a *routed* board: actual copper traces joining the pads. The board is
-placed — every part is where it should be and the ratsnest is correct — but the traces are
-not drawn. Nothing to order yet.
+The board is routed and the Gerbers are exported. What has *not* happened is any bench
+verification: **breadboard one channel** before committing to a run. The design rests on a
+gate clamp nobody has watched work, and finding out it wants a different Zener costs an
+evening on a breadboard versus a board respin.
 
-Also, before any of this: **breadboard one channel.** The whole design rests on a gate clamp
-nobody has watched work. Finding out it needs a different Zener costs an evening on a
-breadboard and a board respin if you skip it.
+Also settle F1's voltage rating first — see [design.md](design.md).
 
 ## Step 1 — route the board in KiCad
 
