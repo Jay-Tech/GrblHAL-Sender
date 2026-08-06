@@ -1,5 +1,18 @@
 # Shop Output Board
 
+> ### On the shelf as of 2026-08-06 — not cancelled, just unnecessary
+>
+> Commercial Pico relay boards do this job for around £22, in an enclosure, on a DIN rail.
+> This board switches a 5–24 V *signal* that still has to drive external relay modules, so the
+> honest comparison was always "custom PCB + 8 relay modules + a field PSU + a case" against
+> "one bought board". See [commercial-alternatives.md](../commercial-alternatives.md) for the
+> comparison and what to verify on a bought board.
+>
+> **Nothing here is wrong or unfinished.** The design is complete, DRC-clean and documented,
+> and it stays the answer if a requirement appears that dry relay contacts cannot meet — a
+> switched 5–24 V output, or genuine galvanic isolation with the field ground leaving the
+> board. It has still never been on a bench.
+
 8-channel opto-isolated high-side switch board, driven by a Raspberry Pi Pico over USB-C.
 Takes a 5–24 V field supply and sources it to screw terminals, so shop wiring carries a
 robust signal instead of 3.3 V logic. Built for the sender's shop outputs — dust collection,

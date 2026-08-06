@@ -1,5 +1,16 @@
 # Shop Output Board v2
 
+> ### On the shelf as of 2026-08-06 — see [commercial-alternatives.md](../commercial-alternatives.md)
+>
+> Bought Pico relay boards cover the shop-outputs use case for a fraction of what this costs
+> to build, with the relays already on them and an enclosure round the outside. This board was
+> routed, verified and had its JLCPCB files prepared before that turned up — all of which is
+> still here and still correct. It just is not the thing to order.
+>
+> Worth knowing if you come back to it: the design is sound, `JlcLab/` is ready bar the LCSC
+> codes and F1 sourcing, and **it has never been bench-tested**. Start at
+> [bench-test.md](../shop-output-board/bench-test.md) if that ever changes.
+
 Four-channel opto-isolated high-side switch board. **70 × 92 mm against v1's 150 × 115 —
 64% less area**, same circuit per channel.
 
