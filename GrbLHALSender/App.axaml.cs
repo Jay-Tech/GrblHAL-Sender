@@ -14,6 +14,7 @@ using GrbLHALSender.Views;
 using GrbLHALSender.Updates;
 using GrbLHALSender.WebServer;
 using Microsoft.Extensions.DependencyInjection;
+using GrbLHALSender.Pendant;
 
 namespace GrbLHALSender;
 
@@ -78,6 +79,7 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<GpioOutputService>();
         collection.AddSingleton<FileUploadService>();
         collection.AddSingleton<WebServerService>();
+        collection.AddSingleton<PendantService>();
         collection.AddSingleton<SdCardService>();
         collection.AddSingleton<UpdateCheckService>();
         // Explicit factory: the injector also has a test-only ctor overload, and

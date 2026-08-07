@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -822,6 +822,73 @@
 					</StackPanel>
 					<TextBlock Grid.Row="3"
 							   Text="Changes require app restart. Access from LAN: http://&lt;this-pc-ip&gt;:port"
+							   Foreground="{DynamicResource TextMutedBrush}"
+							   FontSize="14"
+							   TextWrapping="Wrap"
+							   HorizontalAlignment="Center"
+							   Margin="0,20,0,0"/>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Pendant" FontSize="16" Padding="15,5">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="10,10,10,0">
+					<CheckBox Grid.Row="0"
+							  Content="Enable Wireless Pendant"
+							  HorizontalAlignment="Center"
+							  VerticalAlignment="Center"
+							  HorizontalContentAlignment="Center"
+							  VerticalContentAlignment="Center"
+							  Margin="0,10,0,10"
+							  IsChecked="{Binding IsPendantEnabled}"/>
+					<Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+						<Label Grid.Column="0"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Center"
+							   HorizontalContentAlignment="Right"
+							   VerticalContentAlignment="Center"
+							   FontSize="20"
+							   Content="Port:"/>
+						<TextBox Grid.Column="1"
+								 Width="120"
+								 HorizontalAlignment="Left"
+								 VerticalAlignment="Center"
+								 HorizontalContentAlignment="Left"
+								 VerticalContentAlignment="Center"
+								 Margin="10,0,0,0"
+								 FontSize="20"
+								 IsEnabled="{Binding IsPendantEnabled}"
+								 Text="{Binding PendantPort}"
+								 ToolTip.Tip="The pendant connects to this PC on this port"/>
+					</Grid>
+					<Grid Grid.Row="2" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+						<Label Grid.Column="0"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Center"
+							   HorizontalContentAlignment="Right"
+							   VerticalContentAlignment="Center"
+							   FontSize="20"
+							   Content="Max jog per message (mm):"/>
+						<TextBox Grid.Column="1"
+								 Width="120"
+								 HorizontalAlignment="Left"
+								 VerticalAlignment="Center"
+								 HorizontalContentAlignment="Left"
+								 VerticalContentAlignment="Center"
+								 Margin="10,0,0,0"
+								 FontSize="20"
+								 IsEnabled="{Binding IsPendantEnabled}"
+								 Text="{Binding PendantMaxJogMm}"
+								 ToolTip.Tip="A jog carries a detent count times a step size. This bounds how far one message can move the machine if that count is ever wrong."/>
+					</Grid>
+					<CheckBox Grid.Row="3"
+							  Content="Allow pendant to zero an axis"
+							  HorizontalAlignment="Center"
+							  VerticalAlignment="Center"
+							  Margin="0,20,0,0"
+							  IsEnabled="{Binding IsPendantEnabled}"
+							  IsChecked="{Binding PendantAllowZeroAxis}"
+							  ToolTip.Tip="Zeroing rewrites the work offset. Off by default so a mis-hit button on a handheld cannot lose your datum."/>
+					<TextBlock Grid.Row="4"
+							   Text="Changes require app restart. Set SENDER_HOST on the pendant to this PC's IP address."
 							   Foreground="{DynamicResource TextMutedBrush}"
 							   FontSize="14"
 							   TextWrapping="Wrap"

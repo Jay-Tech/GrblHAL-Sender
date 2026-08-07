@@ -458,3 +458,7 @@ $RECYCLE.BIN/
 ##
 # Scratch git worktrees created for isolated agent runs
 .claude/worktrees/
+# Machine-local Claude Code config: absolute paths and per-machine
+# permission grants, not shared state.
+.claude/launch.json
+.claude/settings.local.json

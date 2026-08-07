@@ -38,6 +38,10 @@ namespace GrbLHALSender.ViewModels
         private double _gamePadResponseCurveExponent = 1.5;
         private int _gamePadTriggerThreshold = 16000;
         private bool _isWebServerEnabled;
+        private bool _isPendantEnabled;
+        private int _pendantPort;
+        private double _pendantMaxJogMm;
+        private bool _pendantAllowZeroAxis;
         private int _webServerPort;
         private bool _useAntiAlias = true;
         private string _spindleImagePath = "spindle.png";
@@ -192,6 +196,39 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _webServerPort, value);
         }
 
+        public bool IsPendantEnabled
+        {
+            get => _isPendantEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isPendantEnabled, value);
+        }
+
+        public int PendantPort
+        {
+            get => _pendantPort;
+            set => this.RaiseAndSetIfChanged(ref _pendantPort, value);
+        }
+
+        /// <summary>
+        /// Ceiling on the distance one pendant message may command. A jog message
+        /// carries a detent count times a step size, so a corrupted count would
+        /// otherwise command an arbitrarily long move.
+        /// </summary>
+        public double PendantMaxJogMm
+        {
+            get => _pendantMaxJogMm;
+            set => this.RaiseAndSetIfChanged(ref _pendantMaxJogMm, value);
+        }
+
+        /// <summary>
+        /// Whether the pendant may rewrite a work offset. Off by default: losing a
+        /// datum to a mis-hit button on a handheld is expensive.
+        /// </summary>
+        public bool PendantAllowZeroAxis
+        {
+            get => _pendantAllowZeroAxis;
+            set => this.RaiseAndSetIfChanged(ref _pendantAllowZeroAxis, value);
+        }
+
         /// <summary>
         /// Where uploads actually land, read live from the service rather than rebuilt here
         /// so the two can never disagree. Shown because the path is otherwise unguessable:
@@ -330,6 +367,10 @@ namespace GrbLHALSender.ViewModels
             LoadGamepadMappings(_appConfig.GamepadConfig);
             IsWebServerEnabled = _appConfig.WebServerConfig.Enabled;
             WebServerPort = _appConfig.WebServerConfig.Port;
+            IsPendantEnabled = _appConfig.PendantConfig.Enabled;
+            PendantPort = _appConfig.PendantConfig.Port;
+            PendantMaxJogMm = _appConfig.PendantConfig.MaxJogDistanceMm;
+            PendantAllowZeroAxis = _appConfig.PendantConfig.AllowZeroAxis;
             UseAntiAlias = _appConfig.UseAntiAlias;
             SpindleImagePath = _appConfig.SpindleImagePath;
             RendererIndex = (int)_appConfig.Renderer;
@@ -408,6 +449,10 @@ namespace GrbLHALSender.ViewModels
             SaveGamepadMappings(_appConfig.GamepadConfig);
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
+            _appConfig.PendantConfig.Enabled = IsPendantEnabled;
+            _appConfig.PendantConfig.Port = PendantPort;
+            _appConfig.PendantConfig.MaxJogDistanceMm = PendantMaxJogMm;
+            _appConfig.PendantConfig.AllowZeroAxis = PendantAllowZeroAxis;
              AuxOutputViewModel.Save();
             GpioOutputViewModel.Save();
             GcodeEventViewModel.Save();

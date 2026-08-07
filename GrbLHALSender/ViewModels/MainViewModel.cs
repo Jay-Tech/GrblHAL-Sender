@@ -13,6 +13,7 @@ using GrbLHALSender.States;
 using GrbLHALSender.Updates;
 using GrbLHALSender.Utility;
 using GrbLHALSender.WebServer;
+using GrbLHALSender.Pendant;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -76,6 +77,7 @@ public class MainViewModel : ViewModelBase
     private readonly GamepadService _gamepadService;
     private readonly GpioOutputService _gpioOutputService;
     private readonly WebServerService _webServerService;
+    private readonly PendantService _pendantService;
     private readonly FileUploadService _fileUploadService;
     private readonly GcodeEventInjector _eventInjector;
 
@@ -442,7 +444,8 @@ public class MainViewModel : ViewModelBase
         WebServerService webServerService, MachineStateService machineStateService,
         SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService,
         SurfacingViewModel surfacingViewModel, GcodeEventInjector eventInjector,
-        FileUploadService fileUploadService, GpioOutputService gpioOutputService)
+        FileUploadService fileUploadService, GpioOutputService gpioOutputService,
+        PendantService pendantService)
     {
         _gpioOutputService = gpioOutputService;
         CommManager = commManager;
@@ -588,6 +591,11 @@ public class MainViewModel : ViewModelBase
         _webServerService.SetViewModel(this);
         _webServerService.StatusMessage += (_, msg) => ConsoleOutput.Add($"[WebServer] {msg}");
         _webServerService.Initialize(_config.WebServerConfig);
+
+        _pendantService = pendantService;
+        _pendantService.SetViewModel(this);
+        _pendantService.PendantStatusMessage += (_, msg) => ConsoleOutput.Add($"[Pendant] {msg}");
+        _pendantService.Initialize(_config.PendantConfig);
 
         updateCheckService.StatusMessage += (_, msg) =>
             Dispatcher.UIThread.Post(() => ConsoleOutput.Add($"[Update] {msg}"));
