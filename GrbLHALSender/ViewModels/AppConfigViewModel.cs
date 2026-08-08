@@ -44,6 +44,7 @@ namespace GrbLHALSender.ViewModels
         private double _pendantMaxFeed;
         private int _pendantDispatchMs;
         private bool _pendantAllowZeroAxis;
+        private bool _pendantEchoJogs;
         private int _webServerPort;
         private bool _useAntiAlias = true;
         private string _spindleImagePath = "spindle.png";
@@ -256,6 +257,12 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _pendantAllowZeroAxis, value);
         }
 
+        public bool PendantEchoJogs
+        {
+            get => _pendantEchoJogs;
+            set => this.RaiseAndSetIfChanged(ref _pendantEchoJogs, value);
+        }
+
         /// <summary>
         /// Where uploads actually land, read live from the service rather than rebuilt here
         /// so the two can never disagree. Shown because the path is otherwise unguessable:
@@ -400,6 +407,7 @@ namespace GrbLHALSender.ViewModels
             PendantMaxFeed = _appConfig.PendantConfig.MaxJogFeedRate;
             PendantDispatchMs = _appConfig.PendantConfig.JogDispatchIntervalMs;
             PendantAllowZeroAxis = _appConfig.PendantConfig.AllowZeroAxis;
+            PendantEchoJogs = _appConfig.PendantConfig.EchoJogsToConsole;
             UseAntiAlias = _appConfig.UseAntiAlias;
             SpindleImagePath = _appConfig.SpindleImagePath;
             RendererIndex = (int)_appConfig.Renderer;
@@ -484,6 +492,7 @@ namespace GrbLHALSender.ViewModels
             _appConfig.PendantConfig.MaxJogFeedRate = PendantMaxFeed;
             _appConfig.PendantConfig.JogDispatchIntervalMs = PendantDispatchMs;
             _appConfig.PendantConfig.AllowZeroAxis = PendantAllowZeroAxis;
+            _appConfig.PendantConfig.EchoJogsToConsole = PendantEchoJogs;
              AuxOutputViewModel.Save();
             GpioOutputViewModel.Save();
             GcodeEventViewModel.Save();

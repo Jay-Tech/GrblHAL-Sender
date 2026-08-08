@@ -382,36 +382,52 @@ public class PendantService : IDisposable
                     distance = clamped;
                 }
 
-                Dispatcher.UIThread.Post(() =>
-                {
-                    if (_mainViewModel == null) return;
-                    if (!_mainViewModel.Connected || _mainViewModel.AlarmActive) return;
+                // Written straight to the port rather than posted to the UI
+                // thread. The write itself is already serialised by the comm
+                // layer's lock, so the hop bought nothing but latency - and it
+                // charged that latency to a queue shared with rendering, DRO
+                // updates and console trimming.
+                //
+                // That was the transport stall behind every merged block. Jogs
+                // arriving every 50 ms sat in the UI queue behind whatever the
+                // interface was doing, the service coalesced the backlog, and
+                // one 50 mm block went out where seven 7 mm blocks should have.
+                // A 50 mm block at F8550 puts the machine 350 ms behind the
+                // hand the instant it is queued.
+                //
+                // It also explained why the jerk arrived partway through a long
+                // move rather than at random: the console fills to its cap
+                // within seconds of a traverse starting, and every status tick
+                // from then on does repeated O(n) removals with a UI
+                // notification each. The load switches on mid-move and stays on.
+                if (_mainViewModel == null) return;
+                if (!_mainViewModel.Connected || _mainViewModel.AlarmActive) return;
 
-                    // The pendant sends a feed matching how fast the wheel is
-                    // being turned, which is what makes the machine track the
-                    // hand rather than lag it. Fall back to configuration only
-                    // when it does not, and never exceed the ceiling.
-                    var feed = requested > 0
-                        ? requested
-                        : (_config.JogFeedRate > 0 ? _config.JogFeedRate : _mainViewModel.JogRate);
+                // The pendant sends a feed matching how fast the wheel is
+                // being turned, which is what makes the machine track the
+                // hand rather than lag it. Fall back to configuration only
+                // when it does not, and never exceed the ceiling.
+                var feed = requested > 0
+                    ? requested
+                    : (_config.JogFeedRate > 0 ? _config.JogFeedRate : _mainViewModel.JogRate);
 
-                    if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
-                        feed = _config.MaxJogFeedRate;
+                if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
+                    feed = _config.MaxJogFeedRate;
 
-                    // G21 is stated explicitly rather than inherited. The pendant
-                    // always works in millimetres, and a jog line carries its own
-                    // modal context without altering the machine's - so this stays
-                    // correct whether the job is running in G20 or G21.
-                    // Both figures are rounded rather than printed at full
-                    // double precision. Summing detent distances produces
-                    // values like 1.2000000000000002, which is 32 bytes in
-                    // grblHAL's receive buffer where 20 would do - and that
-                    // buffer is the same pipeline the pendant works to keep
-                    // supplied. Three decimals is exact for the finest step
-                    // the pendant offers.
-                    _mainViewModel.SendCommand(
-                        $"$J=G91G21{axis}{distance.ToInvariantString("0.###")}F{feed.ToInvariantString("0.#")}");
-                });
+                // G21 is stated explicitly rather than inherited. The pendant
+                // always works in millimetres, and a jog line carries its own
+                // modal context without altering the machine's - so this stays
+                // correct whether the job is running in G20 or G21.
+                // Both figures are rounded rather than printed at full
+                // double precision. Summing detent distances produces
+                // values like 1.2000000000000002, which is 32 bytes in
+                // grblHAL's receive buffer where 20 would do - and that
+                // buffer is the same pipeline the pendant works to keep
+                // supplied. Three decimals is exact for the finest step
+                // the pendant offers.
+                _mainViewModel.SendPendantJog(
+                    $"$J=G91G21{axis}{distance.ToInvariantString("0.###")}F{feed.ToInvariantString("0.#")}",
+                    _config.EchoJogsToConsole);
             }
         }
         catch (OperationCanceledException) { /* shutting down */ }

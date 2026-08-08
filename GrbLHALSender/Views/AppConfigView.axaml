@@ -919,6 +919,14 @@
 							  IsEnabled="{Binding IsPendantEnabled}"
 							  IsChecked="{Binding PendantAllowZeroAxis}"
 							  ToolTip.Tip="Zeroing rewrites the work offset. Off by default so a mis-hit button on a handheld cannot lose your datum."/>
+					<CheckBox Grid.Row="5"
+							  Content="Echo pendant jogs to console"
+							  HorizontalAlignment="Right"
+							  VerticalAlignment="Center"
+							  Margin="0,20,10,0"
+							  IsEnabled="{Binding IsPendantEnabled}"
+							  IsChecked="{Binding PendantEchoJogs}"
+							  ToolTip.Tip="Diagnostic only. Jogs arrive 20 times a second, which fills the console to its cap within seconds and then costs a UI update on every status tick - felt as jerk partway through a long move."/>
 					<TextBlock Grid.Row="6"
 							   Text="Changes require app restart. Set SENDER_HOST on the pendant to this PC's IP address."
 							   Foreground="{DynamicResource TextMutedBrush}"

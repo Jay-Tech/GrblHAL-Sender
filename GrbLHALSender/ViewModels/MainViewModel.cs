@@ -900,6 +900,30 @@ public class MainViewModel : ViewModelBase
     /// Configured G-code event rules are expanded here, so a rule fires no matter which
     /// of those raised the command.
     /// </summary>
+    /// <summary>
+    /// Sends a pendant jog without touching the UI thread.
+    /// </summary>
+    /// <remarks>
+    /// Jogs arrive twenty times a second and only need the serial port, which
+    /// the comm layer already serialises with its own lock. Routing them
+    /// through the UI thread put every one behind rendering, DRO updates and
+    /// console trimming, so a busy interface delayed the write, the pendant
+    /// service coalesced the backlog, and single blocks of 30 to 50 mm went out
+    /// where a stream of 7 mm blocks should have.
+    ///
+    /// The console echo stays optional and marshalled. It is a diagnostic, and
+    /// at twenty lines a second it is also what drives the console to its cap
+    /// within seconds - after which every status tick pays repeated O(n)
+    /// removals with a change notification each.
+    /// </remarks>
+    public void SendPendantJog(string command, bool echo)
+    {
+        if (string.IsNullOrEmpty(command)) return;
+        CommManager.SendCommand(command);
+        if (echo)
+            Dispatcher.UIThread.Post(() => ConsoleOutput.Add(command));
+    }
+
     public void SendCommand(string command)
     {
         if (string.IsNullOrEmpty(command)) return;

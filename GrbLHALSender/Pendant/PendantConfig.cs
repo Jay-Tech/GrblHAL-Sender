@@ -72,6 +72,18 @@ public class PendantConfig
     public int ClientTimeoutSeconds { get; set; } = 15;
 
     /// <summary>
+    /// Echo every pendant jog command to the console.
+    ///
+    /// Off by default. It is useful for diagnosing pendant motion, but jogs
+    /// arrive twenty times a second: the console reaches its line cap within
+    /// seconds of a traverse, and from then on each status tick pays repeated
+    /// O(n) removals with a UI notification each. That load lands on the same
+    /// thread the interface renders from, which is felt as jerk partway
+    /// through a long move rather than at the start.
+    /// </summary>
+    public bool EchoJogsToConsole { get; set; } = false;
+
+    /// <summary>
     /// Allow the pendant to zero a work axis. Off by default: zeroing rewrites
     /// the work offset, and whether that belongs on a handheld is the
     /// operator's call rather than a default.
