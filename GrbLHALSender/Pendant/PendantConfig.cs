@@ -47,9 +47,12 @@ public class PendantConfig
     /// sent as one longer move; movement arriving slower is sent as soon as it
     /// arrives.
     ///
-    /// Keep it below the pendant's own tick. Set equal to it, the two free-run
-    /// against each other and beat - some windows carry two messages and some
-    /// carry none, and an empty window is a gap the machine decelerates into.
+    /// Keep it below the pendant's own tick, which is now 20 ms. Set equal to
+    /// it, the two free-run against each other and beat - some windows carry
+    /// two messages and some carry none, and an empty window is a gap the
+    /// machine decelerates into. Set above it, messages are merged back into
+    /// the long blocks the short tick exists to avoid: a merged block halves
+    /// the count the planner can chain, and chaining is what holds a feed.
     ///
     /// This is backpressure, and it is the only place that can apply it: the
     /// pendant cannot see the controller's planner. Without it, jog blocks
@@ -57,7 +60,7 @@ public class PendantConfig
     /// the send path blocks - which stalls status, strands the machine behind
     /// the operator's hand, and eventually drops the pendant connection.
     /// </summary>
-    public int JogDispatchIntervalMs { get; set; } = 25;
+    public int JogDispatchIntervalMs { get; set; } = 10;
 
     /// <summary>
     /// How often machine status is pushed to the pendant, in milliseconds.
