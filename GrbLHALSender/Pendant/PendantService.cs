@@ -402,8 +402,15 @@ public class PendantService : IDisposable
                     // always works in millimetres, and a jog line carries its own
                     // modal context without altering the machine's - so this stays
                     // correct whether the job is running in G20 or G21.
+                    // Both figures are rounded rather than printed at full
+                    // double precision. Summing detent distances produces
+                    // values like 1.2000000000000002, which is 32 bytes in
+                    // grblHAL's receive buffer where 20 would do - and that
+                    // buffer is the same pipeline the pendant works to keep
+                    // supplied. Three decimals is exact for the finest step
+                    // the pendant offers.
                     _mainViewModel.SendCommand(
-                        $"$J=G91G21{axis}{distance.ToInvariantString()}F{feed.ToInvariantString()}");
+                        $"$J=G91G21{axis}{distance.ToInvariantString("0.###")}F{feed.ToInvariantString("0.#")}");
                 });
             }
         }
