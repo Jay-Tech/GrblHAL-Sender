@@ -42,6 +42,7 @@ namespace GrbLHALSender.ViewModels
         private int _pendantPort;
         private double _pendantMaxJogMm;
         private double _pendantMaxFeed;
+        private int _pendantDispatchMs;
         private bool _pendantAllowZeroAxis;
         private int _webServerPort;
         private bool _useAntiAlias = true;
@@ -233,6 +234,19 @@ namespace GrbLHALSender.ViewModels
         }
 
         /// <summary>
+        /// Minimum gap between jog commands sent to the controller. Must stay
+        /// below the pendant's own tick, or movement from several pendant
+        /// messages is merged into one longer block - which halves the number of
+        /// blocks the controller's planner has to look ahead at, and the planner
+        /// decelerates to a stop at the end of the last block it holds.
+        /// </summary>
+        public int PendantDispatchMs
+        {
+            get => _pendantDispatchMs;
+            set => this.RaiseAndSetIfChanged(ref _pendantDispatchMs, value);
+        }
+
+        /// <summary>
         /// Whether the pendant may rewrite a work offset. Off by default: losing a
         /// datum to a mis-hit button on a handheld is expensive.
         /// </summary>
@@ -384,6 +398,7 @@ namespace GrbLHALSender.ViewModels
             PendantPort = _appConfig.PendantConfig.Port;
             PendantMaxJogMm = _appConfig.PendantConfig.MaxJogDistanceMm;
             PendantMaxFeed = _appConfig.PendantConfig.MaxJogFeedRate;
+            PendantDispatchMs = _appConfig.PendantConfig.JogDispatchIntervalMs;
             PendantAllowZeroAxis = _appConfig.PendantConfig.AllowZeroAxis;
             UseAntiAlias = _appConfig.UseAntiAlias;
             SpindleImagePath = _appConfig.SpindleImagePath;
@@ -467,6 +482,7 @@ namespace GrbLHALSender.ViewModels
             _appConfig.PendantConfig.Port = PendantPort;
             _appConfig.PendantConfig.MaxJogDistanceMm = PendantMaxJogMm;
             _appConfig.PendantConfig.MaxJogFeedRate = PendantMaxFeed;
+            _appConfig.PendantConfig.JogDispatchIntervalMs = PendantDispatchMs;
             _appConfig.PendantConfig.AllowZeroAxis = PendantAllowZeroAxis;
              AuxOutputViewModel.Save();
             GpioOutputViewModel.Save();

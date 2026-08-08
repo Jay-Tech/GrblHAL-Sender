@@ -29,7 +29,7 @@
 
 			<!-- App Height Tab -->
 			<TabItem Header="APP" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="10">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" Margin="10">
 					<Grid Grid.Row="0" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*,*,*">
 						<CheckBox Grid.Row="0" Grid.Column="0"
 								  Content="Full Screen"
@@ -895,7 +895,23 @@
 								 Text="{Binding PendantMaxFeed}"
 								 ToolTip.Tip="Set to the machine's own maximum jog rate. The pendant already limits itself per axis and per step, so a lower value here silently discards feed it asked for."/>
 					</Grid>
-					<CheckBox Grid.Row="4"
+					<Grid Grid.Row="4" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+						<Label Grid.Column="0"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Center"
+							   FontSize="20"
+							   Content="Min gap between jogs (ms):"/>
+						<TextBox Grid.Column="1"
+								 Width="120"
+								 HorizontalAlignment="Left"
+								 VerticalAlignment="Center"
+								 Margin="10,0,0,0"
+								 FontSize="20"
+								 IsEnabled="{Binding IsPendantEnabled}"
+								 Text="{Binding PendantDispatchMs}"
+								 ToolTip.Tip="Must be below the pendant's tick (50 ms). Higher and several pendant messages merge into one longer block, which halves the lookahead the controller's planner has and makes it decelerate at the end of each block."/>
+					</Grid>
+					<CheckBox Grid.Row="5"
 							  Content="Allow pendant to zero an axis"
 							  HorizontalAlignment="Center"
 							  VerticalAlignment="Center"
@@ -903,7 +919,7 @@
 							  IsEnabled="{Binding IsPendantEnabled}"
 							  IsChecked="{Binding PendantAllowZeroAxis}"
 							  ToolTip.Tip="Zeroing rewrites the work offset. Off by default so a mis-hit button on a handheld cannot lose your datum."/>
-					<TextBlock Grid.Row="5"
+					<TextBlock Grid.Row="6"
 							   Text="Changes require app restart. Set SENDER_HOST on the pendant to this PC's IP address."
 							   Foreground="{DynamicResource TextMutedBrush}"
 							   FontSize="14"
