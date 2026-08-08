@@ -31,13 +31,15 @@ public class PendantConfig
     public double MaxJogFeedRate { get; set; } = 5000;
 
     /// <summary>
-    /// Largest distance a single pendant message may command, in millimetres.
-    /// A jog message carries a detent count and a step size, so a corrupted or
-    /// malformed count would otherwise command an arbitrarily long move. At the
-    /// coarsest step a fast spin produces roughly 10 mm per message, so this
-    /// leaves headroom while still bounding the worst case.
+    /// Largest distance a single dispatch may command, in millimetres. Movement
+    /// beyond this is clamped, not discarded.
+    ///
+    /// The guard bounds a corrupted detent count. Size it against what a
+    /// dispatch interval can legitimately carry: at the maximum feed a 100 ms
+    /// window is already 20 mm, so a limit near that is reached in ordinary use
+    /// and every clamp costs real motion.
     /// </summary>
-    public double MaxJogDistanceMm { get; set; } = 25.0;
+    public double MaxJogDistanceMm { get; set; } = 50.0;
 
     /// <summary>
     /// Minimum interval between jog commands sent to the controller, in

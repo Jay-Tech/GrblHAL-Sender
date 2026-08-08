@@ -344,11 +344,18 @@ public class PendantService : IDisposable
 
                 if (axis == null || distance == 0) continue;
 
+                // Clamp rather than reject. The guard exists to bound a corrupt
+                // detent count, and clamping bounds it just as effectively -
+                // whereas rejecting discards legitimate motion too, and every
+                // discarded move is distance the machine never makes and the
+                // operator never gets back. Coalescing made this reachable in
+                // normal use: at full feed a 100 ms window is already 20 mm.
                 if (Math.Abs(distance) > _config.MaxJogDistanceMm)
                 {
-                    Report($"Pendant jog of {distance:0.###} mm exceeds the " +
-                           $"{_config.MaxJogDistanceMm:0.###} mm limit - ignored.");
-                    continue;
+                    var clamped = Math.Sign(distance) * _config.MaxJogDistanceMm;
+                    Report($"Pendant jog of {distance:0.###} mm clamped to " +
+                           $"{clamped:0.###} mm.");
+                    distance = clamped;
                 }
 
                 Dispatcher.UIThread.Post(() =>
