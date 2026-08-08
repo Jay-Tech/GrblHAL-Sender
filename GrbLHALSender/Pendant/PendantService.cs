@@ -51,6 +51,10 @@ public class PendantService : IDisposable
     // Jog movement accumulated between dispatches. Summing rather than
     // forwarding each message is what keeps the controller's planner supplied
     // without being flooded; see JogLoopAsync.
+    // Poll interval for the dispatch loop. Well under the dispatch interval,
+    // so motion is forwarded promptly instead of waiting on a timer edge.
+    private const int JogPollMs = 10;
+
     private readonly object _jogLock = new();
     private string? _pendingAxis;
     private double _pendingDistance;
@@ -328,9 +332,29 @@ public class PendantService : IDisposable
     {
         try
         {
+            var sinceDispatch = Stopwatch.StartNew();
+
             while (!token.IsCancellationRequested)
             {
-                await Task.Delay(_config.JogDispatchIntervalMs, token);
+                // Poll faster than the dispatch interval and send as soon as
+                // there is something to send, rather than waiting for a timer
+                // edge.
+                //
+                // A fixed interval free-runs against the pendant's own tick, and
+                // two unsynchronised periods beat: some windows carry two
+                // messages, some carry none. A window with none sends nothing at
+                // all, the machine finishes what little it has buffered and
+                // decelerates - while the pendant's trace shows a perfectly
+                // steady stream, because from its side nothing went wrong.
+                await Task.Delay(JogPollMs, token);
+
+                lock (_jogLock)
+                {
+                    if (_pendingDistance == 0) continue;
+                }
+                if (sinceDispatch.ElapsedMilliseconds < _config.JogDispatchIntervalMs)
+                    continue;
+                sinceDispatch.Restart();
 
                 string? axis;
                 double distance, requested;

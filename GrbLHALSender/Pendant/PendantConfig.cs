@@ -44,7 +44,12 @@ public class PendantConfig
     /// <summary>
     /// Minimum interval between jog commands sent to the controller, in
     /// milliseconds. Pendant movement arriving faster than this is summed and
-    /// sent as one longer move.
+    /// sent as one longer move; movement arriving slower is sent as soon as it
+    /// arrives.
+    ///
+    /// Keep it below the pendant's own tick. Set equal to it, the two free-run
+    /// against each other and beat - some windows carry two messages and some
+    /// carry none, and an empty window is a gap the machine decelerates into.
     ///
     /// This is backpressure, and it is the only place that can apply it: the
     /// pendant cannot see the controller's planner. Without it, jog blocks
@@ -52,7 +57,7 @@ public class PendantConfig
     /// the send path blocks - which stalls status, strands the machine behind
     /// the operator's hand, and eventually drops the pendant connection.
     /// </summary>
-    public int JogDispatchIntervalMs { get; set; } = 100;
+    public int JogDispatchIntervalMs { get; set; } = 50;
 
     /// <summary>
     /// How often machine status is pushed to the pendant, in milliseconds.
