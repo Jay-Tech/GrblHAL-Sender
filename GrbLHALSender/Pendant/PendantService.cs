@@ -403,6 +403,29 @@ public class PendantService : IDisposable
                 if (_mainViewModel == null) return;
                 if (!_mainViewModel.Connected || _mainViewModel.AlarmActive) return;
 
+                // A hardware MPG can take the controller's input stream via the
+                // MPG_MODE pin or the 0x8B toggle, and while it holds it this
+                // sender is not the stream in control. Writing jogs into it
+                // then is at best ignored and at worst interleaves this
+                // pendant's motion with the other device's.
+                //
+                // Two operators driving one axis from two places is the
+                // failure worth refusing outright rather than arbitrating.
+                if (_machineState.MpgActive) return;
+
+                // And never mid-job. A jog injected into a running stream is
+                // not merely rejected by the controller: this sender counts
+                // characters to track what the controller is holding, and an
+                // "ok" returned for an out-of-band line is credited to a job
+                // line instead. The stream accounting desyncs from that point
+                // on, in the middle of a cut.
+                //
+                // A hold is still a running job - the file is loaded, the
+                // position is committed, and resuming expects the machine
+                // where it was left. Jogging away from that is how a resume
+                // plunges into the work.
+                if (_mainViewModel.JobViewModel?.JobRunning == true) return;
+
                 // The pendant sends a feed matching how fast the wheel is
                 // being turned, which is what makes the machine track the
                 // hand rather than lag it. Fall back to configuration only
@@ -446,6 +469,17 @@ public class PendantService : IDisposable
 
         Dispatcher.UIThread.Post(() =>
         {
+            // Deliberately guarded on connection alone - not on a running job,
+            // an alarm, or MPG mode, the way jogging and zeroing are.
+            //
+            // These are single-byte real-time commands. They bypass the line
+            // buffer entirely, so they cannot desync the stream accounting that
+            // makes an injected jog dangerous mid-job. And they are exactly the
+            // commands wanted at the worst moment: a feed hold that stops
+            // working once a job starts is worse than no button at all, and
+            // cycle start is how the operator resumes from that hold.
+            //
+            // Do not extend the jog guards to cover this.
             if (_mainViewModel == null || !_mainViewModel.Connected) return;
 
             switch (id)
@@ -481,6 +515,17 @@ public class PendantService : IDisposable
         {
             if (_mainViewModel == null) return;
             if (!_mainViewModel.Connected || _mainViewModel.AlarmActive) return;
+
+            // Zeroing rewrites the work offset, so it is refused for the same
+            // reasons jogging is - and more sharply. Doing it mid-job moves
+            // every remaining coordinate in the file relative to the stock,
+            // while the tool is in the cut.
+            if (_machineState.MpgActive) return;
+            if (_mainViewModel.JobViewModel?.JobRunning == true)
+            {
+                Report("Pendant zero ignored: a job is running.");
+                return;
+            }
 
             // G10 L20 sets the work offset so the current position reads the
             // given value on that axis alone, leaving the others untouched.

@@ -102,6 +102,18 @@ public class MachineStateService : ReactiveObject, IDisposable
     // Feed & speed (parsed from strings to ints)
     private int _feedRate;
     private int _plannerBlocksFree;
+    private bool _mpgActive;
+
+    /// <summary>
+    /// The controller has handed its input stream to an MPG, via the MPG_MODE
+    /// pin or the 0x8B toggle. While this is set the sender is not the stream
+    /// in control, so anything it writes is at best ignored.
+    /// </summary>
+    public bool MpgActive
+    {
+        get => _mpgActive;
+        private set => this.RaiseAndSetIfChanged(ref _mpgActive, value);
+    }
 
     /// <summary>Free slots in the controller's planner buffer, from Bf:.
     /// Only populated when the buffer-state bit is set in $10. This is the
@@ -342,6 +354,7 @@ public class MachineStateService : ReactiveObject, IDisposable
 
         // --- Feed & speed ---
         if (double.TryParse(state.FeedRate, NumberStyles.Float, CultureInfo.InvariantCulture, out var feedRate)) FeedRate = (int)ConvertUnit(feedRate);
+        MpgActive = state.MpgActive;
         if (int.TryParse(state.PlannerBlocksFree, NumberStyles.Integer, CultureInfo.InvariantCulture, out var bf)) PlannerBlocksFree = bf;
         if (int.TryParse(state.FeedOverRide, NumberStyles.Integer, CultureInfo.InvariantCulture, out var fo)) FeedOverride = fo;
         if (double.TryParse(state.ProgramRPM, NumberStyles.Float, CultureInfo.InvariantCulture, out var ps)) SpindleRpm = (int)ps;
