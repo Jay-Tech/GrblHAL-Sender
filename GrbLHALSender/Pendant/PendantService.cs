@@ -502,8 +502,14 @@ public class PendantService : IDisposable
             builder.Append(value.ToString("0.###", CultureInfo.InvariantCulture));
         }
 
+        // The controller's actual feed, so the pendant can compare what it asked
+        // for against what the machine is doing. A commanded feed that holds
+        // steady while this collapses to zero and back is the planner running a
+        // block at a time and decelerating at the end of each - which nothing on
+        // the pendant side can see.
         builder.Append("],\"fro\":").Append(_machineState.FeedOverride)
                .Append(",\"sro\":").Append(_machineState.RpmOverride)
+               .Append(",\"fr\":").Append(_machineState.FeedRate)
                .Append('}');
         return builder.ToString();
     }
