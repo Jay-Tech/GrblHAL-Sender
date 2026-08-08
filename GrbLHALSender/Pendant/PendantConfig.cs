@@ -57,7 +57,7 @@ public class PendantConfig
     /// the send path blocks - which stalls status, strands the machine behind
     /// the operator's hand, and eventually drops the pendant connection.
     /// </summary>
-    public int JogDispatchIntervalMs { get; set; } = 50;
+    public int JogDispatchIntervalMs { get; set; } = 25;
 
     /// <summary>
     /// How often machine status is pushed to the pendant, in milliseconds.
