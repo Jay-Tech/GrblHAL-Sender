@@ -15,6 +15,11 @@ public class RealTImeState
     public string WCS { get; set; }
     public string Tool { get; set; }
     public string FeedRate { get; set; }
+
+    /// <summary>Free slots in the planner buffer, from Bf:. Requires the
+    /// buffer-state bit in $10. Near the maximum means the planner is
+    /// starved and decelerating at the end of every block.</summary>
+    public string PlannerBlocksFree { get; set; }
     public string FeedOverRide { get; set; }
     public string RapidOverRide { get; set; }
     public string RpmOverRide { get; set; }

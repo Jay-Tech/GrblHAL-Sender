@@ -101,6 +101,18 @@ public class MachineStateService : ReactiveObject, IDisposable
 
     // Feed & speed (parsed from strings to ints)
     private int _feedRate;
+    private int _plannerBlocksFree;
+
+    /// <summary>Free slots in the controller's planner buffer, from Bf:.
+    /// Only populated when the buffer-state bit is set in $10. This is the
+    /// controller's lookahead depth: when it is at the maximum the planner is
+    /// empty and every block must decelerate to a stop at its own end.</summary>
+    public int PlannerBlocksFree
+    {
+        get => _plannerBlocksFree;
+        private set => this.RaiseAndSetIfChanged(ref _plannerBlocksFree, value);
+    }
+
     public int FeedRate
     {
         get => _feedRate;
@@ -330,6 +342,7 @@ public class MachineStateService : ReactiveObject, IDisposable
 
         // --- Feed & speed ---
         if (double.TryParse(state.FeedRate, NumberStyles.Float, CultureInfo.InvariantCulture, out var feedRate)) FeedRate = (int)ConvertUnit(feedRate);
+        if (int.TryParse(state.PlannerBlocksFree, NumberStyles.Integer, CultureInfo.InvariantCulture, out var bf)) PlannerBlocksFree = bf;
         if (int.TryParse(state.FeedOverRide, NumberStyles.Integer, CultureInfo.InvariantCulture, out var fo)) FeedOverride = fo;
         if (double.TryParse(state.ProgramRPM, NumberStyles.Float, CultureInfo.InvariantCulture, out var ps)) SpindleRpm = (int)ps;
         if (double.TryParse(state.ActualRpm, NumberStyles.Float, CultureInfo.InvariantCulture, out var rpm)) ActualRpm = (int)rpm;

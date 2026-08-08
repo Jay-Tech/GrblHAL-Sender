@@ -507,9 +507,14 @@ public class PendantService : IDisposable
         // steady while this collapses to zero and back is the planner running a
         // block at a time and decelerating at the end of each - which nothing on
         // the pendant side can see.
+        // "bf" is the controller's free planner slots. It answers the question
+        // the pendant cannot answer for itself: whether the blocks it believes
+        // it has queued ahead actually reached the planner. Zero means the
+        // buffer-state bit is off in $10 and the number is unavailable.
         builder.Append("],\"fro\":").Append(_machineState.FeedOverride)
                .Append(",\"sro\":").Append(_machineState.RpmOverride)
                .Append(",\"fr\":").Append(_machineState.FeedRate)
+               .Append(",\"bf\":").Append(_machineState.PlannerBlocksFree)
                .Append('}');
         return builder.ToString();
     }
