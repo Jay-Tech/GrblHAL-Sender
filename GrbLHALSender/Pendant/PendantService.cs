@@ -48,6 +48,14 @@ public class PendantService : IDisposable
     // Set after construction to avoid circular DI, matching GamepadService.
     private MainViewModel? _mainViewModel;
 
+    // Jog movement accumulated between dispatches. Summing rather than
+    // forwarding each message is what keeps the controller's planner supplied
+    // without being flooded; see JogLoopAsync.
+    private readonly object _jogLock = new();
+    private string? _pendingAxis;
+    private double _pendingDistance;
+    private double _pendingFeed;
+
     public event EventHandler<bool>? PendantConnectionChanged;
     public event EventHandler<string>? PendantStatusMessage;
 
@@ -160,6 +168,7 @@ public class PendantService : IDisposable
 
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(token);
         var statusTask = Task.Run(() => StatusLoopAsync(client, linked.Token), linked.Token);
+        var jogTask = Task.Run(() => JogLoopAsync(linked.Token), linked.Token);
 
         try
         {
@@ -188,6 +197,8 @@ public class PendantService : IDisposable
         {
             linked.Cancel();
             try { await statusTask; } catch { /* ignore */ }
+            try { await jogTask; } catch { /* ignore */ }
+            lock (_jogLock) { _pendingDistance = 0; _pendingAxis = null; }
 
             // A pendant that vanishes mid-jog must not leave the machine
             // running on: cancel whatever it had in flight.
@@ -287,36 +298,85 @@ public class PendantService : IDisposable
 
         var requested = GetDouble(root, "feed", 0);
 
-        if (Math.Abs(distance) > _config.MaxJogDistanceMm)
+        // Accumulate rather than dispatching. The loop decides when to send, so
+        // movement arriving faster than the controller can absorb becomes one
+        // longer move instead of a queue of short ones. An axis change discards
+        // what was pending for the previous axis rather than carrying it over.
+        lock (_jogLock)
         {
-            Report($"Pendant jog of {distance:0.###} mm exceeds the " +
-                   $"{_config.MaxJogDistanceMm:0.###} mm limit - ignored.");
-            return;
+            if (_pendingAxis != axis)
+            {
+                _pendingAxis = axis;
+                _pendingDistance = 0;
+            }
+            _pendingDistance += distance;
+            if (requested > 0) _pendingFeed = requested;
         }
+    }
 
-        Dispatcher.UIThread.Post(() =>
+    /// <summary>
+    /// Sends accumulated pendant movement, no more often than the configured
+    /// interval.
+    ///
+    /// This is the only place backpressure can be applied. The pendant cannot
+    /// see the controller's planner, so left to itself it emits jog blocks
+    /// faster than grblHAL can parse and execute; the buffer fills, the send
+    /// path blocks, status stops flowing, and the machine ends up over a second
+    /// behind the operator's hand.
+    /// </summary>
+    private async Task JogLoopAsync(CancellationToken token)
+    {
+        try
         {
-            if (_mainViewModel == null) return;
-            if (!_mainViewModel.Connected || _mainViewModel.AlarmActive) return;
+            while (!token.IsCancellationRequested)
+            {
+                await Task.Delay(_config.JogDispatchIntervalMs, token);
 
-            // The pendant sends a feed matching how fast the wheel is being
-            // turned, which is what makes the machine track the hand rather
-            // than lag it. Fall back to configuration only when it does not,
-            // and never exceed the configured ceiling.
-            var feed = requested > 0
-                ? requested
-                : (_config.JogFeedRate > 0 ? _config.JogFeedRate : _mainViewModel.JogRate);
+                string? axis;
+                double distance, requested;
+                lock (_jogLock)
+                {
+                    axis = _pendingAxis;
+                    distance = _pendingDistance;
+                    requested = _pendingFeed;
+                    _pendingDistance = 0;
+                }
 
-            if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
-                feed = _config.MaxJogFeedRate;
+                if (axis == null || distance == 0) continue;
 
-            // G21 is stated explicitly rather than inherited. The pendant always
-            // works in millimetres, and a jog line carries its own modal context
-            // without altering the machine's - so this stays correct whether the
-            // job is running in G20 or G21, and does not disturb either.
-            _mainViewModel.SendCommand(
-                $"$J=G91G21{axis}{distance.ToInvariantString()}F{feed.ToInvariantString()}");
-        });
+                if (Math.Abs(distance) > _config.MaxJogDistanceMm)
+                {
+                    Report($"Pendant jog of {distance:0.###} mm exceeds the " +
+                           $"{_config.MaxJogDistanceMm:0.###} mm limit - ignored.");
+                    continue;
+                }
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_mainViewModel == null) return;
+                    if (!_mainViewModel.Connected || _mainViewModel.AlarmActive) return;
+
+                    // The pendant sends a feed matching how fast the wheel is
+                    // being turned, which is what makes the machine track the
+                    // hand rather than lag it. Fall back to configuration only
+                    // when it does not, and never exceed the ceiling.
+                    var feed = requested > 0
+                        ? requested
+                        : (_config.JogFeedRate > 0 ? _config.JogFeedRate : _mainViewModel.JogRate);
+
+                    if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
+                        feed = _config.MaxJogFeedRate;
+
+                    // G21 is stated explicitly rather than inherited. The pendant
+                    // always works in millimetres, and a jog line carries its own
+                    // modal context without altering the machine's - so this stays
+                    // correct whether the job is running in G20 or G21.
+                    _mainViewModel.SendCommand(
+                        $"$J=G91G21{axis}{distance.ToInvariantString()}F{feed.ToInvariantString()}");
+                });
+            }
+        }
+        catch (OperationCanceledException) { /* shutting down */ }
     }
 
     private void HandleButton(JsonElement root)

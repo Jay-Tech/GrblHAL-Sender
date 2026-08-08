@@ -830,7 +830,7 @@
 				</Grid>
 			</TabItem>
 			<TabItem Header="Pendant" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="10,10,10,0">
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="10,10,10,0">
 					<CheckBox Grid.Row="0"
 							  Content="Enable Wireless Pendant"
 							  HorizontalAlignment="Center"
@@ -879,7 +879,23 @@
 								 Text="{Binding PendantMaxJogMm}"
 								 ToolTip.Tip="A jog carries a detent count times a step size. This bounds how far one message can move the machine if that count is ever wrong."/>
 					</Grid>
-					<CheckBox Grid.Row="3"
+					<Grid Grid.Row="3" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+						<Label Grid.Column="0"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Center"
+							   FontSize="20"
+							   Content="Max feed rate (mm/min):"/>
+						<TextBox Grid.Column="1"
+								 Width="120"
+								 HorizontalAlignment="Left"
+								 VerticalAlignment="Center"
+								 Margin="10,0,0,0"
+								 FontSize="20"
+								 IsEnabled="{Binding IsPendantEnabled}"
+								 Text="{Binding PendantMaxFeed}"
+								 ToolTip.Tip="Set to the machine's own maximum jog rate. The pendant already limits itself per axis and per step, so a lower value here silently discards feed it asked for."/>
+					</Grid>
+					<CheckBox Grid.Row="4"
 							  Content="Allow pendant to zero an axis"
 							  HorizontalAlignment="Center"
 							  VerticalAlignment="Center"
@@ -887,7 +903,7 @@
 							  IsEnabled="{Binding IsPendantEnabled}"
 							  IsChecked="{Binding PendantAllowZeroAxis}"
 							  ToolTip.Tip="Zeroing rewrites the work offset. Off by default so a mis-hit button on a handheld cannot lose your datum."/>
-					<TextBlock Grid.Row="4"
+					<TextBlock Grid.Row="5"
 							   Text="Changes require app restart. Set SENDER_HOST on the pendant to this PC's IP address."
 							   Foreground="{DynamicResource TextMutedBrush}"
 							   FontSize="14"

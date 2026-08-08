@@ -28,7 +28,7 @@ public class PendantConfig
     /// asks for a feed matching how fast the wheel is turned; this bounds it to
     /// what the machine can actually deliver. Zero means no ceiling.
     /// </summary>
-    public double MaxJogFeedRate { get; set; } = 4000;
+    public double MaxJogFeedRate { get; set; } = 5000;
 
     /// <summary>
     /// Largest distance a single pendant message may command, in millimetres.
@@ -38,6 +38,19 @@ public class PendantConfig
     /// leaves headroom while still bounding the worst case.
     /// </summary>
     public double MaxJogDistanceMm { get; set; } = 25.0;
+
+    /// <summary>
+    /// Minimum interval between jog commands sent to the controller, in
+    /// milliseconds. Pendant movement arriving faster than this is summed and
+    /// sent as one longer move.
+    ///
+    /// This is backpressure, and it is the only place that can apply it: the
+    /// pendant cannot see the controller's planner. Without it, jog blocks
+    /// arrive faster than grblHAL can parse and execute, its buffer fills, and
+    /// the send path blocks - which stalls status, strands the machine behind
+    /// the operator's hand, and eventually drops the pendant connection.
+    /// </summary>
+    public int JogDispatchIntervalMs { get; set; } = 100;
 
     /// <summary>
     /// How often machine status is pushed to the pendant, in milliseconds.
