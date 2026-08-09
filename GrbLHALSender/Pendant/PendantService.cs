@@ -13,6 +13,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace GrbLHALSender.Pendant;
 
@@ -279,6 +280,10 @@ public class PendantService : IDisposable
                 HandleZero(root);
                 break;
 
+            case "probe":
+                HandleProbe(root);
+                break;
+
             case "mode":
                 PendantAxis = GetString(root, "axis");
                 PendantStep = GetDouble(root, "step", 0);
@@ -456,6 +461,82 @@ public class PendantService : IDisposable
         catch (OperationCanceledException) { /* shutting down */ }
     }
 
+    /// <summary>
+    /// Runs a probe cycle the pendant asked for.
+    /// </summary>
+    /// <remarks>
+    /// The pendant sends an operation name and nothing else. Every parameter
+    /// belongs to this side, per operation, and a pendant carrying its own copy
+    /// would be a second answer to a question that already has one - which is
+    /// precisely what made the shared probe parameters unsafe.
+    ///
+    /// Refused for the same reasons a jog is, and one more: not while a cycle
+    /// is already running. A probe started into a machine already probing is
+    /// worth refusing outright rather than arbitrating, and the pendant greys
+    /// its targets while busy so this should never be reached - "should never"
+    /// being the reason it is checked here as well.
+    ///
+    /// Centre finding is absent by design, not oversight. It acts on a
+    /// bore-or-boss selection visible only on this screen, and firing a cycle
+    /// whose behaviour cannot be read at the machine is the failure this whole
+    /// arrangement avoids.
+    /// </remarks>
+    private void HandleProbe(JsonElement root)
+    {
+        var operation = GetString(root, "op");
+        if (string.IsNullOrEmpty(operation)) return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_mainViewModel?.ProbeViewModel is not { } probe) return;
+
+            if (!_mainViewModel.Connected || _mainViewModel.AlarmActive)
+            {
+                Report($"Pendant probe '{operation}' ignored: not ready.");
+                return;
+            }
+
+            if (_machineState.MpgActive ||
+                _mainViewModel.JobViewModel?.JobRunning == true)
+            {
+                Report($"Pendant probe '{operation}' ignored: a job is running.");
+                return;
+            }
+
+            if (probe.IsProbing)
+            {
+                Report($"Pendant probe '{operation}' ignored: already probing.");
+                return;
+            }
+
+            ICommand? command = operation switch
+            {
+                "z" => probe.ProbeZCommand,
+                "corner" => probe.ProbeCornerCommand,
+                "tlr" => probe.ProbeToolReferenceHereCommand,
+                _ => null
+            };
+
+            if (command is null)
+            {
+                Report($"Pendant asked for unknown probe '{operation}'.");
+                return;
+            }
+
+            // Through the same command the button on this screen uses, so a
+            // pendant probe and a clicked one cannot diverge - including every
+            // field check that refuses to start on an unparseable value.
+            if (!command.CanExecute(null))
+            {
+                Report($"Pendant probe '{operation}' refused by the probe page.");
+                return;
+            }
+
+            Report($"Pendant started probe '{operation}'.");
+            command.Execute(null);
+        });
+    }
+
     private void HandleButton(JsonElement root)
     {
         var id = GetString(root, "id");
@@ -582,8 +663,23 @@ public class PendantService : IDisposable
         builder.Append("],\"fro\":").Append(_machineState.FeedOverride)
                .Append(",\"sro\":").Append(_machineState.RpmOverride)
                .Append(",\"fr\":").Append(_machineState.FeedRate)
-               .Append(",\"bf\":").Append(_machineState.PlannerBlocksFree)
-               .Append('}');
+               .Append(",\"bf\":").Append(_machineState.PlannerBlocksFree);
+
+        // The corner a probe would use, and whether one is running. Sent so
+        // the pendant can name the target on its own screen: firing a cycle
+        // whose corner is only visible here, behind the operator, is the same
+        // failure as the probe parameters that used to be shared.
+        var probeVm = _mainViewModel?.ProbeViewModel;
+        if (probeVm != null)
+        {
+            builder.Append(",\"probe\":{\"corner\":\"")
+                   .Append(probeVm.SelectedCorner)
+                   .Append("\",\"busy\":")
+                   .Append(probeVm.IsProbing ? "true" : "false")
+                   .Append('}');
+        }
+
+        builder.Append('}');
         return builder.ToString();
     }
 
