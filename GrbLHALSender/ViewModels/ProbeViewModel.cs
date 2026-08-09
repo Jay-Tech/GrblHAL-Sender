@@ -84,15 +84,21 @@ namespace GrbLHALSender.ViewModels
         };
 
         /// <summary>
-        /// Whether the visible tab offers a probe distance.
+        /// Every tab offers a probe distance, because every cycle emits one.
         /// <para>
-        /// Only Z and the tool reference do. The corner and centre cycles still emit one, but
-        /// derive their approach from stand-off and approximate size, so a box for it there
-        /// would be a number the operator sets and the cycle largely ignores - which is worse
-        /// than not offering it.
+        /// It was briefly hidden on the corner and centre tabs, on the understanding that
+        /// those derived their approach from stand-off and approximate size instead. They do
+        /// not: ProbeCorner, ProbeInsideCenter and ProbeOutsideCenter all reach
+        /// ProbeSingleAxis, which builds its move from this value and has no move without it.
+        /// </para>
+        /// <para>
+        /// Kept as a property rather than deleted so the reasoning stays attached to the
+        /// decision. A field that drives motion and cannot be seen is the failure this whole
+        /// change exists to remove, and hiding one would have reintroduced it in a smaller
+        /// form.
         /// </para>
         /// </summary>
-        public bool SelectedUsesDistance => _selectedTabIndex is 0 or 3;
+        public bool SelectedUsesDistance => true;
 
         private CornerDirection _selectedCorner = CornerDirection.FrontLeft;
         private CenterFinderType _selectedCenterType = CenterFinderType.Bore;
@@ -543,36 +549,27 @@ namespace GrbLHALSender.ViewModels
         /// it never reads and which its own tab does not even display.
         /// </summary>
         /// <summary>
-        /// The rates every cycle needs, from that cycle's own set.
+        /// The four every cycle needs, from that cycle's own set.
         /// <para>
-        /// Distance is not here. Only the Z touch and the tool reference offer it for editing:
-        /// the corner and centre cycles still emit it, but derive their approach from the
-        /// stand-off and the approximate size, so a box for it on those tabs would be a number
-        /// the operator sets and the cycle largely ignores.
+        /// Distance included: every cycle reaches ProbeSingleAxis, which has no move without
+        /// it. A cycle refusing to start should name a field the operator can see and fix.
         /// </para>
         /// </summary>
         private static List<(string Label, string Text)> RateFields(ProbeParameterSet p) =>
         [
             ("Search Rate", p.SearchRateText),
             ("Latch Rate", p.LatchRateText),
+            ("Distance", p.ProbeDistanceText),
             ("Latch Dist", p.LatchDistanceText)
         ];
 
-        private static List<(string Label, string Text)> RateAndDistanceFields(
-            ProbeParameterSet p)
-        {
-            var fields = RateFields(p);
-            fields.Add(("Distance", p.ProbeDistanceText));
-            return fields;
-        }
-
         private List<(string Label, string Text)> ToolReferenceFields() =>
-            RateAndDistanceFields(ToolReferenceParams);
+            RateFields(ToolReferenceParams);
 
         /// <summary>A Z touch reads the plate thickness, and on a 3D probe nothing else.</summary>
         private List<(string, string)> ZProbeFields()
         {
-            var fields = RateAndDistanceFields(ZParams);
+            var fields = RateFields(ZParams);
             if (IsTouchPlate) fields.Add(("Plate Thickness", TouchPlateThicknessText));
             return fields;
         }

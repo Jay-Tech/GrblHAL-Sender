@@ -21,25 +21,38 @@
 				IsVisible="{Binding !#ToolSetterTab.IsSelected}">
 			<Grid RowDefinitions="*,*" >
 				<Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto">
+					<Grid.Styles>
+						<!-- The selected tool type is bold as well as checked. A radio group
+						     read at a glance is easy to mistake for a label, and this one
+						     decides whether plate thickness is applied as an offset - so
+						     mistaking it means probing as a plate with a stylus fitted. -->
+						<Style Selector="RadioButton:checked">
+							<Setter Property="FontWeight" Value="Bold"/>
+						</Style>
+					</Grid.Styles>
 					<Label  Grid.Column="0"
 							Content="Probe Type:"
 							FontSize="16"
 							VerticalAlignment="Center"
 							Margin="0,0,10,0"/>
+					<!-- 3D probe first, touch plate second. The order was the other way and the
+					     touch plate is the default, so an unread radio group left the operator
+					     probing as a plate with a stylus fitted - which the plate thickness
+					     then applies as an offset that is not there. -->
 					<RadioButton  Grid.Column="1"
-								  Content="Touch Plate"
-								  FontSize="14"
-								  GroupName="ProbeToolType"
-								  IsChecked="{Binding IsTouchPlate}"
-								  Command="{Binding SetToolTypeTouchPlateCommand}"
-								  VerticalAlignment="Center"
-								  Margin="0,0,15,0"/>
-					<RadioButton  Grid.Column="2"
 								  Content="3D Probe"
 								  FontSize="14"
 								  GroupName="ProbeToolType"
 								  IsChecked="{Binding !IsTouchPlate}"
 								  Command="{Binding SetToolTypeProbe3DCommand}"
+								  VerticalAlignment="Center"
+								  Margin="0,0,15,0"/>
+					<RadioButton  Grid.Column="2"
+								  Content="Touch Plate"
+								  FontSize="14"
+								  GroupName="ProbeToolType"
+								  IsChecked="{Binding IsTouchPlate}"
+								  Command="{Binding SetToolTypeTouchPlateCommand}"
 								  VerticalAlignment="Center"
 								  Margin="0,0,20,0"/>
 				</Grid>
