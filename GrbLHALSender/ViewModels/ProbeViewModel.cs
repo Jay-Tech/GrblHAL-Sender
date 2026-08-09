@@ -36,16 +36,18 @@ namespace GrbLHALSender.ViewModels
         private string _approxWidthText = "100";
         private string _approxHeightText = "200";
 
-        // The tool length reference's own four. Separate because a reference is set once and
-        // trusted afterwards, while the shared fields are re-entered for every corner or
-        // centre - and sharing them meant a corner setup rewrote, and persisted over, the
-        // numbers that established the reference.
-        private string _tlrSearchRateText = "250";
-        private string _tlrLatchRateText = "125";
-        private string _tlrProbeDistanceText = "12";
-        private string _tlrLatchDistanceText = "6";
-
         private string _unitSystem = Metric;
+
+        // One set per operation. What is shared stays outside them - tool type, stylus
+        // diameter and plate thickness describe what is fitted to the spindle rather than what
+        // a cycle does with it, which is why the UI already keeps those above the tabs.
+        public ProbeParameterSet ZParams { get; } = new();
+        public ProbeParameterSet CornerParams { get; } = new();
+        public ProbeParameterSet CenterParams { get; } = new();
+        public ProbeParameterSet ToolReferenceParams { get; } = new();
+
+        private ProbeParameterSet[] AllParams =>
+            [ZParams, CornerParams, CenterParams, ToolReferenceParams];
 
         private CornerDirection _selectedCorner = CornerDirection.FrontLeft;
         private CenterFinderType _selectedCenterType = CenterFinderType.Bore;
@@ -179,39 +181,6 @@ namespace GrbLHALSender.ViewModels
 
         public double TouchPlateThickness => _touchPlateThicknessText.StringToDouble();
         public double ProbeDiameter => _probeDiameterText.StringToDouble();
-        public string TlrSearchRateText
-        {
-            get => _tlrSearchRateText;
-            set => SetNumericField(ref _tlrSearchRateText, value,
-                                   nameof(TlrSearchRate));
-        }
-
-        public string TlrLatchRateText
-        {
-            get => _tlrLatchRateText;
-            set => SetNumericField(ref _tlrLatchRateText, value,
-                                   nameof(TlrLatchRate));
-        }
-
-        public string TlrProbeDistanceText
-        {
-            get => _tlrProbeDistanceText;
-            set => SetNumericField(ref _tlrProbeDistanceText, value,
-                                   nameof(TlrProbeDistance));
-        }
-
-        public string TlrLatchDistanceText
-        {
-            get => _tlrLatchDistanceText;
-            set => SetNumericField(ref _tlrLatchDistanceText, value,
-                                   nameof(TlrLatchDistance));
-        }
-
-        public double TlrSearchRate => _tlrSearchRateText.StringToDouble();
-        public double TlrLatchRate => _tlrLatchRateText.StringToDouble();
-        public double TlrProbeDistance => _tlrProbeDistanceText.StringToDouble();
-        public double TlrLatchDistance => _tlrLatchDistanceText.StringToDouble();
-
         public double SearchRate => _searchRateText.StringToDouble();
         public double LatchRate => _latchRateText.StringToDouble();
         public double ProbeDistance => _probeDistanceText.StringToDouble();
@@ -439,10 +408,7 @@ namespace GrbLHALSender.ViewModels
             ApproxWidthText = metric ? "100" : "4";
             ApproxHeightText = metric ? "200" : "8";
 
-            TlrSearchRateText = metric ? "250" : "10";
-            TlrLatchRateText = metric ? "125" : "5";
-            TlrProbeDistanceText = metric ? "12" : ".5";
-            TlrLatchDistanceText = metric ? "6" : ".25";
+            foreach (var set in AllParams) set.ApplyUnitDefaults(metric);
         }
 
         public void LoadFromConfig(GHalSenderConfig config)
@@ -473,25 +439,33 @@ namespace GrbLHALSender.ViewModels
                 pc.Initialized = true;
             }
 
-            // The tool reference's own values, seeded on first run from the shared ones.
+            // Each operation's own values, seeded on first run from the shared ones.
             //
             // Seeded rather than defaulted, because before the split those shared fields were
-            // what the tool reference used. An operator who had them right keeps working
-            // numbers; defaulting would silently replace a known-good reference setup with
-            // whatever this file happens to ship.
-            var tlr = pc.ToolReference;
-            if (!tlr.Initialized)
+            // what every cycle used. An operator who had them right keeps working numbers on
+            // every tab; defaulting would silently replace a known-good setup with whatever
+            // this file happens to ship, and the tool reference is the one nobody would think
+            // to re-check.
+            foreach (var (set, saved) in new (ProbeParameterSet, ProbeParameters)[]
+                     {
+                         (ZParams, pc.Z), (CornerParams, pc.Corner),
+                         (CenterParams, pc.Center), (ToolReferenceParams, pc.ToolReference)
+                     })
             {
-                tlr.SearchRate = SearchRate;
-                tlr.LatchRate = LatchRate;
-                tlr.ProbeDistance = ProbeDistance;
-                tlr.LatchDistance = LatchDistance;
-                tlr.Initialized = true;
+                if (!saved.Initialized)
+                {
+                    saved.SearchRate = SearchRate;
+                    saved.LatchRate = LatchRate;
+                    saved.ProbeDistance = ProbeDistance;
+                    saved.LatchDistance = LatchDistance;
+                    saved.ClearanceHeight = ClearanceHeight;
+                    saved.ProbeDepth = ProbeDepth;
+                    saved.ApproxWidth = ApproxWidth;
+                    saved.ApproxHeight = ApproxHeight;
+                    saved.Initialized = true;
+                }
+                set.Load(saved);
             }
-            TlrSearchRateText = tlr.SearchRate.ToInvariantString();
-            TlrLatchRateText = tlr.LatchRate.ToInvariantString();
-            TlrProbeDistanceText = tlr.ProbeDistance.ToInvariantString();
-            TlrLatchDistanceText = tlr.LatchDistance.ToInvariantString();
 
             // Guarded because the handler is no longer idempotent. It used to only set
             // UnitSystem, which did no harm twice; it now rescales every field, so a second
@@ -537,10 +511,7 @@ namespace GrbLHALSender.ViewModels
             string Rescale(string text) =>
                 (text.StringToDouble() * factor).ToInvariantString(format);
 
-            TlrSearchRateText = Rescale(TlrSearchRateText);
-            TlrLatchRateText = Rescale(TlrLatchRateText);
-            TlrProbeDistanceText = Rescale(TlrProbeDistanceText);
-            TlrLatchDistanceText = Rescale(TlrLatchDistanceText);
+            foreach (var set in AllParams) set.Rescale(Rescale);
 
             TouchPlateThicknessText = Rescale(TouchPlateThicknessText);
             ProbeDiameterText = Rescale(ProbeDiameterText);
@@ -568,12 +539,10 @@ namespace GrbLHALSender.ViewModels
             pc.ApproxWidth = ApproxWidth;
             pc.ApproxHeight = ApproxHeight;
 
-            var tlr = pc.ToolReference;
-            tlr.SearchRate = TlrSearchRate;
-            tlr.LatchRate = TlrLatchRate;
-            tlr.ProbeDistance = TlrProbeDistance;
-            tlr.LatchDistance = TlrLatchDistance;
-            tlr.Initialized = true;
+            ZParams.Save(pc.Z);
+            CornerParams.Save(pc.Corner);
+            CenterParams.Save(pc.Center);
+            ToolReferenceParams.Save(pc.ToolReference);
         }
 
         /// <summary>
@@ -605,27 +574,37 @@ namespace GrbLHALSender.ViewModels
         /// the whole dialog meant a tool reference probe could be refused over Diameter, which
         /// it never reads and which its own tab does not even display.
         /// </summary>
-        private List<(string Label, string Text)> CommonFields() =>
+        /// <summary>
+        /// The rates every cycle needs, from that cycle's own set.
+        /// <para>
+        /// Distance is not here. Only the Z touch and the tool reference offer it for editing:
+        /// the corner and centre cycles still emit it, but derive their approach from the
+        /// stand-off and the approximate size, so a box for it on those tabs would be a number
+        /// the operator sets and the cycle largely ignores.
+        /// </para>
+        /// </summary>
+        private static List<(string Label, string Text)> RateFields(ProbeParameterSet p) =>
         [
-            ("Search Rate", SearchRateText),
-            ("Latch Rate", LatchRateText),
-            ("Distance", ProbeDistanceText),
-            ("Latch Dist", LatchDistanceText)
+            ("Search Rate", p.SearchRateText),
+            ("Latch Rate", p.LatchRateText),
+            ("Latch Dist", p.LatchDistanceText)
         ];
 
-        /// <summary>The tool reference's own four, labelled so a refusal names the right box.</summary>
+        private static List<(string Label, string Text)> RateAndDistanceFields(
+            ProbeParameterSet p)
+        {
+            var fields = RateFields(p);
+            fields.Add(("Distance", p.ProbeDistanceText));
+            return fields;
+        }
+
         private List<(string Label, string Text)> ToolReferenceFields() =>
-        [
-            ("TLR Search Rate", TlrSearchRateText),
-            ("TLR Latch Rate", TlrLatchRateText),
-            ("TLR Distance", TlrProbeDistanceText),
-            ("TLR Latch Dist", TlrLatchDistanceText)
-        ];
+            RateAndDistanceFields(ToolReferenceParams);
 
         /// <summary>A Z touch reads the plate thickness, and on a 3D probe nothing else.</summary>
         private List<(string, string)> ZProbeFields()
         {
-            var fields = CommonFields();
+            var fields = RateAndDistanceFields(ZParams);
             if (IsTouchPlate) fields.Add(("Plate Thickness", TouchPlateThicknessText));
             return fields;
         }
@@ -635,9 +614,9 @@ namespace GrbLHALSender.ViewModels
         /// </summary>
         private List<(string, string)> CornerFields()
         {
-            var fields = CommonFields();
-            fields.Add(("Clearance Height", ClearanceHeightText));
-            fields.Add(("Probe Depth", ProbeDepthText));
+            var fields = RateFields(CornerParams);
+            fields.Add(("Clearance Height", CornerParams.ClearanceHeightText));
+            fields.Add(("Probe Depth", CornerParams.ProbeDepthText));
             if (!IsTouchPlate) fields.Add(("Diameter", ProbeDiameterText));
             if (IsTouchPlate && IncludeZInCorner)
                 fields.Add(("Plate Thickness", TouchPlateThicknessText));
@@ -650,14 +629,15 @@ namespace GrbLHALSender.ViewModels
         /// </summary>
         private List<(string, string)> CenterFields()
         {
-            var fields = CommonFields();
+            var fields = RateFields(CenterParams);
             if (!IsTouchPlate) fields.Add(("Diameter", ProbeDiameterText));
             if (IsOutsideCenter)
             {
-                fields.Add(("Approx Width", ApproxWidthText));
-                if (HasTwoApproxSizes) fields.Add(("Approx Height", ApproxHeightText));
-                fields.Add(("Clearance Height", ClearanceHeightText));
-                fields.Add(("Probe Depth", ProbeDepthText));
+                fields.Add(("Approx Width", CenterParams.ApproxWidthText));
+                if (HasTwoApproxSizes)
+                    fields.Add(("Approx Height", CenterParams.ApproxHeightText));
+                fields.Add(("Clearance Height", CenterParams.ClearanceHeightText));
+                fields.Add(("Probe Depth", CenterParams.ProbeDepthText));
             }
             return fields;
         }
@@ -733,20 +713,16 @@ namespace GrbLHALSender.ViewModels
         /// than duplicated.
         /// </para>
         /// </summary>
-        private ProbeJobBuilder CreateJobBuilder(bool toolReference = false)
+        private ProbeJobBuilder CreateJobBuilder(ProbeParameterSet p)
         {
             return new ProbeJobBuilder
             {
-                ProbeSearchRate = (toolReference ? TlrSearchRate : SearchRate)
-                    .ToInvariantString(),
-                ProbeLatchRate = (toolReference ? TlrLatchRate : LatchRate)
-                    .ToInvariantString(),
-                ProbeDistance = (toolReference ? TlrProbeDistance : ProbeDistance)
-                    .ToInvariantString(),
-                LatchDistance = (toolReference ? TlrLatchDistance : LatchDistance)
-                    .ToInvariantString(),
-                ClearanceHeight = ClearanceHeight.ToInvariantString(),
-                ProbeDepth = ProbeDepth.ToInvariantString(),
+                ProbeSearchRate = p.SearchRate.ToInvariantString(),
+                ProbeLatchRate = p.LatchRate.ToInvariantString(),
+                ProbeDistance = p.ProbeDistance.ToInvariantString(),
+                LatchDistance = p.LatchDistance.ToInvariantString(),
+                ClearanceHeight = p.ClearanceHeight.ToInvariantString(),
+                ProbeDepth = p.ProbeDepth.ToInvariantString(),
                 TouchPlateThickness = TouchPlateThickness.ToInvariantString(),
                 ToolType = SelectedToolType,
                 UnitSystem = UnitSystem
@@ -882,7 +858,7 @@ namespace GrbLHALSender.ViewModels
                 ? "Moving to tool setter and probing reference..."
                 : "Probing tool length reference...";
 
-            _probeJob = CreateJobBuilder(toolReference: true);
+            _probeJob = CreateJobBuilder(ToolReferenceParams);
             _phases = new List<List<string>>();
             if (moveToSetter && approach != null)
                 _phases.Add(approach);
@@ -1006,7 +982,7 @@ namespace GrbLHALSender.ViewModels
             ClearResults();
             ProbeStatus = "Probing Z...";
 
-            _probeJob = CreateJobBuilder();
+            _probeJob = CreateJobBuilder(ZParams);
             var zCommands = _probeJob.ProbeZ();
 
             _phases = new List<List<string>> { zCommands };
@@ -1044,7 +1020,8 @@ namespace GrbLHALSender.ViewModels
             // panel and so is visible from this tab. Clearance Height only appears on the Corner
             // and Center tabs, which had an invisible field driving visible motion.
             _communicationManager.SendCommand("G91");
-            _communicationManager.SendCommand($"G0Z{LatchDistance.ToInvariantString("F3")}");
+            _communicationManager.SendCommand(
+                $"G0Z{ZParams.LatchDistance.ToInvariantString("F3")}");
             _communicationManager.SendCommand("G90");
 
             ProbeStatus = $"Z set. Offset: {zOffset.ToInvariantString("F3")}";
@@ -1073,7 +1050,7 @@ namespace GrbLHALSender.ViewModels
             ClearResults();
             ProbeStatus = $"Probing corner ({SelectedCorner})...";
 
-            _probeJob = CreateJobBuilder();
+            _probeJob = CreateJobBuilder(CornerParams);
             _phases = _probeJob.ProbeCorner(SelectedCorner, IncludeZInCorner,
                 _cornerStart[0], _cornerStart[1], _cornerStart[2]);
             _phaseResults = new List<ProbeState>();
@@ -1153,7 +1130,8 @@ namespace GrbLHALSender.ViewModels
             // above put the work origin there.
             if (_cornerStart != null)
             {
-                var safeZ = (_cornerStart[2] + ClearanceHeight).ToInvariantString("F3");
+                var safeZ = (_cornerStart[2] + CornerParams.ClearanceHeight)
+                    .ToInvariantString("F3");
                 _communicationManager.SendCommand($"G53G0Z{safeZ}");
                 _communicationManager.SendCommand("G0X0Y0");
             }
@@ -1184,18 +1162,20 @@ namespace GrbLHALSender.ViewModels
 
             ClearResults();
 
-            _probeJob = CreateJobBuilder();
+            _probeJob = CreateJobBuilder(CenterParams);
 
             if (IsOutsideCenter)
             {
                 // A round boss is the same size across both axes, so it takes the width twice
                 // rather than asking for two numbers that would have to agree.
-                var height = HasTwoApproxSizes ? ApproxHeight : ApproxWidth;
+                var height = HasTwoApproxSizes
+                    ? CenterParams.ApproxHeight
+                    : CenterParams.ApproxWidth;
 
                 ProbeStatus = HasTwoApproxSizes
                     ? "Probing rectangular boss center..."
                     : "Probing boss center...";
-                _phases = _probeJob.ProbeOutsideCenter(ApproxWidth, height,
+                _phases = _probeJob.ProbeOutsideCenter(CenterParams.ApproxWidth, height,
                     _centerStart[0], _centerStart[1], _centerStart[2]);
             }
             else
