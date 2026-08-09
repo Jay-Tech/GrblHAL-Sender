@@ -27,14 +27,6 @@ namespace GrbLHALSender.ViewModels
         // so nothing reads as inches while the unit says otherwise.
         private string _touchPlateThicknessText = "12.7";
         private string _probeDiameterText = "2";
-        private string _searchRateText = "250";
-        private string _latchRateText = "125";
-        private string _probeDistanceText = "12";
-        private string _latchDistanceText = "6";
-        private string _clearanceHeightText = "12";
-        private string _probeDepthText = "6";
-        private string _approxWidthText = "100";
-        private string _approxHeightText = "200";
 
         private string _unitSystem = Metric;
 
@@ -48,6 +40,59 @@ namespace GrbLHALSender.ViewModels
 
         private ProbeParameterSet[] AllParams =>
             [ZParams, CornerParams, CenterParams, ToolReferenceParams];
+
+        private int _selectedTabIndex;
+
+        /// <summary>
+        /// Which probe tab is showing. Drives which set the rates panel edits.
+        /// </summary>
+        public int SelectedTabIndex
+        {
+            get => _selectedTabIndex;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _selectedTabIndex, value);
+                this.RaisePropertyChanged(nameof(SelectedParams));
+                this.RaisePropertyChanged(nameof(SelectedParamsLabel));
+                this.RaisePropertyChanged(nameof(SelectedUsesDistance));
+            }
+        }
+
+        /// <summary>
+        /// The set the visible tab uses.
+        /// <para>
+        /// The panel sits above the tabs, which is what made these look shared and let a
+        /// corner setup quietly overwrite the tool reference. It edits one operation's values
+        /// at a time now, and says whose - the position stays because the alternative is four
+        /// copies of the same panel, and four copies drift.
+        /// </para>
+        /// </summary>
+        public ProbeParameterSet SelectedParams => _selectedTabIndex switch
+        {
+            1 => CornerParams,
+            2 => CenterParams,
+            3 => ToolReferenceParams,
+            _ => ZParams
+        };
+
+        public string SelectedParamsLabel => _selectedTabIndex switch
+        {
+            1 => "Corner",
+            2 => "Center Finder",
+            3 => "Tool Length Reference",
+            _ => "Z Height"
+        };
+
+        /// <summary>
+        /// Whether the visible tab offers a probe distance.
+        /// <para>
+        /// Only Z and the tool reference do. The corner and centre cycles still emit one, but
+        /// derive their approach from stand-off and approximate size, so a box for it there
+        /// would be a number the operator sets and the cycle largely ignores - which is worse
+        /// than not offering it.
+        /// </para>
+        /// </summary>
+        public bool SelectedUsesDistance => _selectedTabIndex is 0 or 3;
 
         private CornerDirection _selectedCorner = CornerDirection.FrontLeft;
         private CenterFinderType _selectedCenterType = CenterFinderType.Bore;
@@ -131,64 +176,16 @@ namespace GrbLHALSender.ViewModels
             set => SetNumericField(ref _probeDiameterText, value, nameof(ProbeDiameter));
         }
 
-        public string SearchRateText
-        {
-            get => _searchRateText;
-            set => SetNumericField(ref _searchRateText, value, nameof(SearchRate));
-        }
 
-        public string LatchRateText
-        {
-            get => _latchRateText;
-            set => SetNumericField(ref _latchRateText, value, nameof(LatchRate));
-        }
 
-        public string ProbeDistanceText
-        {
-            get => _probeDistanceText;
-            set => SetNumericField(ref _probeDistanceText, value, nameof(ProbeDistance));
-        }
 
-        public string LatchDistanceText
-        {
-            get => _latchDistanceText;
-            set => SetNumericField(ref _latchDistanceText, value, nameof(LatchDistance));
-        }
 
-        public string ClearanceHeightText
-        {
-            get => _clearanceHeightText;
-            set => SetNumericField(ref _clearanceHeightText, value, nameof(ClearanceHeight));
-        }
 
-        public string ProbeDepthText
-        {
-            get => _probeDepthText;
-            set => SetNumericField(ref _probeDepthText, value, nameof(ProbeDepth));
-        }
 
-        public string ApproxWidthText
-        {
-            get => _approxWidthText;
-            set => SetNumericField(ref _approxWidthText, value, nameof(ApproxWidth));
-        }
 
-        public string ApproxHeightText
-        {
-            get => _approxHeightText;
-            set => SetNumericField(ref _approxHeightText, value, nameof(ApproxHeight));
-        }
 
         public double TouchPlateThickness => _touchPlateThicknessText.StringToDouble();
         public double ProbeDiameter => _probeDiameterText.StringToDouble();
-        public double SearchRate => _searchRateText.StringToDouble();
-        public double LatchRate => _latchRateText.StringToDouble();
-        public double ProbeDistance => _probeDistanceText.StringToDouble();
-        public double LatchDistance => _latchDistanceText.StringToDouble();
-        public double ClearanceHeight => _clearanceHeightText.StringToDouble();
-        public double ProbeDepth => _probeDepthText.StringToDouble();
-        public double ApproxWidth => _approxWidthText.StringToDouble();
-        public double ApproxHeight => _approxHeightText.StringToDouble();
 
         private void SetNumericField(ref string field, string value, string numericName,
             [CallerMemberName] string? textName = null)
@@ -399,14 +396,6 @@ namespace GrbLHALSender.ViewModels
             // the two units, so switching display units leaves the defaults agreeing.
             TouchPlateThicknessText = metric ? "12.7" : ".5";
             ProbeDiameterText = metric ? "2" : ".0787";
-            SearchRateText = metric ? "250" : "10";
-            LatchRateText = metric ? "125" : "5";
-            ProbeDistanceText = metric ? "12" : ".5";
-            LatchDistanceText = metric ? "6" : ".25";
-            ClearanceHeightText = metric ? "12" : ".5";
-            ProbeDepthText = metric ? "6" : ".25";
-            ApproxWidthText = metric ? "100" : "4";
-            ApproxHeightText = metric ? "200" : "8";
 
             foreach (var set in AllParams) set.ApplyUnitDefaults(metric);
         }
@@ -424,14 +413,6 @@ namespace GrbLHALSender.ViewModels
             {
                 TouchPlateThicknessText = pc.TouchPlateThickness.ToInvariantString();
                 ProbeDiameterText = pc.ProbeDiameter.ToInvariantString();
-                SearchRateText = pc.SearchRate.ToInvariantString();
-                LatchRateText = pc.LatchRate.ToInvariantString();
-                ProbeDistanceText = pc.ProbeDistance.ToInvariantString();
-                LatchDistanceText = pc.LatchDistance.ToInvariantString();
-                ClearanceHeightText = pc.ClearanceHeight.ToInvariantString();
-                ProbeDepthText = pc.ProbeDepth.ToInvariantString();
-                ApproxWidthText = pc.ApproxWidth.ToInvariantString();
-                ApproxHeightText = pc.ApproxHeight.ToInvariantString();
             }
             else
             {
@@ -454,14 +435,17 @@ namespace GrbLHALSender.ViewModels
             {
                 if (!saved.Initialized)
                 {
-                    saved.SearchRate = SearchRate;
-                    saved.LatchRate = LatchRate;
-                    saved.ProbeDistance = ProbeDistance;
-                    saved.LatchDistance = LatchDistance;
-                    saved.ClearanceHeight = ClearanceHeight;
-                    saved.ProbeDepth = ProbeDepth;
-                    saved.ApproxWidth = ApproxWidth;
-                    saved.ApproxHeight = ApproxHeight;
+                    // Straight from the stored flat values, which are what every cycle used
+                    // before the split. Those fields stay on ProbeConfig purely as this
+                    // migration's source; nothing reads them afterwards.
+                    saved.SearchRate = pc.SearchRate;
+                    saved.LatchRate = pc.LatchRate;
+                    saved.ProbeDistance = pc.ProbeDistance;
+                    saved.LatchDistance = pc.LatchDistance;
+                    saved.ClearanceHeight = pc.ClearanceHeight;
+                    saved.ProbeDepth = pc.ProbeDepth;
+                    saved.ApproxWidth = pc.ApproxWidth;
+                    saved.ApproxHeight = pc.ApproxHeight;
                     saved.Initialized = true;
                 }
                 set.Load(saved);
@@ -515,14 +499,6 @@ namespace GrbLHALSender.ViewModels
 
             TouchPlateThicknessText = Rescale(TouchPlateThicknessText);
             ProbeDiameterText = Rescale(ProbeDiameterText);
-            SearchRateText = Rescale(SearchRateText);
-            LatchRateText = Rescale(LatchRateText);
-            ProbeDistanceText = Rescale(ProbeDistanceText);
-            LatchDistanceText = Rescale(LatchDistanceText);
-            ClearanceHeightText = Rescale(ClearanceHeightText);
-            ProbeDepthText = Rescale(ProbeDepthText);
-            ApproxWidthText = Rescale(ApproxWidthText);
-            ApproxHeightText = Rescale(ApproxHeightText);
         }
         public void SaveToConfig(GHalSenderConfig config)
         {
@@ -530,14 +506,6 @@ namespace GrbLHALSender.ViewModels
             pc.ToolType = SelectedToolType;
             pc.TouchPlateThickness = TouchPlateThickness;
             pc.ProbeDiameter = ProbeDiameter;
-            pc.SearchRate = SearchRate;
-            pc.LatchRate = LatchRate;
-            pc.ProbeDistance = ProbeDistance;
-            pc.LatchDistance = LatchDistance;
-            pc.ClearanceHeight = ClearanceHeight;
-            pc.ProbeDepth = ProbeDepth;
-            pc.ApproxWidth = ApproxWidth;
-            pc.ApproxHeight = ApproxHeight;
 
             ZParams.Save(pc.Z);
             CornerParams.Save(pc.Corner);

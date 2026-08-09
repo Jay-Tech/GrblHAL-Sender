@@ -14,7 +14,8 @@
 		     part in a tool length measurement — the offset is differential, so thickness
 		     cancels, and diameter only matters for edge and centre finding. Hiding it also
 		     gives that tab the height it needs. The rate and distance panel below stays,
-		     because the tool reference probe really does use those values. -->
+		     because the tool reference probe really does use those values — its own now,
+		     not the ones a corner setup last touched. -->
 		<Border 
             Grid.Row="0" BorderThickness="1" CornerRadius="4" Padding="10,8"
 				IsVisible="{Binding !#ToolSetterTab.IsSelected}">
@@ -97,82 +98,100 @@
 			</Grid>
 		</Border>
 
-		<!-- Shared Parameters -->
+		<!-- Rates and distances for the visible tab only.
+		     Each probe operation owns its own now. They were one shared set, which meant
+		     setting up a corner probe rewrote - and persisted over - the numbers that had
+		     established the tool length reference: the reference survived while the values
+		     that would reproduce it did not, and nothing looked wrong until the next one
+		     landed somewhere else.
+		     The panel stays above the tabs rather than being copied into each, because four
+		     copies of the same fields drift. The heading says whose values these are. -->
 		<Border Grid.Row="1" BorderThickness="1" CornerRadius="4"
                 Padding="10,5"
-                Margin="0,0,0,8">
-			<Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowDefinitions="*,*">
-				<Label Grid.Row="0"
+                Margin="0,0,0,8"
+                DataContext="{Binding SelectedParams}"
+                x:DataType="viewModels:ProbeParameterSet">
+			<Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+				  RowDefinitions="Auto,*,*">
+				<TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="6"
+						   FontSize="12" Opacity="0.7" Margin="0,0,0,2"
+						   Text="{Binding $parent[UserControl].DataContext.SelectedParamsLabel,
+						                  StringFormat='{}{0} — these values apply to this tab only'}"/>
+				<Label Grid.Row="1"
 					   Grid.Column="0"
 					   Content="Search Rate:"
 					   FontSize="13"
 					   VerticalAlignment="Center"
 					   Margin="0,0,4,0"/>
-				<TextBox Grid.Row="0" Grid.Column="1"
+				<TextBox Grid.Row="1" Grid.Column="1"
 						 Text="{Binding SearchRateText}"
 						 FontSize="13"
 						 Width="75" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
 						 Margin="0,0,2,0"/>
-				<TextBlock Grid.Row="0" Grid.Column="2"
-						   Text="{Binding RateLabel}"
+				<TextBlock Grid.Row="1" Grid.Column="2"
+						   Text="{Binding $parent[UserControl].DataContext.RateLabel}"
 						   FontSize="13" VerticalAlignment="Center"
 						   Opacity="0.6" Margin="0,0,10,0"/>
-				<Label Grid.Row="0" Grid.Column="3"
+				<Label Grid.Row="1" Grid.Column="3"
 					   Content="Latch Rate:" FontSize="13"
 					   VerticalAlignment="Center"
 					   Margin="0,0,4,0"/>
-				<TextBox Grid.Row="0" Grid.Column="4"
+				<TextBox Grid.Row="1" Grid.Column="4"
 						 Text="{Binding LatchRateText}"
 						 FontSize="13"
 						 Width="75" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
 						 Margin="0,0,2,0"/>
-				<TextBlock Grid.Row="0" Grid.Column="5"
-						   Text="{Binding RateLabel}"
+				<TextBlock Grid.Row="1" Grid.Column="5"
+						   Text="{Binding $parent[UserControl].DataContext.RateLabel}"
 						   FontSize="13" VerticalAlignment="Center"
 						   Opacity="0.6" Margin="0,0,10,0"/>
-				<Label Grid.Row="1" Grid.Column="0"
+				<Label Grid.Row="2" Grid.Column="0"
+					   IsVisible="{Binding $parent[UserControl].DataContext.SelectedUsesDistance}"
 					   Content="Distance:"
 					   HorizontalAlignment="Right"
 					   FontSize="13"
 					   VerticalAlignment="Center"
 					   Margin="0,10,5,0"/>
-				<TextBox Grid.Row="1" Grid.Column="1"
+				<TextBox Grid.Row="2" Grid.Column="1"
+					   IsVisible="{Binding $parent[UserControl].DataContext.SelectedUsesDistance}"
 						 Text="{Binding ProbeDistanceText}"
 						 FontSize="13"
 						 Width="75" Height="28"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"
 						 Margin="0,10,2,0"/>
-				<TextBlock Grid.Row="1" Grid.Column="2"
-						   Text="{Binding UnitLabel}"
+				<TextBlock Grid.Row="2" Grid.Column="2"
+					   IsVisible="{Binding $parent[UserControl].DataContext.SelectedUsesDistance}"
+						   Text="{Binding $parent[UserControl].DataContext.UnitLabel}"
 						   FontSize="13" VerticalAlignment="Center"
 						   Opacity="0.6" Margin="0,10,10,0"/>
-				<Label Grid.Row="1" Grid.Column="3"
+				<Label Grid.Row="2" Grid.Column="3"
 					   Content="Latch Dist:"
 					   FontSize="13"
 					   HorizontalAlignment="Right"
 					   VerticalAlignment="Center"
 					   Margin="0,10,5,0"/>
-				<TextBox Grid.Row="1" Grid.Column="4"
+				<TextBox Grid.Row="2" Grid.Column="4"
 						 Text="{Binding LatchDistanceText}"
 						 FontSize="13"
 						 Width="75" Height="28"
 						 Margin="0,10,2,0"
 						 HorizontalContentAlignment="Center"
 						 VerticalContentAlignment="Center"/>
-				<TextBlock Grid.Row="1" Grid.Column="5"
-						   Text="{Binding UnitLabel}"
+				<TextBlock Grid.Row="2" Grid.Column="5"
+						   Text="{Binding $parent[UserControl].DataContext.UnitLabel}"
 						   FontSize="13" VerticalAlignment="Center"
 						   Opacity="0.6" Margin="0,10,10,0"/>
 			</Grid>
 		</Border>
 
 		<!-- Tab Control for Probe Types -->
-		<TabControl Grid.Row="2" TabStripPlacement="Top">
+		<TabControl Grid.Row="2" TabStripPlacement="Top"
+					SelectedIndex="{Binding SelectedTabIndex}">
 
 			<!-- Z Height Tab -->
 			<TabItem Header="Z Height" FontSize="16" Padding="15,5">
@@ -241,7 +260,7 @@
 						
 						<StackPanel Orientation="Horizontal">
 							<Label Content="Clearance Height:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ClearanceHeightText}" FontSize="13" Width="65" Height="28"
+							<TextBox Text="{Binding CornerParams.ClearanceHeightText}" FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
 									 Margin="0,0,2,0"
 									 ToolTip.Tip="Safe height it lifts to before moving, and how far it steps clear of the stock."/>
@@ -252,7 +271,7 @@
 							<!-- How far below the start height the stylus drops to get beside the
 							     stock. Distinct from Clearance Height, which is what it lifts to. -->
 							<Label Content="Probe Depth:" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ProbeDepthText}" FontSize="13" Width="65" Height="28"
+							<TextBox Text="{Binding CornerParams.ProbeDepthText}" FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
 									 Margin="0,0,2,0"
 									 ToolTip.Tip="How far below the starting height to drop before probing sideways, so the stylus is beside the stock rather than above it."/>
@@ -315,7 +334,7 @@
                                    FontSize="13"
                                    VerticalAlignment="Center"
                                    Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ApproxWidthText}"
+							<TextBox Text="{Binding CenterParams.ApproxWidthText}"
                                      FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center"
                                      VerticalContentAlignment="Center"
@@ -332,7 +351,7 @@
                                    VerticalAlignment="Center"
                                    IsEnabled="{Binding HasTwoApproxSizes}"
                                    Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ApproxHeightText}"
+							<TextBox Text="{Binding CenterParams.ApproxHeightText}"
                                      FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center"
                                      VerticalContentAlignment="Center"
@@ -349,7 +368,7 @@
                                    FontSize="13"
                                    VerticalAlignment="Center"
                                    Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ClearanceHeightText}"
+							<TextBox Text="{Binding CenterParams.ClearanceHeightText}"
                                      FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center"
                                      VerticalContentAlignment="Center"
@@ -362,7 +381,7 @@
                                    FontSize="13"
                                    VerticalAlignment="Center"
                                    Margin="0,0,5,0"/>
-							<TextBox Text="{Binding ProbeDepthText}"
+							<TextBox Text="{Binding CenterParams.ProbeDepthText}"
                                      FontSize="13" Width="65" Height="28"
 									 HorizontalContentAlignment="Center"
                                      VerticalContentAlignment="Center"
