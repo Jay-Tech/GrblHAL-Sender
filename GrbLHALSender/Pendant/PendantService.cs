@@ -514,6 +514,11 @@ public class PendantService : IDisposable
                 "z" => probe.ProbeZCommand,
                 "corner" => probe.ProbeCornerCommand,
                 "tlr" => probe.ProbeToolReferenceHereCommand,
+                // Distinct from "tlr", not a variant of it. This one traverses
+                // to G59.3 before probing where the other descends from wherever
+                // the tool was left, and the pendant gives them separate rows
+                // for the same reason they get separate names here.
+                "tlr_setter" => probe.ProbeToolReferenceAtSetterCommand,
                 _ => null
             };
 
