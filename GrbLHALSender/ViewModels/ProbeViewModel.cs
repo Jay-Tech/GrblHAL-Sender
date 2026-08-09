@@ -35,6 +35,16 @@ namespace GrbLHALSender.ViewModels
         private string _probeDepthText = "6";
         private string _approxWidthText = "100";
         private string _approxHeightText = "200";
+
+        // The tool length reference's own four. Separate because a reference is set once and
+        // trusted afterwards, while the shared fields are re-entered for every corner or
+        // centre - and sharing them meant a corner setup rewrote, and persisted over, the
+        // numbers that established the reference.
+        private string _tlrSearchRateText = "250";
+        private string _tlrLatchRateText = "125";
+        private string _tlrProbeDistanceText = "12";
+        private string _tlrLatchDistanceText = "6";
+
         private string _unitSystem = Metric;
 
         private CornerDirection _selectedCorner = CornerDirection.FrontLeft;
@@ -169,6 +179,39 @@ namespace GrbLHALSender.ViewModels
 
         public double TouchPlateThickness => _touchPlateThicknessText.StringToDouble();
         public double ProbeDiameter => _probeDiameterText.StringToDouble();
+        public string TlrSearchRateText
+        {
+            get => _tlrSearchRateText;
+            set => SetNumericField(ref _tlrSearchRateText, value,
+                                   nameof(TlrSearchRate));
+        }
+
+        public string TlrLatchRateText
+        {
+            get => _tlrLatchRateText;
+            set => SetNumericField(ref _tlrLatchRateText, value,
+                                   nameof(TlrLatchRate));
+        }
+
+        public string TlrProbeDistanceText
+        {
+            get => _tlrProbeDistanceText;
+            set => SetNumericField(ref _tlrProbeDistanceText, value,
+                                   nameof(TlrProbeDistance));
+        }
+
+        public string TlrLatchDistanceText
+        {
+            get => _tlrLatchDistanceText;
+            set => SetNumericField(ref _tlrLatchDistanceText, value,
+                                   nameof(TlrLatchDistance));
+        }
+
+        public double TlrSearchRate => _tlrSearchRateText.StringToDouble();
+        public double TlrLatchRate => _tlrLatchRateText.StringToDouble();
+        public double TlrProbeDistance => _tlrProbeDistanceText.StringToDouble();
+        public double TlrLatchDistance => _tlrLatchDistanceText.StringToDouble();
+
         public double SearchRate => _searchRateText.StringToDouble();
         public double LatchRate => _latchRateText.StringToDouble();
         public double ProbeDistance => _probeDistanceText.StringToDouble();
@@ -395,6 +438,11 @@ namespace GrbLHALSender.ViewModels
             ProbeDepthText = metric ? "6" : ".25";
             ApproxWidthText = metric ? "100" : "4";
             ApproxHeightText = metric ? "200" : "8";
+
+            TlrSearchRateText = metric ? "250" : "10";
+            TlrLatchRateText = metric ? "125" : "5";
+            TlrProbeDistanceText = metric ? "12" : ".5";
+            TlrLatchDistanceText = metric ? "6" : ".25";
         }
 
         public void LoadFromConfig(GHalSenderConfig config)
@@ -424,6 +472,26 @@ namespace GrbLHALSender.ViewModels
                 ApplyUnitDefaults();
                 pc.Initialized = true;
             }
+
+            // The tool reference's own values, seeded on first run from the shared ones.
+            //
+            // Seeded rather than defaulted, because before the split those shared fields were
+            // what the tool reference used. An operator who had them right keeps working
+            // numbers; defaulting would silently replace a known-good reference setup with
+            // whatever this file happens to ship.
+            var tlr = pc.ToolReference;
+            if (!tlr.Initialized)
+            {
+                tlr.SearchRate = SearchRate;
+                tlr.LatchRate = LatchRate;
+                tlr.ProbeDistance = ProbeDistance;
+                tlr.LatchDistance = LatchDistance;
+                tlr.Initialized = true;
+            }
+            TlrSearchRateText = tlr.SearchRate.ToInvariantString();
+            TlrLatchRateText = tlr.LatchRate.ToInvariantString();
+            TlrProbeDistanceText = tlr.ProbeDistance.ToInvariantString();
+            TlrLatchDistanceText = tlr.LatchDistance.ToInvariantString();
 
             // Guarded because the handler is no longer idempotent. It used to only set
             // UnitSystem, which did no harm twice; it now rescales every field, so a second
@@ -469,6 +537,11 @@ namespace GrbLHALSender.ViewModels
             string Rescale(string text) =>
                 (text.StringToDouble() * factor).ToInvariantString(format);
 
+            TlrSearchRateText = Rescale(TlrSearchRateText);
+            TlrLatchRateText = Rescale(TlrLatchRateText);
+            TlrProbeDistanceText = Rescale(TlrProbeDistanceText);
+            TlrLatchDistanceText = Rescale(TlrLatchDistanceText);
+
             TouchPlateThicknessText = Rescale(TouchPlateThicknessText);
             ProbeDiameterText = Rescale(ProbeDiameterText);
             SearchRateText = Rescale(SearchRateText);
@@ -494,6 +567,13 @@ namespace GrbLHALSender.ViewModels
             pc.ProbeDepth = ProbeDepth;
             pc.ApproxWidth = ApproxWidth;
             pc.ApproxHeight = ApproxHeight;
+
+            var tlr = pc.ToolReference;
+            tlr.SearchRate = TlrSearchRate;
+            tlr.LatchRate = TlrLatchRate;
+            tlr.ProbeDistance = TlrProbeDistance;
+            tlr.LatchDistance = TlrLatchDistance;
+            tlr.Initialized = true;
         }
 
         /// <summary>
@@ -531,6 +611,15 @@ namespace GrbLHALSender.ViewModels
             ("Latch Rate", LatchRateText),
             ("Distance", ProbeDistanceText),
             ("Latch Dist", LatchDistanceText)
+        ];
+
+        /// <summary>The tool reference's own four, labelled so a refusal names the right box.</summary>
+        private List<(string Label, string Text)> ToolReferenceFields() =>
+        [
+            ("TLR Search Rate", TlrSearchRateText),
+            ("TLR Latch Rate", TlrLatchRateText),
+            ("TLR Distance", TlrProbeDistanceText),
+            ("TLR Latch Dist", TlrLatchDistanceText)
         ];
 
         /// <summary>A Z touch reads the plate thickness, and on a 3D probe nothing else.</summary>
@@ -636,14 +725,26 @@ namespace GrbLHALSender.ViewModels
                 : reportedValue * 25.4;  // inches reported, mm being sent
         }
 
-        private ProbeJobBuilder CreateJobBuilder()
+        /// <summary>
+        /// Builds a probe job from the shared fields, or from the tool reference's own.
+        /// <para>
+        /// The four that differ are rates and distances. Everything else is either irrelevant
+        /// to a vertical touch or cancels out of it, so the rest is passed unchanged rather
+        /// than duplicated.
+        /// </para>
+        /// </summary>
+        private ProbeJobBuilder CreateJobBuilder(bool toolReference = false)
         {
             return new ProbeJobBuilder
             {
-                ProbeSearchRate = SearchRate.ToInvariantString(),
-                ProbeLatchRate = LatchRate.ToInvariantString(),
-                ProbeDistance = ProbeDistance.ToInvariantString(),
-                LatchDistance = LatchDistance.ToInvariantString(),
+                ProbeSearchRate = (toolReference ? TlrSearchRate : SearchRate)
+                    .ToInvariantString(),
+                ProbeLatchRate = (toolReference ? TlrLatchRate : LatchRate)
+                    .ToInvariantString(),
+                ProbeDistance = (toolReference ? TlrProbeDistance : ProbeDistance)
+                    .ToInvariantString(),
+                LatchDistance = (toolReference ? TlrLatchDistance : LatchDistance)
+                    .ToInvariantString(),
                 ClearanceHeight = ClearanceHeight.ToInvariantString(),
                 ProbeDepth = ProbeDepth.ToInvariantString(),
                 TouchPlateThickness = TouchPlateThickness.ToInvariantString(),
@@ -772,7 +873,7 @@ namespace GrbLHALSender.ViewModels
             // no stylus radius, and no plate thickness either, since the offset $TPW applies is
             // the difference between two probes of the same surface and thickness cancels.
             // Before ClearResults, which would wipe the message explaining the refusal.
-            if (!FieldsValid(CommonFields())) return;
+            if (!FieldsValid(ToolReferenceFields())) return;
             _probeFailureMessage = "Probe failed — no contact, TLR not set";
 
             _toolReferenceReturn = returnMoves;
@@ -781,7 +882,7 @@ namespace GrbLHALSender.ViewModels
                 ? "Moving to tool setter and probing reference..."
                 : "Probing tool length reference...";
 
-            _probeJob = CreateJobBuilder();
+            _probeJob = CreateJobBuilder(toolReference: true);
             _phases = new List<List<string>>();
             if (moveToSetter && approach != null)
                 _phases.Add(approach);
