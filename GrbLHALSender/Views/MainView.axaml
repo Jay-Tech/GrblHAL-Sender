@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:viewModels="clr-namespace:GrbLHALSender.ViewModels"
@@ -24,7 +24,7 @@
 			     border; this panel's controls stretch flush to theirs, which left the render
 			     area optically off-centre. This gutter matches the two. -->
 			<Border  Grid.Column="0"
-					 IsEnabled="{Binding ControlsEnabled}"
+					 IsEnabled="{Binding Connected}"
 					 Name="DroBorder"
 					 Margin="0,50,5,0"
 					 MaxWidth="300" MinWidth="295"

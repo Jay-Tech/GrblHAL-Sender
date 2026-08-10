@@ -39,7 +39,7 @@
 			     its header; on this one the control block is a row of its own. No Min/MaxWidth
 			     either — those are landscape's column widths, and they would cap the split. -->
 			<Border Grid.Column="0"
-					IsEnabled="{Binding ControlsEnabled}"
+					IsEnabled="{Binding Connected}"
 					Name="DroBorder"
 					VerticalAlignment="Stretch">
 				<views:DroPanelView ShowWcs="False" />
