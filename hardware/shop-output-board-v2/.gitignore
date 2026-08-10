@@ -1,0 +1,19 @@
+# Regenerated on demand by kicad-cli; not worth versioning
+*.kicad_prl
+erc.rpt
+netlist.net
+drc.rpt
+pads.d356
+svgout/
+fab/
+
+# Full-board renders regenerate from the board. The documentation diagrams do not, so if
+# channel/power layout SVGs ever land here they stay tracked.
+board-v2.svg
+
+# Scratch backups taken before scripted edits to the board or the project file.
+*.bak-*
+*-backups/
+
+# The Gerber folder is tracked; the zip of it is not — it is just an upload wrapper.
+*.zip

@@ -1,0 +1,205 @@
+using System;
+using System.Collections.Generic;
+
+namespace GrbLHALSender.Gpio;
+
+/// <summary>
+/// The output state machine, with no dependency on Avalonia, the config file or the
+/// machine state service. "Now" is passed in and the follow sources are read through a
+/// delegate, so all of the behaviour that is easy to get subtly wrong — off delays,
+/// mode cycling, pin polarity — can be tested directly.
+/// <para>
+/// <see cref="GpioOutputService"/> is the adapter that feeds this from the real clock,
+/// the real config and the real machine state.
+/// </para>
+/// </summary>
+internal sealed class GpioOutputController
+{
+    private readonly IGpioBackend _backend;
+    private readonly Func<GpioFollowSource, bool> _isSourceActive;
+    private readonly Func<int> _spindleRpm;
+
+    public List<GpioOutput> Outputs { get; } = new();
+
+    public GpioOutputController(
+        IGpioBackend backend,
+        Func<GpioFollowSource, bool> isSourceActive,
+        Func<int> spindleRpm)
+    {
+        _backend = backend;
+        _isSourceActive = isSourceActive;
+        _spindleRpm = spindleRpm;
+    }
+
+    /// <summary>
+    /// Whether one output's follow source currently counts as active, applying its spindle
+    /// speed threshold if it has one.
+    /// </summary>
+    private bool IsActiveFor(GpioOutputConfig config)
+    {
+        if (!_isSourceActive(config.Follow)) return false;
+        if (config.Follow != GpioFollowSource.Spindle) return true;
+        if (config.MinSpindleRpm <= 0) return true;
+
+        // Threshold flap is absorbed by the off delay: dropping under it starts the
+        // countdown, coming back over cancels it.
+        return _spindleRpm() >= config.MinSpindleRpm;
+    }
+
+    /// <summary>
+    /// Claims the pin and registers the output. The pin is opened already holding the
+    /// de-energised level for its polarity, so it never sits at an arbitrary level long
+    /// enough to click a relay.
+    /// </summary>
+    public GpioOutput Add(GpioOutputConfig config)
+    {
+        var output = new GpioOutput
+        {
+            Config = config,
+            Name = string.IsNullOrWhiteSpace(config.Name) ? $"GPIO {config.Pin}" : config.Name,
+            Mode = NormaliseMode(config),
+        };
+
+        output.IsPinReady = _backend.TryOpenOutput(config.Pin, PinLevelFor(config, on: false));
+        Outputs.Add(output);
+        return output;
+    }
+
+    /// <summary>
+    /// Pushes the current state of one follow source to every Auto output tracking it.
+    /// <paramref name="forceInactive"/> covers comms loss, where the last known source
+    /// value is stale and must not be trusted.
+    /// </summary>
+    public void EvaluateFollow(GpioFollowSource source, DateTime now, bool forceInactive = false)
+    {
+        foreach (var output in Outputs)
+        {
+            if (output.Config.Follow != source) continue;
+            if (output.Mode != GpioOutputMode.Auto) continue;
+            // Evaluated per output, not once for the source: the spindle threshold is a
+            // per-output setting, so two outputs on the same source can disagree.
+            RequestState(output, !forceInactive && IsActiveFor(output.Config), now);
+        }
+    }
+
+    /// <summary>Steps Off → Auto → On → Off, skipping Auto where it means nothing.</summary>
+    public void CycleMode(GpioOutput output, DateTime now)
+    {
+        output.Mode = NextMode(output.Mode, output.HasFollow);
+        ApplyMode(output, now);
+
+        // Remember the choice in the config object, but do not save the file from here:
+        // this runs on every button tap and SaveConfig writes and fsyncs the whole file.
+        // The shutdown handler persists it.
+        output.Config.Mode = output.Mode;
+    }
+
+    /// <summary>
+    /// Settles the stored mode against the follow source, which may have been changed since
+    /// the mode was saved — or never have matched it in the first place.
+    /// </summary>
+    internal static GpioOutputMode NormaliseMode(GpioOutputConfig config)
+    {
+        if (config.Follow == GpioFollowSource.None)
+        {
+            // Auto has no meaning with nothing to follow, and the cycle skips it. A new
+            // output is created as Auto, so without this it came up showing AUTO on a
+            // button that only ever has On and Off — and the label only corrected itself
+            // once you tapped it.
+            return config.Mode == GpioOutputMode.On ? GpioOutputMode.On : GpioOutputMode.Off;
+        }
+
+        // An output that follows something never comes back On after a restart;
+        // see GpioOutputConfig.Mode.
+        return config.Mode == GpioOutputMode.On ? GpioOutputMode.Auto : config.Mode;
+    }
+
+    internal static GpioOutputMode NextMode(GpioOutputMode current, bool hasFollow) => current switch
+    {
+        GpioOutputMode.Off => hasFollow ? GpioOutputMode.Auto : GpioOutputMode.On,
+        GpioOutputMode.Auto => GpioOutputMode.On,
+        _ => GpioOutputMode.Off,
+    };
+
+    public void ApplyMode(GpioOutput output, DateTime now)
+    {
+        switch (output.Mode)
+        {
+            case GpioOutputMode.On:
+                output.PendingOffUtc = null;
+                Write(output, true);
+                break;
+
+            case GpioOutputMode.Off:
+                // Immediate. Someone tapping Off wants it off now, not in fifteen seconds.
+                output.PendingOffUtc = null;
+                Write(output, false);
+                break;
+
+            case GpioOutputMode.Auto:
+                RequestState(output, IsActiveFor(output.Config), now);
+                break;
+        }
+    }
+
+    private void RequestState(GpioOutput output, bool wanted, DateTime now)
+    {
+        if (wanted)
+        {
+            // A fresh demand inside the delay window cancels the pending switch-off. This
+            // is what collapses a program full of tool changes and M3/M5 pairs into one
+            // continuous run instead of cycling a contactor every few seconds.
+            output.PendingOffUtc = null;
+            Write(output, true);
+            return;
+        }
+
+        if (!output.IsOn) return;
+
+        if (output.Config.OffDelaySeconds <= 0)
+        {
+            Write(output, false);
+            return;
+        }
+
+        // ??= so repeated off-requests do not keep pushing the deadline out; it is
+        // measured from the first one.
+        output.PendingOffUtc ??= now.AddSeconds(output.Config.OffDelaySeconds);
+    }
+
+    /// <summary>Drops any output whose delayed switch-off has come due.</summary>
+    public void Tick(DateTime now)
+    {
+        foreach (var output in Outputs)
+        {
+            if (output.PendingOffUtc is not { } due || now < due) continue;
+            output.PendingOffUtc = null;
+            Write(output, false);
+        }
+    }
+
+    /// <summary>De-energises everything, cancelling pending delays. Used on teardown.</summary>
+    public void AllOff()
+    {
+        foreach (var output in Outputs)
+        {
+            output.PendingOffUtc = null;
+            Write(output, false);
+        }
+    }
+
+    private void Write(GpioOutput output, bool on)
+    {
+        if (!output.IsPinReady) return;
+        if (output.IsOn == on) return;
+
+        _backend.Write(output.Config.Pin, PinLevelFor(output.Config, on));
+        output.IsOn = on;
+    }
+
+    /// <summary>
+    /// Maps "load energised" to a pin level. On an active-low board the off state is a
+    /// HIGH pin, which is why this cannot just be the boolean itself.
+    /// </summary>
+    internal static bool PinLevelFor(GpioOutputConfig config, bool on) => on == config.ActiveHigh;
+}

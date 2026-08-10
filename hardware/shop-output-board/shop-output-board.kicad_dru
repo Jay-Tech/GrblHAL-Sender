@@ -1,0 +1,35 @@
+(version 1)
+
+# Custom design rules for the shop output board.
+#
+# Put this file beside shop-output-board.kicad_pcb and KiCad loads it automatically
+# (Board Setup -> Design Rules -> Custom Rules shows the parsed result).
+#
+# Requires two net classes, set in Board Setup -> Net Classes:
+#   Logic     : PICO_GND, GP2..GP9, LEDA1..LEDA8
+#   Isolated  : everything else
+#
+# See layout.md.
+
+# The whole point of the board. Without this the barrier is something you have to notice;
+# with it, a trace or pour that bridges the two domains is a DRC error.
+#
+# 5mm is what the DIP-4 optocouplers can span while keeping every pad clear of the gap.
+# Electrically it is far more than 24V functional isolation needs - it is buying noise
+# separation and making the barrier obvious to anyone looking at the board.
+(rule "isolation barrier"
+	(constraint clearance (min 5mm))
+	(condition "A.NetClass == 'Logic' && B.NetClass == 'Isolated'"))
+
+# Same separation for copper pours, which is where it is most likely to be breached by
+# accident - a zone that fills a little too far is easy to miss by eye.
+(rule "isolation barrier - zones"
+	(constraint physical_clearance (min 5mm))
+	(condition "A.NetClass == 'Logic' && B.NetClass == 'Isolated' && A.Type == 'Zone'"))
+
+# The output nets run off the board to relay modules and can see inductive kick from a
+# coil despite the flyback being at the far end. A little extra spacing costs nothing here
+# because the board is not dense.
+(rule "output net spacing"
+	(constraint clearance (min 0.4mm))
+	(condition "A.NetClass == 'Isolated' && A.NetName == 'OUT*'"))

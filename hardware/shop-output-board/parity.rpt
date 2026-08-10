@@ -1,0 +1,547 @@
+** Drc report for shop-output-board.kicad_pcb **
+** Created on 2026-08-04T20:45:47 **
+** Report includes: Errors, Warnings **
+
+** Found 0 DRC violations **
+
+** Found 0 unconnected pads **
+
+** Found 367 Footprint errors **
+[footprint_symbol_mismatch]: Value (C1) doesn't match symbol value ()
+    Local override; warning
+    @(62.0000 mm, 92.0000 mm): Footprint C1
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(62.0000 mm, 92.0000 mm): Footprint C1
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(58.3000 mm, 92.0000 mm): Pad 1 [V+] of C1 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(65.7000 mm, 92.0000 mm): Pad 2 [ISO_GND] of C1 on F.Cu
+[footprint_symbol_mismatch]: Value (C2) doesn't match symbol value ()
+    Local override; warning
+    @(72.0000 mm, 92.0000 mm): Footprint C2
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(72.0000 mm, 92.0000 mm): Footprint C2
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(71.0500 mm, 92.0000 mm): Pad 1 [V+] of C2 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(72.9500 mm, 92.0000 mm): Pad 2 [ISO_GND] of C2 on F.Cu
+[footprint_symbol_mismatch]: Value (D1) doesn't match symbol value ()
+    Local override; warning
+    @(15.0000 mm, 56.0000 mm): Footprint D1
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(15.0000 mm, 56.0000 mm): Footprint D1
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(13.3500 mm, 56.0000 mm): Pad 1 [V+] of D1 on F.Cu
+[net_conflict]: Pad net (GATE1) doesn't match net given by schematic (/GATE1)
+    Local override; warning
+    @(16.6500 mm, 56.0000 mm): Pad 2 [GATE1] of D1 on F.Cu
+[footprint_symbol_mismatch]: Value (D2) doesn't match symbol value ()
+    Local override; warning
+    @(31.0000 mm, 56.0000 mm): Footprint D2
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(31.0000 mm, 56.0000 mm): Footprint D2
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(29.3500 mm, 56.0000 mm): Pad 1 [V+] of D2 on F.Cu
+[net_conflict]: Pad net (GATE2) doesn't match net given by schematic (/GATE2)
+    Local override; warning
+    @(32.6500 mm, 56.0000 mm): Pad 2 [GATE2] of D2 on F.Cu
+[footprint_symbol_mismatch]: Value (D3) doesn't match symbol value ()
+    Local override; warning
+    @(47.0000 mm, 56.0000 mm): Footprint D3
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(47.0000 mm, 56.0000 mm): Footprint D3
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(45.3500 mm, 56.0000 mm): Pad 1 [V+] of D3 on F.Cu
+[net_conflict]: Pad net (GATE3) doesn't match net given by schematic (/GATE3)
+    Local override; warning
+    @(48.6500 mm, 56.0000 mm): Pad 2 [GATE3] of D3 on F.Cu
+[footprint_symbol_mismatch]: Value (D4) doesn't match symbol value ()
+    Local override; warning
+    @(63.0000 mm, 56.0000 mm): Footprint D4
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(63.0000 mm, 56.0000 mm): Footprint D4
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(61.3500 mm, 56.0000 mm): Pad 1 [V+] of D4 on F.Cu
+[net_conflict]: Pad net (GATE4) doesn't match net given by schematic (/GATE4)
+    Local override; warning
+    @(64.6500 mm, 56.0000 mm): Pad 2 [GATE4] of D4 on F.Cu
+[footprint_symbol_mismatch]: Value (D5) doesn't match symbol value ()
+    Local override; warning
+    @(79.0000 mm, 56.0000 mm): Footprint D5
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(79.0000 mm, 56.0000 mm): Footprint D5
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(77.3500 mm, 56.0000 mm): Pad 1 [V+] of D5 on F.Cu
+[net_conflict]: Pad net (GATE5) doesn't match net given by schematic (/GATE5)
+    Local override; warning
+    @(80.6500 mm, 56.0000 mm): Pad 2 [GATE5] of D5 on F.Cu
+[footprint_symbol_mismatch]: Value (D6) doesn't match symbol value ()
+    Local override; warning
+    @(95.0000 mm, 56.0000 mm): Footprint D6
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(95.0000 mm, 56.0000 mm): Footprint D6
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(93.3500 mm, 56.0000 mm): Pad 1 [V+] of D6 on F.Cu
+[net_conflict]: Pad net (GATE6) doesn't match net given by schematic (/GATE6)
+    Local override; warning
+    @(96.6500 mm, 56.0000 mm): Pad 2 [GATE6] of D6 on F.Cu
+[footprint_symbol_mismatch]: Value (D7) doesn't match symbol value ()
+    Local override; warning
+    @(111.0000 mm, 56.0000 mm): Footprint D7
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(111.0000 mm, 56.0000 mm): Footprint D7
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(109.3500 mm, 56.0000 mm): Pad 1 [V+] of D7 on F.Cu
+[net_conflict]: Pad net (GATE7) doesn't match net given by schematic (/GATE7)
+    Local override; warning
+    @(112.6500 mm, 56.0000 mm): Pad 2 [GATE7] of D7 on F.Cu
+[footprint_symbol_mismatch]: Value (D8) doesn't match symbol value ()
+    Local override; warning
+    @(127.0000 mm, 56.0000 mm): Footprint D8
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(127.0000 mm, 56.0000 mm): Footprint D8
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(125.3500 mm, 56.0000 mm): Pad 1 [V+] of D8 on F.Cu
+[net_conflict]: Pad net (GATE8) doesn't match net given by schematic (/GATE8)
+    Local override; warning
+    @(128.6500 mm, 56.0000 mm): Pad 2 [GATE8] of D8 on F.Cu
+[footprint_symbol_mismatch]: Value (D9) doesn't match symbol value ()
+    Local override; warning
+    @(46.0000 mm, 86.0000 mm): Footprint D9
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(46.0000 mm, 86.0000 mm): Footprint D9
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(47.6500 mm, 86.0000 mm): Pad 1 [V+] of D9 on F.Cu
+[net_conflict]: Pad net (Q9GATE) doesn't match net given by schematic (/Q9GATE)
+    Local override; warning
+    @(44.3500 mm, 86.0000 mm): Pad 2 [Q9GATE] of D9 on F.Cu
+[footprint_symbol_mismatch]: Value (F1) doesn't match symbol value ()
+    Local override; warning
+    @(28.0000 mm, 92.0000 mm): Footprint F1
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(28.0000 mm, 92.0000 mm): Footprint F1
+[net_conflict]: Pad net (VIN_RAW) doesn't match net given by schematic (/VIN_RAW)
+    Local override; warning
+    @(26.6000 mm, 92.0000 mm): Pad 1 [VIN_RAW] of F1 on F.Cu
+[net_conflict]: Pad net (VIN_F) doesn't match net given by schematic (/VIN_F)
+    Local override; warning
+    @(29.4000 mm, 92.0000 mm): Pad 2 [VIN_F] of F1 on F.Cu
+[footprint_symbol_mismatch]: Value (J1) doesn't match symbol value ()
+    Local override; warning
+    @(16.0000 mm, 103.0000 mm): Footprint J1
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(16.0000 mm, 103.0000 mm): Footprint J1
+[net_conflict]: Pad net (VIN_RAW) doesn't match net given by schematic (/VIN_RAW)
+    Local override; warning
+    @(16.0000 mm, 103.0000 mm): PTH pad 1 [VIN_RAW] of J1
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(21.0800 mm, 103.0000 mm): PTH pad 2 [ISO_GND] of J1
+[footprint_symbol_mismatch]: Value (J2) doesn't match symbol value ()
+    Local override; warning
+    @(95.0000 mm, 103.0000 mm): Footprint J2
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(95.0000 mm, 103.0000 mm): Footprint J2
+[net_conflict]: Pad net (OUT1) doesn't match net given by schematic (/OUT1)
+    Local override; warning
+    @(95.0000 mm, 103.0000 mm): PTH pad 1 [OUT1] of J2
+[net_conflict]: Pad net (OUT2) doesn't match net given by schematic (/OUT2)
+    Local override; warning
+    @(98.8100 mm, 103.0000 mm): PTH pad 2 [OUT2] of J2
+[net_conflict]: Pad net (OUT3) doesn't match net given by schematic (/OUT3)
+    Local override; warning
+    @(102.6200 mm, 103.0000 mm): PTH pad 3 [OUT3] of J2
+[net_conflict]: Pad net (OUT4) doesn't match net given by schematic (/OUT4)
+    Local override; warning
+    @(106.4300 mm, 103.0000 mm): PTH pad 4 [OUT4] of J2
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(110.2400 mm, 103.0000 mm): PTH pad 5 [ISO_GND] of J2
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(114.0500 mm, 103.0000 mm): PTH pad 6 [ISO_GND] of J2
+[footprint_symbol_mismatch]: Value (J3) doesn't match symbol value ()
+    Local override; warning
+    @(125.0000 mm, 103.0000 mm): Footprint J3
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(125.0000 mm, 103.0000 mm): Footprint J3
+[net_conflict]: Pad net (OUT5) doesn't match net given by schematic (/OUT5)
+    Local override; warning
+    @(125.0000 mm, 103.0000 mm): PTH pad 1 [OUT5] of J3
+[net_conflict]: Pad net (OUT6) doesn't match net given by schematic (/OUT6)
+    Local override; warning
+    @(128.8100 mm, 103.0000 mm): PTH pad 2 [OUT6] of J3
+[net_conflict]: Pad net (OUT7) doesn't match net given by schematic (/OUT7)
+    Local override; warning
+    @(132.6200 mm, 103.0000 mm): PTH pad 3 [OUT7] of J3
+[net_conflict]: Pad net (OUT8) doesn't match net given by schematic (/OUT8)
+    Local override; warning
+    @(136.4300 mm, 103.0000 mm): PTH pad 4 [OUT8] of J3
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(140.2400 mm, 103.0000 mm): PTH pad 5 [ISO_GND] of J3
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(144.0500 mm, 103.0000 mm): PTH pad 6 [ISO_GND] of J3
+[footprint_symbol_mismatch]: Value (J4) doesn't match symbol value ()
+    Local override; warning
+    @(50.8700 mm, 24.7800 mm): Footprint J4
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(50.8700 mm, 24.7800 mm): Footprint J4
+[net_conflict]: Pad net (PICO_GND) doesn't match net given by schematic (/PICO_GND)
+    Local override; warning
+    @(55.9500 mm, 24.7800 mm): PTH pad 3 [PICO_GND] of J4
+[net_conflict]: Pad net (GP2) doesn't match net given by schematic (/GP2)
+    Local override; warning
+    @(58.4900 mm, 24.7800 mm): PTH pad 4 [GP2] of J4
+[net_conflict]: Pad net (GP3) doesn't match net given by schematic (/GP3)
+    Local override; warning
+    @(61.0300 mm, 24.7800 mm): PTH pad 5 [GP3] of J4
+[net_conflict]: Pad net (GP4) doesn't match net given by schematic (/GP4)
+    Local override; warning
+    @(63.5700 mm, 24.7800 mm): PTH pad 6 [GP4] of J4
+[net_conflict]: Pad net (GP5) doesn't match net given by schematic (/GP5)
+    Local override; warning
+    @(66.1100 mm, 24.7800 mm): PTH pad 7 [GP5] of J4
+[net_conflict]: Pad net (PICO_GND) doesn't match net given by schematic (/PICO_GND)
+    Local override; warning
+    @(68.6500 mm, 24.7800 mm): PTH pad 8 [PICO_GND] of J4
+[net_conflict]: Pad net (GP6) doesn't match net given by schematic (/GP6)
+    Local override; warning
+    @(71.1900 mm, 24.7800 mm): PTH pad 9 [GP6] of J4
+[net_conflict]: Pad net (GP7) doesn't match net given by schematic (/GP7)
+    Local override; warning
+    @(73.7300 mm, 24.7800 mm): PTH pad 10 [GP7] of J4
+[net_conflict]: Pad net (GP8) doesn't match net given by schematic (/GP8)
+    Local override; warning
+    @(76.2700 mm, 24.7800 mm): PTH pad 11 [GP8] of J4
+[net_conflict]: Pad net (GP9) doesn't match net given by schematic (/GP9)
+    Local override; warning
+    @(78.8100 mm, 24.7800 mm): PTH pad 12 [GP9] of J4
+[net_conflict]: Pad net (PICO_GND) doesn't match net given by schematic (/PICO_GND)
+    Local override; warning
+    @(81.3500 mm, 24.7800 mm): PTH pad 13 [PICO_GND] of J4
+[net_conflict]: Pad net (PICO_GND) doesn't match net given by schematic (/PICO_GND)
+    Local override; warning
+    @(94.0500 mm, 24.7800 mm): PTH pad 18 [PICO_GND] of J4
+[footprint_symbol_mismatch]: Value (J5) doesn't match symbol value ()
+    Local override; warning
+    @(50.8700 mm, 7.0000 mm): Footprint J5
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(50.8700 mm, 7.0000 mm): Footprint J5
+[net_conflict]: Pad net (PICO_GND) doesn't match net given by schematic (/PICO_GND)
+    Local override; warning
+    @(55.9500 mm, 7.0000 mm): PTH pad 3 [PICO_GND] of J5
+[net_conflict]: Pad net (PICO_GND) doesn't match net given by schematic (/PICO_GND)
+    Local override; warning
+    @(68.6500 mm, 7.0000 mm): PTH pad 8 [PICO_GND] of J5
+[net_conflict]: Pad net (PICO_GND) doesn't match net given by schematic (/PICO_GND)
+    Local override; warning
+    @(81.3500 mm, 7.0000 mm): PTH pad 13 [PICO_GND] of J5
+[net_conflict]: Pad net (PICO_GND) doesn't match net given by schematic (/PICO_GND)
+    Local override; warning
+    @(94.0500 mm, 7.0000 mm): PTH pad 18 [PICO_GND] of J5
+[footprint_symbol_mismatch]: Value (LED1) doesn't match symbol value ()
+    Local override; warning
+    @(15.0000 mm, 80.0000 mm): Footprint LED1
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(15.0000 mm, 80.0000 mm): Footprint LED1
+[net_conflict]: Pad net (LEDK1) doesn't match net given by schematic (/LEDK1)
+    Local override; warning
+    @(14.0625 mm, 80.0000 mm): Pad 1 [LEDK1] of LED1 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(15.9375 mm, 80.0000 mm): Pad 2 [ISO_GND] of LED1 on F.Cu
+[footprint_symbol_mismatch]: Value (LED2) doesn't match symbol value ()
+    Local override; warning
+    @(31.0000 mm, 80.0000 mm): Footprint LED2
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(31.0000 mm, 80.0000 mm): Footprint LED2
+[net_conflict]: Pad net (LEDK2) doesn't match net given by schematic (/LEDK2)
+    Local override; warning
+    @(30.0625 mm, 80.0000 mm): Pad 1 [LEDK2] of LED2 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(31.9375 mm, 80.0000 mm): Pad 2 [ISO_GND] of LED2 on F.Cu
+[footprint_symbol_mismatch]: Value (LED3) doesn't match symbol value ()
+    Local override; warning
+    @(47.0000 mm, 80.0000 mm): Footprint LED3
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(47.0000 mm, 80.0000 mm): Footprint LED3
+[net_conflict]: Pad net (LEDK3) doesn't match net given by schematic (/LEDK3)
+    Local override; warning
+    @(46.0625 mm, 80.0000 mm): Pad 1 [LEDK3] of LED3 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(47.9375 mm, 80.0000 mm): Pad 2 [ISO_GND] of LED3 on F.Cu
+[footprint_symbol_mismatch]: Value (LED4) doesn't match symbol value ()
+    Local override; warning
+    @(63.0000 mm, 80.0000 mm): Footprint LED4
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(63.0000 mm, 80.0000 mm): Footprint LED4
+[net_conflict]: Pad net (LEDK4) doesn't match net given by schematic (/LEDK4)
+    Local override; warning
+    @(62.0625 mm, 80.0000 mm): Pad 1 [LEDK4] of LED4 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(63.9375 mm, 80.0000 mm): Pad 2 [ISO_GND] of LED4 on F.Cu
+[footprint_symbol_mismatch]: Value (LED5) doesn't match symbol value ()
+    Local override; warning
+    @(79.0000 mm, 80.0000 mm): Footprint LED5
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(79.0000 mm, 80.0000 mm): Footprint LED5
+[net_conflict]: Pad net (LEDK5) doesn't match net given by schematic (/LEDK5)
+    Local override; warning
+    @(78.0625 mm, 80.0000 mm): Pad 1 [LEDK5] of LED5 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(79.9375 mm, 80.0000 mm): Pad 2 [ISO_GND] of LED5 on F.Cu
+[footprint_symbol_mismatch]: Value (LED6) doesn't match symbol value ()
+    Local override; warning
+    @(95.0000 mm, 80.0000 mm): Footprint LED6
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(95.0000 mm, 80.0000 mm): Footprint LED6
+[net_conflict]: Pad net (LEDK6) doesn't match net given by schematic (/LEDK6)
+    Local override; warning
+    @(94.0625 mm, 80.0000 mm): Pad 1 [LEDK6] of LED6 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(95.9375 mm, 80.0000 mm): Pad 2 [ISO_GND] of LED6 on F.Cu
+[footprint_symbol_mismatch]: Value (LED7) doesn't match symbol value ()
+    Local override; warning
+    @(111.0000 mm, 80.0000 mm): Footprint LED7
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(111.0000 mm, 80.0000 mm): Footprint LED7
+[net_conflict]: Pad net (LEDK7) doesn't match net given by schematic (/LEDK7)
+    Local override; warning
+    @(110.0625 mm, 80.0000 mm): Pad 1 [LEDK7] of LED7 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(111.9375 mm, 80.0000 mm): Pad 2 [ISO_GND] of LED7 on F.Cu
+[footprint_symbol_mismatch]: Value (LED8) doesn't match symbol value ()
+    Local override; warning
+    @(127.0000 mm, 80.0000 mm): Footprint LED8
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(127.0000 mm, 80.0000 mm): Footprint LED8
+[net_conflict]: Pad net (LEDK8) doesn't match net given by schematic (/LEDK8)
+    Local override; warning
+    @(126.0625 mm, 80.0000 mm): Pad 1 [LEDK8] of LED8 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(127.9375 mm, 80.0000 mm): Pad 2 [ISO_GND] of LED8 on F.Cu
+[footprint_symbol_mismatch]: Value (Q1) doesn't match symbol value ()
+    Local override; warning
+    @(15.0000 mm, 62.0000 mm): Footprint Q1
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(15.0000 mm, 62.0000 mm): Footprint Q1
+[net_conflict]: Pad net (GATE1) doesn't match net given by schematic (/GATE1)
+    Local override; warning
+    @(15.9500 mm, 61.0625 mm): Pad 1 [GATE1] of Q1 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(14.0500 mm, 61.0625 mm): Pad 2 [V+] of Q1 on F.Cu
+[net_conflict]: Pad net (OUT1) doesn't match net given by schematic (/OUT1)
+    Local override; warning
+    @(15.0000 mm, 62.9375 mm): Pad 3 [OUT1] of Q1 on F.Cu
+[footprint_symbol_mismatch]: Value (Q2) doesn't match symbol value ()
+    Local override; warning
+    @(31.0000 mm, 62.0000 mm): Footprint Q2
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(31.0000 mm, 62.0000 mm): Footprint Q2
+[net_conflict]: Pad net (GATE2) doesn't match net given by schematic (/GATE2)
+    Local override; warning
+    @(31.9500 mm, 61.0625 mm): Pad 1 [GATE2] of Q2 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(30.0500 mm, 61.0625 mm): Pad 2 [V+] of Q2 on F.Cu
+[net_conflict]: Pad net (OUT2) doesn't match net given by schematic (/OUT2)
+    Local override; warning
+    @(31.0000 mm, 62.9375 mm): Pad 3 [OUT2] of Q2 on F.Cu
+[footprint_symbol_mismatch]: Value (Q3) doesn't match symbol value ()
+    Local override; warning
+    @(47.0000 mm, 62.0000 mm): Footprint Q3
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(47.0000 mm, 62.0000 mm): Footprint Q3
+[net_conflict]: Pad net (GATE3) doesn't match net given by schematic (/GATE3)
+    Local override; warning
+    @(47.9500 mm, 61.0625 mm): Pad 1 [GATE3] of Q3 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(46.0500 mm, 61.0625 mm): Pad 2 [V+] of Q3 on F.Cu
+[net_conflict]: Pad net (OUT3) doesn't match net given by schematic (/OUT3)
+    Local override; warning
+    @(47.0000 mm, 62.9375 mm): Pad 3 [OUT3] of Q3 on F.Cu
+[footprint_symbol_mismatch]: Value (Q4) doesn't match symbol value ()
+    Local override; warning
+    @(63.0000 mm, 62.0000 mm): Footprint Q4
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(63.0000 mm, 62.0000 mm): Footprint Q4
+[net_conflict]: Pad net (GATE4) doesn't match net given by schematic (/GATE4)
+    Local override; warning
+    @(63.9500 mm, 61.0625 mm): Pad 1 [GATE4] of Q4 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(62.0500 mm, 61.0625 mm): Pad 2 [V+] of Q4 on F.Cu
+[net_conflict]: Pad net (OUT4) doesn't match net given by schematic (/OUT4)
+    Local override; warning
+    @(63.0000 mm, 62.9375 mm): Pad 3 [OUT4] of Q4 on F.Cu
+[footprint_symbol_mismatch]: Value (Q5) doesn't match symbol value ()
+    Local override; warning
+    @(79.0000 mm, 62.0000 mm): Footprint Q5
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(79.0000 mm, 62.0000 mm): Footprint Q5
+[net_conflict]: Pad net (GATE5) doesn't match net given by schematic (/GATE5)
+    Local override; warning
+    @(79.9500 mm, 61.0625 mm): Pad 1 [GATE5] of Q5 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(78.0500 mm, 61.0625 mm): Pad 2 [V+] of Q5 on F.Cu
+[net_conflict]: Pad net (OUT5) doesn't match net given by schematic (/OUT5)
+    Local override; warning
+    @(79.0000 mm, 62.9375 mm): Pad 3 [OUT5] of Q5 on F.Cu
+[footprint_symbol_mismatch]: Value (Q6) doesn't match symbol value ()
+    Local override; warning
+    @(95.0000 mm, 62.0000 mm): Footprint Q6
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(95.0000 mm, 62.0000 mm): Footprint Q6
+[net_conflict]: Pad net (GATE6) doesn't match net given by schematic (/GATE6)
+    Local override; warning
+    @(95.9500 mm, 61.0625 mm): Pad 1 [GATE6] of Q6 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(94.0500 mm, 61.0625 mm): Pad 2 [V+] of Q6 on F.Cu
+[net_conflict]: Pad net (OUT6) doesn't match net given by schematic (/OUT6)
+    Local override; warning
+    @(95.0000 mm, 62.9375 mm): Pad 3 [OUT6] of Q6 on F.Cu
+[footprint_symbol_mismatch]: Value (Q7) doesn't match symbol value ()
+    Local override; warning
+    @(111.0000 mm, 62.0000 mm): Footprint Q7
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(111.0000 mm, 62.0000 mm): Footprint Q7
+[net_conflict]: Pad net (GATE7) doesn't match net given by schematic (/GATE7)
+    Local override; warning
+    @(111.9500 mm, 61.0625 mm): Pad 1 [GATE7] of Q7 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(110.0500 mm, 61.0625 mm): Pad 2 [V+] of Q7 on F.Cu
+[net_conflict]: Pad net (OUT7) doesn't match net given by schematic (/OUT7)
+    Local override; warning
+    @(111.0000 mm, 62.9375 mm): Pad 3 [OUT7] of Q7 on F.Cu
+[footprint_symbol_mismatch]: Value (Q8) doesn't match symbol value ()
+    Local override; warning
+    @(127.0000 mm, 62.0000 mm): Footprint Q8
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(127.0000 mm, 62.0000 mm): Footprint Q8
+[net_conflict]: Pad net (GATE8) doesn't match net given by schematic (/GATE8)
+    Local override; warning
+    @(127.9500 mm, 61.0625 mm): Pad 1 [GATE8] of Q8 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(126.0500 mm, 61.0625 mm): Pad 2 [V+] of Q8 on F.Cu
+[net_conflict]: Pad net (OUT8) doesn't match net given by schematic (/OUT8)
+    Local override; warning
+    @(127.0000 mm, 62.9375 mm): Pad 3 [OUT8] of Q8 on F.Cu
+[footprint_symbol_mismatch]: Value (Q9) doesn't match symbol value ()
+    Local override; warning
+    @(38.0000 mm, 92.0000 mm): Footprint Q9
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(38.0000 mm, 92.0000 mm): Footprint Q9
+[net_conflict]: Pad net (Q9GATE) doesn't match net given by schematic (/Q9GATE)
+    Local override; warning
+    @(37.0625 mm, 91.0500 mm): Pad 1 [Q9GATE] of Q9 on F.Cu
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(37.0625 mm, 92.9500 mm): Pad 2 [V+] of Q9 on F.Cu
+[net_conflict]: Pad net (VIN_F) doesn't match net given by schematic (/VIN_F)
+    Local override; warning
+    @(38.9375 mm, 92.0000 mm): Pad 3 [VIN_F] of Q9 on F.Cu
+[footprint_symbol_mismatch]: Value (R6) doesn't match symbol value ()
+    Local override; warning
+    @(34.0000 mm, 86.0000 mm): Footprint R6
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(34.0000 mm, 86.0000 mm): Footprint R6
+[net_conflict]: Pad net (Q9GATE) doesn't match net given by schematic (/Q9GATE)
+    Local override; warning
+    @(33.0875 mm, 86.0000 mm): Pad 1 [Q9GATE] of R6 on F.Cu
+[net_conflict]: Pad net (ISO_GND) doesn't match net given by schematic (/ISO_GND)
+    Local override; warning
+    @(34.9125 mm, 86.0000 mm): Pad 2 [ISO_GND] of R6 on F.Cu
+[footprint_symbol_mismatch]: Value (R101) doesn't match symbol value ()
+    Local override; warning
+    @(15.0000 mm, 68.0000 mm): Footprint R101
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(15.0000 mm, 68.0000 mm): Footprint R101
+[net_conflict]: Pad net (V+) doesn't match net given by schematic (/V+)
+    Local override; warning
+    @(14.0875 mm, 68.0000 mm): Pad 1 [V+] of R101 on F.Cu
+[net_conflict]: Pad net (GATE1) doesn't match net given by schematic (/GATE1)
+    Local override; warning
+    @(15.9125 mm, 68.0000 mm): Pad 2 [GATE1] of R101 on F.Cu
+[footprint_symbol_mismatch]: Value (R102) doesn't match symbol value ()
+    Local override; warning
+    @(15.0000 mm, 50.0000 mm): Footprint R102
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(15.0000 mm, 50.0000 mm): Footprint R102
+[net_conflict]: Pad net (GATE1) doesn't match net given by schematic (/GATE1)
+    Local override; warning
+    @(15.9125 mm, 50.0000 mm): Pad 1 [GATE1] of R102 on F.Cu
+[net_conflict]: Pad net (OPTOC1) doesn't match net given by schematic (/OPTOC1)
+    Local override; warning
+    @(14.0875 mm, 50.0000 mm): Pad 2 [OPTOC1] of R102 on F.Cu
+[footprint_symbol_mismatch]: Value (R103) doesn't match symbol value ()
+    Local override; warning
+    @(15.0000 mm, 72.0000 mm): Footprint R103
+[footprint_symbol_field_mismatch]: Field 'Datasheet' differs (PCB: '', Schematic: '~')
+    Local override; warning
+    @(15.0000 mm, 72.0000 mm): Footprint R103
+[net_conflict]: Pad net (OUT1) doesn't match net given by schemat

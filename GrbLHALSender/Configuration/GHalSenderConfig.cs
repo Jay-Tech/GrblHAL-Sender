@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using GrbLHALSender.Communication;
 using GrbLHALSender.Gamepad;
+using GrbLHALSender.Gpio;
 using GrbLHALSender.Probe;
 using GrbLHALSender.SdCard;
 using GrbLHALSender.Theming;
@@ -60,6 +61,7 @@ public class GHalSenderConfig : ObservableObject
     public WebSocketSettings WebSocketSettings { get; set; } = new(81, "192.168.5.1");
     public AtcConfig AtcConfig { get; set; } = new();
     public GamepadConfig GamepadConfig { get; set; } = new();
+    public GpioConfig Gpio { get; set; } = new();
     public WebServerConfig WebServerConfig { get; set; } = new();
     public ProbeConfig ProbeConfig { get; set; } = new();
     public SdCardConfig SdCardConfig { get; set; } = new();

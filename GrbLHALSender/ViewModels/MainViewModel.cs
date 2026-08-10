@@ -7,6 +7,7 @@ using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gamepad;
 using GrbLHALSender.Gcode;
+using GrbLHALSender.Gpio;
 using GrbLHALSender.Settings;
 using GrbLHALSender.States;
 using GrbLHALSender.Updates;
@@ -73,6 +74,7 @@ public class MainViewModel : ViewModelBase
     private string _unloadToolMacro;
     private string _tlrMacro;
     private readonly GamepadService _gamepadService;
+    private readonly GpioOutputService _gpioOutputService;
     private readonly WebServerService _webServerService;
     private readonly FileUploadService _fileUploadService;
     private readonly GcodeEventInjector _eventInjector;
@@ -440,8 +442,9 @@ public class MainViewModel : ViewModelBase
         WebServerService webServerService, MachineStateService machineStateService,
         SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService,
         SurfacingViewModel surfacingViewModel, GcodeEventInjector eventInjector,
-        FileUploadService fileUploadService)
+        FileUploadService fileUploadService, GpioOutputService gpioOutputService)
     {
+        _gpioOutputService = gpioOutputService;
         CommManager = commManager;
         _fileUploadService = fileUploadService;
         _eventInjector = eventInjector;
@@ -956,6 +959,10 @@ public class MainViewModel : ViewModelBase
         _configManager.SaveConfig();
         _webServerService?.Stop();
         _gamepadService?.Stop();
+        // After SaveConfig above, so the mode each output was left in is persisted, and
+        // before the process goes away, so closing the sender cannot leave the dust
+        // collector or the shop lights running.
+        _gpioOutputService?.Stop();
         CommManager.ShutDown();
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
