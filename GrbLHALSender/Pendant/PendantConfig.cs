@@ -27,17 +27,27 @@ public class PendantConfig
     /// Ceiling on the feed rate the pendant may request, mm/min. The pendant
     /// asks for a feed matching how fast the wheel is turned; this bounds it to
     /// what the machine can actually deliver. Zero means no ceiling.
+    ///
+    /// The pendant already limits itself twice, per step size and per axis, and
+    /// the most it can ever ask for is 12000 - the cap on its coarsest step. So
+    /// this is a guard against a corrupted request rather than the working
+    /// limit, and anything below 12000 silently discards feed the operator
+    /// asked for. The previous default of 5000 clamped both coarse steps, which
+    /// is felt as the wheel going heavy near the top of its range rather than
+    /// reported as anything.
     /// </summary>
-    public double MaxJogFeedRate { get; set; } = 5000;
+    public double MaxJogFeedRate { get; set; } = 12000;
 
     /// <summary>
     /// Largest distance a single dispatch may command, in millimetres. Movement
     /// beyond this is clamped, not discarded.
     ///
     /// The guard bounds a corrupted detent count. Size it against what a
-    /// dispatch interval can legitimately carry: at the maximum feed a 100 ms
-    /// window is already 20 mm, so a limit near that is reached in ordinary use
-    /// and every clamp costs real motion.
+    /// dispatch interval can legitimately carry: the pendant ticks every 20 ms
+    /// and at its 12000 mm/min ceiling that window is 4 mm, so 50 mm leaves an
+    /// order of magnitude of headroom. It was sized when the tick was longer;
+    /// tightening it would bound a bad message more closely, at the cost of
+    /// clamping a legitimate one if the tick ever grows again.
     /// </summary>
     public double MaxJogDistanceMm { get; set; } = 50.0;
 
@@ -77,8 +87,9 @@ public class PendantConfig
     /// <summary>
     /// Echo every pendant jog command to the console.
     ///
-    /// Off by default. It is useful for diagnosing pendant motion, but jogs
-    /// arrive twenty times a second: the console reaches its line cap within
+    /// Off by default. It is useful for diagnosing pendant motion, but the
+    /// pendant ticks every 20 ms, so jogs arrive up to fifty times a second:
+    /// the console reaches its line cap within
     /// seconds of a traverse, and from then on each status tick pays repeated
     /// O(n) removals with a UI notification each. That load lands on the same
     /// thread the interface renders from, which is felt as jerk partway

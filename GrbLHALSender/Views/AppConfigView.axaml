@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -830,110 +830,97 @@
 				</Grid>
 			</TabItem>
 			<TabItem Header="Pendant" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="10,10,10,0">
-					<CheckBox Grid.Row="0"
-							  Content="Enable Wireless Pendant"
-							  HorizontalAlignment="Center"
-							  VerticalAlignment="Center"
-							  HorizontalContentAlignment="Center"
-							  VerticalContentAlignment="Center"
-							  Margin="0,10,0,10"
-							  IsChecked="{Binding IsPendantEnabled}"/>
-					<Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
-						<Label Grid.Column="0"
-							   HorizontalAlignment="Right"
-							   VerticalAlignment="Center"
-							   HorizontalContentAlignment="Right"
-							   VerticalContentAlignment="Center"
-							   FontSize="20"
-							   Content="Port:"/>
-						<TextBox Grid.Column="1"
-								 Width="120"
-								 HorizontalAlignment="Left"
-								 VerticalAlignment="Center"
-								 HorizontalContentAlignment="Left"
-								 VerticalContentAlignment="Center"
-								 Margin="10,0,0,0"
-								 FontSize="20"
-								 IsEnabled="{Binding IsPendantEnabled}"
-								 Text="{Binding PendantPort}"
-								 ToolTip.Tip="The pendant connects to this PC on this port"/>
-					</Grid>
-					<Grid Grid.Row="2" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
-						<Label Grid.Column="0"
-							   HorizontalAlignment="Right"
-							   VerticalAlignment="Center"
-							   HorizontalContentAlignment="Right"
-							   VerticalContentAlignment="Center"
-							   FontSize="20"
-							   Content="Max jog per message (mm):"/>
-						<TextBox Grid.Column="1"
-								 Width="120"
-								 HorizontalAlignment="Left"
-								 VerticalAlignment="Center"
-								 HorizontalContentAlignment="Left"
-								 VerticalContentAlignment="Center"
-								 Margin="10,0,0,0"
-								 FontSize="20"
-								 IsEnabled="{Binding IsPendantEnabled}"
-								 Text="{Binding PendantMaxJogMm}"
-								 ToolTip.Tip="A jog carries a detent count times a step size. This bounds how far one message can move the machine if that count is ever wrong."/>
-					</Grid>
-					<Grid Grid.Row="3" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
-						<Label Grid.Column="0"
-							   HorizontalAlignment="Right"
-							   VerticalAlignment="Center"
-							   FontSize="20"
-							   Content="Max feed rate (mm/min):"/>
-						<TextBox Grid.Column="1"
-								 Width="120"
-								 HorizontalAlignment="Left"
-								 VerticalAlignment="Center"
-								 Margin="10,0,0,0"
-								 FontSize="20"
-								 IsEnabled="{Binding IsPendantEnabled}"
-								 Text="{Binding PendantMaxFeed}"
-								 ToolTip.Tip="Set to the machine's own maximum jog rate. The pendant already limits itself per axis and per step, so a lower value here silently discards feed it asked for."/>
-					</Grid>
-					<Grid Grid.Row="4" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
-						<Label Grid.Column="0"
-							   HorizontalAlignment="Right"
-							   VerticalAlignment="Center"
-							   FontSize="20"
-							   Content="Min gap between jogs (ms):"/>
-						<TextBox Grid.Column="1"
-								 Width="120"
-								 HorizontalAlignment="Left"
-								 VerticalAlignment="Center"
-								 Margin="10,0,0,0"
-								 FontSize="20"
-								 IsEnabled="{Binding IsPendantEnabled}"
-								 Text="{Binding PendantDispatchMs}"
-								 ToolTip.Tip="Must be below the pendant's tick (50 ms). Higher and several pendant messages merge into one longer block, which halves the lookahead the controller's planner has and makes it decelerate at the end of each block."/>
-					</Grid>
-					<CheckBox Grid.Row="5"
-							  Content="Allow pendant to zero an axis"
-							  HorizontalAlignment="Center"
-							  VerticalAlignment="Center"
-							  Margin="0,20,0,0"
-							  IsEnabled="{Binding IsPendantEnabled}"
-							  IsChecked="{Binding PendantAllowZeroAxis}"
-							  ToolTip.Tip="Zeroing rewrites the work offset. Off by default so a mis-hit button on a handheld cannot lose your datum."/>
-					<CheckBox Grid.Row="5"
-							  Content="Echo pendant jogs to console"
-							  HorizontalAlignment="Right"
-							  VerticalAlignment="Center"
-							  Margin="0,20,10,0"
-							  IsEnabled="{Binding IsPendantEnabled}"
-							  IsChecked="{Binding PendantEchoJogs}"
-							  ToolTip.Tip="Diagnostic only. Jogs arrive 20 times a second, which fills the console to its cap within seconds and then costs a UI update on every status tick - felt as jerk partway through a long move."/>
-					<TextBlock Grid.Row="6"
-							   Text="Changes require app restart. Set SENDER_HOST on the pendant to this PC's IP address."
-							   Foreground="{DynamicResource TextMutedBrush}"
-							   FontSize="14"
-							   TextWrapping="Wrap"
-							   HorizontalAlignment="Center"
-							   Margin="0,20,0,0"/>
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+				      ColumnDefinitions="Auto,*"
+				      Margin="10,10,10,0">
+					<CheckBox Grid.Row="0" Grid.ColumnSpan="2"
+						      Content="Enable Wireless Pendant"
+						      HorizontalAlignment="Center"
+						      Margin="0,10,0,10"
+						      IsChecked="{Binding IsPendantEnabled}"/>
+					<Label Grid.Row="1" Grid.Column="0"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   FontSize="20"
+						   Margin="0,10,0,0"
+						   Content="Port:"/>
+					<TextBox Grid.Row="1" Grid.Column="1"
+						     Width="120"
+						     HorizontalAlignment="Left"
+						     VerticalAlignment="Center"
+						     Margin="10,10,0,0"
+						     FontSize="20"
+						     IsEnabled="{Binding IsPendantEnabled}"
+						     Text="{Binding PendantPort}"
+						     ToolTip.Tip="The pendant connects to this PC on this port"/>
+					<Label Grid.Row="2" Grid.Column="0"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   FontSize="20"
+						   Margin="0,10,0,0"
+						   Content="Max jog per message (mm):"/>
+					<TextBox Grid.Row="2" Grid.Column="1"
+						     Width="120"
+						     HorizontalAlignment="Left"
+						     VerticalAlignment="Center"
+						     Margin="10,10,0,0"
+						     FontSize="20"
+						     IsEnabled="{Binding IsPendantEnabled}"
+						     Text="{Binding PendantMaxJogMm}"
+						     ToolTip.Tip="A jog carries a detent count times a step size. This bounds how far one message can move the machine if that count is ever wrong."/>
+					<Label Grid.Row="3" Grid.Column="0"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   FontSize="20"
+						   Margin="0,10,0,0"
+						   Content="Max feed rate (mm/min):"/>
+					<TextBox Grid.Row="3" Grid.Column="1"
+						     Width="120"
+						     HorizontalAlignment="Left"
+						     VerticalAlignment="Center"
+						     Margin="10,10,0,0"
+						     FontSize="20"
+						     IsEnabled="{Binding IsPendantEnabled}"
+						     Text="{Binding PendantMaxFeed}"
+						     ToolTip.Tip="Set to the machine&apos;s own maximum jog rate. The pendant already limits itself per axis and per step, so a lower value here silently discards feed it asked for."/>
+					<Label Grid.Row="4" Grid.Column="0"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   FontSize="20"
+						   Margin="0,10,0,0"
+						   Content="Min gap between jogs (ms):"/>
+					<TextBox Grid.Row="4" Grid.Column="1"
+						     Width="120"
+						     HorizontalAlignment="Left"
+						     VerticalAlignment="Center"
+						     Margin="10,10,0,0"
+						     FontSize="20"
+						     IsEnabled="{Binding IsPendantEnabled}"
+						     Text="{Binding PendantDispatchMs}"
+						     ToolTip.Tip="Must be below the pendant&apos;s tick (20 ms). Higher and several pendant messages merge into one longer block, which halves the lookahead the controller&apos;s planner has and makes it decelerate at the end of each block."/>
+					<CheckBox Grid.Row="5" Grid.Column="1"
+						      Content="Allow pendant to zero an axis"
+						      HorizontalAlignment="Left"
+						      VerticalAlignment="Center"
+						      Margin="10,16,0,0"
+						      IsEnabled="{Binding IsPendantEnabled}"
+						      IsChecked="{Binding PendantAllowZeroAxis}"
+						      ToolTip.Tip="Zeroing rewrites the work offset. Off by default so a mis-hit button on a handheld cannot lose your datum."/>
+					<CheckBox Grid.Row="6" Grid.Column="1"
+						      Content="Echo pendant jogs to console"
+						      HorizontalAlignment="Left"
+						      VerticalAlignment="Center"
+						      Margin="10,16,0,0"
+						      IsEnabled="{Binding IsPendantEnabled}"
+						      IsChecked="{Binding PendantEchoJogs}"
+						      ToolTip.Tip="Diagnostic only. Jogs arrive 50 times a second, which fills the console to its cap within seconds and then costs a UI update on every status tick - felt as jerk partway through a long move."/>
+					<TextBlock Grid.Row="7" Grid.ColumnSpan="2"
+						       Text="Changes require app restart. Set SENDER_HOST on the pendant to this PC&apos;s IP address."
+						       Foreground="{DynamicResource TextMutedBrush}"
+						       FontSize="14"
+						       TextWrapping="Wrap"
+						       HorizontalAlignment="Center"
+						       Margin="0,24,0,0"/>
 				</Grid>
 			</TabItem>
 			<TabItem Header="Aux Outputs" FontSize="16" Padding="15,5">
