@@ -33,7 +33,6 @@
 					<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
 							HorizontalAlignment="Stretch"
 							IsVisible="{Binding #HomeTab.IsSelected}"
-							IsEnabled="{Binding ControlsEnabled}"
 							Background="Transparent"
 							VerticalAlignment="Stretch">
 						<views:JobButtonView DataContext="{Binding JobViewModel}"/>

@@ -297,16 +297,24 @@ namespace GrbLHALSender.ViewModels
 
         private void UpdateButtonStates()
         {
-            // Hold: enabled when connected, disabled when already in Hold state
+            // Hold: enabled when connected, disabled when already in Hold state.
+            // Deliberately not gated on MPG mode. Hold writes 0x82 straight to the
+            // adapter, and grblHAL acts on real-time bytes whichever stream sends
+            // them - so this is the one control here that still works while a
+            // hardware MPG drives the machine, which is exactly when someone
+            // standing at the PC might need it.
             CanHoldJob = Connected &&
                          JobState is not JobState.Hold;
 
             // Start: enabled when:
             //   - Machine is in Hold or Tool state (resume, no file required)
             //   - File loaded and no job running (idle, program complete, or stopped)
-            CanStartJob = JobState is JobState.Hold or JobState.Tool ||
+            // Never while an MPG holds the stream: starting means streaming g-code,
+            // and the controller is not listening to us for that.
+            CanStartJob = !_machineStateService.MpgActive &&
+                          (JobState is JobState.Hold or JobState.Tool ||
                           (FileLoaded && !JobRunning &&
-                           JobState is (JobState.Idle or JobState.ProgramComplete or JobState.Stop));
+                           JobState is (JobState.Idle or JobState.ProgramComplete or JobState.Stop)));
 
             ToolChangeVisible = JobState == JobState.Tool;
             this.RaisePropertyChanged(nameof(TouchOffVisible));
@@ -439,6 +447,10 @@ namespace GrbLHALSender.ViewModels
                     // watching it. Left latched, the first Idle after reconnecting would
                     // put the UI back into a tool change that is long over.
                     if (!Connected) _manualToolChange.Reset();
+                    break;
+                case nameof(MachineStateService.MpgActive):
+                    // Start needs the input stream, which an MPG is holding.
+                    UpdateButtonStates();
                     break;
                 case nameof(MachineStateService.GrblState):
                     if (!JobRunning)
