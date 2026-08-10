@@ -15,7 +15,7 @@
 	     Placement and sizing belong to whichever canvas hosts this, not here. -->
 	<Grid  x:Name="Grid"  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
 		   HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-		<Grid  x:Name="Panel" Grid.Row="0"   HorizontalAlignment="Stretch"
+		<Grid  x:Name="Panel" Grid.Row="0"   IsEnabled="{Binding ControlsEnabled}" HorizontalAlignment="Stretch"
 			   VerticalAlignment="Stretch" ColumnDefinitions="*,*,*,*">
 			<Label Grid.Column="0"
 				   FontSize="24"
@@ -137,7 +137,7 @@
 					CommandParameter="Z" 
 					Content="{icons:MaterialIconExt Kind=ArrowDownBoldBoxOutline,  IconSize=90}"/>
 		</Grid>
-		<Grid x:Name="StepRatePanel" Grid.Row="2"
+		<Grid x:Name="StepRatePanel" Grid.Row="2" IsEnabled="{Binding ControlsEnabled}"
 			  Margin="0,20,0,0"
 			  HorizontalAlignment="Stretch"
 			  VerticalAlignment="Stretch"
@@ -311,7 +311,7 @@
 		<!--END Spindle Control-->
 
 		<!--START OverRide Control-->
-		<Grid Grid.Row="6" RowDefinitions="Auto,Auto,Auto,Auto">
+		<Grid Grid.Row="6" IsEnabled="{Binding ControlsEnabled}" RowDefinitions="Auto,Auto,Auto,Auto">
 			
                         <Label Grid.Row="0"
                                Content="Feed OverRide"

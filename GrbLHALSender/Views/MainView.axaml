@@ -41,7 +41,10 @@
 			<!-- END Center Content Control -->
 
 			<!--START Right Control-->
-			<Border IsEnabled ="{Binding ControlsEnabled}" x:Name="JogBorder"  Grid.Column="2"
+			<!-- Connected, not ControlsEnabled: the spindle section inside this panel keeps
+			     one control live through MPG mode, and IsEnabled inherits, so the MPG gate
+			     has to sit on the rows rather than here. -->
+			<Border IsEnabled ="{Binding Connected}" x:Name="JogBorder"  Grid.Column="2"
 					MaxWidth="330" MinWidth="325" >
 				<views:JogPanelView Margin="0,45,0,0" />
 			</Border>

@@ -27,28 +27,37 @@
 	     so it would light up on a command the controller went on to
 	     refuse. These carry no state of their own — the highlight comes
 	     from the reported SpindleDirection via Classes.active. -->
+	<!-- CW and CCW are M03/M04, streamed, so MPG mode silences them like
+	     everything else that needs the g-code stream. -->
 	<Button Classes="touch stateToggle" Grid.Column="0" Grid.Row="1"
+			IsEnabled="{Binding ControlsEnabled}"
 			Classes.active="{Binding SpindleDirection,
 				Converter={StaticResource EnumMatch}, ConverterParameter=CW}"
 			Content="CW"
 			Margin="5,5,5,0"
 			Command="{Binding SpindleCWCommand}"/>
 	<Button Classes="touch stateToggle" Grid.Column="1" Grid.Row="1"
+			IsEnabled="{Binding ControlsEnabled}"
 			Classes.active="{Binding SpindleDirection,
 				Converter={StaticResource EnumMatch}, ConverterParameter=CCW}"
 			Content="CCW"
 			Margin="5,5,5,0"
 			Command="{Binding SpindleCCWCommand}"/>
+	<!-- Its own condition, not ControlsEnabled: in a hold this sends the real-time
+	     toggle rather than M05, and the controller takes that from any stream. So
+	     it stays reachable through MPG mode on that one path. Hold, then this. -->
 	<Button Classes="touch stateToggle" Grid.Column="0"
 			Grid.Row="2"
 			Grid.ColumnSpan="2"
 			Margin="5,10,5,0"
+			IsEnabled="{Binding SpindleOffEnabled}"
 			Classes.active="{Binding SpindleDirection,
 				Converter={StaticResource EnumMatch}, ConverterParameter=Off}"
 			Content="Spindle Off"
 			Command="{Binding SpindleOffCommand}" />
 
 	<views:TouchNumericUpDown Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+				   IsEnabled="{Binding ControlsEnabled}"
 				   FontSize="24"
 				   MinHeight="48"
 				   Margin="5,10,10,0"
@@ -66,13 +75,15 @@
                                     VerticalAlignment="Center"  />
                        
                         <Button Classes="touch" Grid.Row="4" Grid.Column="0"
+                                IsEnabled="{Binding ControlsEnabled}"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 Content="Set Speed"
                                 Margin="5,10,5,0"
                                 Command="{Binding SpindleSetSpeedCommand }"/>
 	
-                        <Grid  Grid.Row="5"  Grid.Column="0" Grid.ColumnSpan="2" 
+                        <Grid  Grid.Row="5"  Grid.Column="0" Grid.ColumnSpan="2"
+                               IsEnabled="{Binding ControlsEnabled}"
                                HorizontalAlignment="Stretch"
                                VerticalAlignment="Center" 
                                ColumnDefinitions="*,*,*,*">

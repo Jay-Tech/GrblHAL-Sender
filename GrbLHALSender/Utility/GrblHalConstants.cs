@@ -20,6 +20,14 @@
         public const byte SpindleFinePlus = 0x9C;
         public const byte SpindleCoarseMinus = 0x9B;
         public const byte SpindleCoarsePlus = 0x9A;
+        // Toggles the spindle off and on again, and only while the machine is in
+        // HOLD - outside a hold the controller ignores it. Deliberate: stopping the
+        // spindle while the tool is still moving through material is worse than
+        // leaving it running, so the hold decelerates first. A cycle start restores
+        // the spindle on its own, so the toggle back is not something a caller has
+        // to remember. Unlike M05 this is real time, which means grblHAL acts on it
+        // whichever stream sends it - the only spindle control that survives MPG mode.
+        public const byte SpindleStopToggle = 0x9E;
         //Feed
         public const byte FeedOrReset = 0x90;
         public const byte FeedOrCoarsePlus = 0x91;

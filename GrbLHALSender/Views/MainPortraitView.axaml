@@ -49,7 +49,7 @@
 			     keeps them inline; moving them for portrait fills what was 460px of dead space
 			     and shortens both panels, which is what buys the render its extra height. -->
 			<Border Grid.Column="1"
-					IsEnabled="{Binding ControlsEnabled}"
+					IsEnabled="{Binding Connected}"
 					Name="CentreControlBorder"
 					Margin="10,0"
 					VerticalAlignment="Stretch">
@@ -57,13 +57,13 @@
 				     side. This column's content is ~120px shorter than the jog panel, and that
 				     surplus collects in the empty star row at the bottom. -->
 				<Grid RowDefinitions="Auto,Auto,*">
-					<views:WcsPanelView Grid.Row="0" />
+					<views:WcsPanelView Grid.Row="0" IsEnabled="{Binding ControlsEnabled}" />
 					<views:SpindlePanelView Grid.Row="1" Margin="0,20,0,0" />
 					<!-- Fills whatever the WCS and spindle blocks leave, and scrolls rather than
 					     clipping if the macros outgrow it. No cap: the Macro dialog edits macros
 					     but cannot run them, so a button that is not shown is a macro that
 					     cannot be triggered at all. -->
-					<views:MacroGridView Grid.Row="2" Margin="0,15,0,0" />
+					<views:MacroGridView Grid.Row="2" IsEnabled="{Binding ControlsEnabled}" Margin="0,15,0,0" />
 				</Grid>
 			</Border>
 

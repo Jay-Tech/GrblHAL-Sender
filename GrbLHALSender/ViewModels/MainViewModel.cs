@@ -188,6 +188,7 @@ public class MainViewModel : ViewModelBase
             if (_connected == value) return;
             this.RaiseAndSetIfChanged(ref _connected, value);
             this.RaisePropertyChanged(nameof(ControlsEnabled));
+            this.RaisePropertyChanged(nameof(SpindleOffEnabled));
         }
     }
 
@@ -203,6 +204,7 @@ public class MainViewModel : ViewModelBase
             if (_mpgActive == value) return;
             this.RaiseAndSetIfChanged(ref _mpgActive, value);
             this.RaisePropertyChanged(nameof(ControlsEnabled));
+            this.RaisePropertyChanged(nameof(SpindleOffEnabled));
         }
     }
 
@@ -217,6 +219,18 @@ public class MainViewModel : ViewModelBase
     /// MpgActive - this puts the equivalent in front of the person.
     /// </summary>
     public bool ControlsEnabled => Connected && !MpgActive;
+
+    /// <summary>
+    /// Whether Spindle Off can reach the controller.
+    ///
+    /// Normally it streams M05, so it needs the stream like everything else. The
+    /// exception is a hold, where it sends the real-time toggle instead and any
+    /// stream will do - so it stays live through MPG mode on that one path. Hold
+    /// first, then this: the two together are the whole of what the PC can still
+    /// do while someone else drives the machine.
+    /// </summary>
+    public bool SpindleOffEnabled =>
+        ControlsEnabled || (Connected && CurrentGrblState == GrblState.Hold);
     public bool HideToolChangeList
     {
         get => _hideToolChangeList;
@@ -656,16 +670,24 @@ public class MainViewModel : ViewModelBase
         // test while the streamer is still counting acks for lines in flight.
         var jobRunning = JobViewModel?.JobRunning ?? false;
 
-        CanJog = Connected &&
+        // Tracks GrblState, because entering and leaving a hold is what changes
+        // whether Spindle Off has a real-time route to the controller.
+        this.RaisePropertyChanged(nameof(SpindleOffEnabled));
+
+        // ControlsEnabled, not Connected: during MPG mode the controller reports Jog
+        // while the hardware wheel drives it, which passes the state test - so the
+        // arrows would look available while jogging that is not ours is underway.
+        CanJog = ControlsEnabled &&
                  CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
 
-        CanSetTool = Connected && HomeState && !jobRunning &&
+        CanSetTool = ControlsEnabled && HomeState && !jobRunning &&
                      CurrentGrblState is GrblState.Idle or GrblState.Tool;
 
         // One rule for every control that hands a g-code line straight to the
         // controller: MDI, the macro buttons, and the probe cycles. A running job is not
-        // allowed, because those lines would land in the middle of the program.
-        var canSendManualGcode = Connected && !jobRunning &&
+        // allowed, because those lines would land in the middle of the program. Nor is
+        // MPG mode, where the controller is not reading our stream at all.
+        var canSendManualGcode = ControlsEnabled && !jobRunning &&
                                  CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
 
         // A mid-job tool change is the one exception for MDI. grblHAL's protocol requires
@@ -676,7 +698,7 @@ public class MainViewModel : ViewModelBase
         // accept at that point, which is treated as a manual failure rather than the
         // job's.
         CanUseMdi = canSendManualGcode ||
-                    (Connected && jobRunning && CurrentGrblState is GrblState.Tool);
+                    (ControlsEnabled && jobRunning && CurrentGrblState is GrblState.Tool);
 
         // Whether this machine's $341 mode expects the operator to touch the new tool off.
         // Read from the controller rather than configured here, so the control cannot
@@ -857,9 +879,20 @@ public class MainViewModel : ViewModelBase
     {
         SendByteCommand(GrblHalConstants.SpindleReset);
     }
+    /// <summary>
+    /// Stops the spindle by whichever route the controller will actually accept.
+    ///
+    /// In a hold that is the real-time toggle, which grblHAL takes from any stream -
+    /// so this still reaches the controller while a hardware MPG holds the g-code
+    /// stream, which is exactly when someone standing at the PC wants it. Outside a
+    /// hold there is no real-time equivalent and M05 has to be streamed.
+    /// </summary>
     private void SpindleOff()
     {
-        SendCommand(GrblHalConstants.SpindleOff);
+        if (CurrentGrblState == GrblState.Hold)
+            SendByteCommand(GrblHalConstants.SpindleStopToggle);
+        else
+            SendCommand(GrblHalConstants.SpindleOff);
     }
     private void SpindleCcw()
     {
