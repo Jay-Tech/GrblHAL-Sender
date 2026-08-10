@@ -298,11 +298,21 @@ namespace GrbLHALSender.ViewModels
         private void UpdateButtonStates()
         {
             // Hold: enabled when connected, disabled when already in Hold state.
-            // Deliberately not gated on MPG mode. Hold writes 0x82 straight to the
-            // adapter, and grblHAL acts on real-time bytes whichever stream sends
-            // them - so this is the one control here that still works while a
-            // hardware MPG drives the machine, which is exactly when someone
-            // standing at the PC might need it.
+            //
+            // Deliberately not gated on MPG mode, on the understanding that Hold
+            // writes 0x82 straight to the adapter and grblHAL acts on real-time bytes
+            // from whichever stream sends them - making this the one control here that
+            // still reaches the machine while a hardware MPG drives it.
+            //
+            // UNVERIFIED. That is grblHAL's documented design as read, not something
+            // measured: this machine has no second port, so MpgActive never becomes
+            // true on it and the path cannot be exercised. What is certain is only
+            // that both streams stay open, since MPG:1 arrives on ours at all.
+            // First person with a second port: enter MPG mode, jog with the wheel,
+            // press Hold. If the machine does not stop, real-time commands are not
+            // honoured from the inactive stream, and this and SpindleOffEnabled should
+            // both collapse to ControlsEnabled - a button that silently does nothing
+            // is the fault this gating exists to remove.
             CanHoldJob = Connected &&
                          JobState is not JobState.Hold;
 

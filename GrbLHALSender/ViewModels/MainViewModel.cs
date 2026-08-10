@@ -55,6 +55,7 @@ public class MainViewModel : ViewModelBase
     private int _spindleRpm;
     private bool _connected;
     private bool _mpgActive;
+    private bool _pendantConnected;
     private bool _alarmActive;
     private int _selectedTool;
     private bool _hideToolChangeList;
@@ -231,6 +232,21 @@ public class MainViewModel : ViewModelBase
     /// </summary>
     public bool SpindleOffEnabled =>
         ControlsEnabled || (Connected && CurrentGrblState == GrblState.Hold);
+
+    /// <summary>
+    /// The wireless pendant has a live connection to this application.
+    ///
+    /// Nothing to do with MpgActive, despite both being "a pendant". This one
+    /// talks to us, and PendantService turns what it sends into ordinary jog
+    /// commands on the sender's own stream - the controller never learns it
+    /// exists. So the interface stays fully usable and both can drive the
+    /// machine. The indicator says the handheld is live; it takes nothing away.
+    /// </summary>
+    public bool PendantConnected
+    {
+        get => _pendantConnected;
+        private set => this.RaiseAndSetIfChanged(ref _pendantConnected, value);
+    }
     public bool HideToolChangeList
     {
         get => _hideToolChangeList;
@@ -642,6 +658,9 @@ public class MainViewModel : ViewModelBase
         _pendantService = pendantService;
         _pendantService.SetViewModel(this);
         _pendantService.PendantStatusMessage += (_, msg) => ConsoleOutput.Add($"[Pendant] {msg}");
+        // Raised from the listener task, so it has to cross to the UI thread.
+        _pendantService.PendantConnectionChanged += (_, connected) =>
+            Dispatcher.UIThread.Post(() => PendantConnected = connected);
         _pendantService.Initialize(_config.PendantConfig);
 
         updateCheckService.StatusMessage += (_, msg) =>

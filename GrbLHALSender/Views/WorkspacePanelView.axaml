@@ -38,27 +38,54 @@
 						<views:JobButtonView DataContext="{Binding JobViewModel}"/>
 					</Border>
 
-					<!-- MPG banner. The job buttons centre themselves and leave this corner
-					     empty, which is where the eye already goes when a job is loaded.
-					     Shown only while a hardware MPG holds the controller's input stream -
-					     the one moment when every control in this window stops doing anything,
-					     so the window has to say why rather than just appear broken. -->
-					<Border Grid.Row="0" Grid.Column="0"
-							HorizontalAlignment="Left"
-							VerticalAlignment="Top"
-							Margin="14,12,0,0"
-							Padding="14,6"
-							CornerRadius="6"
-							BorderThickness="2"
-							BorderBrush="{DynamicResource OkBrush}"
-							Background="{DynamicResource SurfaceBrush}"
-							IsVisible="{Binding MpgActive}">
-						<TextBlock Text="MPG ACTIVE"
-								   FontWeight="DemiBold"
-								   FontSize="{DynamicResource BaseFontSize}"
-								   Foreground="{DynamicResource OkBrush}"
-								   VerticalAlignment="Center"/>
-					</Border>
+					<!-- Who is driving. The job buttons centre themselves and leave this
+					     corner empty, which is where the eye already goes when a job is
+					     loaded. Two separate states, and the difference matters:
+
+					     MPG ACTIVE - a hardware MPG holds the controller's input stream.
+					     Every control in this window stops doing anything, so it has to say
+					     why rather than just appear broken.
+
+					     PENDANT - the wireless pendant is connected to us. It goes out on
+					     this application's own stream, so nothing is taken away and nothing
+					     is disabled. Purely "the handheld is live".
+
+					     Both can show at once, and that combination is worth seeing: the
+					     wireless pendant's jogs are refused while an MPG holds the stream. -->
+					<!-- Deliberately not bordered pills. These sit in a row of real buttons,
+					     and a rounded outline with a background is that row's idiom - it read
+					     as something to click. A dot and a label is the status-light idiom
+					     instead, and matches the state circles already in the header.
+					     MPG carries more weight than PENDANT because it is the one that takes
+					     the window away from you. -->
+					<StackPanel Grid.Row="0" Grid.Column="0"
+								HorizontalAlignment="Left"
+								VerticalAlignment="Top"
+								Orientation="Vertical"
+								Spacing="7"
+								Margin="16,16,0,0">
+						<StackPanel Orientation="Horizontal" Spacing="7"
+									IsVisible="{Binding MpgActive}">
+							<Border Width="10" Height="10" CornerRadius="5"
+									VerticalAlignment="Center"
+									Background="{DynamicResource OkBrush}"/>
+							<TextBlock Text="MPG ACTIVE"
+									   FontWeight="DemiBold"
+									   FontSize="{DynamicResource DetailFontSize}"
+									   Foreground="{DynamicResource OkBrush}"
+									   VerticalAlignment="Center"/>
+						</StackPanel>
+						<StackPanel Orientation="Horizontal" Spacing="7"
+									IsVisible="{Binding PendantConnected}">
+							<Border Width="10" Height="10" CornerRadius="5"
+									VerticalAlignment="Center"
+									Background="{DynamicResource AccentBrush}"/>
+							<TextBlock Text="PENDANT"
+									   FontSize="{DynamicResource DetailFontSize}"
+									   Foreground="{DynamicResource TextMutedBrush}"
+									   VerticalAlignment="Center"/>
+						</StackPanel>
+					</StackPanel>
 
 					<Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
 							HorizontalAlignment="Right"
