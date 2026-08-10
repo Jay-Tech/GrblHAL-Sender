@@ -11,7 +11,7 @@ never board-against-board. It was:
 
 > custom PCB + 8 relay modules + a field PSU + an enclosure + assembly
 > **against**
-> one bought board, around £22, in a case, on a DIN rail
+> one bought board, around £22 - $25, in a case, on a DIN rail
 
 That is not close, and it stopped being close the moment the requirement was "switch some
 shop lights and a dust extractor".
