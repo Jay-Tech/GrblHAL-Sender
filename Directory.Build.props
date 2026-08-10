@@ -13,7 +13,7 @@
          build report an update it already has. The release job fails if the two differ.
 
          To release: bump this, commit, tag the commit v<same number>, push the tag. -->
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
 
     <!-- Application metadata -->
     <Product>GrblHAL Sender</Product>
