@@ -33,9 +33,32 @@
 					<Border Grid.Row="0" Grid.ColumnSpan="3" Grid.Column="0"
 							HorizontalAlignment="Stretch"
 							IsVisible="{Binding #HomeTab.IsSelected}"
+							IsEnabled="{Binding ControlsEnabled}"
 							Background="Transparent"
 							VerticalAlignment="Stretch">
 						<views:JobButtonView DataContext="{Binding JobViewModel}"/>
+					</Border>
+
+					<!-- MPG banner. The job buttons centre themselves and leave this corner
+					     empty, which is where the eye already goes when a job is loaded.
+					     Shown only while a hardware MPG holds the controller's input stream -
+					     the one moment when every control in this window stops doing anything,
+					     so the window has to say why rather than just appear broken. -->
+					<Border Grid.Row="0" Grid.Column="0"
+							HorizontalAlignment="Left"
+							VerticalAlignment="Top"
+							Margin="14,12,0,0"
+							Padding="14,6"
+							CornerRadius="6"
+							BorderThickness="2"
+							BorderBrush="{DynamicResource OkBrush}"
+							Background="{DynamicResource SurfaceBrush}"
+							IsVisible="{Binding MpgActive}">
+						<TextBlock Text="MPG ACTIVE"
+								   FontWeight="DemiBold"
+								   FontSize="{DynamicResource BaseFontSize}"
+								   Foreground="{DynamicResource OkBrush}"
+								   VerticalAlignment="Center"/>
 					</Border>
 
 					<Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
@@ -115,8 +138,12 @@
 									Background="{DynamicResource TextMutedBrush}"
 									IsVisible="{Binding AppConfigViewModel.GpioOutputViewModel.HasOutputs}"/>
 
+							<!-- Aux outputs are the controller's own, driven by M62/M64 through the
+							     stream, so MPG mode silences them like everything else here. The
+							     GPIO list below is host-attached and deliberately not gated: staying
+							     out of the stream is the whole reason it exists. -->
 							<ItemsRepeater ItemsSource="{Binding AppConfigViewModel.AuxOutputViewModel.AuxOutputItems}"
-										   IsEnabled="{Binding Connected}"
+										   IsEnabled="{Binding ControlsEnabled}"
 										   x:Name="AuxOutputRepeater" HorizontalAlignment="Left" VerticalAlignment="Bottom">
 								<ItemsRepeater.Layout>
 									<UniformGridLayout   ItemsJustification="End" Orientation="Vertical"/>
@@ -148,7 +175,7 @@
 			</TabItem>
 			<TabItem Padding="8,0"
 					 FontWeight="DemiBold"
-					 IsEnabled="{Binding Connected}"
+					 IsEnabled="{Binding ControlsEnabled}"
 					 HorizontalContentAlignment="Center"
 					 VerticalContentAlignment="Center"
 					 FontSize="{DynamicResource BaseFontSize}" x:Name="SettingTab"

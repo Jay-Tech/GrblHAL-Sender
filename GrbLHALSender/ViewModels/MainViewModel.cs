@@ -54,6 +54,7 @@ public class MainViewModel : ViewModelBase
     private bool _isJobRunning;
     private int _spindleRpm;
     private bool _connected;
+    private bool _mpgActive;
     private bool _alarmActive;
     private int _selectedTool;
     private bool _hideToolChangeList;
@@ -182,8 +183,40 @@ public class MainViewModel : ViewModelBase
     public bool Connected
     {
         get => _connected;
-        set => this.RaiseAndSetIfChanged(ref _connected, value);
+        set
+        {
+            if (_connected == value) return;
+            this.RaiseAndSetIfChanged(ref _connected, value);
+            this.RaisePropertyChanged(nameof(ControlsEnabled));
+        }
     }
+
+    /// <summary>
+    /// The controller has handed its input stream to a hardware MPG, via the
+    /// MPG_MODE pin or the 0x8B toggle.
+    /// </summary>
+    public bool MpgActive
+    {
+        get => _mpgActive;
+        private set
+        {
+            if (_mpgActive == value) return;
+            this.RaiseAndSetIfChanged(ref _mpgActive, value);
+            this.RaisePropertyChanged(nameof(ControlsEnabled));
+        }
+    }
+
+    /// <summary>
+    /// Whether this window's controls should accept input.
+    ///
+    /// Disconnected is the obvious case. The other is MPG mode: while a
+    /// hardware pendant holds the controller's input stream, anything the
+    /// sender writes is at best ignored, so leaving the buttons live invites
+    /// the operator to press one and conclude the machine is broken. The same
+    /// reasoning already gates PendantService, which refuses to jog while
+    /// MpgActive - this puts the equivalent in front of the person.
+    /// </summary>
+    public bool ControlsEnabled => Connected && !MpgActive;
     public bool HideToolChangeList
     {
         get => _hideToolChangeList;
@@ -1055,6 +1088,7 @@ public class MainViewModel : ViewModelBase
         //SpindlePosition = svc.SpindlePosition;
         //WorkCoordinateOffset = svc.WorkCoordinateOffset;
         AlarmActive = svc.AlarmActive;
+        MpgActive = svc.MpgActive;
 
         // Drain buffered console log messages (from data thread) to UI.
         // Only process when the console panel is visible to avoid unnecessary
