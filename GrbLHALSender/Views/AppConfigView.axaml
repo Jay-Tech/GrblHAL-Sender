@@ -830,7 +830,7 @@
 				</Grid>
 			</TabItem>
 			<TabItem Header="Pendant" FontSize="16" Padding="15,5">
-				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+				<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
 				      ColumnDefinitions="Auto,*"
 				      Margin="10,10,10,0">
 					<CheckBox Grid.Row="0" Grid.ColumnSpan="2"
@@ -843,7 +843,7 @@
 						   VerticalAlignment="Center"
 						   FontSize="20"
 						   Margin="0,10,0,0"
-						   Content="Port:"/>
+						   Content="WiFi port:"/>
 					<TextBox Grid.Row="1" Grid.Column="1"
 						     Width="120"
 						     HorizontalAlignment="Left"
@@ -852,14 +852,56 @@
 						     FontSize="20"
 						     IsEnabled="{Binding IsPendantEnabled}"
 						     Text="{Binding PendantPort}"
-						     ToolTip.Tip="The pendant connects to this PC on this port"/>
+						     ToolTip.Tip="The pendant connects to this PC on this port when it is on WiFi."/>
+					<!-- The other transport. A pendant on ESP-NOW talks to a receiver
+					     board plugged into this machine, which appears here as a serial
+					     port; both transports run at once and the newest pendant wins. -->
 					<Label Grid.Row="2" Grid.Column="0"
 						   HorizontalAlignment="Right"
 						   VerticalAlignment="Center"
 						   FontSize="20"
 						   Margin="0,10,0,0"
+						   Content="ESP-NOW receiver:"/>
+					<StackPanel Grid.Row="2" Grid.Column="1"
+						        Orientation="Horizontal"
+						        Margin="10,10,0,0">
+						<ComboBox Width="200"
+							      FontSize="20"
+							      VerticalAlignment="Center"
+							      IsEnabled="{Binding IsPendantEnabled}"
+							      ItemsSource="{Binding PendantSerialPorts}"
+							      SelectedItem="{Binding PendantSerialPort}"
+							      ToolTip.Tip="Pick the receiver board's port explicitly. The app never scans — your controller is on one of these ports and must not be written to. Leave on (none) if no receiver is fitted."/>
+						<Button Content="Refresh"
+							    FontSize="16"
+							    Height="36"
+							    Margin="8,0,0,0"
+							    VerticalAlignment="Center"
+							    IsEnabled="{Binding IsPendantEnabled}"
+							    Command="{Binding RefreshPendantPortsCommand}"/>
+					</StackPanel>
+					<Label Grid.Row="3" Grid.Column="0"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   FontSize="20"
+						   Margin="0,10,0,0"
+						   Content="Receiver baud:"/>
+					<TextBox Grid.Row="3" Grid.Column="1"
+						     Width="120"
+						     HorizontalAlignment="Left"
+						     VerticalAlignment="Center"
+						     Margin="10,10,0,0"
+						     FontSize="20"
+						     IsEnabled="{Binding IsPendantEnabled}"
+						     Text="{Binding PendantSerialBaud}"
+						     ToolTip.Tip="Only matters over a real UART. A receiver on USB is a CDC device and ignores this entirely."/>
+					<Label Grid.Row="4" Grid.Column="0"
+						   HorizontalAlignment="Right"
+						   VerticalAlignment="Center"
+						   FontSize="20"
+						   Margin="0,10,0,0"
 						   Content="Max jog per message (mm):"/>
-					<TextBox Grid.Row="2" Grid.Column="1"
+					<TextBox Grid.Row="4" Grid.Column="1"
 						     Width="120"
 						     HorizontalAlignment="Left"
 						     VerticalAlignment="Center"
@@ -868,13 +910,13 @@
 						     IsEnabled="{Binding IsPendantEnabled}"
 						     Text="{Binding PendantMaxJogMm}"
 						     ToolTip.Tip="A jog carries a detent count times a step size. This bounds how far one message can move the machine if that count is ever wrong."/>
-					<Label Grid.Row="3" Grid.Column="0"
+					<Label Grid.Row="5" Grid.Column="0"
 						   HorizontalAlignment="Right"
 						   VerticalAlignment="Center"
 						   FontSize="20"
 						   Margin="0,10,0,0"
 						   Content="Max feed rate (mm/min):"/>
-					<TextBox Grid.Row="3" Grid.Column="1"
+					<TextBox Grid.Row="5" Grid.Column="1"
 						     Width="120"
 						     HorizontalAlignment="Left"
 						     VerticalAlignment="Center"
@@ -883,13 +925,13 @@
 						     IsEnabled="{Binding IsPendantEnabled}"
 						     Text="{Binding PendantMaxFeed}"
 						     ToolTip.Tip="Set to the machine&apos;s own maximum jog rate. The pendant already limits itself per axis and per step, so a lower value here silently discards feed it asked for."/>
-					<Label Grid.Row="4" Grid.Column="0"
+					<Label Grid.Row="6" Grid.Column="0"
 						   HorizontalAlignment="Right"
 						   VerticalAlignment="Center"
 						   FontSize="20"
 						   Margin="0,10,0,0"
 						   Content="Min gap between jogs (ms):"/>
-					<TextBox Grid.Row="4" Grid.Column="1"
+					<TextBox Grid.Row="6" Grid.Column="1"
 						     Width="120"
 						     HorizontalAlignment="Left"
 						     VerticalAlignment="Center"
@@ -898,7 +940,7 @@
 						     IsEnabled="{Binding IsPendantEnabled}"
 						     Text="{Binding PendantDispatchMs}"
 						     ToolTip.Tip="Must be below the pendant&apos;s tick (20 ms). Higher and several pendant messages merge into one longer block, which halves the lookahead the controller&apos;s planner has and makes it decelerate at the end of each block."/>
-					<CheckBox Grid.Row="5" Grid.Column="1"
+					<CheckBox Grid.Row="7" Grid.Column="1"
 						      Content="Allow pendant to zero an axis"
 						      HorizontalAlignment="Left"
 						      VerticalAlignment="Center"
@@ -906,7 +948,7 @@
 						      IsEnabled="{Binding IsPendantEnabled}"
 						      IsChecked="{Binding PendantAllowZeroAxis}"
 						      ToolTip.Tip="Zeroing rewrites the work offset. Off by default so a mis-hit button on a handheld cannot lose your datum."/>
-					<CheckBox Grid.Row="6" Grid.Column="1"
+					<CheckBox Grid.Row="8" Grid.Column="1"
 						      Content="Echo pendant jogs to console"
 						      HorizontalAlignment="Left"
 						      VerticalAlignment="Center"
@@ -914,8 +956,8 @@
 						      IsEnabled="{Binding IsPendantEnabled}"
 						      IsChecked="{Binding PendantEchoJogs}"
 						      ToolTip.Tip="Diagnostic only. Jogs arrive 50 times a second, which fills the console to its cap within seconds and then costs a UI update on every status tick - felt as jerk partway through a long move."/>
-					<TextBlock Grid.Row="7" Grid.ColumnSpan="2"
-						       Text="Changes require app restart. Set SENDER_HOST on the pendant to this PC&apos;s IP address."
+					<TextBlock Grid.Row="9" Grid.ColumnSpan="2"
+						       Text="Changes require app restart. On WiFi, set SENDER_HOST on the pendant to this PC&apos;s IP address; on ESP-NOW, pair the pendant to the receiver board."
 						       Foreground="{DynamicResource TextMutedBrush}"
 						       FontSize="14"
 						       TextWrapping="Wrap"

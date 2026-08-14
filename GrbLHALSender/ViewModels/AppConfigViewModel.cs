@@ -45,6 +45,8 @@ namespace GrbLHALSender.ViewModels
         private int _pendantDispatchMs;
         private bool _pendantAllowZeroAxis;
         private bool _pendantEchoJogs;
+        private string _pendantSerialPort = NoSerialReceiver;
+        private int _pendantSerialBaud;
         private int _webServerPort;
         private bool _useAntiAlias = true;
         private string _spindleImagePath = "spindle.png";
@@ -264,6 +266,72 @@ namespace GrbLHALSender.ViewModels
         }
 
         /// <summary>
+        /// Shown instead of a blank row when no receiver is fitted. A ComboBox
+        /// selected on an empty string renders as nothing at all, which on a
+        /// touchscreen is a target the operator cannot see or hit.
+        /// </summary>
+        public const string NoSerialReceiver = "(none)";
+
+        /// <summary>
+        /// Serial port of the ESP-NOW receiver board, or <see cref="NoSerialReceiver"/>
+        /// when none is fitted and only the network transport runs.
+        ///
+        /// Chosen explicitly and never scanned for: the controller is on one of
+        /// these ports too, and the two cannot be told apart by name.
+        /// </summary>
+        public string PendantSerialPort
+        {
+            get => _pendantSerialPort;
+            set => this.RaiseAndSetIfChanged(ref _pendantSerialPort, value ?? NoSerialReceiver);
+        }
+
+        /// <summary>
+        /// Baud rate for the receiver board. Only meaningful over a real UART; a
+        /// USB CDC device ignores it.
+        /// </summary>
+        public int PendantSerialBaud
+        {
+            get => _pendantSerialBaud;
+            set => this.RaiseAndSetIfChanged(ref _pendantSerialBaud, value);
+        }
+
+        /// <summary>
+        /// Ports offered for the receiver. Kept beside the pendant settings rather
+        /// than shared with the connection page, whose list is bound to the
+        /// controller's own selection.
+        /// </summary>
+        public ObservableCollection<string> PendantSerialPorts { get; } = [];
+
+        public ICommand RefreshPendantPortsCommand { get; }
+
+        private void RefreshPendantPorts()
+        {
+            List<string> ports;
+            try
+            {
+                ports = ConnectionViewModel.OrderPorts(System.IO.Ports.SerialPort.GetPortNames());
+            }
+            catch (Exception)
+            {
+                // Not every platform has serial ports at all.
+                ports = [];
+            }
+
+            // A receiver unplugged while its port is still the configured one is
+            // kept in the list. Without it the ComboBox would find no matching
+            // item, select nothing, and write that back over a setting the
+            // operator never touched - the same way refreshing the connection
+            // page's list used to lose the controller's port.
+            if (PendantSerialPort != NoSerialReceiver &&
+                !string.IsNullOrWhiteSpace(PendantSerialPort) &&
+                !ports.Contains(PendantSerialPort, StringComparer.OrdinalIgnoreCase))
+                ports.Add(PendantSerialPort);
+
+            ports.Insert(0, NoSerialReceiver);
+            ConnectionViewModel.ReconcilePorts(PendantSerialPorts, ports);
+        }
+
+        /// <summary>
         /// Where uploads actually land, read live from the service rather than rebuilt here
         /// so the two can never disagree. Shown because the path is otherwise unguessable:
         /// on Linux it resolves inside <c>~/.config</c>, which is hidden from file browsers.
@@ -372,6 +440,7 @@ namespace GrbLHALSender.ViewModels
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
             SelectAccentCommand = ReactiveCommand.Create<string>(hex => AccentColor = hex);
             ResetAccentCommand = ReactiveCommand.Create(() => AccentColor = string.Empty);
+            RefreshPendantPortsCommand = ReactiveCommand.Create(RefreshPendantPorts);
             _configManager.OnConfigLoaded += _configManager_OnConfigLoaded;
          
         }
@@ -408,6 +477,13 @@ namespace GrbLHALSender.ViewModels
             PendantDispatchMs = _appConfig.PendantConfig.JogDispatchIntervalMs;
             PendantAllowZeroAxis = _appConfig.PendantConfig.AllowZeroAxis;
             PendantEchoJogs = _appConfig.PendantConfig.EchoJogsToConsole;
+            PendantSerialPort = string.IsNullOrWhiteSpace(_appConfig.PendantConfig.SerialPortName)
+                ? NoSerialReceiver
+                : _appConfig.PendantConfig.SerialPortName;
+            PendantSerialBaud = _appConfig.PendantConfig.SerialBaudRate;
+            // After the configured port is known, so an unplugged receiver still
+            // appears in the list rather than the binding blanking the setting.
+            RefreshPendantPorts();
             UseAntiAlias = _appConfig.UseAntiAlias;
             SpindleImagePath = _appConfig.SpindleImagePath;
             RendererIndex = (int)_appConfig.Renderer;
@@ -493,6 +569,9 @@ namespace GrbLHALSender.ViewModels
             _appConfig.PendantConfig.JogDispatchIntervalMs = PendantDispatchMs;
             _appConfig.PendantConfig.AllowZeroAxis = PendantAllowZeroAxis;
             _appConfig.PendantConfig.EchoJogsToConsole = PendantEchoJogs;
+            _appConfig.PendantConfig.SerialPortName =
+                PendantSerialPort == NoSerialReceiver ? string.Empty : PendantSerialPort;
+            _appConfig.PendantConfig.SerialBaudRate = PendantSerialBaud;
              AuxOutputViewModel.Save();
             GpioOutputViewModel.Save();
             GcodeEventViewModel.Save();

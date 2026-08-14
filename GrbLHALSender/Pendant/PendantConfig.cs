@@ -18,6 +18,26 @@ public class PendantConfig
     public string BindAddress { get; set; } = "0.0.0.0";
 
     /// <summary>
+    /// Serial port of the ESP-NOW receiver board, e.g. "COM5" or "/dev/ttyUSB0".
+    /// Empty means no receiver is fitted and only the network transport runs.
+    ///
+    /// The two transports are independent: naming a port here does not disable
+    /// the listener, and a pendant may arrive either way.
+    ///
+    /// Never scanned for, deliberately. A grblHAL controller and a receiver board
+    /// both enumerate as anonymous USB serial devices and cannot be told apart by
+    /// name, and pendant JSON written at a controller is at best noise in its
+    /// console.
+    /// </summary>
+    public string SerialPortName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Baud rate for the receiver board. Only meaningful over a real UART; a USB
+    /// CDC device ignores it entirely.
+    /// </summary>
+    public int SerialBaudRate { get; set; } = 115200;
+
+    /// <summary>
     /// Feed rate for pendant jog commands, mm/min. Falls back to the
     /// application's JogRate when zero.
     /// </summary>
@@ -78,9 +98,13 @@ public class PendantConfig
     public int StatusIntervalMs { get; set; } = 100;
 
     /// <summary>
-    /// Drop the connection if nothing arrives from the pendant for this long.
-    /// The pendant pings every few seconds, so silence means it has gone away
-    /// without closing - a case TCP alone can take minutes to notice.
+    /// Stand the pendant down if nothing arrives from it for this long. The
+    /// pendant pings every few seconds, so silence means it has gone away
+    /// without saying so - a case TCP alone can take minutes to notice, and one
+    /// a serial receiver cannot notice at all, since its port stays open whether
+    /// or not a handheld is switched on.
+    ///
+    /// Zero disables the watchdog.
     /// </summary>
     public int ClientTimeoutSeconds { get; set; } = 15;
 

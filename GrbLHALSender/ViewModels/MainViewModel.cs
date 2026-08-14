@@ -657,7 +657,12 @@ public class MainViewModel : ViewModelBase
 
         _pendantService = pendantService;
         _pendantService.SetViewModel(this);
-        _pendantService.PendantStatusMessage += (_, msg) => ConsoleOutput.Add($"[Pendant] {msg}");
+        // Raised from the accept, session and receiver loops, so this has to cross
+        // to the UI thread like the connection event below it. ConsoleOutput is
+        // bound, and an ObservableCollection changed off the UI thread raises its
+        // notification there too.
+        _pendantService.PendantStatusMessage += (_, msg) =>
+            Dispatcher.UIThread.Post(() => ConsoleOutput.Add($"[Pendant] {msg}"));
         // Raised from the listener task, so it has to cross to the UI thread.
         _pendantService.PendantConnectionChanged += (_, connected) =>
             Dispatcher.UIThread.Post(() => PendantConnected = connected);

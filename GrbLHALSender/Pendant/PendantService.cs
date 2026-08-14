@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO.Ports;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -29,6 +30,11 @@ namespace GrbLHALSender.Pendant;
 /// the single arbiter of the command queue, which is what GRBL requires however
 /// the commands arrive.
 ///
+/// It arrives one of two ways, and nothing below the transport knows which. Over
+/// WiFi the pendant opens a TCP session here. Over ESP-NOW it talks to a receiver
+/// board plugged into this machine, which presents a serial port and forwards the
+/// same bytes - so the radio never becomes this application's problem.
+///
 /// Protocol is newline-delimited JSON; see the pendant firmware for the message
 /// set. Unknown message types are ignored rather than rejected so either end can
 /// add messages without breaking the other.
@@ -42,9 +48,14 @@ public class PendantService : IDisposable
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
     private Task? _acceptTask;
+    private Task? _serialTask;
+    private Task? _jogTask;
+    private Task? _statusTask;
 
-    private TcpClient? _client;
-    private readonly object _clientLock = new();
+    private readonly PendantArbiter _arbiter = new();
+
+    // When the active pendant was last heard from, for the silence watchdog.
+    private long _lastRxTicks;
 
     // Set after construction to avoid circular DI, matching GamepadService.
     private MainViewModel? _mainViewModel;
@@ -55,6 +66,20 @@ public class PendantService : IDisposable
     // Poll interval for the dispatch loop. Well under the dispatch interval,
     // so motion is forwarded promptly instead of waiting on a timer edge.
     private const int JogPollMs = 10;
+
+    // How long the status loop sleeps with no pendant on. Nothing is being sent
+    // in that state, so it only has to notice a new one promptly.
+    private const int IdlePollMs = 250;
+
+    // Bounds how long a serial read blocks, which is how quickly the reader
+    // notices cancellation. Silence on that port is normal - it is open whether
+    // or not a pendant is switched on - so a timeout here is not an error.
+    private const int SerialReadTimeoutMs = 250;
+
+    // Gap before reopening a receiver port that failed. It is a USB device on a
+    // machine that gets re-cabled, so the alternative to retrying is an
+    // application restart to pick it up again.
+    private const int SerialRetryMs = 2000;
 
     private readonly object _jogLock = new();
     private string? _pendingAxis;
@@ -93,19 +118,48 @@ public class PendantService : IDisposable
             return;
         }
 
-        if (_listener != null) return;
+        if (_cts != null) return;
 
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        StartListener(token);
+
+        var portName = _config.SerialPortName?.Trim();
+        if (!string.IsNullOrEmpty(portName))
+        {
+            // A dedicated thread rather than the pool. It spends its life in a
+            // blocking read - SerialPort's stream does not reliably honour a
+            // cancellation token, and the usual workaround of disposing the port
+            // to break a pending read races the teardown that would dispose it.
+            _serialTask = Task.Factory.StartNew(
+                () => SerialLoop(portName, token),
+                token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        }
+
+        // Both loops belong to the service, not to a session. Two pendants are
+        // never active at once, but a handover means one session outlives the
+        // start of the next - and two jog loops draining one accumulator would
+        // each dispatch half of the operator's movement.
+        _jogTask = Task.Run(() => JogLoopAsync(token));
+        _statusTask = Task.Run(() => StatusLoopAsync(token));
+    }
+
+    private void StartListener(CancellationToken token)
+    {
         try
         {
             var address = IPAddress.Parse(_config.BindAddress);
             _listener = new TcpListener(address, _config.Port);
             _listener.Start();
-            _cts = new CancellationTokenSource();
-            _acceptTask = Task.Run(() => AcceptLoopAsync(_cts.Token));
+            _acceptTask = Task.Run(() => AcceptLoopAsync(token));
             Report($"Pendant listener on {_config.BindAddress}:{_config.Port}");
         }
         catch (Exception ex)
         {
+            // Reported and dropped rather than failing Start. The transports are
+            // independent, and a port already taken by a previous instance
+            // should not also cost the operator the serial receiver.
             Report($"Pendant listener failed to start: {ex.Message}");
             _listener = null;
         }
@@ -114,19 +168,77 @@ public class PendantService : IDisposable
     public void Stop()
     {
         _cts?.Cancel();
-        CloseClient("service stopping");
+        RetireActive("service stopping");
 
         try { _listener?.Stop(); } catch { /* already torn down */ }
         _listener = null;
 
-        try { _acceptTask?.Wait(TimeSpan.FromSeconds(2)); } catch { /* ignore */ }
-        _acceptTask = null;
+        WaitFor(_acceptTask);
+        WaitFor(_serialTask);
+        WaitFor(_jogTask);
+        WaitFor(_statusTask);
+        _acceptTask = _serialTask = _jogTask = _statusTask = null;
 
         _cts?.Dispose();
         _cts = null;
     }
 
+    private static void WaitFor(Task? task)
+    {
+        try { task?.Wait(TimeSpan.FromSeconds(2)); } catch { /* cancelled, or already gone */ }
+    }
+
     public void Dispose() => Stop();
+
+    // --- who is driving ---------------------------------------------------
+
+    /// <summary>
+    /// Hands this channel the machine, standing down whatever held it before.
+    /// </summary>
+    private void Adopt(IPendantChannel channel)
+    {
+        var previous = _arbiter.Adopt(channel);
+        Volatile.Write(ref _lastRxTicks, Environment.TickCount64);
+
+        if (previous != null)
+        {
+            previous.Close();
+            Report($"Pendant on {previous.Describe()} superseded by {channel.Describe()}.");
+        }
+
+        // Movement the outgoing pendant accumulated is dropped rather than
+        // dispatched under the new one's authority.
+        ClearPendingJog();
+
+        SetConnected(true);
+        Report($"Pendant connected on {channel.Describe()}.");
+    }
+
+    /// <summary>
+    /// Stands this channel down, if it is still the one driving the machine.
+    /// Does nothing at all if it has already been superseded - see
+    /// <see cref="PendantArbiter.Retire"/> for why that check has to be here.
+    /// </summary>
+    private void RetireIfActive(IPendantChannel channel, string reason)
+    {
+        if (!_arbiter.Retire(channel)) return;
+
+        channel.Close();
+        ClearPendingJog();
+
+        // A pendant that vanishes mid-jog must not leave the machine running
+        // on: cancel whatever it had in flight.
+        Dispatcher.UIThread.Post(() => _mainViewModel?.JogCancel());
+
+        SetConnected(false);
+        Report($"Pendant on {channel.Describe()} stood down ({reason}).");
+    }
+
+    private void RetireActive(string reason)
+    {
+        var channel = _arbiter.Active;
+        if (channel != null) RetireIfActive(channel, reason);
+    }
 
     // --- accept -----------------------------------------------------------
 
@@ -137,20 +249,8 @@ public class PendantService : IDisposable
             try
             {
                 var incoming = await _listener!.AcceptTcpClientAsync(token);
-
-                // One pendant at a time, newest wins. The usual reason a second
-                // connection arrives is that the first is a stale half-open
-                // socket from a pendant that lost WiFi; refusing would lock the
-                // operator out until that socket finally timed out.
-                CloseClient("superseded by a new pendant");
-
                 incoming.NoDelay = true;
-                lock (_clientLock) _client = incoming;
-
-                SetConnected(true);
-                Report($"Pendant connected from {incoming.Client.RemoteEndPoint}");
-
-                _ = Task.Run(() => SessionAsync(incoming, token), token);
+                _ = Task.Run(() => TcpSessionAsync(incoming, token), token);
             }
             catch (OperationCanceledException)
             {
@@ -165,61 +265,200 @@ public class PendantService : IDisposable
         }
     }
 
-    private async Task SessionAsync(TcpClient client, CancellationToken token)
+    private async Task TcpSessionAsync(TcpClient client, CancellationToken token)
     {
+        var channel = new TcpPendantChannel(client);
+
+        // For the network transport the accept is the trigger: a socket exists
+        // only because a pendant opened it. The serial receiver cannot use that
+        // rule - see SerialLoop.
+        Adopt(channel);
+
         var buffer = new byte[2048];
         var pending = new StringBuilder();
-        var lastRx = Stopwatch.StartNew();
-
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(token);
-        var channel = new TcpPendantChannel(client);
-        var statusTask = Task.Run(() => StatusLoopAsync(channel, linked.Token), linked.Token);
-        var jogTask = Task.Run(() => JogLoopAsync(linked.Token), linked.Token);
 
         try
         {
             var stream = channel.Stream;
-            while (!linked.Token.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
-                var read = await stream.ReadAsync(buffer, linked.Token);
+                var read = await stream.ReadAsync(buffer, token);
                 if (read == 0) break;                       // pendant closed
 
-                lastRx.Restart();
                 pending.Append(Encoding.UTF8.GetString(buffer, 0, read));
 
                 foreach (var line in TakeLines(pending))
-                    HandleMessage(line, channel);
-
-                if (lastRx.Elapsed.TotalSeconds > _config.ClientTimeoutSeconds)
-                    break;
+                {
+                    if (TryParse(line, out var root)) Deliver(root, channel);
+                    else Report($"Pendant sent malformed JSON: {Truncate(line)}");
+                }
             }
         }
         catch (OperationCanceledException) { /* shutting down */ }
         catch (Exception ex)
         {
-            Report($"Pendant session ended: {ex.Message}");
+            // Expected once this session has been superseded: the adopting
+            // channel closed this socket, and the read fails on the way out.
+            if (!token.IsCancellationRequested && _arbiter.IsActive(channel))
+                Report($"Pendant session on {channel.Describe()} ended: {ex.Message}");
         }
         finally
         {
-            linked.Cancel();
-            try { await statusTask; } catch { /* ignore */ }
-            try { await jogTask; } catch { /* ignore */ }
-            lock (_jogLock) { _pendingDistance = 0; _pendingAxis = null; }
-
-            // A pendant that vanishes mid-jog must not leave the machine
-            // running on: cancel whatever it had in flight.
-            Dispatcher.UIThread.Post(() => _mainViewModel?.JogCancel());
-
-            CloseClient("pendant disconnected");
+            // Unconditionally: the socket is this session's whether or not the
+            // channel still holds the machine.
+            channel.Close();
+            RetireIfActive(channel, "connection closed");
         }
+    }
+
+    // --- serial -----------------------------------------------------------
+
+    /// <summary>
+    /// Reads the ESP-NOW receiver's port and lets the pendant on the far side of
+    /// it drive the machine.
+    /// </summary>
+    /// <remarks>
+    /// The receiver forwards the same newline-delimited JSON the network carries,
+    /// so everything above this reads identically either way. What differs is
+    /// what counts as a connection.
+    ///
+    /// A socket exists only because a pendant opened it, so accepting one is
+    /// proof of a pendant. The receiver's port is open from the moment it
+    /// enumerates, whether or not a handheld is switched on, charged or in range
+    /// - so opening it proves nothing, and the hello is the trigger instead.
+    /// Treating the port as the connection would light the pendant indicator on
+    /// an empty bench.
+    ///
+    /// The port therefore outlives the session. A pendant that goes quiet is
+    /// stood down while the port stays open, waiting for the next hello, which
+    /// the firmware sends whenever it acquires the link.
+    /// </remarks>
+    private void SerialLoop(string portName, CancellationToken token)
+    {
+        var buffer = new byte[512];
+        var pending = new StringBuilder();
+        string? lastFailure = null;
+
+        while (!token.IsCancellationRequested)
+        {
+            SerialPort? port = null;
+            SerialPendantChannel? channel = null;
+
+            try
+            {
+                port = new SerialPort(portName, _config.SerialBaudRate, Parity.None, 8, StopBits.One)
+                {
+                    Handshake = Handshake.None,
+                    DtrEnable = true,
+                    ReadTimeout = SerialReadTimeoutMs,
+                    WriteTimeout = 500,
+                };
+                port.Open();
+
+                pending.Clear();
+                lastFailure = null;
+                channel = new SerialPendantChannel(port);
+                Report($"Pendant receiver open on {portName}, waiting for a pendant.");
+
+                while (!token.IsCancellationRequested)
+                {
+                    int read;
+                    try { read = port.Read(buffer, 0, buffer.Length); }
+                    catch (TimeoutException) { continue; }  // silence is the normal state
+                    if (read <= 0) continue;
+
+                    pending.Append(Encoding.UTF8.GetString(buffer, 0, read));
+
+                    foreach (var line in TakeLines(pending))
+                        ReceiveFromSerial(line, channel);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (token.IsCancellationRequested) break;
+
+                // Once per distinct fault, not once per retry. A port name that
+                // matches nothing - a receiver left unplugged, or a COM number
+                // Windows has moved - would otherwise put a line in the console
+                // every two seconds for the rest of the session. That is how the
+                // console reaches its cap, and past the cap every status tick
+                // pays repeated O(n) removals on the UI thread.
+                if (ex.Message != lastFailure)
+                {
+                    lastFailure = ex.Message;
+                    Report($"Pendant receiver on {portName}: {ex.Message}");
+                }
+            }
+            finally
+            {
+                if (channel != null) RetireIfActive(channel, "receiver port closed");
+                try { port?.Dispose(); } catch { /* already gone */ }
+            }
+
+            // WaitOne returns true when the token is signalled.
+            if (token.WaitHandle.WaitOne(SerialRetryMs)) break;
+        }
+    }
+
+    private void ReceiveFromSerial(string line, SerialPendantChannel channel)
+    {
+        if (!TryParse(line, out var root))
+        {
+            // Only a complaint once a pendant is actually talking. Before the
+            // hello, whatever is on this port belongs to the receiver - an ESP32
+            // prints a bootloader banner at every reset - and calling that a
+            // protocol error would fill the console on every replug.
+            if (_arbiter.IsActive(channel))
+                Report($"Pendant sent malformed JSON: {Truncate(line)}");
+            return;
+        }
+
+        var type = MessageType(root);
+
+        // The receiver board's own diagnostics, which it writes into the same
+        // stream under an "rx_" namespace rather than as bare prints that would
+        // land mid-protocol.
+        //
+        // Taken first because they are not the pendant talking. They arrive when
+        // no pendant is connected at all - "receiver up, this board is <mac>" at
+        // power-on, and the pendant's MAC when one pairs, which are the two lines
+        // that matter when pairing is not working - so gating them on an active
+        // pendant would drop exactly the ones worth having. For the same reason
+        // they must not feed the silence watchdog: the receiver being alive is no
+        // evidence a pendant is.
+        //
+        // The relay these replaced filtered them out and printed them to its own
+        // terminal. Dropping them silently here would have retired that terminal
+        // and the diagnostics with it.
+        if (type.StartsWith("rx_", StringComparison.Ordinal))
+        {
+            var note = GetString(root, "msg");
+            Report(note.Length > 0 ? $"Receiver: {note}" : $"Receiver sent '{type}'.");
+            return;
+        }
+
+        // The hello is what says a pendant is there, for the reasons in the
+        // remarks on SerialLoop. It is also what takes the machine from a
+        // network pendant, which is the same "newest wins" rule the accept
+        // applies rather than a second one.
+        //
+        // The pendant firmware sends one on every link acquisition, not only at
+        // power-on, and broadcasts one every discovery interval while unpaired -
+        // which the receiver forwards here like any other packet. So a pendant
+        // stood down for silence re-announces itself without anything being
+        // restarted.
+        if (type == "hello" && !_arbiter.IsActive(channel))
+            Adopt(channel);
+
+        Deliver(root, channel);
     }
 
     /// <summary>
     /// Pull complete newline-delimited messages out of the buffer, leaving any
-    /// partial tail behind. TCP gives no message boundaries, so a read can land
-    /// mid-object or carry several at once.
+    /// partial tail behind. Neither transport gives message boundaries, so a read
+    /// can land mid-object or carry several at once.
     /// </summary>
-    private static IEnumerable<string> TakeLines(StringBuilder pending)
+    internal static IEnumerable<string> TakeLines(StringBuilder pending)
     {
         var lines = new List<string>();
         var text = pending.ToString();
@@ -240,25 +479,51 @@ public class PendantService : IDisposable
 
     // --- inbound messages -------------------------------------------------
 
-    private void HandleMessage(string line, IPendantChannel channel)
+    /// <summary>
+    /// Parsed once, here, rather than in the handler. The serial path has to read
+    /// the message type before deciding whether the message may be acted on at
+    /// all, and parsing twice to answer that would cost every line on the port.
+    /// </summary>
+    private static bool TryParse(string line, out JsonElement root)
     {
-        JsonElement root;
         try
         {
             using var document = JsonDocument.Parse(line);
             root = document.RootElement.Clone();
+            return true;
         }
         catch (JsonException)
         {
-            Report($"Pendant sent malformed JSON: {Truncate(line)}");
-            return;
+            root = default;
+            return false;
         }
+    }
 
-        if (root.ValueKind != JsonValueKind.Object ||
-            !root.TryGetProperty("t", out var typeElement))
-            return;
+    private static string MessageType(JsonElement root) =>
+        root.ValueKind == JsonValueKind.Object &&
+        root.TryGetProperty("t", out var type) &&
+        type.ValueKind == JsonValueKind.String
+            ? type.GetString() ?? string.Empty
+            : string.Empty;
 
-        switch (typeElement.GetString())
+    /// <summary>
+    /// Acts on a message, if it came from the pendant that is driving the
+    /// machine.
+    /// </summary>
+    /// <remarks>
+    /// A superseded pendant is dropped rather than merely ignored for tidiness.
+    /// It may still be transmitting - a handheld that lost WiFi and came back on
+    /// the receiver is two live sources of jogs for the same hand - and acting on
+    /// both is two operators driving one axis.
+    /// </remarks>
+    private void Deliver(JsonElement root, IPendantChannel channel)
+    {
+        if (!_arbiter.IsActive(channel)) return;
+
+        // Anything at all counts against the silence watchdog, not just a ping.
+        Volatile.Write(ref _lastRxTicks, Environment.TickCount64);
+
+        switch (MessageType(root))
         {
             case "hello":
                 Report($"Pendant identified: {GetString(root, "dev")} " +
@@ -333,6 +598,11 @@ public class PendantService : IDisposable
     /// faster than grblHAL can parse and execute; the buffer fills, the send
     /// path blocks, status stops flowing, and the machine ends up over a second
     /// behind the operator's hand.
+    ///
+    /// Runs for the life of the service rather than per session. Every refusal
+    /// below therefore skips the dispatch and nothing more: a loop that returned
+    /// on an alarm would leave the pendant dead for the rest of the run, long
+    /// after the alarm was cleared.
     /// </summary>
     private async Task JogLoopAsync(CancellationToken token)
     {
@@ -406,8 +676,8 @@ public class PendantService : IDisposable
                 // within seconds of a traverse starting, and every status tick
                 // from then on does repeated O(n) removals with a UI
                 // notification each. The load switches on mid-move and stays on.
-                if (_mainViewModel == null) return;
-                if (!_mainViewModel.Connected || _mainViewModel.AlarmActive) return;
+                if (_mainViewModel == null) continue;
+                if (!_mainViewModel.Connected || _mainViewModel.AlarmActive) continue;
 
                 // A hardware MPG can take the controller's input stream via the
                 // MPG_MODE pin or the 0x8B toggle, and while it holds it this
@@ -417,7 +687,7 @@ public class PendantService : IDisposable
                 //
                 // Two operators driving one axis from two places is the
                 // failure worth refusing outright rather than arbitrating.
-                if (_machineState.MpgActive) return;
+                if (_machineState.MpgActive) continue;
 
                 // And never mid-job. A jog injected into a running stream is
                 // not merely rejected by the controller: this sender counts
@@ -430,7 +700,7 @@ public class PendantService : IDisposable
                 // position is committed, and resuming expects the machine
                 // where it was left. Jogging away from that is how a resume
                 // plunges into the work.
-                if (_mainViewModel.JobViewModel?.JobRunning == true) return;
+                if (_mainViewModel.JobViewModel?.JobRunning == true) continue;
 
                 // The pendant sends a feed matching how fast the wheel is
                 // being turned, which is what makes the machine track the
@@ -623,22 +893,60 @@ public class PendantService : IDisposable
 
     // --- outbound status --------------------------------------------------
 
-    private async Task StatusLoopAsync(IPendantChannel channel, CancellationToken token)
+    /// <summary>
+    /// Pushes machine status to whichever pendant is driving, and stands one down
+    /// that has gone quiet.
+    /// </summary>
+    /// <remarks>
+    /// The watchdog lives here because this is the one loop that ticks whether or
+    /// not anything is arriving. It used to be a check inside the read loop,
+    /// against a stopwatch that had just been restarted by the read that woke it
+    /// - so it could only ever fire on a pendant that was still talking, which is
+    /// to say never. A pendant that stops dead never wakes that loop at all.
+    ///
+    /// It matters more now than it did. A dropped socket is at least eventually
+    /// noticed by TCP; a serial receiver holds its port open indefinitely, so
+    /// without this a pendant switched off mid-session would read as connected
+    /// until the application was restarted.
+    /// </remarks>
+    private async Task StatusLoopAsync(CancellationToken token)
     {
         try
         {
-            while (!token.IsCancellationRequested && channel.IsOpen)
+            while (!token.IsCancellationRequested)
             {
-                channel.WriteLine(BuildStatus());
+                var channel = _arbiter.Active;
+
+                if (channel == null)
+                {
+                    await Task.Delay(IdlePollMs, token);
+                    continue;
+                }
+
+                if (!channel.IsOpen)
+                    RetireIfActive(channel, "transport closed");
+                else if (SilentTooLong())
+                    RetireIfActive(channel, $"silent for {_config.ClientTimeoutSeconds}s");
+                else
+                    channel.WriteLine(BuildStatus());
+
                 await Task.Delay(_config.StatusIntervalMs, token);
             }
         }
         catch (OperationCanceledException) { /* shutting down */ }
-        catch (Exception)
-        {
-            // The session loop owns teardown; a write failure here just ends
-            // this task.
-        }
+    }
+
+    /// <summary>
+    /// Whether the active pendant has said nothing for longer than the configured
+    /// timeout. It pings every few seconds, so silence is not idleness - it is a
+    /// flat battery, a lost radio link, or a half-open socket.
+    /// </summary>
+    private bool SilentTooLong()
+    {
+        var timeout = _config.ClientTimeoutSeconds;
+        if (timeout <= 0) return false;
+
+        return Environment.TickCount64 - Volatile.Read(ref _lastRxTicks) > timeout * 1000L;
     }
 
     private string BuildStatus()
@@ -691,20 +999,9 @@ public class PendantService : IDisposable
 
     // --- helpers ----------------------------------------------------------
 
-    private void CloseClient(string reason)
+    private void ClearPendingJog()
     {
-        TcpClient? existing;
-        lock (_clientLock)
-        {
-            existing = _client;
-            _client = null;
-        }
-
-        if (existing == null) return;
-
-        try { existing.Close(); } catch { /* already gone */ }
-        SetConnected(false);
-        Report($"Pendant connection closed ({reason}).");
+        lock (_jogLock) { _pendingDistance = 0; _pendingAxis = null; }
     }
 
     private void SetConnected(bool connected)
