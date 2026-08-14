@@ -1,4 +1,4 @@
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.States;
 using GrbLHALSender.Utility;
@@ -172,12 +172,13 @@ public class PendantService : IDisposable
         var lastRx = Stopwatch.StartNew();
 
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(token);
-        var statusTask = Task.Run(() => StatusLoopAsync(client, linked.Token), linked.Token);
+        var channel = new TcpPendantChannel(client);
+        var statusTask = Task.Run(() => StatusLoopAsync(channel, linked.Token), linked.Token);
         var jogTask = Task.Run(() => JogLoopAsync(linked.Token), linked.Token);
 
         try
         {
-            var stream = client.GetStream();
+            var stream = channel.Stream;
             while (!linked.Token.IsCancellationRequested)
             {
                 var read = await stream.ReadAsync(buffer, linked.Token);
@@ -187,7 +188,7 @@ public class PendantService : IDisposable
                 pending.Append(Encoding.UTF8.GetString(buffer, 0, read));
 
                 foreach (var line in TakeLines(pending))
-                    HandleMessage(line, stream);
+                    HandleMessage(line, channel);
 
                 if (lastRx.Elapsed.TotalSeconds > _config.ClientTimeoutSeconds)
                     break;
@@ -239,7 +240,7 @@ public class PendantService : IDisposable
 
     // --- inbound messages -------------------------------------------------
 
-    private void HandleMessage(string line, NetworkStream stream)
+    private void HandleMessage(string line, IPendantChannel channel)
     {
         JsonElement root;
         try
@@ -290,7 +291,7 @@ public class PendantService : IDisposable
                 break;
 
             case "ping":
-                Send(stream, $"{{\"t\":\"pong\",\"seq\":{GetDouble(root, "seq", 0):0}}}");
+                channel.WriteLine($"{{\"t\":\"pong\",\"seq\":{GetDouble(root, "seq", 0):0}}}");
                 break;
         }
     }
@@ -622,14 +623,13 @@ public class PendantService : IDisposable
 
     // --- outbound status --------------------------------------------------
 
-    private async Task StatusLoopAsync(TcpClient client, CancellationToken token)
+    private async Task StatusLoopAsync(IPendantChannel channel, CancellationToken token)
     {
         try
         {
-            var stream = client.GetStream();
-            while (!token.IsCancellationRequested && client.Connected)
+            while (!token.IsCancellationRequested && channel.IsOpen)
             {
-                Send(stream, BuildStatus());
+                channel.WriteLine(BuildStatus());
                 await Task.Delay(_config.StatusIntervalMs, token);
             }
         }
@@ -688,18 +688,6 @@ public class PendantService : IDisposable
         return builder.ToString();
     }
 
-    private void Send(NetworkStream stream, string message)
-    {
-        try
-        {
-            var payload = Encoding.UTF8.GetBytes(message + "\n");
-            stream.Write(payload, 0, payload.Length);
-        }
-        catch (Exception)
-        {
-            // Peer has gone; the session loop notices and tears down.
-        }
-    }
 
     // --- helpers ----------------------------------------------------------
 
