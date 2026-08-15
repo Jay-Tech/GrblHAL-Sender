@@ -94,6 +94,14 @@ public class PendantService : IDisposable
     private long _lastMalformedTicks;
     private int _suppressedMalformed;
 
+    // Receiver notes get the same treatment, and for the same reason. They are
+    // usually rare - one at power-up, one when a pendant pairs - but the board
+    // now reports a caught fault as a note rather than dying of it, and a fault
+    // that recurs every time round its loop would arrive faster than anything
+    // else on the port.
+    private long _lastNoteTicks;
+    private int _suppressedNotes;
+
     // Said once per port session, then reset when the port is reopened.
     private bool _reportedRepl;
 
@@ -491,7 +499,9 @@ public class PendantService : IDisposable
         if (type.StartsWith("rx_", StringComparison.Ordinal))
         {
             var note = GetString(root, "msg");
-            Report(note.Length > 0 ? $"Receiver: {note}" : $"Receiver sent '{type}'.");
+            ReportThrottled(
+                note.Length > 0 ? $"Receiver: {note}" : $"Receiver sent '{type}'.",
+                ref _lastNoteTicks, ref _suppressedNotes);
             return;
         }
 
@@ -1160,22 +1170,35 @@ public class PendantService : IDisposable
         RetireIfActive(channel, "receiver stopped running its bridge");
     }
 
-    private void ReportMalformed(string line)
+    private void ReportMalformed(string line) =>
+        ReportThrottled($"Pendant sent malformed JSON: {Truncate(line)}",
+                        ref _lastMalformedTicks, ref _suppressedMalformed);
+
+    /// <summary>
+    /// Reports at most once per interval, carrying a count of what was dropped
+    /// in between. The first of anything always gets through.
+    /// </summary>
+    /// <remarks>
+    /// Every caller of this is something the far end can emit without limit, and
+    /// the console is not a free place to put things: it has a line cap, and
+    /// past that cap each addition costs repeated O(n) removals with a UI
+    /// notification each, on the thread that draws the DRO. That load has been
+    /// felt as jerk in the middle of a move twice in this project already.
+    /// </remarks>
+    private void ReportThrottled(string message, ref long lastTicks, ref int suppressed)
     {
         var now = Environment.TickCount64;
-        if (now - _lastMalformedTicks < MalformedReportIntervalMs)
+        if (now - lastTicks < MalformedReportIntervalMs)
         {
-            _suppressedMalformed++;
+            suppressed++;
             return;
         }
 
-        var skipped = _suppressedMalformed;
-        _suppressedMalformed = 0;
-        _lastMalformedTicks = now;
+        var skipped = suppressed;
+        suppressed = 0;
+        lastTicks = now;
 
-        Report(skipped > 0
-            ? $"Pendant sent malformed JSON: {Truncate(line)} (and {skipped} more)"
-            : $"Pendant sent malformed JSON: {Truncate(line)}");
+        Report(skipped > 0 ? $"{message} (and {skipped} more)" : message);
     }
 
     private void ClearPendingJog()
