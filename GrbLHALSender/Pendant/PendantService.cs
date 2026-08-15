@@ -131,6 +131,26 @@ public class PendantService : IDisposable
     private int _jogArrivals;
     private int _longGaps;
 
+    // What was actually asked of the controller during the same burst, which is
+    // a different question from how the movement arrived.
+    //
+    // Feed spread tests whether the blocks are asking for a steady velocity or a
+    // wobbling one. The pendant sets its feed from how fast the wheel is being
+    // turned, deliberately, so consecutive blocks can each carry a different F -
+    // and a planner given a changing target has to accelerate and decelerate
+    // between them rather than chaining them at speed.
+    //
+    // Planner depth is the controller's own answer to whether it ran dry. It is
+    // free blocks, so high means empty: if the minimum stays high through a
+    // burst, nothing was ever queued deep enough to chain and the machine is
+    // decelerating at the end of every block it gets. Zero means the buffer
+    // report is switched off in $10 and the number is unavailable.
+    private int _dispatches;
+    private double _feedMin;
+    private double _feedMax;
+    private int _plannerFreeMin;
+    private int _plannerFreeMax;
+
     public event EventHandler<bool>? PendantConnectionChanged;
     public event EventHandler<string>? PendantStatusMessage;
 
@@ -898,6 +918,8 @@ public class PendantService : IDisposable
                 // buffer is the same pipeline the pendant works to keep
                 // supplied. Three decimals is exact for the finest step
                 // the pendant offers.
+                RecordDispatch(feed);
+
                 _mainViewModel.SendPendantJog(
                     $"$J=G91G21{axis}{distance.ToInvariantString("0.###")}F{feed.ToInvariantString("0.#")}",
                     _config.EchoJogsToConsole);
@@ -1239,6 +1261,11 @@ public class PendantService : IDisposable
             if (_jogArrivals == 0)
             {
                 _burstStartTicks = now;
+                _dispatches = 0;
+                _feedMin = double.MaxValue;
+                _feedMax = 0;
+                _plannerFreeMin = int.MaxValue;
+                _plannerFreeMax = 0;
             }
             else
             {
@@ -1253,15 +1280,38 @@ public class PendantService : IDisposable
     }
 
     /// <summary>
-    /// Summarises how a burst of pendant movement arrived, once the wheel has
-    /// stopped. One line per burst, not per message: the per-message form of
-    /// this already exists as EchoJogsToConsole and is documented there as
-    /// filling the console within seconds of a traverse.
+    /// Records what one dispatched block asked the controller for, and how deep
+    /// the controller's planner was when it was asked.
+    /// </summary>
+    private void RecordDispatch(double feed)
+    {
+        // Sampled at dispatch rather than on a timer, so the depth is the one
+        // the controller had when this block reached it.
+        var free = _machineState.PlannerBlocksFree;
+
+        lock (_arrivalLock)
+        {
+            _dispatches++;
+            if (feed < _feedMin) _feedMin = feed;
+            if (feed > _feedMax) _feedMax = feed;
+
+            if (free <= 0) return;              // buffer report off in $10
+            if (free < _plannerFreeMin) _plannerFreeMin = free;
+            if (free > _plannerFreeMax) _plannerFreeMax = free;
+        }
+    }
+
+    /// <summary>
+    /// Summarises a burst of pendant movement once the wheel has stopped: how it
+    /// arrived, and what was made of it. One pair of lines per burst, not per
+    /// message - the per-message form already exists as EchoJogsToConsole and is
+    /// documented there as filling the console within seconds of a traverse.
     /// </summary>
     private void ReportJogBurstIfQuiet()
     {
-        int arrivals, longGaps;
+        int arrivals, longGaps, dispatches, freeMin, freeMax;
         long worst, span;
+        double feedMin, feedMax;
 
         lock (_arrivalLock)
         {
@@ -1272,6 +1322,11 @@ public class PendantService : IDisposable
             longGaps = _longGaps;
             worst = _worstGapMs;
             span = _lastJogArrivalTicks - _burstStartTicks;
+            dispatches = _dispatches;
+            feedMin = _feedMin;
+            feedMax = _feedMax;
+            freeMin = _plannerFreeMin;
+            freeMax = _plannerFreeMax;
 
             _jogArrivals = 0;
             _longGaps = 0;
@@ -1285,6 +1340,16 @@ public class PendantService : IDisposable
         Report($"Pendant jog stream: {arrivals} messages over {span / 1000.0:0.0} s, " +
                $"average {average:0} ms apart, worst gap {worst} ms, " +
                $"{longGaps} over {JogGapThresholdMs} ms.");
+
+        if (dispatches == 0) return;
+
+        var planner = freeMax > 0
+            ? $"planner free {freeMin}-{freeMax}"
+            : "planner depth unavailable ($10 buffer report off)";
+
+        Report($"Pendant jog dispatch: {dispatches} blocks, " +
+               $"feed {feedMin.ToInvariantString("0")}-{feedMax.ToInvariantString("0")} mm/min, " +
+               $"{planner}.");
     }
 
     private void ClearPendingJog()
