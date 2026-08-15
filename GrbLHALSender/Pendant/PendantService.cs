@@ -137,6 +137,21 @@ public class PendantService : IDisposable
     private const int RateMinSpanMs = 150;
     private const int RateMinSamples = 3;
 
+    // A shorter window, taken alongside the long one, with the faster of the two
+    // winning.
+    //
+    // A trailing average lags a hand that is speeding up: while the wheel
+    // accelerates the long window still holds the slow start of the ramp, so it
+    // reports a rate below the one being turned now, the ceiling comes down on
+    // a request that was honest, and the machine dips before catching up. Felt
+    // as a stumble part way into every acceleration.
+    //
+    // Taking the higher of the two is safe because this is only ever a ceiling.
+    // Too high simply defers to what the pendant asked for, which is where this
+    // started; too low invents a stall that nothing asked for.
+    private const int RateRecentMs = 200;
+    private const int RateRecentMinSpanMs = 100;
+
     // Commanded a little above the measured rate on purpose. Exactly at it, any
     // jitter leaves the machine behind and the shortfall accumulates as queued
     // motion - which is felt as the axis running on after the wheel stops.
@@ -1404,10 +1419,31 @@ public class PendantService : IDisposable
         if (span < RateMinSpanMs) return 0;
 
         var total = 0.0;
-        foreach (var (_, moved) in _recentMotion) total += moved;
-        if (total <= 0) return 0;
+        var recent = 0.0;
+        var recentOldest = now;
 
-        return total / span * 60000.0 * RateHeadroom;
+        foreach (var (tick, moved) in _recentMotion)
+        {
+            total += moved;
+            if (now - tick > RateRecentMs) continue;
+            recent += moved;
+            if (tick < recentOldest) recentOldest = tick;
+        }
+
+        if (total <= 0) return 0;
+        var rate = total / span;
+
+        // Only once the short window covers enough time to mean anything. One
+        // block spanning a few milliseconds would read as an enormous rate and
+        // lift the ceiling out of the way entirely.
+        var recentSpan = now - recentOldest;
+        if (recent > 0 && recentSpan >= RateRecentMinSpanMs)
+        {
+            var recentRate = recent / recentSpan;
+            if (recentRate > rate) rate = recentRate;
+        }
+
+        return rate * 60000.0 * RateHeadroom;
     }
 
     private void RecordDispatch(double feed, double raw)
