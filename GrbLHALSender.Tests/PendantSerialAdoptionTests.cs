@@ -31,28 +31,46 @@ public class PendantSerialAdoptionTests
         Assert.True(PendantService.ShouldAdoptSerial("hello", false, true));
     }
 
-    [Theory]
-    [InlineData("ping")]
-    [InlineData("jog")]
-    [InlineData("btn")]
-    [InlineData("mode")]
-    public void AnyPendantMessage_ClaimsAnIdleMachine(string type)
+    [Fact]
+    public void Ping_ClaimsAnIdleMachine()
     {
-        // The regression. A pendant paired before the sender started sends no
-        // further hello, so its ping - every three seconds - has to be enough to
-        // be noticed. Without this the pendant is invisible until someone
-        // restarts it, and nothing on either screen says why.
-        Assert.True(PendantService.ShouldAdoptSerial(type, false, false));
+        // The regression this rule was widened for. A pendant paired before the
+        // sender started sends no further hello, so its ping - every three
+        // seconds while its queue is empty - has to be enough to be noticed.
+        // Without this the pendant is invisible until someone restarts it, and
+        // nothing on either screen says why.
+        Assert.True(PendantService.ShouldAdoptSerial("ping", false, false));
+    }
+
+    [Fact]
+    public void Ping_LeavesABusyMachineAlone()
+    {
+        // Only a hello may take the machine from whoever holds it. A ping from
+        // a pendant that was superseded must not claim it back, or two
+        // handhelds trade an axis between them.
+        Assert.False(PendantService.ShouldAdoptSerial("ping", false, true));
     }
 
     [Theory]
-    [InlineData("ping")]
     [InlineData("jog")]
-    public void AnyPendantMessage_LeavesABusyMachineAlone(string type)
+    [InlineData("btn")]
+    [InlineData("zero")]
+    [InlineData("probe")]
+    [InlineData("mode")]
+    [InlineData("jog_cancel")]
+    public void AnInstruction_NeverClaimsTheMachine(string type)
     {
-        // Only a hello may take the machine from whoever holds it. A stray jog
-        // from a pendant that was superseded must not claim it back, or two
-        // handhelds trade an axis between them.
+        // The message that adopts is also the first message acted on. Letting a
+        // jog adopt makes the act of noticing a pendant into a movement of the
+        // machine - and the jog that does it is the wheel being knocked while
+        // the handheld is picked up, which is how anyone lifts a thing with a
+        // wheel on it. This was found the hard way: an encoder bumped on pickup
+        // jumped the machine the moment the sender started.
+        //
+        // btn, zero and probe are barred by the same argument. Cycle start, a
+        // rewritten datum and a probing cycle are all worse ways to discover
+        // that a pendant exists.
+        Assert.False(PendantService.ShouldAdoptSerial(type, false, false));
         Assert.False(PendantService.ShouldAdoptSerial(type, false, true));
     }
 
@@ -69,6 +87,16 @@ public class PendantSerialAdoptionTests
         // refused here too rather than only by the caller filtering first.
         Assert.False(PendantService.ShouldAdoptSerial(type, false, false));
         Assert.False(PendantService.ShouldAdoptSerial(type, false, true));
+    }
+
+    [Fact]
+    public void AJogIsStillActedOnOnceThePendantIsDriving()
+    {
+        // The bar is on jogs *claiming* the machine, not on jogs working. Once a
+        // hello or a ping has adopted the channel, everything it sends is live -
+        // which is the whole point of the pendant.
+        Assert.False(PendantService.ShouldAdoptSerial("jog", true, true));
+        Assert.True(PendantService.ShouldAdoptSerial("ping", false, false));
     }
 
     [Theory]

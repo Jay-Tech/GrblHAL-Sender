@@ -337,6 +337,7 @@ public class PendantService : IDisposable
     {
         var buffer = new byte[512];
         var pending = new StringBuilder();
+        var synced = false;
         string? lastFailure = null;
 
         while (!token.IsCancellationRequested)
@@ -355,7 +356,17 @@ public class PendantService : IDisposable
                 };
                 port.Open();
 
+                // Anything buffered between the open and here is dropped. This
+                // is cheap insurance rather than a fix for anything observed -
+                // measured on a receiver sending steadily into a closed port,
+                // the first read after opening returns one line, not the
+                // backlog, so the driver does not appear to hold anything for a
+                // closed handle. Kept because the cost is nothing and the
+                // alternative is trusting that on every platform.
+                port.DiscardInBuffer();
+
                 pending.Clear();
+                synced = false;
                 lastFailure = null;
                 channel = new SerialPendantChannel(port);
                 Report($"Pendant receiver open on {portName}, waiting for a pendant.");
@@ -368,6 +379,28 @@ public class PendantService : IDisposable
                     if (read <= 0) continue;
 
                     pending.Append(Encoding.UTF8.GetString(buffer, 0, read));
+
+                    // Discard everything up to the first line break, once per
+                    // port.
+                    //
+                    // The receiver writes continuously and this end opens
+                    // whenever the application happens to start, so the first
+                    // bytes read are usually the tail of a message whose start
+                    // nobody saw. That tail is not harmless: it arrives
+                    // terminated, so it looks like a whole line, and it reached
+                    // the console as "malformed JSON" - the readable version of
+                    // the failure. The unreadable version is a tail that still
+                    // parses, which for a jog is a real number of detents with
+                    // the sign or magnitude of whatever survived.
+                    if (!synced)
+                    {
+                        var text = pending.ToString();
+                        var firstBreak = text.IndexOf('\n');
+                        pending.Clear();
+                        if (firstBreak < 0) continue;      // still mid-message
+                        pending.Append(text[(firstBreak + 1)..]);
+                        synced = true;
+                    }
 
                     foreach (var line in TakeLines(pending))
                         ReceiveFromSerial(line, channel);
@@ -476,14 +509,35 @@ public class PendantService : IDisposable
     /// Notes are refused explicitly rather than by relying on the caller having
     /// filtered them, because "the receiver is plugged in" reading as "a pendant
     /// is connected" is exactly the confusion this whole rule exists to prevent.
+    ///
+    /// Only a hello or a ping may do the claiming, and that is a safety rule
+    /// rather than a tidiness one. Whatever message adopts is also the first
+    /// message acted on, so letting a jog adopt means the act of noticing a
+    /// pendant is itself a movement of the machine - and the jog that does it is
+    /// the wheel being knocked while the handheld is picked up, which is not an
+    /// unlucky case but the ordinary way of lifting a thing with a wheel on it.
+    /// The same argument bars btn, zero and probe: cycle start, a rewritten
+    /// datum and a probing cycle are all worse ways to discover a pendant.
+    ///
+    /// A hello and a ping are the two that carry no instruction, and the ping is
+    /// what makes this enough on its own: the firmware sends one every three
+    /// seconds whenever its queue is empty. So an already-paired pendant is
+    /// picked up within three seconds of going quiet, and never mid-motion -
+    /// while it is being jogged the queue stays busy and the ping waits, which
+    /// is the right moment to take the machine anyway.
     /// </remarks>
     internal static bool ShouldAdoptSerial(string messageType, bool alreadyActive,
                                            bool anyPendantActive)
     {
         if (alreadyActive) return false;
-        if (messageType.StartsWith("rx_", StringComparison.Ordinal)) return false;
 
-        return messageType == "hello" || !anyPendantActive;
+        // A hello is a pendant announcing itself and takes the machine from
+        // whoever holds it. A ping only fills the gap this rule exists for, so
+        // it claims an idle machine and never an occupied one.
+        if (messageType == "hello") return true;
+        if (messageType == "ping") return !anyPendantActive;
+
+        return false;
     }
 
     /// <summary>
