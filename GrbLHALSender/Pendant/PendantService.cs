@@ -1500,6 +1500,24 @@ public class PendantService : IDisposable
             _worstGapMs = 0;
         }
 
+        // The wheel has stopped, so the next burst starts from whatever it then
+        // asks for rather than from where this one left off.
+        //
+        // Carrying the average across a pause commanded a feed nobody asked
+        // for: stop at 8000, start again gently at 900, and the first blocks go
+        // out near 8000 while the average decays. The console showed it as a
+        // commanded range above the requested one, which cannot otherwise
+        // happen - the ceiling only ever lowers. On the machine it is a burst
+        // that sprints and then settles, which is the wrong way round.
+        //
+        // It also lands in the one window the arrival-rate ceiling cannot
+        // cover, since three samples of history do not exist yet.
+        lock (_jogLock)
+        {
+            _smoothedFeed = 0;
+            _rawFeed = 0;
+        }
+
         // A nudge of the wheel says nothing about steadiness.
         if (arrivals < 10) return;
 
