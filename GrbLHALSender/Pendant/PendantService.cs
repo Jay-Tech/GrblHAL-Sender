@@ -112,6 +112,18 @@ public class PendantService : IDisposable
     private double _rawFeed;
     private double _smoothedFeed;
 
+    // How many pendant messages the pending block is made of, and how far apart
+    // they have been arriving. Their product is how long the movement in that
+    // block took to happen - which is the only honest denominator for the rate
+    // it should be travelled at.
+    //
+    // Time since the last dispatch is not that denominator, and using it was a
+    // real bug: it counts the idle between one turn of the wheel and the next,
+    // so a nudge after a pause divided a small distance by a long silence and
+    // commanded single-digit feeds.
+    private int _pendingMessages;
+    private double _arrivalIntervalMs;
+
     // How steadily jog messages are arriving, which is the one thing this end
     // can measure about the link without touching either board.
     //
@@ -778,6 +790,7 @@ public class PendantService : IDisposable
                 _pendingDistance = 0;
             }
             _pendingDistance += distance;
+            _pendingMessages++;
             if (requested > 0)
             {
                 _pendingFeed = requested;
@@ -843,18 +856,17 @@ public class PendantService : IDisposable
                 if (sinceDispatch.ElapsedMilliseconds < _config.JogDispatchIntervalMs)
                     continue;
 
-                // How long this block's movement took to accumulate. Captured
-                // before the restart, because it is the denominator of the rate
-                // that movement is actually arriving at.
-                var accumulatedMs = sinceDispatch.ElapsedMilliseconds;
                 sinceDispatch.Restart();
 
                 string? axis;
                 double distance, requested, raw;
+                int messages;
                 lock (_jogLock)
                 {
                     axis = _pendingAxis;
                     distance = _pendingDistance;
+                    messages = _pendingMessages;
+                    _pendingMessages = 0;
                     raw = _rawFeed;
                     requested = _config.SmoothJogFeed && _smoothedFeed > 0
                         ? _smoothedFeed
@@ -940,9 +952,18 @@ public class PendantService : IDisposable
                 // only make it arrive early and stand still until the next one.
                 // That stall is the stumble, and with the planner empty the
                 // controller has to decelerate into every one of them.
-                if (_config.MatchFeedToArrivalRate && accumulatedMs > 0)
+                // Each pendant message carries one tick's worth of wheel, so the
+                // movement in this block took roughly that many ticks to happen.
+                // Measuring the cadence rather than assuming 20 ms keeps this
+                // right if the pendant's rate ever changes.
+                var cadence = _arrivalIntervalMs > 0
+                    ? _arrivalIntervalMs
+                    : Math.Max(_config.JogDispatchIntervalMs, 1);
+                var elapsedMs = Math.Max(messages, 1) * cadence;
+
+                if (_config.MatchFeedToArrivalRate && elapsedMs > 0)
                 {
-                    var arriving = Math.Abs(distance) / accumulatedMs * 60000.0;
+                    var arriving = Math.Abs(distance) / elapsedMs * 60000.0;
                     if (arriving > 0 && feed > arriving) feed = arriving;
                 }
 
@@ -1313,6 +1334,14 @@ public class PendantService : IDisposable
                 var gap = now - _lastJogArrivalTicks;
                 if (gap > _worstGapMs) _worstGapMs = gap;
                 if (gap > JogGapThresholdMs) _longGaps++;
+
+                // Only ordinary gaps shape the cadence. A stall is the thing
+                // being measured elsewhere; folding it in here would stretch
+                // the estimate and slow the machine for the rest of the burst.
+                if (gap > 0 && gap <= JogGapThresholdMs)
+                    _arrivalIntervalMs = _arrivalIntervalMs <= 0
+                        ? gap
+                        : _arrivalIntervalMs + (gap - _arrivalIntervalMs) * 0.2;
             }
 
             _lastJogArrivalTicks = now;
