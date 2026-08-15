@@ -109,6 +109,8 @@ public class PendantService : IDisposable
     private string? _pendingAxis;
     private double _pendingDistance;
     private double _pendingFeed;
+    private double _rawFeed;
+    private double _smoothedFeed;
 
     // How steadily jog messages are arriving, which is the one thing this end
     // can measure about the link without touching either board.
@@ -150,6 +152,8 @@ public class PendantService : IDisposable
     private double _feedMax;
     private int _plannerFreeMin;
     private int _plannerFreeMax;
+    private double _rawFeedMin;
+    private double _rawFeedMax;
 
     public event EventHandler<bool>? PendantConnectionChanged;
     public event EventHandler<string>? PendantStatusMessage;
@@ -774,7 +778,21 @@ public class PendantService : IDisposable
                 _pendingDistance = 0;
             }
             _pendingDistance += distance;
-            if (requested > 0) _pendingFeed = requested;
+            if (requested > 0)
+            {
+                _pendingFeed = requested;
+                _rawFeed = requested;
+
+                // Smoothed as the figures arrive rather than at dispatch, so the
+                // average is over what the wheel did and not over which of those
+                // messages happened to land on a dispatch tick.
+                if (_smoothedFeed <= 0) _smoothedFeed = requested;
+                else
+                {
+                    var alpha = Math.Clamp(_config.JogFeedSmoothing, 0.01, 1.0);
+                    _smoothedFeed += (requested - _smoothedFeed) * alpha;
+                }
+            }
         }
     }
 
@@ -827,12 +845,15 @@ public class PendantService : IDisposable
                 sinceDispatch.Restart();
 
                 string? axis;
-                double distance, requested;
+                double distance, requested, raw;
                 lock (_jogLock)
                 {
                     axis = _pendingAxis;
                     distance = _pendingDistance;
-                    requested = _pendingFeed;
+                    raw = _rawFeed;
+                    requested = _config.SmoothJogFeed && _smoothedFeed > 0
+                        ? _smoothedFeed
+                        : _pendingFeed;
                     _pendingDistance = 0;
                 }
 
@@ -918,7 +939,7 @@ public class PendantService : IDisposable
                 // buffer is the same pipeline the pendant works to keep
                 // supplied. Three decimals is exact for the finest step
                 // the pendant offers.
-                RecordDispatch(feed);
+                RecordDispatch(feed, raw);
 
                 _mainViewModel.SendPendantJog(
                     $"$J=G91G21{axis}{distance.ToInvariantString("0.###")}F{feed.ToInvariantString("0.#")}",
@@ -1264,6 +1285,8 @@ public class PendantService : IDisposable
                 _dispatches = 0;
                 _feedMin = double.MaxValue;
                 _feedMax = 0;
+                _rawFeedMin = double.MaxValue;
+                _rawFeedMax = 0;
                 _plannerFreeMin = int.MaxValue;
                 _plannerFreeMax = 0;
             }
@@ -1283,7 +1306,7 @@ public class PendantService : IDisposable
     /// Records what one dispatched block asked the controller for, and how deep
     /// the controller's planner was when it was asked.
     /// </summary>
-    private void RecordDispatch(double feed)
+    private void RecordDispatch(double feed, double raw)
     {
         // Sampled at dispatch rather than on a timer, so the depth is the one
         // the controller had when this block reached it.
@@ -1294,6 +1317,14 @@ public class PendantService : IDisposable
             _dispatches++;
             if (feed < _feedMin) _feedMin = feed;
             if (feed > _feedMax) _feedMax = feed;
+
+            // Kept beside the commanded figure so smoothing can be judged from
+            // the console: same wheel, two ranges, one of them narrower.
+            if (raw > 0)
+            {
+                if (raw < _rawFeedMin) _rawFeedMin = raw;
+                if (raw > _rawFeedMax) _rawFeedMax = raw;
+            }
 
             if (free <= 0) return;              // buffer report off in $10
             if (free < _plannerFreeMin) _plannerFreeMin = free;
@@ -1311,7 +1342,7 @@ public class PendantService : IDisposable
     {
         int arrivals, longGaps, dispatches, freeMin, freeMax;
         long worst, span;
-        double feedMin, feedMax;
+        double feedMin, feedMax, rawMin, rawMax;
 
         lock (_arrivalLock)
         {
@@ -1325,6 +1356,8 @@ public class PendantService : IDisposable
             dispatches = _dispatches;
             feedMin = _feedMin;
             feedMax = _feedMax;
+            rawMin = _rawFeedMin;
+            rawMax = _rawFeedMax;
             freeMin = _plannerFreeMin;
             freeMax = _plannerFreeMax;
 
@@ -1347,9 +1380,13 @@ public class PendantService : IDisposable
             ? $"planner free {freeMin}-{freeMax}"
             : "planner depth unavailable ($10 buffer report off)";
 
+        var asked = _config.SmoothJogFeed && rawMax > 0
+            ? $" (pendant asked {rawMin.ToInvariantString("0")}-{rawMax.ToInvariantString("0")})"
+            : string.Empty;
+
         Report($"Pendant jog dispatch: {dispatches} blocks, " +
-               $"feed {feedMin.ToInvariantString("0")}-{feedMax.ToInvariantString("0")} mm/min, " +
-               $"{planner}.");
+               $"feed {feedMin.ToInvariantString("0")}-{feedMax.ToInvariantString("0")} mm/min" +
+               $"{asked}, {planner}.");
     }
 
     private void ClearPendingJog()

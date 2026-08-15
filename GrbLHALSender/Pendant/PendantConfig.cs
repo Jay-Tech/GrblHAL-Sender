@@ -109,6 +109,38 @@ public class PendantConfig
     public int ClientTimeoutSeconds { get; set; } = 15;
 
     /// <summary>
+    /// Smooth the feed rate commanded to the controller instead of passing the
+    /// pendant's instantaneous figure straight through.
+    ///
+    /// The pendant derives feed from detents per tick, and at a slow hand that
+    /// estimate has almost no resolution: at 0.1 mm per detent and a 20 ms tick,
+    /// one detent is about 300 mm/min and two is about 600, so the number
+    /// quantises into large steps. Passed through, consecutive blocks then carry
+    /// feeds differing several-fold, and grblHAL plans the junction between two
+    /// blocks from the lower of them - so it decelerates hard at every one.
+    /// Measured on a slow jog: feed 60-551 mm/min across a burst, with the
+    /// planner never holding more than 11 blocks of 128.
+    ///
+    /// Smoothing changes only the rate, never the distance. Each block still
+    /// carries exactly the movement the wheel produced, so the axis finishes in
+    /// the same place either way - what changes is that neighbouring blocks
+    /// share a feed the planner can chain instead of stepping between them.
+    ///
+    /// Turn it off to compare: the jog dispatch line reports the commanded feed
+    /// range beside the range the pendant actually asked for, so the effect is
+    /// visible in the console rather than only in the hand.
+    /// </summary>
+    public bool SmoothJogFeed { get; set; } = true;
+
+    /// <summary>
+    /// How strongly each new feed figure pulls the smoothed value, 0 to 1.
+    /// Around a quarter settles in roughly four messages - near a tenth of a
+    /// second at the pendant's tick, which is short enough to follow a real
+    /// change of hand speed and long enough to lose the per-tick quantisation.
+    /// </summary>
+    public double JogFeedSmoothing { get; set; } = 0.25;
+
+    /// <summary>
     /// Echo every pendant jog command to the console.
     ///
     /// Off by default. It is useful for diagnosing pendant motion, but the
