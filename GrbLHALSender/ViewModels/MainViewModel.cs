@@ -56,6 +56,10 @@ public class MainViewModel : ViewModelBase
     private bool _connected;
     private bool _mpgActive;
     private bool _pendantConnected;
+    private string _pendantBatteryText = string.Empty;
+    private bool _pendantBatteryKnown;
+    private bool _pendantBatteryLow;
+    private bool _pendantBatteryCritical;
     private bool _alarmActive;
     private int _selectedTool;
     private bool _hideToolChangeList;
@@ -246,6 +250,67 @@ public class MainViewModel : ViewModelBase
     {
         get => _pendantConnected;
         private set => this.RaiseAndSetIfChanged(ref _pendantConnected, value);
+    }
+
+    /// <summary>
+    /// The handheld's charge as text - "81%", or "81% +" while charging.
+    ///
+    /// Empty when there is nothing to show: no pendant, or a pendant that has
+    /// said it cannot vouch for a reading. Empty rather than a placeholder,
+    /// because the indicator beside it already says whether a pendant is there
+    /// at all, and a second control saying "unknown" adds a row of furniture
+    /// to a panel that is mostly machine state.
+    /// </summary>
+    public string PendantBatteryText
+    {
+        get => _pendantBatteryText;
+        private set => this.RaiseAndSetIfChanged(ref _pendantBatteryText, value);
+    }
+
+    public bool PendantBatteryKnown
+    {
+        get => _pendantBatteryKnown;
+        private set => this.RaiseAndSetIfChanged(ref _pendantBatteryKnown, value);
+    }
+
+    /// <summary>
+    /// Low and critical as separate flags rather than one level, so the view
+    /// can pick a brush with an IsVisible binding. This codebase has no value
+    /// converters and no brushes on view models, and one battery indicator is
+    /// a poor reason to introduce either.
+    /// </summary>
+    public bool PendantBatteryLow
+    {
+        get => _pendantBatteryLow;
+        private set => this.RaiseAndSetIfChanged(ref _pendantBatteryLow, value);
+    }
+
+    public bool PendantBatteryCritical
+    {
+        get => _pendantBatteryCritical;
+        private set => this.RaiseAndSetIfChanged(ref _pendantBatteryCritical, value);
+    }
+
+    private void UpdatePendantBattery()
+    {
+        var percent = _pendantService.PendantBatteryPercent;
+        var charging = _pendantService.PendantBatteryCharging;
+
+        if (!_pendantService.IsPendantConnected || percent is null)
+        {
+            PendantBatteryText = string.Empty;
+            PendantBatteryKnown = false;
+            PendantBatteryLow = false;
+            PendantBatteryCritical = false;
+            return;
+        }
+
+        PendantBatteryText = charging ? $"{percent}% +" : $"{percent}%";
+        PendantBatteryKnown = true;
+        // Charging is never a warning at any level, matching both the pendant's
+        // own panel and the message the service logs.
+        PendantBatteryCritical = !charging && percent <= 10;
+        PendantBatteryLow = !charging && percent is <= 20 and > 10;
     }
     public bool HideToolChangeList
     {
@@ -665,7 +730,19 @@ public class MainViewModel : ViewModelBase
             Dispatcher.UIThread.Post(() => ConsoleOutput.Add($"[Pendant] {msg}"));
         // Raised from the listener task, so it has to cross to the UI thread.
         _pendantService.PendantConnectionChanged += (_, connected) =>
-            Dispatcher.UIThread.Post(() => PendantConnected = connected);
+            Dispatcher.UIThread.Post(() =>
+            {
+                PendantConnected = connected;
+                // A pendant that has gone leaves its last charge on screen
+                // otherwise, which ages into a lie - and the number it froze at
+                // is the one from just before it went quiet, so it reads
+                // healthiest exactly when it is least true.
+                if (!connected) UpdatePendantBattery();
+            });
+        // Raised from whichever loop is reading the pendant, so this crosses to
+        // the UI thread like the two above it.
+        _pendantService.PendantBatteryChanged += (_, _) =>
+            Dispatcher.UIThread.Post(UpdatePendantBattery);
         _pendantService.Initialize(_config.PendantConfig);
 
         updateCheckService.StatusMessage += (_, msg) =>

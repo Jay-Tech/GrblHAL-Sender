@@ -204,10 +204,24 @@ public class PendantService : IDisposable
 
     public event EventHandler<bool>? PendantConnectionChanged;
     public event EventHandler<string>? PendantStatusMessage;
+    public event EventHandler? PendantBatteryChanged;
 
     public bool IsPendantConnected { get; private set; }
     public string? PendantAxis { get; private set; }
     public double PendantStep { get; private set; }
+
+    /// <summary>
+    /// The handheld's own charge, or null when it has not said or cannot
+    /// vouch for a reading.
+    ///
+    /// Null rather than zero throughout. The pendant sends the message even
+    /// when it has no answer, precisely so that "cannot say" is distinguishable
+    /// from "has gone quiet" - and a zero here would be shown as a flat battery
+    /// on the one screen the operator is actually watching during a job.
+    /// </summary>
+    public int? PendantBatteryPercent { get; private set; }
+    public double? PendantBatteryVolts { get; private set; }
+    public bool PendantBatteryCharging { get; private set; }
 
     public PendantService(ConfigManager configManager, MachineStateService machineState)
     {
@@ -794,7 +808,77 @@ public class PendantService : IDisposable
             case "ping":
                 channel.WriteLine($"{{\"t\":\"pong\",\"seq\":{GetDouble(root, "seq", 0):0}}}");
                 break;
+
+            case "battery":
+                HandleBattery(root);
+                break;
         }
+    }
+
+    // The same thresholds the pendant's own panel uses. Deliberately shared
+    // rather than tuned separately: two screens disagreeing about when the
+    // battery is low is worse than either number being slightly off.
+    private const int BatteryWarnPercent = 20;
+    private const int BatteryCriticalPercent = 10;
+
+    // What was last said out loud. The pendant reports every ten seconds, and
+    // a warning repeated at that rate for the rest of a shift is one the
+    // operator stops reading - so this speaks only when the level changes.
+    private int _batteryWarningLevel;
+
+    private void HandleBattery(JsonElement root)
+    {
+        var charging = root.TryGetProperty("chg", out var chg) &&
+                       chg.ValueKind == JsonValueKind.True;
+
+        // Absent rather than zero when the pendant has no answer, so the
+        // distinction it went to the trouble of sending survives to the UI.
+        // Read through GetDouble and cast, because a value that arrives as
+        // 81.0 rather than 81 would make GetInt32 throw and take the message
+        // handler with it.
+        int? percent = root.TryGetProperty("pct", out var pct) &&
+                       pct.ValueKind == JsonValueKind.Number
+            ? (int)pct.GetDouble()
+            : null;
+        double? volts = root.TryGetProperty("v", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+            ? v.GetDouble()
+            : null;
+
+        PendantBatteryPercent = percent;
+        PendantBatteryVolts = volts;
+        PendantBatteryCharging = charging;
+        PendantBatteryChanged?.Invoke(this, EventArgs.Empty);
+
+        // A pendant on charge is never a warning, at any level - the same rule
+        // its own panel follows. Warning about a battery that is actively
+        // filling teaches the operator to ignore the one that matters.
+        var level = 0;
+        if (!charging && percent.HasValue)
+        {
+            if (percent.Value <= BatteryCriticalPercent) level = 2;
+            else if (percent.Value <= BatteryWarnPercent) level = 1;
+        }
+
+        if (level == _batteryWarningLevel) return;
+        var previous = _batteryWarningLevel;
+        _batteryWarningLevel = level;
+
+        var reading = percent.HasValue ? $"{percent.Value}%" : "unknown";
+        var detail = volts.HasValue
+            ? $"{reading} ({volts.Value.ToInvariantString("0.00")} V)"
+            : reading;
+
+        Report(level switch
+        {
+            2 => $"Pendant battery critical: {detail}. Charge it now - a " +
+                 "handheld that dies mid-jog leaves the machine where it stood.",
+            1 => $"Pendant battery low: {detail}.",
+            _ => previous > 0
+                ? $"Pendant battery back to {detail}" +
+                  (charging ? " and charging." : ".")
+                : $"Pendant battery {detail}.",
+        });
     }
 
     private void HandleJog(JsonElement root)

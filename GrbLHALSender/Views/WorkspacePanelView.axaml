@@ -84,6 +84,36 @@
 									   FontSize="{DynamicResource DetailFontSize}"
 									   Foreground="{DynamicResource TextMutedBrush}"
 									   VerticalAlignment="Center"/>
+							<!-- Three copies of the same reading, one per state,
+							     rather than a converter or a brush on the view
+							     model - neither of which this project has, and
+							     one battery indicator is a poor reason to add
+							     the first of either. Only one is ever visible:
+							     the flags are mutually exclusive. -->
+							<TextBlock Text="{Binding PendantBatteryText}"
+									   FontSize="{DynamicResource DetailFontSize}"
+									   Foreground="{DynamicResource TextMutedBrush}"
+									   VerticalAlignment="Center">
+								<TextBlock.IsVisible>
+									<MultiBinding Converter="{x:Static BoolConverters.And}">
+										<Binding Path="PendantBatteryKnown"/>
+										<Binding Path="!PendantBatteryLow"/>
+										<Binding Path="!PendantBatteryCritical"/>
+									</MultiBinding>
+								</TextBlock.IsVisible>
+							</TextBlock>
+							<TextBlock Text="{Binding PendantBatteryText}"
+									   FontWeight="DemiBold"
+									   FontSize="{DynamicResource DetailFontSize}"
+									   Foreground="{DynamicResource WarnBrush}"
+									   VerticalAlignment="Center"
+									   IsVisible="{Binding PendantBatteryLow}"/>
+							<TextBlock Text="{Binding PendantBatteryText}"
+									   FontWeight="DemiBold"
+									   FontSize="{DynamicResource DetailFontSize}"
+									   Foreground="{DynamicResource AlertBrush}"
+									   VerticalAlignment="Center"
+									   IsVisible="{Binding PendantBatteryCritical}"/>
 						</StackPanel>
 					</StackPanel>
 
