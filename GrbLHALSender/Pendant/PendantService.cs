@@ -437,20 +437,53 @@ public class PendantService : IDisposable
             return;
         }
 
-        // The hello is what says a pendant is there, for the reasons in the
-        // remarks on SerialLoop. It is also what takes the machine from a
-        // network pendant, which is the same "newest wins" rule the accept
-        // applies rather than a second one.
-        //
-        // The pendant firmware sends one on every link acquisition, not only at
-        // power-on, and broadcasts one every discovery interval while unpaired -
-        // which the receiver forwards here like any other packet. So a pendant
-        // stood down for silence re-announces itself without anything being
-        // restarted.
-        if (type == "hello" && !_arbiter.IsActive(channel))
+        if (ShouldAdoptSerial(type, _arbiter.IsActive(channel), _arbiter.Active is not null))
             Adopt(channel);
 
         Deliver(root, channel);
+    }
+
+    /// <summary>
+    /// Whether a message arriving on the serial transport should hand its
+    /// channel the machine.
+    /// </summary>
+    /// <remarks>
+    /// A hello always claims it. That is a pendant announcing itself, and the
+    /// newest pendant wins whether the one before it was on WiFi or the radio.
+    ///
+    /// Anything else claims it only when nothing is driving, and that clause is
+    /// the fix for a real failure rather than a convenience. A hello is sent
+    /// when the pendant acquires a link with the *receiver*, and the receiver is
+    /// powered by the PC's USB and always on - so a pendant that paired before
+    /// the sender started sent its hello into a port nobody was reading, and no
+    /// second one is coming. It then pings and jogs forever at a sender that
+    /// ignores every message, while its own screen shows the link up, because
+    /// from the pendant's side it genuinely is: the receiver is answering.
+    ///
+    /// The network transport never had this. There the pendant connects to the
+    /// sender, so restarting the sender forces a fresh connection and a fresh
+    /// hello. Over the radio the sender is a third party that can come and go
+    /// without either end noticing, so it has to be able to join a conversation
+    /// already in progress.
+    ///
+    /// Adopting on any message is safe here because of what reaches this port.
+    /// The receiver answers the pendant over the radio, not over the wire; the
+    /// only things it writes to the PC are its own rx_ notes and packets a
+    /// pendant actually sent. So a non-rx_ line is evidence of a pendant by
+    /// construction, and an empty bench stays quiet - which is what the port
+    /// being open must not be mistaken for.
+    ///
+    /// Notes are refused explicitly rather than by relying on the caller having
+    /// filtered them, because "the receiver is plugged in" reading as "a pendant
+    /// is connected" is exactly the confusion this whole rule exists to prevent.
+    /// </remarks>
+    internal static bool ShouldAdoptSerial(string messageType, bool alreadyActive,
+                                           bool anyPendantActive)
+    {
+        if (alreadyActive) return false;
+        if (messageType.StartsWith("rx_", StringComparison.Ordinal)) return false;
+
+        return messageType == "hello" || !anyPendantActive;
     }
 
     /// <summary>
