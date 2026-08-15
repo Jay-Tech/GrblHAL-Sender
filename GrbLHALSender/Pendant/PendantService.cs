@@ -124,6 +124,26 @@ public class PendantService : IDisposable
     private int _pendingMessages;
     private double _arrivalIntervalMs;
 
+    // Distance dispatched recently, with when it went out. The rate movement is
+    // arriving at is the sum of these over the span they cover - measured on the
+    // wall clock, over many blocks, which is the only form of this that survives
+    // contact with the pendant.
+    //
+    // Per-block estimates do not: the pendant collapses several ticks into one
+    // message when it falls behind, so a block is not a fixed slice of time and
+    // counting messages misreads it. Distance and elapsed time are the two
+    // things neither end can be wrong about.
+    private const int RateWindowMs = 500;
+    private const int RateMinSpanMs = 150;
+    private const int RateMinSamples = 3;
+
+    // Commanded a little above the measured rate on purpose. Exactly at it, any
+    // jitter leaves the machine behind and the shortfall accumulates as queued
+    // motion - which is felt as the axis running on after the wheel stops.
+    private const double RateHeadroom = 1.15;
+
+    private readonly Queue<(long Tick, double Distance)> _recentMotion = new();
+
     // How steadily jog messages are arriving, which is the one thing this end
     // can measure about the link without touching either board.
     //
@@ -956,14 +976,9 @@ public class PendantService : IDisposable
                 // movement in this block took roughly that many ticks to happen.
                 // Measuring the cadence rather than assuming 20 ms keeps this
                 // right if the pendant's rate ever changes.
-                var cadence = _arrivalIntervalMs > 0
-                    ? _arrivalIntervalMs
-                    : Math.Max(_config.JogDispatchIntervalMs, 1);
-                var elapsedMs = Math.Max(messages, 1) * cadence;
-
-                if (_config.MatchFeedToArrivalRate && elapsedMs > 0)
+                if (_config.MatchFeedToArrivalRate)
                 {
-                    var arriving = Math.Abs(distance) / elapsedMs * 60000.0;
+                    var arriving = MeasureArrivalRate(Math.Abs(distance));
                     if (arriving > 0 && feed > arriving) feed = arriving;
                 }
 
@@ -1353,6 +1368,37 @@ public class PendantService : IDisposable
     /// Records what one dispatched block asked the controller for, and how deep
     /// the controller's planner was when it was asked.
     /// </summary>
+    /// <summary>
+    /// Millimetres per minute that movement is actually turning up at, or zero
+    /// while there is too little history to say.
+    /// </summary>
+    /// <remarks>
+    /// Returning zero matters as much as the number does. After a pause there is
+    /// nothing to measure, and inventing a rate from one block is what commanded
+    /// single-digit feeds and left the machine crawling through a full planner.
+    /// With no measurement the pendant's own figure stands, which is the
+    /// behaviour this had before any of it.
+    /// </remarks>
+    private double MeasureArrivalRate(double distance)
+    {
+        var now = Environment.TickCount64;
+        _recentMotion.Enqueue((now, distance));
+
+        while (_recentMotion.Count > 0 && now - _recentMotion.Peek().Tick > RateWindowMs)
+            _recentMotion.Dequeue();
+
+        if (_recentMotion.Count < RateMinSamples) return 0;
+
+        var span = now - _recentMotion.Peek().Tick;
+        if (span < RateMinSpanMs) return 0;
+
+        var total = 0.0;
+        foreach (var (_, moved) in _recentMotion) total += moved;
+        if (total <= 0) return 0;
+
+        return total / span * 60000.0 * RateHeadroom;
+    }
+
     private void RecordDispatch(double feed, double raw)
     {
         // Sampled at dispatch rather than on a timer, so the depth is the one
