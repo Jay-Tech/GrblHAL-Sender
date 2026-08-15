@@ -816,6 +816,17 @@ public class PendantService : IDisposable
                 _pendingFeed = requested;
                 _rawFeed = requested;
 
+                // Tracked as the requests arrive, not as blocks go out. Sampled
+                // at dispatch it missed everything asked between two of them,
+                // which reported a narrower range than the pendant actually
+                // asked for - and made the commanded feed look, impossibly,
+                // higher than the request it was capped from.
+                lock (_arrivalLock)
+                {
+                    if (requested < _rawFeedMin) _rawFeedMin = requested;
+                    if (requested > _rawFeedMax) _rawFeedMax = requested;
+                }
+
                 // Smoothed as the figures arrive rather than at dispatch, so the
                 // average is over what the wheel did and not over which of those
                 // messages happened to land on a dispatch tick.
@@ -1411,13 +1422,7 @@ public class PendantService : IDisposable
             if (feed < _feedMin) _feedMin = feed;
             if (feed > _feedMax) _feedMax = feed;
 
-            // Kept beside the commanded figure so smoothing can be judged from
-            // the console: same wheel, two ranges, one of them narrower.
-            if (raw > 0)
-            {
-                if (raw < _rawFeedMin) _rawFeedMin = raw;
-                if (raw > _rawFeedMax) _rawFeedMax = raw;
-            }
+
 
             if (free <= 0) return;              // buffer report off in $10
             if (free < _plannerFreeMin) _plannerFreeMin = free;
