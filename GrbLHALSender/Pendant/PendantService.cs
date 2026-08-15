@@ -110,6 +110,27 @@ public class PendantService : IDisposable
     private double _pendingDistance;
     private double _pendingFeed;
 
+    // How steadily jog messages are arriving, which is the one thing this end
+    // can measure about the link without touching either board.
+    //
+    // The pendant emits on a 20 ms tick while the wheel turns, so arrivals
+    // should be about that far apart. They are not, when the machine runs
+    // rough: a gap here is a window the sender has no motion to dispatch, the
+    // controller finishes what it holds and decelerates, and the operator feels
+    // it as a stumble. Measuring it says whether roughness is the link
+    // delivering in bursts or this end mishandling a steady stream - and the
+    // same number over TCP and over the radio compares the two transports
+    // directly.
+    private const int JogGapThresholdMs = 60;   // three missed ticks
+    private const int JogBurstQuietMs = 750;    // wheel considered stopped
+
+    private readonly object _arrivalLock = new();
+    private long _lastJogArrivalTicks;
+    private long _burstStartTicks;
+    private long _worstGapMs;
+    private int _jogArrivals;
+    private int _longGaps;
+
     public event EventHandler<bool>? PendantConnectionChanged;
     public event EventHandler<string>? PendantStatusMessage;
 
@@ -707,6 +728,10 @@ public class PendantService : IDisposable
 
     private void HandleJog(JsonElement root)
     {
+        // Timed on arrival rather than after the guards below, so the number
+        // describes the link and not what this end decided to do about it.
+        RecordJogArrival();
+
         var axis = GetString(root, "axis");
         if (string.IsNullOrEmpty(axis) || axis.Length > 1) return;
 
@@ -767,6 +792,11 @@ public class PendantService : IDisposable
                 // decelerates - while the pendant's trace shows a perfectly
                 // steady stream, because from its side nothing went wrong.
                 await Task.Delay(JogPollMs, token);
+
+                // Checked here because this loop already ticks faster than the
+                // pendant does, so a burst is noticed ending without a timer of
+                // its own.
+                ReportJogBurstIfQuiet();
 
                 lock (_jogLock)
                 {
@@ -1199,6 +1229,62 @@ public class PendantService : IDisposable
         lastTicks = now;
 
         Report(skipped > 0 ? $"{message} (and {skipped} more)" : message);
+    }
+
+    private void RecordJogArrival()
+    {
+        var now = Environment.TickCount64;
+        lock (_arrivalLock)
+        {
+            if (_jogArrivals == 0)
+            {
+                _burstStartTicks = now;
+            }
+            else
+            {
+                var gap = now - _lastJogArrivalTicks;
+                if (gap > _worstGapMs) _worstGapMs = gap;
+                if (gap > JogGapThresholdMs) _longGaps++;
+            }
+
+            _lastJogArrivalTicks = now;
+            _jogArrivals++;
+        }
+    }
+
+    /// <summary>
+    /// Summarises how a burst of pendant movement arrived, once the wheel has
+    /// stopped. One line per burst, not per message: the per-message form of
+    /// this already exists as EchoJogsToConsole and is documented there as
+    /// filling the console within seconds of a traverse.
+    /// </summary>
+    private void ReportJogBurstIfQuiet()
+    {
+        int arrivals, longGaps;
+        long worst, span;
+
+        lock (_arrivalLock)
+        {
+            if (_jogArrivals == 0) return;
+            if (Environment.TickCount64 - _lastJogArrivalTicks < JogBurstQuietMs) return;
+
+            arrivals = _jogArrivals;
+            longGaps = _longGaps;
+            worst = _worstGapMs;
+            span = _lastJogArrivalTicks - _burstStartTicks;
+
+            _jogArrivals = 0;
+            _longGaps = 0;
+            _worstGapMs = 0;
+        }
+
+        // A nudge of the wheel says nothing about steadiness.
+        if (arrivals < 10) return;
+
+        var average = span / (double)(arrivals - 1);
+        Report($"Pendant jog stream: {arrivals} messages over {span / 1000.0:0.0} s, " +
+               $"average {average:0} ms apart, worst gap {worst} ms, " +
+               $"{longGaps} over {JogGapThresholdMs} ms.");
     }
 
     private void ClearPendingJog()
