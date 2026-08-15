@@ -842,6 +842,11 @@ public class PendantService : IDisposable
                 }
                 if (sinceDispatch.ElapsedMilliseconds < _config.JogDispatchIntervalMs)
                     continue;
+
+                // How long this block's movement took to accumulate. Captured
+                // before the restart, because it is the denominator of the rate
+                // that movement is actually arriving at.
+                var accumulatedMs = sinceDispatch.ElapsedMilliseconds;
                 sinceDispatch.Restart();
 
                 string? axis;
@@ -927,6 +932,19 @@ public class PendantService : IDisposable
 
                 if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
                     feed = _config.MaxJogFeedRate;
+
+                // And never faster than the movement is turning up.
+                //
+                // Commanding above this cannot make the machine cover more
+                // ground - the distance in the block is already fixed - it can
+                // only make it arrive early and stand still until the next one.
+                // That stall is the stumble, and with the planner empty the
+                // controller has to decelerate into every one of them.
+                if (_config.MatchFeedToArrivalRate && accumulatedMs > 0)
+                {
+                    var arriving = Math.Abs(distance) / accumulatedMs * 60000.0;
+                    if (arriving > 0 && feed > arriving) feed = arriving;
+                }
 
                 // G21 is stated explicitly rather than inherited. The pendant
                 // always works in millimetres, and a jog line carries its own

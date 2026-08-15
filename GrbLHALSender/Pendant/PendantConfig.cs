@@ -141,6 +141,32 @@ public class PendantConfig
     public double JogFeedSmoothing { get; set; } = 0.25;
 
     /// <summary>
+    /// Never command a feed faster than movement is actually arriving.
+    ///
+    /// The pendant derives feed from how fast the wheel is turning, but it does
+    /// not deliver everything the wheel produces - a third of the detents were
+    /// being dropped in its own queue on a fast jog. So the controller is told
+    /// to travel at a rate for distance that never comes: it runs through what
+    /// did arrive, empties the planner and waits, thirty times a second. Seen as
+    /// F600/act0 with the planner reporting every one of its 128 blocks free.
+    ///
+    /// This end can measure the honest figure without asking anyone: the
+    /// distance accumulated since the last dispatch, over the time it took to
+    /// accumulate. That is the rate motion is genuinely arriving at, and
+    /// commanding above it cannot make the machine go faster - the distance is
+    /// what it is - it can only make it finish early and stop.
+    ///
+    /// So the commanded feed is capped there. Average speed is unchanged, since
+    /// the same distance is covered in the same time; what changes is that it is
+    /// covered continuously instead of in sprints separated by stalls.
+    ///
+    /// Only a ceiling. A slower feed than the pendant asked for is never raised,
+    /// and the distance in every block is untouched, so the axis still finishes
+    /// exactly where the wheel sent it.
+    /// </summary>
+    public bool MatchFeedToArrivalRate { get; set; } = true;
+
+    /// <summary>
     /// Echo every pendant jog command to the console.
     ///
     /// Off by default. It is useful for diagnosing pendant motion, but the
