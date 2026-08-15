@@ -81,6 +81,22 @@ public class PendantService : IDisposable
     // application restart to pick it up again.
     private const int SerialRetryMs = 2000;
 
+    // Unparseable lines are reported no more often than this, with a count of
+    // what was skipped in between.
+    //
+    // One bad line is worth seeing; a stuck far end produces thousands. A
+    // receiver that has fallen back to its MicroPython REPL echoes every status
+    // frame back as a Python error, which is thirty unparseable lines a second
+    // for as long as it lasts - and past the console's line cap every status
+    // tick pays repeated O(n) removals with a UI notification each, on the
+    // thread that draws the DRO.
+    private const int MalformedReportIntervalMs = 5000;
+    private long _lastMalformedTicks;
+    private int _suppressedMalformed;
+
+    // Said once per port session, then reset when the port is reopened.
+    private bool _reportedRepl;
+
     private readonly object _jogLock = new();
     private string? _pendingAxis;
     private double _pendingDistance;
@@ -339,6 +355,7 @@ public class PendantService : IDisposable
         var pending = new StringBuilder();
         var synced = false;
         string? lastFailure = null;
+        _reportedRepl = false;
 
         while (!token.IsCancellationRequested)
         {
@@ -437,12 +454,20 @@ public class PendantService : IDisposable
     {
         if (!TryParse(line, out var root))
         {
+            // A receiver that has stopped running its bridge is a different
+            // problem from a garbled line, and saying so once beats saying
+            // "malformed JSON" several thousand times.
+            if (LooksLikeRepl(line))
+            {
+                HandleReceiverAtRepl(channel);
+                return;
+            }
+
             // Only a complaint once a pendant is actually talking. Before the
             // hello, whatever is on this port belongs to the receiver - an ESP32
             // prints a bootloader banner at every reset - and calling that a
             // protocol error would fill the console on every replug.
-            if (_arbiter.IsActive(channel))
-                Report($"Pendant sent malformed JSON: {Truncate(line)}");
+            if (_arbiter.IsActive(channel)) ReportMalformed(line);
             return;
         }
 
@@ -475,6 +500,28 @@ public class PendantService : IDisposable
 
         Deliver(root, channel);
     }
+
+    /// <summary>
+    /// Whether this line is the receiver board's MicroPython prompt rather than
+    /// anything protocol-shaped.
+    /// </summary>
+    /// <remarks>
+    /// When the receiver's script stops - an unguarded exception in its loop is
+    /// enough - MicroPython falls back to its REPL, and that REPL is on the same
+    /// serial port this end is writing to. Status frames then arrive at an
+    /// interpreter, which echoes each one back with its prompt and evaluates it
+    /// as Python. They die on the first `false`, since JSON spells it lower case
+    /// and Python does not, and the error comes back down the wire.
+    ///
+    /// So the port fills with `>>>` and tracebacks at the status rate. Worth
+    /// naming rather than reporting as malformed JSON several thousand times:
+    /// the board cannot recover on its own, and nothing else about the symptom
+    /// says the receiver stopped running.
+    /// </remarks>
+    internal static bool LooksLikeRepl(string line) =>
+        line.StartsWith(">>>", StringComparison.Ordinal) ||
+        line.StartsWith("Traceback (most recent call last)", StringComparison.Ordinal) ||
+        line.StartsWith("File \"<stdin>\"", StringComparison.Ordinal);
 
     /// <summary>
     /// Whether a message arriving on the serial transport should hand its
@@ -1085,6 +1132,51 @@ public class PendantService : IDisposable
 
 
     // --- helpers ----------------------------------------------------------
+
+    /// <summary>
+    /// The receiver has fallen back to its MicroPython prompt. Said once per
+    /// port, and the pendant stood down so this end stops talking into it.
+    /// </summary>
+    /// <remarks>
+    /// Standing down is the point, not the reporting. While a pendant is
+    /// adopted the status loop writes ten frames a second, and with the bridge
+    /// gone those frames are going into an interpreter that echoes and
+    /// evaluates every one of them. Retiring stops that immediately rather than
+    /// waiting out the silence watchdog, and costs nothing: the far end is not
+    /// a pendant, so there is nothing to keep.
+    ///
+    /// The port stays open, so the moment the board is reset and its bridge
+    /// runs again, the pendant's next ping is adopted and this heals itself.
+    /// </remarks>
+    private void HandleReceiverAtRepl(SerialPendantChannel channel)
+    {
+        if (!_reportedRepl)
+        {
+            _reportedRepl = true;
+            Report("Receiver is sitting at its MicroPython prompt - main.py has " +
+                   "stopped, so nothing is bridging the radio. Reset the board.");
+        }
+
+        RetireIfActive(channel, "receiver stopped running its bridge");
+    }
+
+    private void ReportMalformed(string line)
+    {
+        var now = Environment.TickCount64;
+        if (now - _lastMalformedTicks < MalformedReportIntervalMs)
+        {
+            _suppressedMalformed++;
+            return;
+        }
+
+        var skipped = _suppressedMalformed;
+        _suppressedMalformed = 0;
+        _lastMalformedTicks = now;
+
+        Report(skipped > 0
+            ? $"Pendant sent malformed JSON: {Truncate(line)} (and {skipped} more)"
+            : $"Pendant sent malformed JSON: {Truncate(line)}");
+    }
 
     private void ClearPendingJog()
     {
