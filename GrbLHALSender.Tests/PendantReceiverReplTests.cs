@@ -49,7 +49,7 @@ public class PendantReceiverReplTests
 
     [Theory]
     [InlineData("{\"t\":\"ping\",\"seq\":42}")]
-    [InlineData("{\"t\":\"hello\",\"dev\":\"pico2w-pendant\",\"ver\":1}")]
+    [InlineData("{\"t\":\"hello\",\"dev\":\"wireless-pendant\",\"ver\":1}")]
     [InlineData("{\"t\":\"rx_note\",\"msg\":\"receiver up, this board is 68:EE:8F:50:B2:84\"}")]
     [InlineData("")]
     public void RealTrafficIsNotMistakenForIt(string line)
