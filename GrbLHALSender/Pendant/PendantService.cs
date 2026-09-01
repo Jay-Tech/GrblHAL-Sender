@@ -202,6 +202,29 @@ public class PendantService : IDisposable
     private double _rawFeedMin;
     private double _rawFeedMax;
 
+    // What the movement itself was made of, which is the question the two lines
+    // above cannot answer.
+    //
+    // Feed range says what was asked for and planner depth says what became of
+    // it, but both are downstream of the distance - and when the same sweep of
+    // the work surface takes four times as long as it used to, the distance is
+    // where it went. Travel over detents is what one click of the wheel is
+    // actually worth at the machine, and the step range beside it is what the
+    // pendant said it should be worth. The two disagreeing localises the loss
+    // to this end; the step alone changing localises it to the handheld.
+    //
+    // The arrival rate is recorded because the ceiling is computed from it. A
+    // commanded feed well under what the pendant asked for is not evidence of
+    // anything on its own: it is correct behaviour if the movement really is
+    // turning up that slowly, and the only way to tell is to see the rate the
+    // ceiling was taken from next to the distance it was measured over.
+    private double _burstDistance;
+    private double _burstDetents;
+    private double _stepMin;
+    private double _stepMax;
+    private double _arrivalMin;
+    private double _arrivalMax;
+
     public event EventHandler<bool>? PendantConnectionChanged;
     public event EventHandler<string>? PendantStatusMessage;
     public event EventHandler? PendantBatteryChanged;
@@ -895,6 +918,20 @@ public class PendantService : IDisposable
         var distance = detents * step;
         if (distance == 0) return;
 
+        // The step is what the pendant believes one detent is worth, and until
+        // now this end read it, multiplied by it and forgot it. It is the first
+        // number to look at when the same movement of the wheel produces less
+        // travel than it used to, because everything downstream - the block
+        // distance, the arrival rate, and the ceiling measured from it - is
+        // this figure multiplied out. A ceiling that has come down is not
+        // evidence that the ceiling is wrong.
+        lock (_arrivalLock)
+        {
+            if (step < _stepMin) _stepMin = step;
+            if (step > _stepMax) _stepMax = step;
+            _burstDetents += Math.Abs(detents);
+        }
+
         var requested = GetDouble(root, "feed", 0);
 
         // Accumulate rather than dispatching. The loop decides when to send, so
@@ -1068,9 +1105,15 @@ public class PendantService : IDisposable
                 // being turned, which is what makes the machine track the
                 // hand rather than lag it. Fall back to configuration only
                 // when it does not, and never exceed the ceiling.
+                //
+                // The last fallback is the rate the operator picked on screen,
+                // and that one is in display units while the block below states
+                // G21. See FallbackJogFeedMmPerMin.
                 var feed = requested > 0
                     ? requested
-                    : (_config.JogFeedRate > 0 ? _config.JogFeedRate : _mainViewModel.JogRate);
+                    : (_config.JogFeedRate > 0
+                        ? _config.JogFeedRate
+                        : FallbackJogFeedMmPerMin());
 
                 if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
                     feed = _config.MaxJogFeedRate;
@@ -1086,9 +1129,10 @@ public class PendantService : IDisposable
                 // movement in this block took roughly that many ticks to happen.
                 // Measuring the cadence rather than assuming 20 ms keeps this
                 // right if the pendant's rate ever changes.
+                var arriving = 0.0;
                 if (_config.MatchFeedToArrivalRate)
                 {
-                    var arriving = MeasureArrivalRate(Math.Abs(distance));
+                    arriving = MeasureArrivalRate(Math.Abs(distance));
                     if (arriving > 0 && feed > arriving) feed = arriving;
                 }
 
@@ -1103,7 +1147,7 @@ public class PendantService : IDisposable
                 // buffer is the same pipeline the pendant works to keep
                 // supplied. Three decimals is exact for the finest step
                 // the pendant offers.
-                RecordDispatch(feed, raw);
+                RecordDispatch(feed, raw, distance, arriving);
 
                 _mainViewModel.SendPendantJog(
                     $"$J=G91G21{axis}{distance.ToInvariantString("0.###")}F{feed.ToInvariantString("0.#")}",
@@ -1332,7 +1376,25 @@ public class PendantService : IDisposable
 
     private string BuildStatus()
     {
-        var positions = _machineState.WorkPositions ?? Array.Empty<double>();
+        // Millimetres, not display units. Every number in this frame is an
+        // input to something on the pendant that computes in millimetres - its
+        // step ladder, its per-step feed ceilings, its lag tracker's jump
+        // threshold - and the jog blocks that come back state G21 for the same
+        // reason. Sending what the interface happens to be showing put the one
+        // unit conversion in this application that nobody is looking at
+        // straight into the handheld's flow control.
+        //
+        // The failure was invisible from either end. With the sender in
+        // imperial a machine running at 9000 mm/min was announced as 354, the
+        // pendant read that as its drain rate and allowed one detent per 20 ms
+        // tick where the hand was producing five, and dropped the rest. Nothing
+        // reported an error: the pendant asked for its full feed, the sender
+        // measured motion genuinely arriving slowly and lowered the commanded
+        // feed to match, and both were behaving correctly on a premise that was
+        // false. It reads on the machine as a pendant that will not keep up in
+        // inches and is fine in millimetres, and it gets worse as it goes -
+        // a throttled machine reports a lower feed, which throttles it further.
+        var positions = _machineState.WorkPositionsMm ?? Array.Empty<double>();
         var builder = new StringBuilder(128);
         builder.Append("{\"t\":\"status\",\"state\":\"")
                .Append(_machineState.GrblStateString ?? "?")
@@ -1345,8 +1407,10 @@ public class PendantService : IDisposable
             builder.Append(value.ToString("0.###", CultureInfo.InvariantCulture));
         }
 
-        // The controller's actual feed, so the pendant can compare what it asked
-        // for against what the machine is doing. A commanded feed that holds
+        // The controller's actual feed in mm/min, so the pendant can compare what
+        // it asked for against what the machine is doing - and, since it caps
+        // its own detent output at this, so it can tell how fast the controller
+        // is draining what it has already been sent. A commanded feed that holds
         // steady while this collapses to zero and back is the planner running a
         // block at a time and decelerating at the end of each - which nothing on
         // the pendant side can see.
@@ -1354,9 +1418,15 @@ public class PendantService : IDisposable
         // the pendant cannot answer for itself: whether the blocks it believes
         // it has queued ahead actually reached the planner. Zero means the
         // buffer-state bit is off in $10 and the number is unavailable.
+        //
+        // "fr" is formatted invariantly rather than appended. It is a double,
+        // and StringBuilder.Append(double) uses the current culture - so on a
+        // comma-decimal machine the frame would carry {"fr":118,5}, which is
+        // not the number the pendant would read even if the JSON survived it.
+        // The overrides and the planner count are integers and cannot say it.
         builder.Append("],\"fro\":").Append(_machineState.FeedOverride)
                .Append(",\"sro\":").Append(_machineState.RpmOverride)
-               .Append(",\"fr\":").Append(_machineState.FeedRate)
+               .Append(",\"fr\":").Append(_machineState.FeedRateMmPerMin.ToInvariantString("0.###"))
                .Append(",\"bf\":").Append(_machineState.PlannerBlocksFree);
 
         // The corner a probe would use, and whether one is running. Sent so
@@ -1438,6 +1508,51 @@ public class PendantService : IDisposable
         Report(skipped > 0 ? $"{message} (and {skipped} more)" : message);
     }
 
+    /// <summary>
+    /// Millimetres per minute per inch per minute. The pendant protocol is
+    /// millimetres throughout, so anything arriving in the operator's units has
+    /// to be converted before it reaches a jog block.
+    /// </summary>
+    private const double MmPerInch = 25.4;
+
+    /// <summary>
+    /// The feed to command when the pendant asks for none, in mm/min.
+    /// </summary>
+    /// <remarks>
+    /// The pendant normally sends a feed of its own and this is not reached. It
+    /// is reached whenever that word is missing or unreadable, though - a feed
+    /// serialised as a JSON string rather than a number reads as zero here -
+    /// and until now what it fell back to was wrong in imperial.
+    ///
+    /// The number comes from the jog rate list the operator picked from, which
+    /// is built from JogSpeedMetric or JogSpeedImperial according to the Metric
+    /// UI setting, so it is in display units. The jog block states G21 and its
+    /// F word is therefore read as mm/min. In metric the two agree by accident
+    /// and nothing looks wrong; in imperial the list offers 10-300 in/min and
+    /// passing 300 straight through commands 300 mm/min, which is 11.8 in/min -
+    /// a twenty-fivefold shortfall that reads on the machine as a pendant that
+    /// crawls and stumbles in imperial while behaving in metric.
+    ///
+    /// The shortfall is felt as roughness and not just slowness, because the
+    /// distance in each block is untouched. Movement keeps arriving at the
+    /// speed of the hand while the blocks carrying it are commanded to take
+    /// twenty-five times as long, so the machine falls progressively further
+    /// behind the wheel and keeps running after it stops.
+    ///
+    /// Converted here rather than at the jog line so the millimetre contract
+    /// stays in one place, and against the configured UI units rather than the
+    /// machine's $13, since the UI setting is what chose the list.
+    /// </remarks>
+    private double FallbackJogFeedMmPerMin() =>
+        ToMmPerMin(_mainViewModel?.JogRate ?? 0,
+                   _configManager.GHalSenderConfig?.UseMetric ?? true);
+
+    /// <summary>
+    /// A feed in the operator's display units, in mm/min.
+    /// </summary>
+    internal static double ToMmPerMin(double feed, bool useMetric) =>
+        useMetric || feed <= 0 ? feed : feed * MmPerInch;
+
     private void RecordJogArrival()
     {
         var now = Environment.TickCount64;
@@ -1453,6 +1568,12 @@ public class PendantService : IDisposable
                 _rawFeedMax = 0;
                 _plannerFreeMin = int.MaxValue;
                 _plannerFreeMax = 0;
+                _burstDistance = 0;
+                _burstDetents = 0;
+                _stepMin = double.MaxValue;
+                _stepMax = 0;
+                _arrivalMin = double.MaxValue;
+                _arrivalMax = 0;
             }
             else
             {
@@ -1530,7 +1651,7 @@ public class PendantService : IDisposable
         return rate * 60000.0 * RateHeadroom;
     }
 
-    private void RecordDispatch(double feed, double raw)
+    private void RecordDispatch(double feed, double raw, double distance, double arriving)
     {
         // Sampled at dispatch rather than on a timer, so the depth is the one
         // the controller had when this block reached it.
@@ -1541,6 +1662,19 @@ public class PendantService : IDisposable
             _dispatches++;
             if (feed < _feedMin) _feedMin = feed;
             if (feed > _feedMax) _feedMax = feed;
+
+            // Distance as it goes out, so this is what the machine was actually
+            // told to travel and not what arrived and was later dropped.
+            _burstDistance += Math.Abs(distance);
+
+            // Zero means there was too little history to measure - the start of
+            // a burst - and folding that in as a rate would read as a stall
+            // that never happened.
+            if (arriving > 0)
+            {
+                if (arriving < _arrivalMin) _arrivalMin = arriving;
+                if (arriving > _arrivalMax) _arrivalMax = arriving;
+            }
 
 
 
@@ -1561,6 +1695,7 @@ public class PendantService : IDisposable
         int arrivals, longGaps, dispatches, freeMin, freeMax;
         long worst, span;
         double feedMin, feedMax, rawMin, rawMax;
+        double travel, detents, stepMin, stepMax, arriveMin, arriveMax;
 
         lock (_arrivalLock)
         {
@@ -1578,6 +1713,12 @@ public class PendantService : IDisposable
             rawMax = _rawFeedMax;
             freeMin = _plannerFreeMin;
             freeMax = _plannerFreeMax;
+            travel = _burstDistance;
+            detents = _burstDetents;
+            stepMin = _stepMin;
+            stepMax = _stepMax;
+            arriveMin = _arrivalMin;
+            arriveMax = _arrivalMax;
 
             _jogArrivals = 0;
             _longGaps = 0;
@@ -1623,6 +1764,27 @@ public class PendantService : IDisposable
         Report($"Pendant jog dispatch: {dispatches} blocks, " +
                $"feed {feedMin.ToInvariantString("0")}-{feedMax.ToInvariantString("0")} mm/min" +
                $"{asked}, {planner}.");
+
+        // The distance the feed lines above are a rate for. Reported separately
+        // because it answers a different question: those say how fast the
+        // machine was told to go, this says how much there was to go at.
+        var step = stepMax > 0
+            ? (stepMin == stepMax
+                ? $"step {stepMin.ToInvariantString("0.####")} mm"
+                : $"step {stepMin.ToInvariantString("0.####")}-{stepMax.ToInvariantString("0.####")} mm")
+            : "step not sent";
+
+        var perDetent = detents > 0
+            ? $"{(travel / detents).ToInvariantString("0.####")} mm per detent over " +
+              $"{detents.ToInvariantString("0")} detents"
+            : "no detents counted";
+
+        var arriving = arriveMax > 0
+            ? $"arriving {arriveMin.ToInvariantString("0")}-{arriveMax.ToInvariantString("0")} mm/min"
+            : "arrival rate never measured";
+
+        Report($"Pendant jog travel: {travel.ToInvariantString("0.##")} mm, " +
+               $"{perDetent}, {step}, {arriving}.");
     }
 
     private void ClearPendingJog()
