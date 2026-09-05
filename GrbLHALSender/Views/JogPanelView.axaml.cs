@@ -118,9 +118,16 @@ public partial class JogPanelView : UserControl
         }
     }
 
-    private void ToolLb_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    /// <summary>
+    /// Applies the picked tool and closes the flyout. Done here rather than through
+    /// a view-model command because the flyout content sits in a popup, outside this
+    /// control's visual tree, so a command binding would need a brittle ancestor walk.
+    /// </summary>
+    private void ToolButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        e.Handled = true;
+        if (sender is Button { DataContext: int tool } && _viewModel is not null)
+            _viewModel.SelectedTool = tool;
+
         SplitB.Flyout?.Hide();
     }
 }

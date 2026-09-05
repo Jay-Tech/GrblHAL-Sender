@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Reactive;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
 
@@ -62,7 +61,6 @@ public class MainViewModel : ViewModelBase
     private bool _pendantBatteryCritical;
     private bool _alarmActive;
     private int _selectedTool;
-    private bool _hideToolChangeList;
     private double _jogStep;
     private double _jogRate;
     private string _mdiText;
@@ -74,7 +72,6 @@ public class MainViewModel : ViewModelBase
     private string _callBackText;
     private string _tool;
     private bool _homeState;
-    private ReactiveCommand<object, Unit> _hideBoxCommand;
     private bool _tlrCommandEnabled;
     private bool _unloadToolCommandEnabled;
     private bool _atcEnabled;
@@ -312,11 +309,6 @@ public class MainViewModel : ViewModelBase
         PendantBatteryCritical = !charging && percent <= 10;
         PendantBatteryLow = !charging && percent is <= 20 and > 10;
     }
-    public bool HideToolChangeList
-    {
-        get => _hideToolChangeList;
-        set => this.RaiseAndSetIfChanged(ref _hideToolChangeList, value);
-    }
     public bool AlarmActive
     {
         get => _alarmActive;
@@ -544,7 +536,6 @@ public class MainViewModel : ViewModelBase
     public ICommand RapidOrFineCommand { get; }
     public ICommand ResetRapidCommand { get; }
     public ICommand SpindleSetSpeedCommand { get; }
-    public ICommand SetToolSelectCommand { get; }
     public ICommand SetTlrCommand { get; }
     public ICommand UnloadToolCommand { get; }
     public ICommand OpenProbeCommand { get; }
@@ -558,12 +549,6 @@ public class MainViewModel : ViewModelBase
 
     public Action? CloseConsoleAction { get; set; }
     public ICommand CloseConsoleCommand { get; }
-
-    public ReactiveCommand<object, Unit> HideBoxCommand
-    {
-        get => _hideBoxCommand;
-        set => _hideBoxCommand = value;
-    }
 
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
@@ -658,12 +643,10 @@ public class MainViewModel : ViewModelBase
         ClearConsoleCommand = ReactiveCommand.Create(ClearConsole);
         ToggleRtCommand = ReactiveCommand.Create(ToggleConsoleRt);
         WcsCommand = ReactiveCommand.Create<string>(Wcs);
-        HideBoxCommand = ReactiveCommand.Create<object>(HideToolList);
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
         SpindleCWCommand = ReactiveCommand.Create(SpindleCw);
         SpindleCCWCommand = ReactiveCommand.Create(SpindleCcw);
-        SetToolSelectCommand = ReactiveCommand.Create<int>(SetSelectedTool);
         SpindleOffCommand = ReactiveCommand.Create(SpindleOff);
         SpindleResetCommand = ReactiveCommand.Create(SpindleReset);
         SpindleIncreaseCommand = ReactiveCommand.Create(SpindleIncrease);
@@ -884,10 +867,6 @@ public class MainViewModel : ViewModelBase
         SendCommand(command);
     }
 
-    private void SetSelectedTool(int tool)
-    {
-        SelectedTool = tool;
-    }
     public string Tool
     {
         get => _tool;
@@ -1016,10 +995,6 @@ public class MainViewModel : ViewModelBase
     private void ChangeFeedRate(double feed)
     {
         JogRate = feed;
-    }
-    private void HideToolList(object obj)
-    {
-        HideToolChangeList = !Convert.ToBoolean(obj);
     }
 
     private void SetUpUiSettings()

@@ -27,15 +27,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.0.2" />
+    <PackageReference Include="Avalonia" Version="12.1.2" />
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
-    <PackageReference Include="Avalonia.Skia" Version="12.0.2" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.2" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.2" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.2" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Include="Avalonia.Themes.Simple" Version="12.0.2" />
+    <PackageReference Include="Avalonia.Themes.Simple" Version="12.1.2" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <!-- Used directly by CommunicationManager and the Job/Main view models, but never
+         declared - it arrived transitively through ReactiveUI 23. ReactiveUI 24 drops
+         DynamicData, so that free ride ends the moment ReactiveUI is upgraded. Declared
+         explicitly here, pinned to the 9.4.31 that ReactiveUI 23 already resolves, so
+         this changes nothing today and removes one landmine from that upgrade. -->
+    <PackageReference Include="DynamicData" Version="9.4.31" />
     <PackageReference Include="HarfBuzzSharp" Version="8.3.1.3" />
     <PackageReference Include="HarfBuzzSharp.NativeAssets.macOS" Version="8.3.1.3" />
     <PackageReference Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="8.3.1.3" />
@@ -44,12 +50,12 @@
     <PackageReference Include="Material.Avalonia.Dialogs" Version="3.16.1" />
     <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
-    <PackageReference Include="ReactiveUI.Avalonia" Version="12.0.1" />
+    <PackageReference Include="ReactiveUI.Avalonia" Version="12.1.1" />
     <PackageReference Include="Silk.NET.OpenGLES" Version="2.22.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
-    <PackageReference Include="SkiaSharp" Version="3.119.4-preview.1.1" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4-preview.1.1" ExcludeAssets="All" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.4-preview.1.1" />
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4" ExcludeAssets="All" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.4" />
     <PackageReference Include="System.Device.Gpio" Version="4.2.0" />
     <PackageReference Include="System.IO.Ports" Version="10.0.3" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />

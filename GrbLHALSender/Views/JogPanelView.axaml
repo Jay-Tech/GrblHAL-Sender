@@ -1,6 +1,5 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:behaviors="clr-namespace:GrbLHALSender.Behaviors"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -229,30 +228,31 @@
 					StringFormat={}Tool# {0}}"
 					HorizontalAlignment="Stretch"
 					VerticalAlignment="Stretch" Margin="5,0">
-				<Button.Flyout >
-					<Flyout  Placement="LeftEdgeAlignedBottom" ShowMode="Standard">
-						<ListBox x:Name="ToolLb" SelectionMode="Single"
-								 ItemsSource="{Binding ToolList}"
-								 SelectedItem="{Binding SelectedTool, Mode=TwoWay}"
-								 SelectionChanged="ToolLb_OnSelectionChanged"
-								 FontSize="{DynamicResource BaseFontSize}"
-								 VerticalAlignment="Stretch"
-								 behaviors:CloseMenuOnItemSelection.Command ="{Binding HideBoxCommand}"
-								 behaviors:CloseMenuOnItemSelection.CommandParameter="{Binding SelectedTool}">
-							<ListBox.ItemTemplate>
+				<!-- Tool picker. A grid of touch buttons rather than a ListBox: the ListBox
+				     drew its own selected-item chrome around every button, and eight tools
+				     stacked in one column ran the full height of the panel. The current tool
+				     already shows on the button that opens this, so no in-list selection
+				     state is needed.
+				     Picking is handled in code-behind rather than by a command: this content
+				     lives in a popup, so binding out to the view model needs an ancestor
+				     traversal that leaves the flyout's own visual tree. -->
+				<Button.Flyout>
+					<Flyout Placement="LeftEdgeAlignedBottom" ShowMode="Standard" FlyoutPresenterClasses="touchGrid">
+						<ItemsControl ItemsSource="{Binding ToolList}" Width="300">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<UniformGrid Columns="4" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
 								<DataTemplate>
-									<Button Classes="touch" Margin="0,5,0,5"
-											Name="ToolButton"
-											CornerRadius="3"
-											Content="{Binding }"
-											Width="120"
-											Command="{Binding  $parent[Grid].((viewModels:MainViewModel)DataContext).SetToolSelectCommand}"
-											CommandParameter="{Binding #ToolButton.Content}"
-											HorizontalAlignment="Stretch"
-											VerticalAlignment="Stretch" />
+									<Button Classes="touch"
+									        Margin="4"
+									        Content="{Binding}"
+									        Click="ToolButton_OnClick" />
 								</DataTemplate>
-							</ListBox.ItemTemplate>
-						</ListBox>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
 					</Flyout>
 				</Button.Flyout>
 			</Button>

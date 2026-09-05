@@ -2,11 +2,11 @@ using Avalonia.Platform.Storage;
 using GrbLHALSender.SdCard;
 using GrbLHALSender.States;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -99,12 +99,12 @@ public class SdCardViewModel : ViewModelBase
 
     // ---- Commands ----
 
-    public ReactiveCommand<Unit, Unit> RefreshCommand { get; }
-    public ReactiveCommand<Unit, Unit> UploadCommand { get; }
-    public ReactiveCommand<Unit, Unit> DownloadCommand { get; }
-    public ReactiveCommand<Unit, Unit> DeleteCommand { get; }
-    public ReactiveCommand<Unit, Unit> RunCommand { get; }
-    public ReactiveCommand<Unit, Unit> CancelTransferCommand { get; }
+    public ReactiveCommand<RxVoid, RxVoid> RefreshCommand { get; }
+    public ReactiveCommand<RxVoid, RxVoid> UploadCommand { get; }
+    public ReactiveCommand<RxVoid, RxVoid> DownloadCommand { get; }
+    public ReactiveCommand<RxVoid, RxVoid> DeleteCommand { get; }
+    public ReactiveCommand<RxVoid, RxVoid> RunCommand { get; }
+    public ReactiveCommand<RxVoid, RxVoid> CancelTransferCommand { get; }
 
     // ---- Interactions (file pickers handled by View) ----
 
