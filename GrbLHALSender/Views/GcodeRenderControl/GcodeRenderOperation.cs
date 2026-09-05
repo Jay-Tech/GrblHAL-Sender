@@ -8,6 +8,7 @@ using GrbLHALSender.Settings;
 using GrbLHALSender.Theming;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace GrbLHALSender.Views.GcodeRenderControl
@@ -37,6 +38,32 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         // Null entries indicate segments behind the camera.
         private SKPoint?[]? _projectedStarts;
         private SKPoint?[]? _projectedEnds;
+
+        // Batched toolpath geometry. Skia's per-call overhead is what made this renderer
+        // painful to drag: a rebuild issued one DrawLine per segment, and a rebuild happens on
+        // every frame of a camera move because the projection changes.
+        //
+        // Batched per RUN of consecutive same-type segments, not per type. Collecting all rapids
+        // into one path and all cuts into another is faster still, but it reorders the painting:
+        // where the toolpath overlaps on screen, whichever type is drawn last wins, so cuts would
+        // start covering rapids that G-code order says are on top. A pixel diff against the
+        // unbatched renderer put that at 29% of drawn pixels. Runs keep painter order exact, and
+        // real G-code comes in long runs of one type, so this still collapses tens of thousands
+        // of calls into a handful.
+        //
+        // Each segment is its own MoveTo/LineTo contour, so no joins are synthesised between
+        // unrelated moves.
+        private readonly List<SKPath> _runPaths = new();
+        private readonly List<MoveType> _runTypes = new();
+        private int _runCount;
+
+        // Batched geometry for the completed-segment overlay. This one is redrawn every frame
+        // while a job streams, and it grows as the job advances, so it is appended to rather
+        // than rebuilt: only a projection change or the index moving backwards (new job, reset,
+        // rewind) costs a full rebuild.
+        private SKPath? _completedPath;
+        private int _completedPathCount;
+        private Matrix4x4 _completedPathViewProj;
 
         // Reusable paint for blitting the cached bitmap (no per-frame allocation).
         private static readonly SKPaint BitmapPaint = new()
@@ -76,15 +103,16 @@ namespace GrbLHALSender.Views.GcodeRenderControl
                 _cachedBitmap = new SKBitmap(pixelW, pixelH, SKColorType.Rgba8888, SKAlphaType.Premul);
             }
 
-            // Pre-project all segment screen coordinates
+            // Pre-project all segment screen coordinates, then batch them into per-type paths
             ProjectAllSegments(toolpath, viewProj, width, height);
+            BuildToolpathPaths(toolpath);
 
             // Render the static scene into the bitmap
             using var canvas = new SKCanvas(_cachedBitmap);
             canvas.Clear(SKColors.Transparent);
 
             GcodeRenderOperation.DrawStaticScene(canvas, viewProj, width, height,
-                toolpath, machineSettings, wco, _projectedStarts, _projectedEnds, useAntiAlias);
+                toolpath, machineSettings, wco, _runPaths, _runTypes, _runCount, useAntiAlias);
 
             canvas.Flush();
 
@@ -103,6 +131,106 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         public SKPoint?[]? ProjectedEnds => _projectedEnds;
 
         /// <summary>
+        /// Batched geometry for the completed-segment overlay, valid for the projection the
+        /// cache was last built against. Returns null when there is nothing completed to draw.
+        /// </summary>
+        public SKPath? GetCompletedPath(int completedCount)
+        {
+            if (_projectedStarts == null || _projectedEnds == null || completedCount <= 0)
+                return null;
+
+            completedCount = Math.Min(completedCount, _projectedStarts.Length);
+
+            // A new projection invalidates every cached screen point, and an index that went
+            // backwards means the path holds segments that are no longer complete.
+            if (_completedPath == null ||
+                _completedPathViewProj != _cachedViewProj ||
+                completedCount < _completedPathCount)
+            {
+                _completedPath ??= new SKPath();
+                _completedPath.Reset();
+                _completedPathCount = 0;
+                _completedPathViewProj = _cachedViewProj;
+            }
+
+            for (int i = _completedPathCount; i < completedCount; i++)
+            {
+                var p1 = _projectedStarts[i];
+                var p2 = _projectedEnds[i];
+                if (!p1.HasValue || !p2.HasValue) continue;
+                _completedPath.MoveTo(p1.Value);
+                _completedPath.LineTo(p2.Value);
+            }
+
+            _completedPathCount = completedCount;
+            return _completedPath.IsEmpty ? null : _completedPath;
+        }
+
+        public IReadOnlyList<SKPath> RunPaths => _runPaths;
+        public IReadOnlyList<MoveType> RunTypes => _runTypes;
+        public int RunCount => _runCount;
+
+        /// <summary>
+        /// Collects the projected segments into one path per run of consecutive same-type moves,
+        /// preserving the order they are painted in. Segments behind the camera project to null
+        /// and are left out, exactly as the old per-segment loop skipped them; an invisible
+        /// segment does not split a run, because it cannot affect what covers what.
+        /// </summary>
+        private void BuildToolpathPaths(ToolpathData? toolpath)
+        {
+            _runCount = 0;
+
+            // The completed overlay is built from the same projection, so it dies with it.
+            _completedPath?.Reset();
+            _completedPathCount = 0;
+
+            if (toolpath == null || _projectedStarts == null || _projectedEnds == null) return;
+
+            int count = Math.Min(toolpath.Segments.Count, _projectedStarts.Length);
+            SKPath? current = null;
+            MoveType currentType = default;
+
+            for (int i = 0; i < count; i++)
+            {
+                var p1 = _projectedStarts[i];
+                var p2 = _projectedEnds[i];
+                if (!p1.HasValue || !p2.HasValue) continue;
+
+                var type = toolpath.Segments[i].Type;
+                if (current == null || type != currentType)
+                {
+                    current = StartRun(type);
+                    currentType = type;
+                }
+
+                current.MoveTo(p1.Value);
+                current.LineTo(p2.Value);
+            }
+        }
+
+        /// <summary>
+        /// Hands out the next run path, growing the pool only the first time a given depth is
+        /// reached. Paths are reused across rebuilds so a drag does not allocate per frame.
+        /// </summary>
+        private SKPath StartRun(MoveType type)
+        {
+            if (_runPaths.Count <= _runCount)
+            {
+                _runPaths.Add(new SKPath());
+                _runTypes.Add(type);
+            }
+            else
+            {
+                _runTypes[_runCount] = type;
+            }
+
+            var path = _runPaths[_runCount];
+            path.Reset();
+            _runCount++;
+            return path;
+        }
+
+        /// <summary>
         /// Draws the cached bitmap onto the target canvas. Constant-time regardless of segment count.
         /// </summary>
         public void DrawCached(SKCanvas canvas)
@@ -115,6 +243,13 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         {
             _cachedBitmap?.Dispose();
             _cachedBitmap = null;
+
+            for (int i = 0; i < _runCount; i++)
+                _runPaths[i].Reset();
+            _runCount = 0;
+
+            _completedPath?.Reset();
+            _completedPathCount = 0;
         }
 
         private void ProjectAllSegments(ToolpathData? toolpath, Matrix4x4 viewProj, float width, float height)
@@ -274,8 +409,9 @@ namespace GrbLHALSender.Views.GcodeRenderControl
 
         /// <summary>
         /// Draws the completed-segment overlay and selection highlight using pre-projected
-        /// screen coordinates from the cache. No matrix math — just DrawLine calls with
-        /// cached SKPoints. Typically redraws only a fraction of total segments.
+        /// screen coordinates from the cache. No matrix math. Unlike the static scene this runs
+        /// every frame, and the completed run grows towards the whole file as a job finishes,
+        /// so it is drawn as one batched path rather than a DrawLine per completed segment.
         /// </summary>
         private void DrawProgressOverlay(SKCanvas canvas)
         {
@@ -289,13 +425,8 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             // Draw completed segments (overdraws on top of the static scene)
             if (_completedSegmentIndex > 0)
             {
-                var completedPaint = Pick(CompletedPaints, aa);
-                int limit = Math.Min(_completedSegmentIndex, segCount);
-                for (int i = 0; i < limit; i++)
-                {
-                    if (starts[i].HasValue && ends[i].HasValue)
-                        canvas.DrawLine(starts[i]!.Value, ends[i]!.Value, completedPaint);
-                }
+                var completedPath = _sceneCache.GetCompletedPath(Math.Min(_completedSegmentIndex, segCount));
+                DrawPathIfAny(canvas, completedPath, Pick(CompletedPaints, aa));
             }
 
             // Draw selected segment highlight
@@ -317,35 +448,36 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         internal static void DrawStaticScene(SKCanvas canvas, Matrix4x4 viewProj,
             float width, float height, ToolpathData? toolpath,
             MachineSettings? machineSettings, Point3D? wco,
-            SKPoint?[]? projectedStarts, SKPoint?[]? projectedEnds, bool useAntiAlias)
+            IReadOnlyList<SKPath> runPaths, IReadOnlyList<MoveType> runTypes, int runCount,
+            bool useAntiAlias)
         {
             DrawGrid(canvas, viewProj, width, height, machineSettings, toolpath, wco, useAntiAlias);
             DrawAxes(canvas, viewProj, width, height, machineSettings, toolpath, wco, useAntiAlias);
 
-            // Draw toolpath segments using pre-projected screen coordinates
-            if (toolpath != null && projectedStarts != null && projectedEnds != null)
+            // Toolpath: one DrawPath per run of same-type moves, in G-code order, instead of one
+            // DrawLine per segment. Drawn in order so overlapping moves cover each other exactly
+            // as they did before.
+            var rapidPaint = Pick(RapidPaints, useAntiAlias);
+            var cutPaint = Pick(CutPaints, useAntiAlias);
+            var traversePaint = Pick(TraversePaints, useAntiAlias);
+
+            for (int i = 0; i < runCount; i++)
             {
-                var rapidPaint = Pick(RapidPaints, useAntiAlias);
-                var cutPaint = Pick(CutPaints, useAntiAlias);
-                var traversePaint = Pick(TraversePaints, useAntiAlias);
-
-                for (int i = 0; i < toolpath.Segments.Count; i++)
+                var paint = runTypes[i] switch
                 {
-                    var p1 = projectedStarts[i];
-                    var p2 = projectedEnds[i];
-                    if (!p1.HasValue || !p2.HasValue) continue;
-
-                    var paint = toolpath.Segments[i].Type switch
-                    {
-                        MoveType.Rapid => rapidPaint,
-                        MoveType.Cut => cutPaint,
-                        MoveType.Traverse => traversePaint,
-                        _ => rapidPaint
-                    };
-
-                    canvas.DrawLine(p1.Value, p2.Value, paint);
-                }
+                    MoveType.Rapid => rapidPaint,
+                    MoveType.Cut => cutPaint,
+                    MoveType.Traverse => traversePaint,
+                    _ => rapidPaint
+                };
+                DrawPathIfAny(canvas, runPaths[i], paint);
             }
+        }
+
+        private static void DrawPathIfAny(SKCanvas canvas, SKPath? path, SKPaint paint)
+        {
+            if (path != null && !path.IsEmpty)
+                canvas.DrawPath(path, paint);
         }
 
         private static void DrawGrid(SKCanvas canvas, Matrix4x4 viewProj, float width, float height,

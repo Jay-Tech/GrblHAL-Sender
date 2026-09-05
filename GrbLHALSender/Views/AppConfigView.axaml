@@ -107,24 +107,16 @@
                                 FontSize="18"
                                 ToolTip.Tip="Enter Poll Rate for real time report. Recommend to stay above 100mm"
                                 Text="{Binding PollRate}"/>
-                            <Label
-                                Margin="10,0,0,0"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                FontSize="18"
-                                Content="Renderer:"/>
-                            <ComboBox
-                                Width="215"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                FontSize="18"
-                                ToolTip.Tip="Software uses SkiaSharp (CPU). Hardware uses OpenGL (GPU). Requires save and takes effect immediately."
-                                ItemsSource="{Binding RendererOptions}"
-                                SelectedIndex="{Binding RendererIndex}"/>
+                            <!-- Renderer picker removed from the UI. Software (Skia) draws one line
+                                 per toolpath segment per frame on the CPU and is unusable to
+                                 interact with on every platform tried; OpenGL wins on Windows,
+                                 Linux and the Pi. It is now a fallback, not a choice: the app
+                                 drops to it by itself if OpenGL will not start
+                                 (MainViewModel.OnOpenGlUnavailable). The Renderer config key and
+                                 AppConfigViewModel.RendererIndex are intentionally kept - it is
+                                 still loaded and saved, so the renderer can be forced by editing
+                                 the config file, and this picker can be restored by re-binding
+                                 SelectedIndex to it. -->
                         </StackPanel>
                         
 					</Grid>

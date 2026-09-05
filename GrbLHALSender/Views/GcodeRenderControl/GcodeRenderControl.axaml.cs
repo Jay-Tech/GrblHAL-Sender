@@ -95,16 +95,13 @@ namespace GrbLHALSender.Views.GcodeRenderControl
         private readonly Camera3D _camera = new();
         private readonly ToolpathSceneCache _sceneCache = new();
         private readonly SpindleImageProvider _spindleImageProvider = new();
-        private Point? _lastPointerPos;
-        private Point? _pressStartPos;
-        private bool _isLeftDragging;
-        private bool _isRightDragging;
-        private bool _isMiddleDragging;
+        private readonly CameraGestureHandler _gestures;
         private bool _fitted;
 
         public GcodeRenderControl()
         {
             InitializeComponent();
+            _gestures = new CameraGestureHandler(this, _camera, InvalidateVisual, OnSegmentClicked, ResetView);
             Background = Brushes.Transparent; // Required for hit testing
             ClipToBounds = true;
 
@@ -203,77 +200,50 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             context.Custom(op);
         }
 
+        // Mouse and touch camera control lives in CameraGestureHandler, shared with the
+        // OpenGL control so the two renderers cannot drift apart on how they handle input.
+
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
             base.OnPointerPressed(e);
-            var point = e.GetCurrentPoint(this);
-            _lastPointerPos = point.Position;
-            _pressStartPos = point.Position;
-
-            if (point.Properties.IsLeftButtonPressed)
-                _isLeftDragging = true;
-            if (point.Properties.IsRightButtonPressed)
-                _isRightDragging = true;
-            if (point.Properties.IsMiddleButtonPressed)
-                _isMiddleDragging = true;
-
-            e.Handled = true;
+            _gestures.PointerPressed(e);
         }
 
         protected override void OnPointerMoved(PointerEventArgs e)
         {
             base.OnPointerMoved(e);
-            if (_lastPointerPos == null) return;
-
-            var currentPos = e.GetCurrentPoint(this).Position;
-            var deltaX = (float)(currentPos.X - _lastPointerPos.Value.X);
-            var deltaY = (float)(currentPos.Y - _lastPointerPos.Value.Y);
-
-            if (_isLeftDragging)
-            {
-                _camera.Rotate(deltaX, deltaY);
-                InvalidateVisual();
-            }
-            else if (_isRightDragging || _isMiddleDragging)
-            {
-                _camera.Pan(deltaX, deltaY);
-                InvalidateVisual();
-            }
-
-            _lastPointerPos = currentPos;
-            e.Handled = true;
+            _gestures.PointerMoved(e);
         }
 
         protected override void OnPointerReleased(PointerReleasedEventArgs e)
         {
             base.OnPointerReleased(e);
+            _gestures.PointerReleased(e);
+        }
 
-            // Detect click vs drag: if pointer moved less than 5px, treat as a click
-            if (_pressStartPos.HasValue)
-            {
-                var releasePos = e.GetCurrentPoint(this).Position;
-                var dx = releasePos.X - _pressStartPos.Value.X;
-                var dy = releasePos.Y - _pressStartPos.Value.Y;
-                if (dx * dx + dy * dy < 25) // 5px squared
-                {
-                    OnSegmentClicked((float)releasePos.X, (float)releasePos.Y);
-                }
-            }
-
-            _isLeftDragging = false;
-            _isRightDragging = false;
-            _isMiddleDragging = false;
-            _lastPointerPos = null;
-            _pressStartPos = null;
-            e.Handled = true;
+        protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+        {
+            base.OnPointerCaptureLost(e);
+            _gestures.PointerCaptureLost(e);
         }
 
         protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
         {
             base.OnPointerWheelChanged(e);
-            _camera.Zoom((float)e.Delta.Y);
+            _gestures.PointerWheelChanged(e);
+        }
+
+        /// <summary>
+        /// Returns the view to the framing it has when a file is first loaded. Clearing
+        /// _fitted re-runs the same auto-fit Render does, which is the only place that knows
+        /// the viewport size; ResetOrientation covers the case where there is neither a
+        /// toolpath nor machine settings to fit to.
+        /// </summary>
+        private void ResetView()
+        {
+            _camera.ResetOrientation();
+            _fitted = false;
             InvalidateVisual();
-            e.Handled = true;
         }
 
         /// <summary>
