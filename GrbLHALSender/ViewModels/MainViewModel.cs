@@ -406,7 +406,6 @@ public class MainViewModel : ViewModelBase
     public ICommand RapidOrFineCommand { get; }
     public ICommand ResetRapidCommand { get; }
     public ICommand SpindleSetSpeedCommand { get; }
-    public ICommand SetToolSelectCommand { get; }
     public ICommand SetTlrCommand { get; }
     public ICommand UnloadToolCommand { get; }
     public ICommand OpenProbeCommand { get; }
@@ -517,7 +516,6 @@ public class MainViewModel : ViewModelBase
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
         SpindleCWCommand = ReactiveCommand.Create(SpindleCw);
         SpindleCCWCommand = ReactiveCommand.Create(SpindleCcw);
-        SetToolSelectCommand = ReactiveCommand.Create<int>(SetSelectedTool);
         SpindleOffCommand = ReactiveCommand.Create(SpindleOff);
         SpindleResetCommand = ReactiveCommand.Create(SpindleReset);
         SpindleIncreaseCommand = ReactiveCommand.Create(SpindleIncrease);
@@ -705,10 +703,6 @@ public class MainViewModel : ViewModelBase
         SendCommand(command);
     }
 
-    private void SetSelectedTool(int tool)
-    {
-        SelectedTool = tool;
-    }
     public string Tool
     {
         get => _tool;

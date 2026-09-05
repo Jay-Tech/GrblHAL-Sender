@@ -1,4 +1,4 @@
-<Styles xmlns="https://github.com/avaloniaui"
+﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
 	<!-- Shared control styling. Everything here paints from the semantic keys
@@ -84,6 +84,20 @@
 		<Setter Property="HorizontalContentAlignment" Value="Center"/>
 		<Setter Property="VerticalContentAlignment" Value="Center"/>
 		<Setter Property="HorizontalAlignment" Value="Stretch"/>
+	</Style>
+
+	<!-- Flyout whose content is a grid of touch buttons. Fluent's default presenter
+	     fill sits within a shade of ButtonBackground (SurfaceAlt), so buttons dropped
+	     straight into a flyout render invisible. Using the panel surface restores the
+	     same figure/ground the buttons get everywhere else in the app.
+	     Applied via FlyoutPresenterClasses rather than a bare FlyoutPresenter selector
+	     so other flyouts keep the stock chrome. -->
+	<Style Selector="FlyoutPresenter.touchGrid">
+		<Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="CornerRadius" Value="6"/>
+		<Setter Property="Padding" Value="6"/>
 	</Style>
 
 	<!-- Compact variant for dialog/console button rows. -->
