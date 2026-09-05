@@ -1,74 +1,50 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using GrbLHALSender.Communication;
+﻿using GrbLHALSender.Communication;
 using GrbLHALSender.Configuration;
 using GrbLHALSender.Gcode;
 using ReactiveUI;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reactive;
 using System.Windows.Input;
 
 namespace GrbLHALSender.ViewModels;
 
 public class MacroViewModel : ViewModelBase, IDialogCloseable
 {
-    private Macro _selectedItem;
-    private int _macroSelectedIndex;
-    private bool _macroNameEnabled;
-    private string _macroName;
-    private bool _displayMacroControl;
-    private string _macroCommandText;
-    private bool _canRunMacro;
     private readonly ConfigManager _configManger;
     private readonly CommunicationManager _commsManager;
     private readonly GcodeEventInjector _eventInjector;
     public ObservableCollection<Macro> MacroList { get; set; }
 
-
-
     public Macro SelectedItem
     {
-        get => _selectedItem;
-        set
-        {
-            MacroCommandText = value?.Command ?? " ";
-            this.RaiseAndSetIfChanged(ref _selectedItem, value);
-        }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
-
     public int MacroSelectedIndex
     {
-        get => _macroSelectedIndex;
-        set
-        {
-            MacroNameEnabled = value == -1;
-            this.RaiseAndSetIfChanged(ref _macroSelectedIndex, value);
-        }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
-
     public bool MacroNameEnabled
     {
-        get => _macroNameEnabled;
-        set => this.RaiseAndSetIfChanged(ref _macroNameEnabled, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
-
     public string MacroName
     {
-        get => _macroName;
-        set => this.RaiseAndSetIfChanged(ref _macroName, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
-
     public bool DisplayMacroControl
     {
-        get => _displayMacroControl;
-        set => this.RaiseAndSetIfChanged(ref _displayMacroControl, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
-
     public string MacroCommandText
     {
-        get => _macroCommandText;
-        set => this.RaiseAndSetIfChanged(ref _macroCommandText, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     /// <summary>
@@ -78,8 +54,8 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
     /// </summary>
     public bool CanRunMacro
     {
-        get => _canRunMacro;
-        set => this.RaiseAndSetIfChanged(ref _canRunMacro, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
     public ICommand RunMacroCommand { get; }
     public ICommand DeleteMacroCommand { get; }
@@ -87,11 +63,9 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
     public ICommand NewMacroCommand { get; }
     public ICommand OpenMacroPanel { get; }
     public ICommand CloseMacroCommand { get; }
-    public Action? CloseAction { get; set; }
     public ICommand CloseCommand { get; }
+    public Action? CloseAction { get; set; }
 
-
-    private ReactiveCommand<object, Unit> _doubleMacroTapCommand;
     public MacroViewModel(ConfigManager configManger, CommunicationManager commsManager,
         GcodeEventInjector eventInjector)
     {
@@ -106,12 +80,26 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
         CloseMacroCommand = ReactiveCommand.Create(CloseMacroControl);
         OpenMacroPanel = ReactiveCommand.Create(MacroControl);
         CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
+        MacroSelectedIndex = -1;
+        this.WhenAnyValue(x => x.MacroSelectedIndex).Subscribe(IndexChange);
+        this.WhenAnyValue(x => x.SelectedItem).Subscribe(SelectedItemChanged);
+    }
+
+    private void SelectedItemChanged(Macro selectedItem)
+    {
+        MacroCommandText = SelectedItem?.Command ?? string.Empty;
+    }
+
+    private void IndexChange(int index)
+    {
+        MacroNameEnabled = index == -1;
     }
 
     private void _configManger_OnConfigLoaded(object? sender, GHalSenderConfig e)
     {
         MacroList = e.MacroList;
     }
+
     private void MacroControl()
     {
         DisplayMacroControl = !DisplayMacroControl;
@@ -124,9 +112,9 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
 
     private void SaveMacro(string macroId)
     {
-        if (string.IsNullOrEmpty(macroId))
+        if (string.IsNullOrWhiteSpace(macroId))
         {
-            if (SelectedItem?.Id == " ") return;
+            if (string.IsNullOrWhiteSpace(SelectedItem?.Id)) return;
             macroId = SelectedItem.Id;
         }
 
@@ -150,6 +138,12 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
             }
         }
 
+        MacroName = string.Empty;
+        MacroCommandText = string.Empty;
+        MacroSelectedIndex = -1;
+        SaveConfig();
+        return;
+
         Macro BuildMacro()
         {
             var m = new Macro
@@ -159,32 +153,45 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
             };
             return m;
         }
+    }
 
-        MacroName = string.Empty;
-        MacroCommandText = string.Empty;
-        MacroSelectedIndex = -1;
-        _configManger.GHalSenderConfig?.MacroList = MacroList;
-        _configManger.SaveConfig();
+    private void SaveConfig()
+    {
+        try
+        {
+            _configManger.GHalSenderConfig?.MacroList = MacroList;
+            _configManger.SaveConfig();
+        }
+        catch (Exception ex)
+        {
+            // ConfigManager writes atomically and lets failures propagate, so this is
+            // the only place a save error surfaces. Swallowing it silently loses the
+            // macro on the next start with nothing shown. Console.Error rather than
+            // Debug.WriteLine: the latter is [Conditional("DEBUG")] and would leave a
+            // release build on the Pi just as silent.
+            Console.Error.WriteLine($"Macro config save failed: {ex.Message}");
+        }
     }
 
     private void DeleteMacro(Macro macro)
     {
-        if (macro?.Id != null)
-        {
-            MacroList.Remove(macro);
-        }
+        if (macro?.Id == null) return;
+        MacroList.Remove(macro);
+        SaveConfig();
+
     }
 
     private void NewMacro()
     {
         MacroSelectedIndex = -1;
     }
+
     private void RunMacro(string macroId)
     {
         // Enforced here too, so the rule does not rely on the view's IsEnabled.
         if (!CanRunMacro) return;
         var command = MacroList.First(x => x.Id == macroId);
-        SendCommand(command.Command);
+        if (command.Command != null) SendCommand(command.Command);
     }
     /// <summary>
     /// Macros are operator-issued G-code, so configured event rules apply. A macro
@@ -205,11 +212,17 @@ public class MacroViewModel : ViewModelBase, IDialogCloseable
     }
 }
 
-public partial class Macro : ObservableObject
+public  class Macro : ReactiveObject
 {
-    [ObservableProperty]
-    private string _id;
+    public string? Id
+    {
+        get;    
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
 
-    [ObservableProperty]
-    private string _command;
+    public string? Command
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
 }
