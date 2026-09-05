@@ -1,7 +1,8 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
+using Avalonia.Rendering;
 using Avalonia.VisualTree;
 using System;
 using System.Linq;
@@ -13,6 +14,59 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+    }
+
+    /// <summary>
+    /// Environment variable that turns on Avalonia's renderer overlays. Unset in normal
+    /// use, so this costs nothing; it exists because the overlays are the only direct way
+    /// to see what the renderer is actually repainting.
+    /// <para>
+    /// Accepts flag names - <c>Fps</c>, <c>DirtyRects</c>, <c>RenderTimeGraph</c>,
+    /// <c>LayoutTimeGraph</c>, or a comma-separated combination - or <c>1</c>/<c>true</c>/
+    /// <c>all</c> for the three worth watching together.
+    /// </para>
+    /// </summary>
+    internal const string RenderOverlayVariable = "GRBLHAL_RENDER_OVERLAY";
+
+    /// <summary>
+    /// Maps the variable to a set of overlays. Anything unrecognised turns them off rather
+    /// than throwing: a typo on a shop machine should not stop the app starting.
+    /// </summary>
+    internal static RendererDebugOverlays ParseRenderOverlays(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return RendererDebugOverlays.None;
+
+        var text = value.Trim();
+
+        if (text == "1" ||
+            text.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+            text.Equals("all", StringComparison.OrdinalIgnoreCase))
+        {
+            return RendererDebugOverlays.Fps
+                 | RendererDebugOverlays.DirtyRects
+                 | RendererDebugOverlays.RenderTimeGraph;
+        }
+
+        return Enum.TryParse<RendererDebugOverlays>(text, ignoreCase: true, out var parsed)
+            ? parsed
+            : RendererDebugOverlays.None;
+    }
+
+    /// <summary>
+    /// Applies the overlays once the renderer is up. DirtyRects is the interesting one on
+    /// this app: the status poll repaints the DRO several times a second, and whether that
+    /// costs a small region or the whole frame including the 3D viewport is the difference
+    /// the renderer settings actually make.
+    /// </summary>
+    protected override void OnOpened(EventArgs e)
+    {
+        base.OnOpened(e);
+
+        var overlays = ParseRenderOverlays(Environment.GetEnvironmentVariable(RenderOverlayVariable));
+        if (overlays == RendererDebugOverlays.None) return;
+
+        RendererDiagnostics.DebugOverlays = overlays;
+        Console.Error.WriteLine($"{RenderOverlayVariable}: renderer overlays enabled ({overlays})");
     }
 
     /// <summary>
