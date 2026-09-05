@@ -1,4 +1,4 @@
-using GrbLHALSender.ViewModels;
+﻿using GrbLHALSender.ViewModels;
 using Xunit;
 
 namespace GrbLHALSender.Tests;
@@ -105,5 +105,45 @@ public class JobStateMappingTests
         }
 
         Assert.Equal(JobState.Tool, state);
+    }
+
+    /// <summary>
+    /// Reported on hardware with $341=0 and Stream Buffer Ahead off. The file was:
+    /// <code>T4 M6 / M64P0 / S16000 M3 / G4 P2 / G54 / M8 / G0 X1.4858 Y0.1155</code>
+    /// Every line between the M6 and the G0 is non-motion, so grblHAL never left Idle
+    /// and no Run report arrived to clear the Tool latch. The barrier had already
+    /// lifted, but JobState stayed Tool, and OnCommandAck returns without refilling in
+    /// Tool - so in lock-step mode each acknowledgement was a dead end. The operator had
+    /// to press Start once per line until the G0 finally produced motion.
+    /// <para>
+    /// The other tool-change modes hide it: $341=1..3 have the controller move to a
+    /// change position, and that motion reports Run, which clears the latch. $341=4
+    /// never raises Tool state at all. Buffer-ahead hides it too, because one fill
+    /// emits the whole remainder rather than needing an acknowledgement per line.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void NonMotionLinesAfterAToolChange_DoNotLeaveTheJobLatchedInTool()
+    {
+        // The barrier lifts on the Idle that follows cycle start.
+        var state = JobViewModel.StateAfterToolChange(JobState.Tool);
+
+        Assert.Equal(JobState.Running, state);
+
+        // M64P0, S16000 M3, G4 P2, G54, M8 - the machine reports Idle throughout.
+        for (var i = 0; i < 5; i++)
+            state = JobViewModel.MapGrblState("Idle", state, jobRunning: true);
+
+        // Whatever it settles on, it must not be Tool: that is the state that stops
+        // acknowledgements from refilling the buffer.
+        Assert.NotEqual(JobState.Tool, state);
+    }
+
+    [Fact]
+    public void AHoldTakenDuringAToolChange_OutlivesIt()
+    {
+        // Only the Tool latch is the barrier's to release. A hold is the operator's.
+        Assert.Equal(JobState.Hold, JobViewModel.StateAfterToolChange(JobState.Hold));
+        Assert.Equal(JobState.Running, JobViewModel.StateAfterToolChange(JobState.Running));
     }
 }
