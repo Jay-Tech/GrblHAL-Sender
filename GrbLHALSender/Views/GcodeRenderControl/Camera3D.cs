@@ -69,7 +69,12 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             ResetOrientation();
         }
 
-        private void ResetOrientation()
+        /// <summary>
+        /// Restores the default orbit angles and clears any pan. Distance and centre are left
+        /// alone — the fit helpers set those, and a caller resetting the view on its own
+        /// (double-tap "home") normally re-runs a fit straight afterwards.
+        /// </summary>
+        public void ResetOrientation()
         {
             ModelScale = 1f;
             PanX = 0f;
@@ -98,6 +103,20 @@ namespace GrbLHALSender.Views.GcodeRenderControl
             float factor = delta > 0 ? 0.9f : 1.1f;
             Distance *= factor;
             Distance = Math.Clamp(Distance, 1f, 100000f);
+        }
+
+        /// <summary>
+        /// Scales the orbit distance by a continuous factor rather than the fixed steps
+        /// <see cref="Zoom"/> uses. Pinch gestures feed the ratio the fingers spread by, so
+        /// the model tracks the fingers instead of jumping in mouse-wheel-sized increments.
+        /// A factor above 1 means the fingers moved apart, which zooms in (shorter distance).
+        /// </summary>
+        public void ZoomByFactor(float factor)
+        {
+            if (!float.IsFinite(factor) || factor <= 0f) return;
+            // Clamp per-step so a glitched touch frame can't teleport the camera.
+            factor = Math.Clamp(factor, 0.5f, 2f);
+            Distance = Math.Clamp(Distance / factor, 1f, 100000f);
         }
 
         public Matrix4x4 GetViewMatrix()

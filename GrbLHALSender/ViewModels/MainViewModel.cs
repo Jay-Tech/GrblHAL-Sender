@@ -268,8 +268,22 @@ public class MainViewModel : ViewModelBase
     private void RebuildRenderControl()
     {
         RenderControl = _useHardwareRenderer
-            ? Views.RenderControlFactory.CreateHardwareRenderer()
+            ? Views.RenderControlFactory.CreateHardwareRenderer(OnOpenGlUnavailable)
             : Views.RenderControlFactory.CreateSoftwareRenderer();
+    }
+
+    /// <summary>
+    /// OpenGL could not start on this machine, so drop to the software renderer. Slow but
+    /// visible beats the blank pane this used to leave behind, and the Renderer setting is no
+    /// longer offered in the UI, so nobody can dig themselves out of it by hand.
+    ///
+    /// Deliberately not written back to config: a driver that gets fixed later should get
+    /// hardware rendering back on the next launch, at the cost of re-probing each start.
+    /// </summary>
+    private void OnOpenGlUnavailable()
+    {
+        if (!_useHardwareRenderer) return;
+        UseHardwareRenderer = false;
     }
     public int FeedRate
     {
