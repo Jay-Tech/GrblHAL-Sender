@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using GrbLHALSender.Views.GcodeGlRenderControl;
 using GrbLHALSender.Views.GcodeRenderControl;
+using System;
 
 namespace GrbLHALSender.Views
 {
@@ -35,13 +36,21 @@ namespace GrbLHALSender.Views
             return control;
         }
 
-        public static Control CreateHardwareRenderer()
+        /// <param name="onOpenGlUnavailable">
+        /// Invoked on the UI thread if OpenGL cannot be brought up on this machine, so the
+        /// caller can swap in the software renderer. Without it a machine with a broken GLES
+        /// stack shows a silently blank 3D pane.
+        /// </param>
+        public static Control CreateHardwareRenderer(Action? onOpenGlUnavailable = null)
         {
             var control = new GcodeGlRenderControl.GcodeGlRenderControl
             {
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
             };
+
+            if (onOpenGlUnavailable != null)
+                control.OpenGlUnavailable += (_, _) => onOpenGlUnavailable();
 
             BindCommonProperties(control,
                 GcodeGlRenderControl.GcodeGlRenderControl.ToolpathProperty,

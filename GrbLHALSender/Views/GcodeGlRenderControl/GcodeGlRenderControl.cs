@@ -107,12 +107,28 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
         }
 
         private readonly Camera3D _camera = new();
-        private Point? _lastPointerPos;
-        private Point? _pressStartPos;
-        private bool _isLeftDragging;
-        private bool _isRightDragging;
-        private bool _isMiddleDragging;
+        private readonly CameraGestureHandler _gestures;
         private bool _fitted;
+
+        // OpenGL availability probe. _glEverInitialized latches on the first successful init
+        // and is never cleared, so a context lost and rebuilt mid-session can't be mistaken
+        // for a machine that has no working GL at all.
+        private volatile bool _glInitFailed;
+        private volatile bool _glEverInitialized;
+        private long _attachedTicks;
+        private bool _glUnavailableRaised;
+
+        // How long to wait for a first successful init before giving up on OpenGL. If the
+        // platform cannot create a context at all, OnOpenGlInit is never called and nothing
+        // throws - a timeout is the only signal there is. Generous because a cold Pi can take
+        // a moment to bring up the GLES stack, and a false alarm downgrades a working machine.
+        private const long GlInitGraceMs = 5000;
+
+        /// <summary>
+        /// Raised on the UI thread when OpenGL could not be brought up, so the host can swap in
+        /// the Skia renderer. Fires at most once per control instance.
+        /// </summary>
+        public event EventHandler? OpenGlUnavailable;
 
         // Spindle image: loaded on UI thread, uploaded to GL texture on compositor thread.
         private readonly SpindleImageProvider _spindleImageProvider = new();
@@ -128,7 +144,7 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
         private int _locMVP;
         private int _locUseOverride;
         private int _locColorOverride;
-        private bool _glInitialized;
+        private volatile bool _glInitialized;
 
         // MSAA framebuffer for anti-aliasing.
         // Avalonia's OpenGlControlBase provides a single-sampled FBO. We create our own
@@ -179,6 +195,8 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
 
         public GcodeGlRenderControl()
         {
+            _gestures = new CameraGestureHandler(this, _camera, MarkDirty, OnSegmentClicked, ResetView);
+
             ClipToBounds = true;
 
             // Load the spindle image from Config folder on startup
@@ -220,6 +238,10 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
             // Reset camera fit state so it auto-fits on first render
             _fitted = false;
 
+            // Restart the OpenGL probe window. Re-attaching (tab switch back) builds a fresh
+            // context, so a previous instance's timing must not carry over.
+            _attachedTicks = Environment.TickCount64;
+
             PublishRenderState();
 
             // ~60 fps timer drives rendering. Only actually calls RequestNextFrameRendering
@@ -251,6 +273,32 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
                 _renderDirty = false;
                 RequestNextFrameRendering();
             }
+
+            CheckOpenGlAvailability();
+        }
+
+        /// <summary>
+        /// Decides whether OpenGL is simply never going to come up on this machine, and if so
+        /// asks the host to swap in the Skia renderer. Two ways to fail: OnOpenGlInit threw
+        /// (flagged), or no context could be created at all, in which case OnOpenGlInit is
+        /// never called and only the elapsed time gives it away.
+        /// </summary>
+        private void CheckOpenGlAvailability()
+        {
+            if (_glUnavailableRaised || _glEverInitialized) return;
+
+            bool timedOut = Environment.TickCount64 - _attachedTicks > GlInitGraceMs;
+            if (!_glInitFailed && !timedOut) return;
+
+            _glUnavailableRaised = true;
+            Console.Error.WriteLine(
+                "[GcodeGlRenderControl] OpenGL unavailable " +
+                (_glInitFailed ? "(init failed)" : $"(no context after {GlInitGraceMs} ms)") +
+                " - falling back to the software renderer for this session.");
+
+            // Posted rather than raised inline: the handler swaps this control out of the
+            // visual tree, which is not something to do from inside a render-priority tick.
+            Dispatcher.UIThread.Post(() => OpenGlUnavailable?.Invoke(this, EventArgs.Empty));
         }
 
         /// <summary>
@@ -394,11 +442,16 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
                 _msaaDepthRbo = _gl.GenRenderbuffer();
 
                 _glInitialized = true;
+                _glEverInitialized = true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[GcodeGlRenderControl] OpenGL init failed: {ex.Message}");
+                // stderr, not Debug.WriteLine: Debug output is compiled out of Release, which
+                // left this failure completely traceless on the Pi. The render timer picks the
+                // flag up and asks the host to fall back to Skia.
+                Console.Error.WriteLine($"[GcodeGlRenderControl] OpenGL init failed: {ex}");
                 _glInitialized = false;
+                _glInitFailed = true;
             }
         }
 
@@ -701,79 +754,57 @@ namespace GrbLHALSender.Views.GcodeGlRenderControl
         }
 
         // =====================================================================
-        // Mouse handling
+        // Mouse and touch handling
+        //
+        // Mouse: left drag orbits, right/middle drag pans, wheel zooms, click selects.
+        // Touch: one finger orbits, two fingers pinch-zoom and pan at the same time,
+        // a single tap selects a segment and a double tap re-fits the view.
+        // Touch is handled separately from mouse because Avalonia raises a full
+        // press/move/release stream per finger, each with its own pointer id, and the
+        // single-position mouse state below cannot represent more than one of them.
         // =====================================================================
 
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
             base.OnPointerPressed(e);
-            var point = e.GetCurrentPoint(this);
-            _lastPointerPos = point.Position;
-            _pressStartPos = point.Position;
-
-            if (point.Properties.IsLeftButtonPressed)
-                _isLeftDragging = true;
-            if (point.Properties.IsRightButtonPressed)
-                _isRightDragging = true;
-            if (point.Properties.IsMiddleButtonPressed)
-                _isMiddleDragging = true;
-
-            e.Handled = true;
+            _gestures.PointerPressed(e);
         }
 
         protected override void OnPointerMoved(PointerEventArgs e)
         {
             base.OnPointerMoved(e);
-            if (_lastPointerPos == null) return;
-
-            var currentPos = e.GetCurrentPoint(this).Position;
-            var deltaX = (float)(currentPos.X - _lastPointerPos.Value.X);
-            var deltaY = (float)(currentPos.Y - _lastPointerPos.Value.Y);
-
-            if (_isLeftDragging)
-            {
-                _camera.Rotate(deltaX, deltaY);
-                MarkDirty();
-            }
-            else if (_isRightDragging || _isMiddleDragging)
-            {
-                _camera.Pan(deltaX, deltaY);
-                MarkDirty();
-            }
-
-            _lastPointerPos = currentPos;
-            e.Handled = true;
+            _gestures.PointerMoved(e);
         }
 
         protected override void OnPointerReleased(PointerReleasedEventArgs e)
         {
             base.OnPointerReleased(e);
+            _gestures.PointerReleased(e);
+        }
 
-            if (_pressStartPos.HasValue)
-            {
-                var releasePos = e.GetCurrentPoint(this).Position;
-                var dx = releasePos.X - _pressStartPos.Value.X;
-                var dy = releasePos.Y - _pressStartPos.Value.Y;
-                if (dx * dx + dy * dy < 25)
-                {
-                    OnSegmentClicked((float)releasePos.X, (float)releasePos.Y);
-                }
-            }
-
-            _isLeftDragging = false;
-            _isRightDragging = false;
-            _isMiddleDragging = false;
-            _lastPointerPos = null;
-            _pressStartPos = null;
-            e.Handled = true;
+        protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+        {
+            base.OnPointerCaptureLost(e);
+            _gestures.PointerCaptureLost(e);
         }
 
         protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
         {
             base.OnPointerWheelChanged(e);
-            _camera.Zoom((float)e.Delta.Y);
+            _gestures.PointerWheelChanged(e);
+        }
+
+        /// <summary>
+        /// Returns the view to the framing it has when a file is first loaded. Clearing
+        /// _fitted re-runs the same auto-fit the render loop does, which is the only place
+        /// that knows the viewport size; ResetOrientation covers the case where there is
+        /// neither a toolpath nor machine settings to fit to.
+        /// </summary>
+        private void ResetView()
+        {
+            _camera.ResetOrientation();
+            _fitted = false;
             MarkDirty();
-            e.Handled = true;
         }
 
         private void OnSegmentClicked(float screenX, float screenY)
