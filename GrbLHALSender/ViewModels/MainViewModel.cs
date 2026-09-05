@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Reactive;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
 
@@ -55,7 +54,6 @@ public class MainViewModel : ViewModelBase
     private bool _connected;
     private bool _alarmActive;
     private int _selectedTool;
-    private bool _hideToolChangeList;
     private double _jogStep;
     private double _jogRate;
     private string _mdiText;
@@ -67,7 +65,6 @@ public class MainViewModel : ViewModelBase
     private string _callBackText;
     private string _tool;
     private bool _homeState;
-    private ReactiveCommand<object, Unit> _hideBoxCommand;
     private bool _tlrCommandEnabled;
     private bool _unloadToolCommandEnabled;
     private bool _atcEnabled;
@@ -181,11 +178,6 @@ public class MainViewModel : ViewModelBase
     {
         get => _connected;
         set => this.RaiseAndSetIfChanged(ref _connected, value);
-    }
-    public bool HideToolChangeList
-    {
-        get => _hideToolChangeList;
-        set => this.RaiseAndSetIfChanged(ref _hideToolChangeList, value);
     }
     public bool AlarmActive
     {
@@ -429,12 +421,6 @@ public class MainViewModel : ViewModelBase
     public Action? CloseConsoleAction { get; set; }
     public ICommand CloseConsoleCommand { get; }
 
-    public ReactiveCommand<object, Unit> HideBoxCommand
-    {
-        get => _hideBoxCommand;
-        set => _hideBoxCommand = value;
-    }
-
     public MainViewModel(CommunicationManager commManager, SettingsViewModel settingsViewModel,
         ConfigManager configManager, JobViewModel jobViewModel, MacroViewModel macroViewModel,
         ProbeViewModel probeViewModel, ConnectionViewModel connectionViewModel, DialogViewModel dialogViewModel,
@@ -527,7 +513,6 @@ public class MainViewModel : ViewModelBase
         ClearConsoleCommand = ReactiveCommand.Create(ClearConsole);
         ToggleRtCommand = ReactiveCommand.Create(ToggleConsoleRt);
         WcsCommand = ReactiveCommand.Create<string>(Wcs);
-        HideBoxCommand = ReactiveCommand.Create<object>(HideToolList);
         FeedRateChangeCommand = ReactiveCommand.Create<double>(ChangeFeedRate);
         StepRateChangeCommand = ReactiveCommand.Create<double>(ChangeStepRate);
         SpindleCWCommand = ReactiveCommand.Create(SpindleCw);
@@ -841,10 +826,6 @@ public class MainViewModel : ViewModelBase
     private void ChangeFeedRate(double feed)
     {
         JogRate = feed;
-    }
-    private void HideToolList(object obj)
-    {
-        HideToolChangeList = !Convert.ToBoolean(obj);
     }
 
     private void SetUpUiSettings()

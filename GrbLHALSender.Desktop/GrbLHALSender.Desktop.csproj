@@ -26,7 +26,7 @@
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4" ExcludeAssets="All" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.4" />
     <PackageReference Include="Avalonia.Themes.Simple" Version="12.1.2" />
-    <PackageReference Include="ReactiveUI.Avalonia" Version="12.0.1" />
+    <PackageReference Include="ReactiveUI.Avalonia" Version="12.1.1" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
