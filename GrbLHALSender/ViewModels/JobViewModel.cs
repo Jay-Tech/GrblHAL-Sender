@@ -514,6 +514,17 @@ namespace GrbLHALSender.ViewModels
         /// all and a manual tool change had no way to finish.
         /// </para>
         /// </summary>
+        /// <summary>
+        /// The job state to adopt when the tool-change barrier lifts.
+        /// <para>
+        /// Streaming resumes at this point, so the job is running again whatever the
+        /// machine happens to be reporting. Only the Tool latch is released - a hold
+        /// taken during the change is the operator's and outlives it.
+        /// </para>
+        /// </summary>
+        internal static JobState StateAfterToolChange(JobState current) =>
+            current is JobState.Tool ? JobState.Running : current;
+
         internal static bool NeedsBareCycleStart(JobState state, bool jobRunning) =>
             !jobRunning && state is JobState.Hold or JobState.Tool;
 
@@ -914,6 +925,16 @@ namespace GrbLHALSender.ViewModels
             if (!lifted) return;
 
             _toolChangeLine = 0;
+
+            // The barrier is the authority on the change being over, so the Tool latch
+            // has to be released here as well. MapGrblState deliberately holds JobState
+            // at Tool through an Idle report - Idle is also what the operator jogging to
+            // touch off looks like - and only a Run report clears it. But the lines after
+            // M6 are often all non-motion (M64, S/M3, G4, G54, M8), so the machine never
+            // leaves Idle and no Run report ever arrives. The barrier came down while
+            // JobState stayed Tool, and OnCommandAck refuses to refill in Tool.
+            JobState = StateAfterToolChange(JobState);
+
             FillBuffer();
         }
 
