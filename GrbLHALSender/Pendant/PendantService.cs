@@ -1231,7 +1231,13 @@ public class PendantService : IDisposable
                 // feed under half a quantum still has to travel the distance in
                 // the block, and a zero F is not a slow move but a rejected
                 // line.
-                feed = SnapFeed(feed, _config.JogFeedQuantumMmPerMin, _lastCommandedFeed,
+                // Sized against the step, if asked, so the band is a fixed
+                // amount of wheel rather than a fixed amount of feed. See
+                // ScaleJogFeedQuantumByStep.
+                var quantum = QuantumFor(step, _config.JogFeedQuantumMmPerMin,
+                                         _config.ScaleJogFeedQuantumByStep);
+
+                feed = SnapFeed(feed, quantum, _lastCommandedFeed,
                                 _config.JogFeedRiseBandSteps, _config.JogFeedFallBandSteps);
 
                 // The floor, applied after the grid so the snap cannot round
@@ -1259,8 +1265,7 @@ public class PendantService : IDisposable
                 // being turned too slowly to reach the clamp, so there is
                 // nothing accumulating to prevent.
                 if (_config.EnforcePendantDeliveryFloor)
-                    feed = ApplyDeliveryFloor(feed, step, askedFor,
-                                              _config.JogFeedQuantumMmPerMin);
+                    feed = ApplyDeliveryFloor(feed, step, askedFor, quantum);
 
                 // Rounding to nearest can lift a feed past the handheld's own
                 // ceiling for this step, and that ceiling is the firmware's
@@ -1277,7 +1282,7 @@ public class PendantService : IDisposable
                 // length, and as a top end that could not be reached because
                 // the request nearest it had become the held value.
                 if (askedFor > 0 && feed > askedFor)
-                    feed = SnapFeedDown(askedFor, _config.JogFeedQuantumMmPerMin);
+                    feed = SnapFeedDown(askedFor, quantum);
 
                 if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
                     feed = _config.MaxJogFeedRate;
@@ -1736,6 +1741,27 @@ public class PendantService : IDisposable
     /// ceiling before this sees it, and the arrival ceiling has already capped
     /// it to what is actually turning up.
     /// </remarks>
+    /// <summary>
+    /// The grid step to use at this pendant step size.
+    /// </summary>
+    /// <remarks>
+    /// The configured value is read as the grid for a 1 mm step and scaled from
+    /// there, because the feed a given wobble of the hand produces is
+    /// proportional to the step: ten detents a second either way is 600 mm/min
+    /// at 1 mm and 300 at 0.5. A flat grid is therefore the right width at one
+    /// step and wrong at all the others, and was measurably too narrow at 1 mm
+    /// when tuned for 0.5.
+    ///
+    /// Unscaled until a step has been seen, which is the first jog message of a
+    /// session - there is nothing to scale by before that, and guessing would
+    /// pick a grid for a step the operator may not be on.
+    /// </remarks>
+    internal static double QuantumFor(double step, double configured, bool scale)
+    {
+        if (!scale || configured <= 0 || step <= 0) return configured;
+        return configured * step;
+    }
+
     internal static double SnapFeed(double feed, double quantum, double previous = 0,
                                     double riseSteps = 0.5, double fallSteps = 1.0)
     {

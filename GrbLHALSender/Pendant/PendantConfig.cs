@@ -253,6 +253,39 @@ public class PendantConfig
     public double JogFeedQuantumMmPerMin { get; set; } = 0;
 
     /// <summary>
+    /// Scale the grid with the step size, taking JogFeedQuantumMmPerMin as the
+    /// value for a 1 mm step. Zero keeps the flat grid.
+    /// </summary>
+    /// <remarks>
+    /// A flat grid is the wrong width at every step but one, because the feed
+    /// is turn_rate x step x 60 - so the same wobble of the hand moves the
+    /// requested feed twice as far at a 1 mm step as at 0.5 mm. Ten detents a
+    /// second either way is 600 mm/min at 1 mm and 300 at 0.5.
+    ///
+    /// Tuned for the finer step, the grid is then half as wide as it should be
+    /// at the coarser one. Measured that way: with 500 flat, a 0.5 mm burst at
+    /// half speed changed feed on 3-7% of blocks while a 1 mm burst at the same
+    /// fraction of its own top speed changed on 10-11%, and it was the only
+    /// outlier left in the run.
+    ///
+    /// Scaling by the step makes the band a fixed amount of *wheel* rather than
+    /// a fixed amount of feed, which is what the hand actually holds steady. A
+    /// grid of 500 at 1 mm becomes 250 at 0.5 mm and 50 at 0.1 mm, and each is
+    /// the same number of detents per second wide.
+    ///
+    /// <para>
+    /// Turning this on wants JogFeedQuantumMmPerMin doubled, because the value
+    /// is now read against a 1 mm step rather than applied flat. A setting of
+    /// 500 that was tuned at 0.5 mm becomes 1000: the finer step keeps the 500
+    /// it was tuned with, and the coarser one gets the wider band it always
+    /// needed. Left at 500 this narrows the fine step instead of widening the
+    /// coarse one, which is the wrong direction and would undo the very
+    /// behaviour it was tuned for.
+    /// </para>
+    /// </remarks>
+    public bool ScaleJogFeedQuantumByStep { get; set; } = false;
+
+    /// <summary>
     /// How far the request must rise above the held feed before the commanded
     /// one follows, as a multiple of the grid step.
     /// </summary>

@@ -68,6 +68,55 @@ public class PendantFeedQuantumTests
         Assert.Equal(0, PendantService.SnapFeed(0, 500));
     }
 
+    // --- sizing the grid against the step -----------------------------------
+
+    [Fact]
+    public void TheGridScalesWithTheStepWhenAsked()
+    {
+        // Read as the grid for a 1 mm step, because the feed a given wobble of
+        // the hand produces is proportional to the step: ten detents a second
+        // either way is 600 mm/min at 1 mm and 300 at 0.5. A flat grid is right
+        // at one step and wrong at every other.
+        Assert.Equal(500, PendantService.QuantumFor(1.0, 500, scale: true));
+        Assert.Equal(250, PendantService.QuantumFor(0.5, 500, scale: true));
+        Assert.Equal(50, PendantService.QuantumFor(0.1, 500, scale: true));
+    }
+
+    [Fact]
+    public void EachScaledGridIsTheSameWidthInWheelSpeed()
+    {
+        // The property that makes this worth doing. Feed is
+        // turn_rate x step x 60, so a grid of step x K spans K/60 detents per
+        // second whatever the step - the band becomes a fixed amount of wheel.
+        double DetentsPerSecond(double step) =>
+            PendantService.QuantumFor(step, 600, scale: true) / (step * 60.0);
+
+        Assert.Equal(DetentsPerSecond(1.0), DetentsPerSecond(0.5), 6);
+        Assert.Equal(DetentsPerSecond(1.0), DetentsPerSecond(0.1), 6);
+    }
+
+    [Fact]
+    public void ScalingOffLeavesTheGridFlat()
+    {
+        Assert.Equal(500, PendantService.QuantumFor(0.5, 500, scale: false));
+        Assert.Equal(500, PendantService.QuantumFor(1.0, 500, scale: false));
+    }
+
+    [Fact]
+    public void NoStepYetMeansNoScaling()
+    {
+        // Before the first jog message of a session there is nothing to scale
+        // by, and guessing would pick a grid for a step the operator may not
+        // be on.
+        Assert.Equal(500, PendantService.QuantumFor(0, 500, scale: true));
+    }
+
+    [Fact]
+    public void NoGridStaysNoGrid()
+    {
+        Assert.Equal(0, PendantService.QuantumFor(0.5, 0, scale: true));
+    }
+
     // --- staying on the grid under the pendant's ceiling --------------------
 
     [Fact]
