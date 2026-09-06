@@ -118,71 +118,8 @@ public class PendantService : IDisposable
     // deliver is a function of it - see PendantFloorPerStepMmPerMin.
     private double _pendingStep;
 
-    // The F word the last block went out with, which the grid holds on to while
-    // the request stays near it. Only the jog loop touches this.
-    private double _lastCommandedFeed;
     private double _pendingFeed;
     private double _rawFeed;
-    private double _smoothedFeed;
-
-    // Distance dispatched recently, with when it went out. The rate movement is
-    // arriving at is the sum of these over the span they cover - measured on the
-    // wall clock, over many blocks, which is the only form of this that survives
-    // contact with the pendant.
-    //
-    // Per-block estimates do not: the pendant collapses several ticks into one
-    // message when it falls behind, so a block is not a fixed slice of time and
-    // counting messages misreads it. Distance and elapsed time are the two
-    // things neither end can be wrong about.
-    private const int RateWindowMs = 500;
-    private const int RateMinSpanMs = 150;
-    private const int RateMinSamples = 3;
-
-    // A shorter window, taken alongside the long one, with the faster of the two
-    // winning.
-    //
-    // A trailing average lags a hand that is speeding up: while the wheel
-    // accelerates the long window still holds the slow start of the ramp, so it
-    // reports a rate below the one being turned now, the ceiling comes down on
-    // a request that was honest, and the machine dips before catching up. Felt
-    // as a stumble part way into every acceleration.
-    //
-    // Taking the higher of the two is safe because this is only ever a ceiling.
-    // Too high simply defers to what the pendant asked for, which is where this
-    // started; too low invents a stall that nothing asked for.
-    private const int RateRecentMs = 200;
-    private const int RateRecentMinSpanMs = 100;
-
-    // And enough samples in it to mean anything, which the span alone does not
-    // guarantee.
-    //
-    // The short window was guarded on elapsed time where the long one is
-    // guarded on time and sample count both, and that asymmetry was the defect.
-    // The pendant emits only on ticks that carry a detent, so a hesitant turn
-    // arrives at 60 ms rather than 27 - and a 200 ms window then holds three
-    // messages where it normally holds seven. One extra detent moves an
-    // estimate made from three by several times over, and because the two
-    // windows are combined by taking the higher, that noise only ever ratchets
-    // the ceiling up before the next block drops it again.
-    //
-    // Measured on the machine as arriving 778-3764 mm/min inside one 0.7 s
-    // burst: a ceiling swinging five to one, block over block. A planner cannot
-    // chain blocks that each ask for a different velocity, so it decelerates
-    // into every one of them - felt as a stutter on a tentative start that
-    // clears the moment the wheel is turned confidently, which is the report
-    // this came from.
-    //
-    // Below this the long window stands on its own, which still bounds the run
-    // on that the ceiling exists to prevent; it is only the fast-reacting half
-    // that is withheld until there is enough to react to.
-    private const int RateRecentMinSamples = 5;
-
-    // Commanded a little above the measured rate on purpose. Exactly at it, any
-    // jitter leaves the machine behind and the shortfall accumulates as queued
-    // motion - which is felt as the axis running on after the wheel stops.
-    private const double RateHeadroom = 1.15;
-
-    private readonly Queue<(long Tick, double Distance)> _recentMotion = new();
 
     // How steadily jog messages are arriving, which is the one thing this end
     // can measure about the link without touching either board.
@@ -261,18 +198,10 @@ public class PendantService : IDisposable
     // actually worth at the machine, and the step range beside it is what the
     // pendant said it should be worth. The two disagreeing localises the loss
     // to this end; the step alone changing localises it to the handheld.
-    //
-    // The arrival rate is recorded because the ceiling is computed from it. A
-    // commanded feed well under what the pendant asked for is not evidence of
-    // anything on its own: it is correct behaviour if the movement really is
-    // turning up that slowly, and the only way to tell is to see the rate the
-    // ceiling was taken from next to the distance it was measured over.
     private double _burstDistance;
     private double _burstDetents;
     private double _stepMin;
     private double _stepMax;
-    private double _arrivalMin;
-    private double _arrivalMax;
 
     public event EventHandler<bool>? PendantConnectionChanged;
     public event EventHandler<string>? PendantStatusMessage;
@@ -1063,16 +992,6 @@ public class PendantService : IDisposable
                     if (requested < _rawFeedMin) _rawFeedMin = requested;
                     if (requested > _rawFeedMax) _rawFeedMax = requested;
                 }
-
-                // Smoothed as the figures arrive rather than at dispatch, so the
-                // average is over what the wheel did and not over which of those
-                // messages happened to land on a dispatch tick.
-                if (_smoothedFeed <= 0) _smoothedFeed = requested;
-                else
-                {
-                    var alpha = Math.Clamp(_config.JogFeedSmoothing, 0.01, 1.0);
-                    _smoothedFeed += (requested - _smoothedFeed) * alpha;
-                }
             }
         }
     }
@@ -1134,9 +1053,7 @@ public class PendantService : IDisposable
                     distance = _pendingDistance;
                     step = _pendingStep;
                     raw = _rawFeed;
-                    requested = _config.SmoothJogFeed && _smoothedFeed > 0
-                        ? _smoothedFeed
-                        : _pendingFeed;
+                    requested = _pendingFeed;
                     _pendingDistance = 0;
                 }
 
@@ -1208,82 +1125,24 @@ public class PendantService : IDisposable
                 if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
                     feed = _config.MaxJogFeedRate;
 
-                // And never faster than the movement is turning up.
+                // Nothing shapes the feed here any more.
                 //
-                // Commanding above this cannot make the machine cover more
-                // ground - the distance in the block is already fixed - it can
-                // only make it arrive early and stand still until the next one.
-                // That stall is the stumble, and with the planner empty the
-                // controller has to decelerate into every one of them.
-                var arriving = 0.0;
-                if (_config.MatchFeedToArrivalRate)
-                {
-                    arriving = MeasureArrivalRate(Math.Abs(distance));
-                    if (arriving > 0 && feed > arriving) feed = arriving;
-                }
-
-                // Snapped to a grid last of all, so whatever the steps above
-                // arrived at, consecutive blocks share an F word wherever the
-                // wheel is being turned steadily. See JogFeedQuantumMmPerMin
-                // for why a changing F is the roughness.
+                // This end used to snap it onto a grid with hysteresis, match
+                // it to a measured arrival rate, hold it above a delivery floor
+                // and smooth it - four mechanisms, each built against a real
+                // symptom, each measured, and every one of them compensating
+                // from outside for a number produced on the handheld.
                 //
-                // Rounded to nearest rather than down, and never to nothing: a
-                // feed under half a quantum still has to travel the distance in
-                // the block, and a zero F is not a slow move but a rejected
-                // line.
-                // Sized against the step, if asked, so the band is a fixed
-                // amount of wheel rather than a fixed amount of feed. See
-                // ScaleJogFeedQuantumByStep.
-                var quantum = QuantumFor(step, _config.JogFeedQuantumMmPerMin,
-                                         _config.ScaleJogFeedQuantumByStep);
-
-                feed = SnapFeed(feed, quantum, _lastCommandedFeed,
-                                _config.JogFeedRiseBandSteps, _config.JogFeedFallBandSteps);
-
-                // The floor, applied after the grid so the snap cannot round
-                // straight back down through it, and bounded by what the
-                // pendant asked for.
+                // They are gone because the pendant now bands its own feed:
+                // four values per step, rounded down, so what arrives is
+                // already constant and already below what the wheel is
+                // supplying. Re-deriving it here could only disagree. It did,
+                // too - the snap had to round up onto the grid, discover it had
+                // passed a ceiling this end does not own, and round back down,
+                // which put back the off-grid values the grid existed to
+                // remove.
                 //
-                // Deliberately not the measured arrival rate. Tying the command
-                // to that measurement pushed the feed to 12000 at a 0.5 mm step
-                // whose firmware ceiling is 8000 - the estimate reads about
-                // twice the true rate, between the span bias, the headroom and
-                // taking the higher of two windows - and snapping up from a
-                // noisy number put the feed on a different grid value every few
-                // blocks: 106 changes in 207 dispatches, against 9 in 143 with
-                // the floor off. It made the roughness it sat beside worse.
-                //
-                // What actually makes motion pile up is narrower than
-                // "commanded below arrival". The handheld throttles its own
-                // detents from the feed this end reports, so a low command is
-                // normally self-correcting - right up to its one-detent-per-tick
-                // clamp, below which it cannot slow down however it is asked.
-                // That clamp is step x 3000 mm/min and needs no measurement.
-                //
-                // Bounded by the request because the request already carries
-                // STEP_MAX_FEED. A pendant asking for less than its own floor is
-                // being turned too slowly to reach the clamp, so there is
-                // nothing accumulating to prevent.
-                if (_config.EnforcePendantDeliveryFloor)
-                    feed = ApplyDeliveryFloor(feed, step, askedFor, quantum);
-
-                // Rounding to nearest can lift a feed past the handheld's own
-                // ceiling for this step, and that ceiling is the firmware's
-                // decision about what the step is for - this end does not get
-                // to round through it. But coming back down has to land on the
-                // grid, not on the raw request.
-                //
-                // Clamping to askedFor directly undid the snap entirely
-                // whenever it rounded up, which is most of the time near the
-                // ceiling and always below half a quantum. The commanded feed
-                // came out as the pendant's raw number - 638, 7969, 3375 - and
-                // hysteresis then latched that arbitrary value and held it.
-                // Measured as a burst pinned at "feed 638-638" for its whole
-                // length, and as a top end that could not be reached because
-                // the request nearest it had become the held value.
-                if (askedFor > 0 && feed > askedFor)
-                    feed = SnapFeedDown(askedFor, quantum);
-
+                // What is left is a clamp the sender legitimately owns.
                 if (_config.MaxJogFeedRate > 0 && feed > _config.MaxJogFeedRate)
                     feed = _config.MaxJogFeedRate;
 
@@ -1298,8 +1157,7 @@ public class PendantService : IDisposable
                 // buffer is the same pipeline the pendant works to keep
                 // supplied. Three decimals is exact for the finest step
                 // the pendant offers.
-                _lastCommandedFeed = feed;
-                RecordDispatch(feed, raw, distance, arriving);
+                RecordDispatch(feed, raw, distance);
 
                 _mainViewModel.SendPendantJog(
                     $"$J=G91G21{axis}{distance.ToInvariantString("0.###")}F{feed.ToInvariantString("0.#")}",
@@ -1671,176 +1529,6 @@ public class PendantService : IDisposable
     /// </summary>
     private const double MmPerInch = 25.4;
 
-    /// <summary>
-    /// The feed to command when the pendant asks for none, in mm/min.
-    /// </summary>
-    /// <remarks>
-    /// The pendant normally sends a feed of its own and this is not reached. It
-    /// is reached whenever that word is missing or unreadable, though - a feed
-    /// serialised as a JSON string rather than a number reads as zero here -
-    /// and until now what it fell back to was wrong in imperial.
-    ///
-    /// The number comes from the jog rate list the operator picked from, which
-    /// is built from JogSpeedMetric or JogSpeedImperial according to the Metric
-    /// UI setting, so it is in display units. The jog block states G21 and its
-    /// F word is therefore read as mm/min. In metric the two agree by accident
-    /// and nothing looks wrong; in imperial the list offers 10-300 in/min and
-    /// passing 300 straight through commands 300 mm/min, which is 11.8 in/min -
-    /// a twenty-fivefold shortfall that reads on the machine as a pendant that
-    /// crawls and stumbles in imperial while behaving in metric.
-    ///
-    /// The shortfall is felt as roughness and not just slowness, because the
-    /// distance in each block is untouched. Movement keeps arriving at the
-    /// speed of the hand while the blocks carrying it are commanded to take
-    /// twenty-five times as long, so the machine falls progressively further
-    /// behind the wheel and keeps running after it stops.
-    ///
-    /// Converted here rather than at the jog line so the millimetre contract
-    /// stays in one place, and against the configured UI units rather than the
-    /// machine's $13, since the UI setting is what chose the list.
-    /// </remarks>
-    /// <summary>
-    /// The commanded feed snapped to the configured grid, holding the previous
-    /// value while the request stays within one grid step of it.
-    /// </summary>
-    /// <remarks>
-    /// Rounded to nearest rather than down, and never to nothing. A feed under
-    /// half a quantum still has to carry the distance already in the block, and
-    /// an F of zero is not a slow move - it is a line the controller rejects.
-    ///
-    /// The hysteresis is what makes the grid worth having below the pendant's
-    /// own ceiling. A bare snap changes the F word every time the request
-    /// crosses a boundary, so a hand drifting around 3250 on a 500 grid flips
-    /// between 3000 and 3500 over and over - and each flip is a velocity change
-    /// the planner has to ramp through. It converts small wobble into whole
-    /// grid steps rather than removing it.
-    ///
-    /// Measured across twelve bursts: every one near the pendant's step ceiling
-    /// changed feed on 3-7% of blocks, because a saturated request cannot
-    /// wobble at all. The single burst at roughly half speed changed on 30%,
-    /// which is what boundary-flapping looks like.
-    ///
-    /// The slack is deliberately asymmetric: a full grid step to come down, half
-    /// a step to go up.
-    ///
-    /// Symmetric slack made the top end unreachable at a coarse grid, and the
-    /// coarser the grid the worse it got. Held at 6000 on a 2000 grid, nothing
-    /// below a request of 8000 could move it - and 8000 is the pendant's own
-    /// ceiling for that step, so the operator had to hit the absolute maximum
-    /// exactly to leave 75% of it. Measured as "smoother at half speed but the
-    /// top end is almost unreachable", with feed changes down at 1-4% and the
-    /// machine stuck below the speed being asked for.
-    ///
-    /// Asking for more speed is answered promptly; a hand wobbling downward is
-    /// not. That is the same shape as the pendant's own FEED_DEADBAND, which
-    /// lets the feed climb on demand and decay lazily, and it is the right way
-    /// round: being slower than the hand is felt immediately, being briefly
-    /// faster is absorbed by the arrival ceiling above.
-    ///
-    /// Nothing runs away upward. The request is bounded by the handheld's step
-    /// ceiling before this sees it, and the arrival ceiling has already capped
-    /// it to what is actually turning up.
-    /// </remarks>
-    /// <summary>
-    /// The grid step to use at this pendant step size.
-    /// </summary>
-    /// <remarks>
-    /// The configured value is read as the grid for a 1 mm step and scaled from
-    /// there, because the feed a given wobble of the hand produces is
-    /// proportional to the step: ten detents a second either way is 600 mm/min
-    /// at 1 mm and 300 at 0.5. A flat grid is therefore the right width at one
-    /// step and wrong at all the others, and was measurably too narrow at 1 mm
-    /// when tuned for 0.5.
-    ///
-    /// Unscaled until a step has been seen, which is the first jog message of a
-    /// session - there is nothing to scale by before that, and guessing would
-    /// pick a grid for a step the operator may not be on.
-    /// </remarks>
-    internal static double QuantumFor(double step, double configured, bool scale)
-    {
-        if (!scale || configured <= 0 || step <= 0) return configured;
-        return configured * step;
-    }
-
-    internal static double SnapFeed(double feed, double quantum, double previous = 0,
-                                    double riseSteps = 0.5, double fallSteps = 1.0)
-    {
-        if (quantum <= 0 || feed <= 0) return feed;
-
-        if (previous > 0)
-        {
-            var steps = feed > previous ? riseSteps : fallSteps;
-            if (steps > 0 && Math.Abs(feed - previous) < quantum * steps) return previous;
-        }
-
-        var snapped = Math.Round(feed / quantum) * quantum;
-        return snapped < quantum ? quantum : snapped;
-    }
-
-    /// <summary>
-    /// Raises the commanded feed to the slowest rate the pendant can actually
-    /// deliver at this step, but never past what the pendant asked for.
-    /// </summary>
-    /// <remarks>
-    /// The handheld throttles its own detents from the feed this end reports,
-    /// so commanding low is normally self-correcting - right up to its
-    /// one-detent-per-tick clamp, below which it cannot slow down however it is
-    /// asked. Command under that while the wheel turns and the surplus has
-    /// nowhere to go but the planner, arriving later as travel after the hand
-    /// has stopped.
-    ///
-    /// The request is the upper bound because it already carries the firmware's
-    /// own ceiling for the step. A pendant asking for less than its floor is
-    /// being turned too slowly to reach the clamp, so there is nothing piling
-    /// up to prevent, and raising it there would command motion nobody asked
-    /// for.
-    /// </remarks>
-    internal static double ApplyDeliveryFloor(double feed, double step,
-                                              double askedFor, double quantum)
-    {
-        if (step <= 0) return feed;
-
-        var floor = step * PendantFloorPerStepMmPerMin;
-        if (askedFor > 0 && floor > askedFor) floor = askedFor;
-        if (feed >= floor) return feed;
-
-        // Snapped up so the floor lands on the grid rather than reintroducing
-        // the off-grid values the quantum exists to remove - then held to the
-        // request again, because rounding up is itself a way through it. A
-        // floor of 600 on a 500 grid rounds to 1000, which is the same mistake
-        // this method exists to prevent, arriving by the back door.
-        var raised = SnapFeedUp(floor, quantum);
-        return askedFor > 0 && raised > askedFor ? askedFor : raised;
-    }
-
-    /// <summary>
-    /// The feed rounded down onto the grid, for holding it under a ceiling
-    /// without leaving the grid to do it.
-    /// </summary>
-    /// <remarks>
-    /// A request below one whole quantum has no grid value beneath it except
-    /// zero, so there it stands unchanged. That is a real gap rather than a
-    /// tidy edge case: the coarser the grid, the more of the range sits under
-    /// the first step and escapes quantization entirely, which is part of why
-    /// a 2000 grid behaved worse than a 500 one rather than merely coarser.
-    /// </remarks>
-    internal static double SnapFeedDown(double feed, double quantum)
-    {
-        if (quantum <= 0 || feed <= 0) return feed;
-        var snapped = Math.Floor(feed / quantum) * quantum;
-        return snapped < quantum ? feed : snapped;
-    }
-
-    /// <summary>
-    /// The feed rounded up onto the grid, for the delivery floor. Never below
-    /// what was asked of it, which is the whole point of a floor.
-    /// </summary>
-    internal static double SnapFeedUp(double feed, double quantum)
-    {
-        if (quantum <= 0 || feed <= 0) return feed;
-        return Math.Ceiling(feed / quantum) * quantum;
-    }
-
     private double FallbackJogFeedMmPerMin() =>
         ToMmPerMin(_mainViewModel?.JogRate ?? 0,
                    _configManager.GHalSenderConfig?.UseMetric ?? true);
@@ -1872,8 +1560,6 @@ public class PendantService : IDisposable
                 _burstDetents = 0;
                 _stepMin = double.MaxValue;
                 _stepMax = 0;
-                _arrivalMin = double.MaxValue;
-                _arrivalMax = 0;
             }
             else
             {
@@ -1888,119 +1574,10 @@ public class PendantService : IDisposable
     }
 
     /// <summary>
-    /// Millimetres per minute that movement is actually turning up at, or zero
-    /// while there is too little history to say.
-    /// </summary>
-    /// <remarks>
-    /// Returning zero matters as much as the number does. After a pause there is
-    /// nothing to measure, and inventing a rate from one block is what commanded
-    /// single-digit feeds and left the machine crawling through a full planner.
-    /// With no measurement the pendant's own figure stands, which is the
-    /// behaviour this had before any of it.
-    /// </remarks>
-    private double MeasureArrivalRate(double distance)
-    {
-        var now = Environment.TickCount64;
-        _recentMotion.Enqueue((now, distance));
-
-        while (_recentMotion.Count > 0 && now - _recentMotion.Peek().Tick > RateWindowMs)
-            _recentMotion.Dequeue();
-
-        return ArrivalRate(_recentMotion, now);
-    }
-
-    /// <summary>
-    /// The rate movement is arriving at, in mm/min, from the window of recently
-    /// dispatched blocks - or zero while there is too little history to say.
-    /// </summary>
-    /// <remarks>
-    /// Separated from the window it reads so the thresholds can be exercised
-    /// against a stream of a chosen cadence. They are tuning constants found at
-    /// the machine, which is exactly the kind of thing that drifts unnoticed.
-    /// </remarks>
-    internal static double ArrivalRate(IEnumerable<(long Tick, double Distance)> window, long now)
-    {
-        var samples = 0;
-        var total = 0.0;
-        var recent = 0.0;
-        var recentCount = 0;
-
-        long span = 0;
-        long recentSpan = 0;
-        long previous = 0;
-        var havePrevious = false;
-
-        // One ordered pass. The window is a queue, so it enumerates oldest
-        // first, and the span is built from the intervals between arrivals
-        // rather than from the wall clock across them.
-        foreach (var (tick, moved) in window)
-        {
-            samples++;
-            total += moved;
-
-            if (havePrevious)
-            {
-                // A stall contributes one ordinary interval and no more.
-                //
-                // Taken as raw elapsed time, a gap adds its whole duration to
-                // the denominator and no distance to the numerator, so the
-                // measured rate collapses in proportion - and with the ceiling
-                // taken from it, a hiccup on the radio arrives at the machine
-                // as a speed change. Seen as "arriving 640-12827 mm/min" in a
-                // burst carrying one 406 ms gap: a twenty to one spread in a
-                // number describing how fast a hand was moving.
-                //
-                // Capping rather than discarding, because dropping the
-                // interval entirely leaves the distance either side of it
-                // divided by a span that no longer covers it, which reads as a
-                // burst of speed that never happened. Capped, a stall costs
-                // the distance that did not arrive during it and nothing more.
-                var step = Math.Min(tick - previous, JogGapThresholdMs);
-                span += step;
-                if (now - tick <= RateRecentMs) recentSpan += step;
-            }
-
-            previous = tick;
-            havePrevious = true;
-
-            if (now - tick > RateRecentMs) continue;
-            recent += moved;
-            recentCount++;
-        }
-
-        if (samples < RateMinSamples) return 0;
-
-        // And the silence since the newest sample, bounded the same way, so a
-        // rate measured a moment after the last block still reflects it.
-        var tail = Math.Min(now - previous, JogGapThresholdMs);
-        span += tail;
-        recentSpan += tail;
-
-        if (span < RateMinSpanMs) return 0;
-        if (total <= 0) return 0;
-
-        var rate = total / (double)span;
-
-        // Only once the short window covers enough time, and holds enough
-        // messages, to mean anything. One block spanning a few milliseconds
-        // would read as an enormous rate and lift the ceiling out of the way
-        // entirely; three spread over a sparse stream do the same thing more
-        // slowly. See RateRecentMinSamples.
-        if (recent > 0 && recentCount >= RateRecentMinSamples &&
-            recentSpan >= RateRecentMinSpanMs)
-        {
-            var recentRate = recent / (double)recentSpan;
-            if (recentRate > rate) rate = recentRate;
-        }
-
-        return rate * 60000.0 * RateHeadroom;
-    }
-
-    /// <summary>
     /// Records what one dispatched block asked the controller for, and how deep
     /// the controller's planner was when it was asked.
     /// </summary>
-    private void RecordDispatch(double feed, double raw, double distance, double arriving)
+    private void RecordDispatch(double feed, double raw, double distance)
     {
         // Sampled at dispatch rather than on a timer, so the depth is the one
         // the controller had when this block reached it.
@@ -2021,11 +1598,6 @@ public class PendantService : IDisposable
             // Zero means there was too little history to measure - the start of
             // a burst - and folding that in as a rate would read as a stall
             // that never happened.
-            if (arriving > 0)
-            {
-                if (arriving < _arrivalMin) _arrivalMin = arriving;
-                if (arriving > _arrivalMax) _arrivalMax = arriving;
-            }
 
             if (free <= 0) return;              // buffer report off in $10
             if (free < _plannerFreeMin) _plannerFreeMin = free;
@@ -2044,7 +1616,7 @@ public class PendantService : IDisposable
         int arrivals, longGaps, dispatches, feedChanges, freeMin, freeMax;
         long worst, span;
         double feedMin, feedMax, rawMin, rawMax;
-        double travel, detents, stepMin, stepMax, arriveMin, arriveMax;
+        double travel, detents, stepMin, stepMax;
 
         lock (_arrivalLock)
         {
@@ -2067,36 +1639,22 @@ public class PendantService : IDisposable
             detents = _burstDetents;
             stepMin = _stepMin;
             stepMax = _stepMax;
-            arriveMin = _arrivalMin;
-            arriveMax = _arrivalMax;
 
             _jogArrivals = 0;
             _longGaps = 0;
             _worstGapMs = 0;
         }
 
-        // The wheel has stopped, so the next burst starts from whatever it then
-        // asks for rather than from where this one left off.
+        // The wheel has stopped, so the next burst reports from whatever it
+        // then asks for rather than from where this one left off.
         //
-        // Carrying the average across a pause commanded a feed nobody asked
-        // for: stop at 8000, start again gently at 900, and the first blocks go
-        // out near 8000 while the average decays. The console showed it as a
-        // commanded range above the requested one, which cannot otherwise
-        // happen - the ceiling only ever lowers. On the machine it is a burst
-        // that sprints and then settles, which is the wrong way round.
-        //
-        // It also lands in the one window the arrival-rate ceiling cannot
-        // cover, since three samples of history do not exist yet.
+        // Nothing carries a feed across a pause any more - the pendant sets it
+        // and this end passes it through - but the reported range still has to
+        // be cleared, or one burst's numbers colour the next.
         lock (_jogLock)
         {
-            _smoothedFeed = 0;
             _rawFeed = 0;
         }
-
-        // The held feed goes with them. Carrying it across a pause would hold
-        // the next burst at a speed the previous one was turning at, which is
-        // the same mistake the smoothed feed made here before it.
-        _lastCommandedFeed = 0;
 
         // A nudge of the wheel says nothing about steadiness.
         if (arrivals < 10) return;
@@ -2112,7 +1670,10 @@ public class PendantService : IDisposable
             ? $"planner free {freeMin}-{freeMax}"
             : "planner depth unavailable ($10 buffer report off)";
 
-        var asked = _config.SmoothJogFeed && rawMax > 0
+        // Shown only when this end changed something, which now means the
+        // MaxJogFeedRate clamp and nothing else - the pendant bands its own
+        // feed, so these two ranges are normally the same number twice.
+        var asked = rawMax > 0 && (rawMin != feedMin || rawMax != feedMax)
             ? $" (pendant asked {rawMin.ToInvariantString("0")}-{rawMax.ToInvariantString("0")})"
             : string.Empty;
 
@@ -2134,12 +1695,8 @@ public class PendantService : IDisposable
               $"{detents.ToInvariantString("0")} detents"
             : "no detents counted";
 
-        var arriving = arriveMax > 0
-            ? $"arriving {arriveMin.ToInvariantString("0")}-{arriveMax.ToInvariantString("0")} mm/min"
-            : "arrival rate never measured";
-
         Report($"Pendant jog travel: {travel.ToInvariantString("0.##")} mm, " +
-               $"{perDetent}, {step}, {arriving}.");
+               $"{perDetent}, {step}.");
     }
 
     private void ClearPendingJog()
