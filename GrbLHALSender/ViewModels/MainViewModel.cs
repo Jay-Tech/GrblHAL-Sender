@@ -223,6 +223,87 @@ public class MainViewModel : ViewModelBase
     public bool ControlsEnabled => Connected && !MpgActive;
 
     /// <summary>
+    /// Whether a jog may be sent by something other than the operator at this
+    /// screen - the wireless pendant, the gamepad.
+    /// </summary>
+    /// <remarks>
+    /// The controller's own state decides it, not this application's job
+    /// bookkeeping. grblHAL accepts g-code in STATE_TOOL_CHANGE, and jogging is
+    /// the whole point of the pause: the operator jogs to the plate to touch
+    /// off. Refusing on "a job is loaded" took the pendant away at exactly the
+    /// moment it is most wanted, with the operator at the spindle and the PC
+    /// across the shop.
+    ///
+    /// The job check that remains is for the momentary Idle. Mid-cut the
+    /// controller reports Idle between blocks, which passes a bare state test
+    /// while the streamer is still counting acks for lines in flight - see
+    /// UpdateButtonStates, where the same blip is what keeps MDI and the macros
+    /// behind !jobRunning. A hand at the wheel makes that far more reachable
+    /// than a button does, because the jog loop dispatches every 10 ms and will
+    /// find the blip on its own.
+    ///
+    /// Which leaves the tool change as the deliberate exception, exactly as
+    /// CanUseMdi already has it and for the same reason: the change cannot be
+    /// completed without it, and commands from outside the streamer are
+    /// accounted for.
+    ///
+    /// The exception is read from the job's latched state and not from the
+    /// controller's, which is the whole reason MapGrblState holds JobState at
+    /// Tool through Jog and Idle reports. Jogging changes the controller's
+    /// state out from under itself - grblHAL reports Jog while the wheel turns
+    /// and Idle when it stops, never Tool again until the change ends - so a
+    /// rule keyed on GrblState.Tool grants permission only in the gaps between
+    /// jogs and withdraws it the instant one starts. On the machine that is a
+    /// jog that stops and restarts on its own, a planner that never fills, and
+    /// a movement button that will not cancel on release because the state is
+    /// Jog by then.
+    /// </remarks>
+    internal static bool CanJogInState(bool controlsEnabled, bool jobRunning,
+                                       JobState jobState, GrblState grblState) =>
+        controlsEnabled &&
+        (jobState is JobState.Tool ||
+         (!jobRunning && grblState is GrblState.Idle or GrblState.Jog or GrblState.Tool));
+
+    /// <summary>
+    /// Whether grblHAL's jog cancel may be sent - everywhere a jog may be, plus
+    /// any moment the machine is actually jogging.
+    /// </summary>
+    /// <remarks>
+    /// Motion that has started must always be stoppable. Tying the cancel to
+    /// the same permission as starting a jog looks tidy and is a trap: any state
+    /// change between the two - and jogging causes one - leaves an axis moving
+    /// with nothing able to stop it.
+    ///
+    /// Safe to widen because a controller reporting Jog is not one part way
+    /// through a cut. Jogs are rejected in Run, so the stream cannot be feeding
+    /// the machine g-code while this is true, and the receive buffer the byte
+    /// flushes holds nothing of the job to lose.
+    /// </remarks>
+    internal static bool CanCancelJogInState(bool controlsEnabled, bool jobRunning,
+                                             JobState jobState, GrblState grblState) =>
+        controlsEnabled &&
+        (grblState is GrblState.Jog ||
+         CanJogInState(controlsEnabled, jobRunning, jobState, grblState));
+
+    /// <summary>
+    /// Live answer to <see cref="CanJogInState"/> for the machine right now.
+    /// Computed rather than cached: the pendant's dispatch loop reads it every
+    /// 10 ms from its own thread, and a value refreshed only when the interface
+    /// updates would let a jog through on a state that had already changed.
+    /// </summary>
+    public bool CanJogFromDevice =>
+        CanJogInState(ControlsEnabled, JobViewModel?.JobRunning ?? false,
+                      JobViewModel?.JobState ?? JobState.Idle, CurrentGrblState);
+
+    /// <summary>
+    /// Live answer to <see cref="CanCancelJogInState"/> for the machine right
+    /// now.
+    /// </summary>
+    public bool CanCancelJogFromDevice =>
+        CanCancelJogInState(ControlsEnabled, JobViewModel?.JobRunning ?? false,
+                            JobViewModel?.JobState ?? JobState.Idle, CurrentGrblState);
+
+    /// <summary>
     /// Whether Spindle Off can reach the controller.
     ///
     /// Normally it streams M05, so it needs the stream like everything else. The
@@ -775,8 +856,15 @@ public class MainViewModel : ViewModelBase
         // ControlsEnabled, not Connected: during MPG mode the controller reports Jog
         // while the hardware wheel drives it, which passes the state test - so the
         // arrows would look available while jogging that is not ours is underway.
-        CanJog = ControlsEnabled &&
-                 CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
+        //
+        // The same rule the pendant and the gamepad jog by, deliberately. The
+        // movement buttons are a press-and-hold whose release sends a jog cancel,
+        // so a looser rule here than the one guarding that byte would arm an
+        // arrow that starts a continuous jog it cannot then stop. The blip is
+        // what makes that reachable: mid-cut the controller reads Idle between
+        // blocks, which a bare state test accepts.
+        CanJog = CanJogInState(ControlsEnabled, jobRunning,
+                               JobViewModel?.JobState ?? JobState.Idle, CurrentGrblState);
 
         CanSetTool = ControlsEnabled && HomeState && !jobRunning &&
                      CurrentGrblState is GrblState.Idle or GrblState.Tool;
@@ -1344,8 +1432,40 @@ public class MainViewModel : ViewModelBase
     }
 
 
+    /// <summary>
+    /// Cancels a jog in progress, if the machine is in a state where this
+    /// sender could have started one.
+    /// </summary>
+    /// <remarks>
+    /// Guarded here rather than at each caller, because 0x85 is not the inert
+    /// real-time byte the rest of its family are and every route to it needs
+    /// the same protection. grblHAL's handler resets the character counter and
+    /// flushes the receive buffer - by way of an ASCII_CAN it injects into the
+    /// stream - before it looks at the machine state at all. Only the motion
+    /// cancel underneath is guarded, on STATE_JOG.
+    ///
+    /// So mid-cut the byte throws away job lines this sender has already
+    /// written and counted. Flushed, they are never parsed, so they answer with
+    /// neither "ok" nor "error:N" - and the accounting that absorbs a rejected
+    /// command cannot absorb a line that never answers at all. The entries stay
+    /// at the head of the queue, the buffer never frees, and the streamer stops
+    /// sending with the tool in the work.
+    ///
+    /// It reaches that state without anybody pressing anything: the pendant
+    /// firmware sends a cancel every time the wheel stops, reverses or changes
+    /// axis, and the gamepad sends one when the stick returns to centre or the
+    /// pad disconnects.
+    ///
+    /// The same condition as sending a jog, because a cancel is only ever for a
+    /// jog this sender sent. That deliberately still allows it through a tool
+    /// change, which is where a pendant dying mid-jog most needs to leave the
+    /// machine stopped rather than running on - and where nothing of the job is
+    /// in the receive buffer to lose, the streamer having stopped dead at the
+    /// M6.
+    /// </remarks>
     public void JogCancel()
     {
+        if (!CanCancelJogFromDevice) return;
         SendByteCommand(GrblHalConstants.JogCancel);
     }
     public void Connect()
