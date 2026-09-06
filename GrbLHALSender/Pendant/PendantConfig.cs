@@ -1,4 +1,4 @@
-namespace GrbLHALSender.Pendant;
+﻿namespace GrbLHALSender.Pendant;
 
 public class PendantConfig
 {
@@ -177,6 +177,143 @@ public class PendantConfig
     /// thread the interface renders from, which is felt as jerk partway
     /// through a long move rather than at the start.
     /// </summary>
+    /// <summary>
+    /// Snap the commanded feed to a multiple of this, in mm/min. Zero disables it.
+    /// </summary>
+    /// <remarks>
+    /// The pendant sets its feed from how fast the wheel is being turned, so below
+    /// the step's own ceiling every block carries a slightly different F word. A
+    /// planner cannot chain blocks that ask for different velocities: it ramps down
+    /// and back up at each junction, hundreds of times a second, and that is the
+    /// roughness felt at any wheel speed other than flat out.
+    ///
+    /// Flat out is smooth for exactly one reason - the feed saturates the pendant's
+    /// STEP_MAX_FEED and stops varying. Measured at the machine, a burst held at a
+    /// constant feed ran the planner down to 103 blocks free where the same wheel
+    /// speed with a varying feed never got below 125, which is a queue that never
+    /// held more than three blocks to look ahead through.
+    ///
+    /// Snapping to a grid gives a steady turn a steady F without pinning it to one
+    /// speed, so consecutive blocks chain. Coarse enough to span the wobble, fine
+    /// enough that the operator still feels the wheel: a few hundred mm/min.
+    ///
+    /// <para>
+    /// A coarse grid locks against MatchFeedToArrivalRate, and the arithmetic is
+    /// worth keeping because the symptom looks nothing like the cause. Climbing
+    /// from a held value V to the next step needs the ceiling to permit V + Q/2,
+    /// and the ceiling is the measured arrival rate - which, once delivery has
+    /// settled to match the command, is about V x RateHeadroom. So climbing needs
+    /// V x 1.15 >= V + Q/2, or V >= Q x 3.33.
+    /// </para>
+    /// <para>
+    /// At Q = 2000 that is V >= 6667: a 0.5 mm step whose ceiling is 8000 sticks
+    /// at 6000 for good, because the arrival rate tops out near 6900 and the next
+    /// grid step needs 7000. Measured exactly that way - "feed 300-6000" in every
+    /// burst at 0.5 mm while 1 mm, sitting at 8000, cleared the threshold and
+    /// reached 10000. It is a feedback trap: the ceiling measures what arrives,
+    /// what arrives is bounded by what was commanded, and what was commanded was
+    /// bounded by the ceiling. At Q = 500 the threshold is 1667 and it never
+    /// appears.
+    /// </para>
+    /// <para>
+    /// So a grid much above a few hundred wants the arrival ceiling switched off,
+    /// and hysteresis cannot rescue it - the constraint is between the grid and
+    /// the ceiling, not in the hold.
+    /// </para>
+    /// </remarks>
+    /// <summary>
+    /// Modem control lines to assert when opening the receiver's port.
+    /// </summary>
+    /// <remarks>
+    /// Configuration rather than a constant because what these do depends
+    /// entirely on the board on the other end, and getting it wrong is not a
+    /// subtle failure - it either resets the receiver or silences it.
+    ///
+    /// On a board behind a USB-UART bridge, DTR and RTS are not flow control at
+    /// all: they are wired to EN and IO0 through the auto-reset circuit, and
+    /// driving them on open resets the chip or drops it into its bootloader.
+    /// Clearing both is the safe state there, which is what Serial.cs does for
+    /// the controller port.
+    ///
+    /// An ESP32-S3 has native USB and no such circuit, so the same reasoning
+    /// does not carry over. Reset can still be driven over these lines - that
+    /// is how esptool does it - but a firmware using TinyUSB CDC may also read
+    /// DTR as "a terminal is attached" and go quiet without it. The two failure
+    /// modes want opposite settings, so the board decides.
+    ///
+    /// Defaults preserve long-standing behaviour. Change them only against an
+    /// observed symptom: a receiver that wedges when the sender starts, or one
+    /// that opens cleanly and then never says anything.
+    /// </remarks>
+    public bool SerialDtrEnable { get; set; } = true;
+
+    /// <summary>See <see cref="SerialDtrEnable"/>.</summary>
+    public bool SerialRtsEnable { get; set; } = false;
+
+    public double JogFeedQuantumMmPerMin { get; set; } = 0;
+
+    /// <summary>
+    /// How far the request must rise above the held feed before the commanded
+    /// one follows, as a multiple of the grid step.
+    /// </summary>
+    /// <remarks>
+    /// Small, because being slower than the hand is felt at once. It also has
+    /// to stay small enough that the top of a step's range is reachable: the
+    /// last climb to the pendant's ceiling costs this much wheel speed on top
+    /// of what the ceiling itself needs, and at a 0.5 mm step every 500 mm/min
+    /// is another 17 detents a second.
+    /// </remarks>
+    public double JogFeedRiseBandSteps { get; set; } = 0.5;
+
+    /// <summary>
+    /// How far the request must fall below the held feed before the commanded
+    /// one follows, as a multiple of the grid step.
+    /// </summary>
+    /// <remarks>
+    /// Larger than the rise, and this is the number that decides how much the
+    /// wheel can ease off while still holding top speed. At one step, holding
+    /// 8000 on a 0.5 mm grid of 500 needs the request to stay above 7500, which
+    /// is 250 detents a second sustained - reported as "got to keep spinning
+    /// fast, not much room to reduce". The same band at a 1 mm step needs only
+    /// 125, which is why the two steps feel so different at the top.
+    ///
+    /// Widening it buys that room, and costs the other way: commanded above
+    /// what the hand is actually delivering, each block finishes early and the
+    /// machine waits, which is felt as a stumble. With MatchFeedToArrivalRate
+    /// off there is nothing else bounding that, so this is the whole of the
+    /// trade.
+    /// </remarks>
+    public double JogFeedFallBandSteps { get; set; } = 1.0;
+
+    /// <summary>
+    /// Never command a feed below the slowest the pendant can deliver at the
+    /// current step.
+    /// </summary>
+    /// <remarks>
+    /// The pendant's flow control floors at one detent per 20 ms tick - see the
+    /// allowed &lt; 1 clamp in jog.py - so it can never deliver slower than
+    /// step x 3000 mm/min: 1500 at a 0.5 mm step, 3000 at 1 mm. Command below
+    /// that while the wheel turns and the excess has nowhere to go but the
+    /// queue, arriving later as travel after the hand has stopped.
+    ///
+    /// Measured: with the feed capped at 2000 and a 1 mm step, 431 mm arrived
+    /// in 7.9 s (3273 mm/min) against 2000 commanded, and the planner filled to
+    /// four blocks free - about 124 mm still to run when the hand stopped. The
+    /// same session at a 0.5 mm step, whose floor of 1500 sits under the cap,
+    /// stayed well behaved throughout.
+    ///
+    /// Bounded by what the pendant asked for, which is not a detail. Written
+    /// first against the measured arrival rate instead, it pushed the feed to
+    /// 12000 at a 0.5 mm step whose firmware ceiling is 8000 - that estimate
+    /// reads about twice the true rate - and snapping up from a noisy number
+    /// changed the commanded feed every few blocks: 106 changes in 207
+    /// dispatches against 9 in 143 with the floor off. It made the roughness it
+    /// was meant to sit beside measurably worse. The request already carries
+    /// STEP_MAX_FEED, and a pendant asking for less than its own floor is being
+    /// turned too slowly to reach the clamp at all.
+    /// </remarks>
+    public bool EnforcePendantDeliveryFloor { get; set; } = false;
+
     public bool EchoJogsToConsole { get; set; } = false;
 
     /// <summary>
