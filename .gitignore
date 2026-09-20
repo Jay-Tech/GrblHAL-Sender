@@ -462,3 +462,4 @@ $RECYCLE.BIN/
 # permission grants, not shared state.
 .claude/launch.json
 .claude/settings.local.json
+/GrbLHALSender.Desktop/Properties/launchSettings.json
