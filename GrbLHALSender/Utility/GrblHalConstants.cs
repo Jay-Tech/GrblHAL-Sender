@@ -20,6 +20,22 @@
         public const byte SpindleFinePlus = 0x9C;
         public const byte SpindleCoarseMinus = 0x9B;
         public const byte SpindleCoarsePlus = 0x9A;
+        // Toggles the spindle off and on again, and only while the machine is in
+        // HOLD - outside a hold the controller ignores it. Deliberate: stopping the
+        // spindle while the tool is still moving through material is worse than
+        // leaving it running, so the hold decelerates first. A cycle start restores
+        // the spindle on its own, so the toggle back is not something a caller has
+        // to remember.
+        //
+        // Being real time rather than a streamed M05 is what should let it work
+        // while a hardware MPG holds the g-code stream - but that half is read from
+        // grblHAL's design, not measured, and is untested here for want of a second
+        // port. See the note at JobViewModel.CanHoldJob for how to settle it.
+        //
+        // The value itself is not a guess: 0x99 to 0x9D above are grbl's spindle
+        // override block exactly - set 100%, plus and minus 10%, plus and minus 1% -
+        // and 0x9E is the documented next member.
+        public const byte SpindleStopToggle = 0x9E;
         //Feed
         public const byte FeedOrReset = 0x90;
         public const byte FeedOrCoarsePlus = 0x91;

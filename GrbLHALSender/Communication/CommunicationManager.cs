@@ -1030,7 +1030,13 @@ namespace GrbLHALSender.Communication
                             rtState.MPos = value.Split(',');
                             break;
                         case "Bf":
-                            var y = value.Split(",");
+                            // Planner blocks free, then RX bytes free. The first
+                            // says how much lookahead the controller actually
+                            // has - which decides whether it can hold a feed
+                            // across block boundaries or must decelerate at the
+                            // end of each.
+                            var bf = value.Split(",");
+                            rtState.PlannerBlocksFree = bf[0];
                             break;
                         case "Ln":
                             var ln = value.Split(",");

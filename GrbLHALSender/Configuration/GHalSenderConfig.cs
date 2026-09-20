@@ -9,6 +9,7 @@ using GrbLHALSender.WebServer;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
+using GrbLHALSender.Pendant;
 
 namespace GrbLHALSender.Configuration;
 
@@ -63,6 +64,7 @@ public class GHalSenderConfig : ObservableObject
     public GamepadConfig GamepadConfig { get; set; } = new();
     public GpioConfig Gpio { get; set; } = new();
     public WebServerConfig WebServerConfig { get; set; } = new();
+    public PendantConfig PendantConfig { get; set; } = new();
     public ProbeConfig ProbeConfig { get; set; } = new();
     public SdCardConfig SdCardConfig { get; set; } = new();
     public ThemeConfig Theme { get; set; } = new();

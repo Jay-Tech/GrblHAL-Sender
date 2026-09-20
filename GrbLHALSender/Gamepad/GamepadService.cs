@@ -415,13 +415,7 @@ public class GamepadService : IDisposable
 
             string command = $"$J=G91{unitSystem}{axisParts}F{jogRate.ToString("F0", CultureInfo.InvariantCulture)}";
 
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (_mainViewModel.Connected && !_mainViewModel.AlarmActive)
-                {
-                    _mainViewModel.SendCommand(command);
-                }
-            });
+            Dispatcher.UIThread.Post(() => SendJogIfAllowed(command));
 
             _wasJogging = true;
         }
@@ -459,7 +453,7 @@ public class GamepadService : IDisposable
                 _mainViewModel.SendByteCommand(GrblHalConstants.CycleStart);
                 break;
             case GamepadAction.JogCancel:
-                _mainViewModel.JogCancel();
+                DispatchJogCancel();
                 break;
             case GamepadAction.SafetyDoor:
                 _mainViewModel.SendByteCommand(GrblHalConstants.SafetyDoor);
@@ -499,27 +493,27 @@ public class GamepadService : IDisposable
                 break;
 
             case GamepadAction.JogXPos:
-                _mainViewModel.SendCommand(
+                SendJogIfAllowed(
                     $"$J=G91{_mainViewModel.UnitSystem}X{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogXNeg:
-                _mainViewModel.SendCommand(
+                SendJogIfAllowed(
                     $"$J=G91{_mainViewModel.UnitSystem}X-{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogYPos:
-                _mainViewModel.SendCommand(
+                SendJogIfAllowed(
                     $"$J=G91{_mainViewModel.UnitSystem}Y{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogYNeg:
-                _mainViewModel.SendCommand(
+                SendJogIfAllowed(
                     $"$J=G91{_mainViewModel.UnitSystem}Y-{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogZPos:
-                _mainViewModel.SendCommand(
+                SendJogIfAllowed(
                     $"$J=G91{_mainViewModel.UnitSystem}Z{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
             case GamepadAction.JogZNeg:
-                _mainViewModel.SendCommand(
+                SendJogIfAllowed(
                     $"$J=G91{_mainViewModel.UnitSystem}Z-{_mainViewModel.JogStep.ToInvariantString()}F{_mainViewModel.JogRate.ToInvariantString()}");
                 break;
         }
@@ -549,9 +543,38 @@ public class GamepadService : IDisposable
         _mainViewModel.JogRate = list[newIndex];
     }
 
+    /// <summary>
+    /// Cancels a jog in progress. Refused by
+    /// <see cref="MainViewModel.JogCancel"/> where the machine is in no state
+    /// for it, which is where the reasoning lives - 0x85 flushes the
+    /// controller's receive buffer rather than being the inert real-time byte
+    /// it looks like.
+    /// </summary>
+    /// <remarks>
+    /// The gamepad reaches it more readily than it looks. Two of the three call
+    /// sites are not a button at all: the stick returning to centre, and the pad
+    /// disconnecting while a jog was in progress.
+    /// </remarks>
     private void DispatchJogCancel()
     {
         Dispatcher.UIThread.Post(() => _mainViewModel?.JogCancel());
+    }
+
+    /// <summary>
+    /// Sends a jog the gamepad asked for, if the controller will take one. Must
+    /// be called on the UI thread.
+    /// </summary>
+    /// <remarks>
+    /// Both jog paths go through here - the proportional stick and the mapped
+    /// step buttons - so neither can be tightened without the other. The rule is
+    /// the controller's state rather than this application's job bookkeeping;
+    /// see <see cref="MainViewModel.CanJogInState"/>, which deliberately still
+    /// allows jogging through a tool change.
+    /// </remarks>
+    private void SendJogIfAllowed(string command)
+    {
+        if (_mainViewModel?.CanJogFromDevice == true)
+            _mainViewModel.SendCommand(command);
     }
 
     public void ReloadConfig(GamepadConfig config)

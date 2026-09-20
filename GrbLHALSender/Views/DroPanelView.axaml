@@ -24,6 +24,7 @@
 					VerticalContentAlignment="Center"
 					VerticalAlignment="Center"
 					HorizontalAlignment="Stretch"
+					IsEnabled="{Binding ControlsEnabled}"
 					Command="{Binding HomeCommand}"/>
 			<Label Grid.Column="1" Grid.Row="0"
 				   Classes.active="{Binding HomeState}"
@@ -95,6 +96,7 @@
 								 VerticalContentAlignment="Center"
 								 Margin="2,2,0,2"
 								 Width="55" Focusable="False"
+								 IsEnabled="{Binding $parent[ItemsControl].((viewModels:MainViewModel)DataContext).ControlsEnabled}"
 								 Command="{Binding ZeroWcsCommand}"
 								 CommandParameter="{Binding Name}"></Button>
 					</Grid>
@@ -108,11 +110,12 @@
 				HorizontalContentAlignment="Center"
 				VerticalContentAlignment="Center"
 				HorizontalAlignment="Stretch"
+				IsEnabled="{Binding ControlsEnabled}"
 				Command="{Binding ZeroAllCommand}" />
 		<!-- END  DRO Control-->
 
 		<!-- START WCS Control-->
-		<views:WcsPanelView Grid.Row="3" x:Name="WcsSection" />
+		<views:WcsPanelView Grid.Row="3" x:Name="WcsSection" IsEnabled="{Binding ControlsEnabled}" />
 		<!--END WCS Control -->
 
 		<!--START MDI Control-->

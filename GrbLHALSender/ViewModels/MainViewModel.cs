@@ -13,6 +13,7 @@ using GrbLHALSender.States;
 using GrbLHALSender.Updates;
 using GrbLHALSender.Utility;
 using GrbLHALSender.WebServer;
+using GrbLHALSender.Pendant;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -52,6 +53,12 @@ public class MainViewModel : ViewModelBase
     private bool _isJobRunning;
     private int _spindleRpm;
     private bool _connected;
+    private bool _mpgActive;
+    private bool _pendantConnected;
+    private string _pendantBatteryText = string.Empty;
+    private bool _pendantBatteryKnown;
+    private bool _pendantBatteryLow;
+    private bool _pendantBatteryCritical;
     private bool _alarmActive;
     private int _selectedTool;
     private double _jogStep;
@@ -73,6 +80,7 @@ public class MainViewModel : ViewModelBase
     private readonly GamepadService _gamepadService;
     private readonly GpioOutputService _gpioOutputService;
     private readonly WebServerService _webServerService;
+    private readonly PendantService _pendantService;
     private readonly FileUploadService _fileUploadService;
     private readonly GcodeEventInjector _eventInjector;
 
@@ -177,7 +185,210 @@ public class MainViewModel : ViewModelBase
     public bool Connected
     {
         get => _connected;
-        set => this.RaiseAndSetIfChanged(ref _connected, value);
+        set
+        {
+            if (_connected == value) return;
+            this.RaiseAndSetIfChanged(ref _connected, value);
+            this.RaisePropertyChanged(nameof(ControlsEnabled));
+            this.RaisePropertyChanged(nameof(SpindleOffEnabled));
+        }
+    }
+
+    /// <summary>
+    /// The controller has handed its input stream to a hardware MPG, via the
+    /// MPG_MODE pin or the 0x8B toggle.
+    /// </summary>
+    public bool MpgActive
+    {
+        get => _mpgActive;
+        private set
+        {
+            if (_mpgActive == value) return;
+            this.RaiseAndSetIfChanged(ref _mpgActive, value);
+            this.RaisePropertyChanged(nameof(ControlsEnabled));
+            this.RaisePropertyChanged(nameof(SpindleOffEnabled));
+        }
+    }
+
+    /// <summary>
+    /// Whether this window's controls should accept input.
+    ///
+    /// Disconnected is the obvious case. The other is MPG mode: while a
+    /// hardware pendant holds the controller's input stream, anything the
+    /// sender writes is at best ignored, so leaving the buttons live invites
+    /// the operator to press one and conclude the machine is broken. The same
+    /// reasoning already gates PendantService, which refuses to jog while
+    /// MpgActive - this puts the equivalent in front of the person.
+    /// </summary>
+    public bool ControlsEnabled => Connected && !MpgActive;
+
+    /// <summary>
+    /// Whether a jog may be sent by something other than the operator at this
+    /// screen - the wireless pendant, the gamepad.
+    /// </summary>
+    /// <remarks>
+    /// The controller's own state decides it, not this application's job
+    /// bookkeeping. grblHAL accepts g-code in STATE_TOOL_CHANGE, and jogging is
+    /// the whole point of the pause: the operator jogs to the plate to touch
+    /// off. Refusing on "a job is loaded" took the pendant away at exactly the
+    /// moment it is most wanted, with the operator at the spindle and the PC
+    /// across the shop.
+    ///
+    /// The job check that remains is for the momentary Idle. Mid-cut the
+    /// controller reports Idle between blocks, which passes a bare state test
+    /// while the streamer is still counting acks for lines in flight - see
+    /// UpdateButtonStates, where the same blip is what keeps MDI and the macros
+    /// behind !jobRunning. A hand at the wheel makes that far more reachable
+    /// than a button does, because the jog loop dispatches every 10 ms and will
+    /// find the blip on its own.
+    ///
+    /// Which leaves the tool change as the deliberate exception, exactly as
+    /// CanUseMdi already has it and for the same reason: the change cannot be
+    /// completed without it, and commands from outside the streamer are
+    /// accounted for.
+    ///
+    /// The exception is read from the job's latched state and not from the
+    /// controller's, which is the whole reason MapGrblState holds JobState at
+    /// Tool through Jog and Idle reports. Jogging changes the controller's
+    /// state out from under itself - grblHAL reports Jog while the wheel turns
+    /// and Idle when it stops, never Tool again until the change ends - so a
+    /// rule keyed on GrblState.Tool grants permission only in the gaps between
+    /// jogs and withdraws it the instant one starts. On the machine that is a
+    /// jog that stops and restarts on its own, a planner that never fills, and
+    /// a movement button that will not cancel on release because the state is
+    /// Jog by then.
+    /// </remarks>
+    internal static bool CanJogInState(bool controlsEnabled, bool jobRunning,
+                                       JobState jobState, GrblState grblState) =>
+        controlsEnabled &&
+        (jobState is JobState.Tool ||
+         (!jobRunning && grblState is GrblState.Idle or GrblState.Jog or GrblState.Tool));
+
+    /// <summary>
+    /// Whether grblHAL's jog cancel may be sent - everywhere a jog may be, plus
+    /// any moment the machine is actually jogging.
+    /// </summary>
+    /// <remarks>
+    /// Motion that has started must always be stoppable. Tying the cancel to
+    /// the same permission as starting a jog looks tidy and is a trap: any state
+    /// change between the two - and jogging causes one - leaves an axis moving
+    /// with nothing able to stop it.
+    ///
+    /// Safe to widen because a controller reporting Jog is not one part way
+    /// through a cut. Jogs are rejected in Run, so the stream cannot be feeding
+    /// the machine g-code while this is true, and the receive buffer the byte
+    /// flushes holds nothing of the job to lose.
+    /// </remarks>
+    internal static bool CanCancelJogInState(bool controlsEnabled, bool jobRunning,
+                                             JobState jobState, GrblState grblState) =>
+        controlsEnabled &&
+        (grblState is GrblState.Jog ||
+         CanJogInState(controlsEnabled, jobRunning, jobState, grblState));
+
+    /// <summary>
+    /// Live answer to <see cref="CanJogInState"/> for the machine right now.
+    /// Computed rather than cached: the pendant's dispatch loop reads it every
+    /// 10 ms from its own thread, and a value refreshed only when the interface
+    /// updates would let a jog through on a state that had already changed.
+    /// </summary>
+    public bool CanJogFromDevice =>
+        CanJogInState(ControlsEnabled, JobViewModel?.JobRunning ?? false,
+                      JobViewModel?.JobState ?? JobState.Idle, CurrentGrblState);
+
+    /// <summary>
+    /// Live answer to <see cref="CanCancelJogInState"/> for the machine right
+    /// now.
+    /// </summary>
+    public bool CanCancelJogFromDevice =>
+        CanCancelJogInState(ControlsEnabled, JobViewModel?.JobRunning ?? false,
+                            JobViewModel?.JobState ?? JobState.Idle, CurrentGrblState);
+
+    /// <summary>
+    /// Whether Spindle Off can reach the controller.
+    ///
+    /// Normally it streams M05, so it needs the stream like everything else. The
+    /// exception is a hold, where it sends the real-time toggle instead and any
+    /// stream will do - so it stays live through MPG mode on that one path. Hold
+    /// first, then this: the two together are the whole of what the PC can still
+    /// do while someone else drives the machine.
+    /// </summary>
+    public bool SpindleOffEnabled =>
+        ControlsEnabled || (Connected && CurrentGrblState == GrblState.Hold);
+
+    /// <summary>
+    /// The wireless pendant has a live connection to this application.
+    ///
+    /// Nothing to do with MpgActive, despite both being "a pendant". This one
+    /// talks to us, and PendantService turns what it sends into ordinary jog
+    /// commands on the sender's own stream - the controller never learns it
+    /// exists. So the interface stays fully usable and both can drive the
+    /// machine. The indicator says the handheld is live; it takes nothing away.
+    /// </summary>
+    public bool PendantConnected
+    {
+        get => _pendantConnected;
+        private set => this.RaiseAndSetIfChanged(ref _pendantConnected, value);
+    }
+
+    /// <summary>
+    /// The handheld's charge as text - "81%", or "81% +" while charging.
+    ///
+    /// Empty when there is nothing to show: no pendant, or a pendant that has
+    /// said it cannot vouch for a reading. Empty rather than a placeholder,
+    /// because the indicator beside it already says whether a pendant is there
+    /// at all, and a second control saying "unknown" adds a row of furniture
+    /// to a panel that is mostly machine state.
+    /// </summary>
+    public string PendantBatteryText
+    {
+        get => _pendantBatteryText;
+        private set => this.RaiseAndSetIfChanged(ref _pendantBatteryText, value);
+    }
+
+    public bool PendantBatteryKnown
+    {
+        get => _pendantBatteryKnown;
+        private set => this.RaiseAndSetIfChanged(ref _pendantBatteryKnown, value);
+    }
+
+    /// <summary>
+    /// Low and critical as separate flags rather than one level, so the view
+    /// can pick a brush with an IsVisible binding. This codebase has no value
+    /// converters and no brushes on view models, and one battery indicator is
+    /// a poor reason to introduce either.
+    /// </summary>
+    public bool PendantBatteryLow
+    {
+        get => _pendantBatteryLow;
+        private set => this.RaiseAndSetIfChanged(ref _pendantBatteryLow, value);
+    }
+
+    public bool PendantBatteryCritical
+    {
+        get => _pendantBatteryCritical;
+        private set => this.RaiseAndSetIfChanged(ref _pendantBatteryCritical, value);
+    }
+
+    private void UpdatePendantBattery()
+    {
+        var percent = _pendantService.PendantBatteryPercent;
+        var charging = _pendantService.PendantBatteryCharging;
+
+        if (!_pendantService.IsPendantConnected || percent is null)
+        {
+            PendantBatteryText = string.Empty;
+            PendantBatteryKnown = false;
+            PendantBatteryLow = false;
+            PendantBatteryCritical = false;
+            return;
+        }
+
+        PendantBatteryText = charging ? $"{percent}% +" : $"{percent}%";
+        PendantBatteryKnown = true;
+        // Charging is never a warning at any level, matching both the pendant's
+        // own panel and the message the service logs.
+        PendantBatteryCritical = !charging && percent <= 10;
+        PendantBatteryLow = !charging && percent is <= 20 and > 10;
     }
     public bool AlarmActive
     {
@@ -441,7 +652,8 @@ public class MainViewModel : ViewModelBase
         WebServerService webServerService, MachineStateService machineStateService,
         SdCardViewModel sdCardViewModel, UpdateCheckService updateCheckService,
         SurfacingViewModel surfacingViewModel, GcodeEventInjector eventInjector,
-        FileUploadService fileUploadService, GpioOutputService gpioOutputService)
+        FileUploadService fileUploadService, GpioOutputService gpioOutputService,
+        PendantService pendantService)
     {
         _gpioOutputService = gpioOutputService;
         CommManager = commManager;
@@ -586,6 +798,31 @@ public class MainViewModel : ViewModelBase
         _webServerService.StatusMessage += (_, msg) => ConsoleOutput.Add($"[WebServer] {msg}");
         _webServerService.Initialize(_config.WebServerConfig);
 
+        _pendantService = pendantService;
+        _pendantService.SetViewModel(this);
+        // Raised from the accept, session and receiver loops, so this has to cross
+        // to the UI thread like the connection event below it. ConsoleOutput is
+        // bound, and an ObservableCollection changed off the UI thread raises its
+        // notification there too.
+        _pendantService.PendantStatusMessage += (_, msg) =>
+            Dispatcher.UIThread.Post(() => ConsoleOutput.Add($"[Pendant] {msg}"));
+        // Raised from the listener task, so it has to cross to the UI thread.
+        _pendantService.PendantConnectionChanged += (_, connected) =>
+            Dispatcher.UIThread.Post(() =>
+            {
+                PendantConnected = connected;
+                // A pendant that has gone leaves its last charge on screen
+                // otherwise, which ages into a lie - and the number it froze at
+                // is the one from just before it went quiet, so it reads
+                // healthiest exactly when it is least true.
+                if (!connected) UpdatePendantBattery();
+            });
+        // Raised from whichever loop is reading the pendant, so this crosses to
+        // the UI thread like the two above it.
+        _pendantService.PendantBatteryChanged += (_, _) =>
+            Dispatcher.UIThread.Post(UpdatePendantBattery);
+        _pendantService.Initialize(_config.PendantConfig);
+
         updateCheckService.StatusMessage += (_, msg) =>
             Dispatcher.UIThread.Post(() => ConsoleOutput.Add($"[Update] {msg}"));
         _ = updateCheckService.CheckForUpdateAsync();
@@ -612,16 +849,31 @@ public class MainViewModel : ViewModelBase
         // test while the streamer is still counting acks for lines in flight.
         var jobRunning = JobViewModel?.JobRunning ?? false;
 
-        CanJog = Connected &&
-                 CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
+        // Tracks GrblState, because entering and leaving a hold is what changes
+        // whether Spindle Off has a real-time route to the controller.
+        this.RaisePropertyChanged(nameof(SpindleOffEnabled));
 
-        CanSetTool = Connected && HomeState && !jobRunning &&
+        // ControlsEnabled, not Connected: during MPG mode the controller reports Jog
+        // while the hardware wheel drives it, which passes the state test - so the
+        // arrows would look available while jogging that is not ours is underway.
+        //
+        // The same rule the pendant and the gamepad jog by, deliberately. The
+        // movement buttons are a press-and-hold whose release sends a jog cancel,
+        // so a looser rule here than the one guarding that byte would arm an
+        // arrow that starts a continuous jog it cannot then stop. The blip is
+        // what makes that reachable: mid-cut the controller reads Idle between
+        // blocks, which a bare state test accepts.
+        CanJog = CanJogInState(ControlsEnabled, jobRunning,
+                               JobViewModel?.JobState ?? JobState.Idle, CurrentGrblState);
+
+        CanSetTool = ControlsEnabled && HomeState && !jobRunning &&
                      CurrentGrblState is GrblState.Idle or GrblState.Tool;
 
         // One rule for every control that hands a g-code line straight to the
         // controller: MDI, the macro buttons, and the probe cycles. A running job is not
-        // allowed, because those lines would land in the middle of the program.
-        var canSendManualGcode = Connected && !jobRunning &&
+        // allowed, because those lines would land in the middle of the program. Nor is
+        // MPG mode, where the controller is not reading our stream at all.
+        var canSendManualGcode = ControlsEnabled && !jobRunning &&
                                  CurrentGrblState is GrblState.Idle or GrblState.Tool or GrblState.Jog;
 
         // A mid-job tool change is the one exception for MDI. grblHAL's protocol requires
@@ -632,7 +884,7 @@ public class MainViewModel : ViewModelBase
         // accept at that point, which is treated as a manual failure rather than the
         // job's.
         CanUseMdi = canSendManualGcode ||
-                    (Connected && jobRunning && CurrentGrblState is GrblState.Tool);
+                    (ControlsEnabled && jobRunning && CurrentGrblState is GrblState.Tool);
 
         // Whether this machine's $341 mode expects the operator to touch the new tool off.
         // Read from the controller rather than configured here, so the control cannot
@@ -809,9 +1061,20 @@ public class MainViewModel : ViewModelBase
     {
         SendByteCommand(GrblHalConstants.SpindleReset);
     }
+    /// <summary>
+    /// Stops the spindle by whichever route the controller will actually accept.
+    ///
+    /// In a hold that is the real-time toggle, which grblHAL takes from any stream -
+    /// so this still reaches the controller while a hardware MPG holds the g-code
+    /// stream, which is exactly when someone standing at the PC wants it. Outside a
+    /// hold there is no real-time equivalent and M05 has to be streamed.
+    /// </summary>
     private void SpindleOff()
     {
-        SendCommand(GrblHalConstants.SpindleOff);
+        if (CurrentGrblState == GrblState.Hold)
+            SendByteCommand(GrblHalConstants.SpindleStopToggle);
+        else
+            SendCommand(GrblHalConstants.SpindleOff);
     }
     private void SpindleCcw()
     {
@@ -881,6 +1144,30 @@ public class MainViewModel : ViewModelBase
     /// Configured G-code event rules are expanded here, so a rule fires no matter which
     /// of those raised the command.
     /// </summary>
+    /// <summary>
+    /// Sends a pendant jog without touching the UI thread.
+    /// </summary>
+    /// <remarks>
+    /// Jogs arrive twenty times a second and only need the serial port, which
+    /// the comm layer already serialises with its own lock. Routing them
+    /// through the UI thread put every one behind rendering, DRO updates and
+    /// console trimming, so a busy interface delayed the write, the pendant
+    /// service coalesced the backlog, and single blocks of 30 to 50 mm went out
+    /// where a stream of 7 mm blocks should have.
+    ///
+    /// The console echo stays optional and marshalled. It is a diagnostic, and
+    /// at twenty lines a second it is also what drives the console to its cap
+    /// within seconds - after which every status tick pays repeated O(n)
+    /// removals with a change notification each.
+    /// </remarks>
+    public void SendPendantJog(string command, bool echo)
+    {
+        if (string.IsNullOrEmpty(command)) return;
+        CommManager.SendCommand(command);
+        if (echo)
+            Dispatcher.UIThread.Post(() => ConsoleOutput.Add(command));
+    }
+
     public void SendCommand(string command)
     {
         if (string.IsNullOrEmpty(command)) return;
@@ -1012,6 +1299,7 @@ public class MainViewModel : ViewModelBase
         //SpindlePosition = svc.SpindlePosition;
         //WorkCoordinateOffset = svc.WorkCoordinateOffset;
         AlarmActive = svc.AlarmActive;
+        MpgActive = svc.MpgActive;
 
         // Drain buffered console log messages (from data thread) to UI.
         // Only process when the console panel is visible to avoid unnecessary
@@ -1144,8 +1432,40 @@ public class MainViewModel : ViewModelBase
     }
 
 
+    /// <summary>
+    /// Cancels a jog in progress, if the machine is in a state where this
+    /// sender could have started one.
+    /// </summary>
+    /// <remarks>
+    /// Guarded here rather than at each caller, because 0x85 is not the inert
+    /// real-time byte the rest of its family are and every route to it needs
+    /// the same protection. grblHAL's handler resets the character counter and
+    /// flushes the receive buffer - by way of an ASCII_CAN it injects into the
+    /// stream - before it looks at the machine state at all. Only the motion
+    /// cancel underneath is guarded, on STATE_JOG.
+    ///
+    /// So mid-cut the byte throws away job lines this sender has already
+    /// written and counted. Flushed, they are never parsed, so they answer with
+    /// neither "ok" nor "error:N" - and the accounting that absorbs a rejected
+    /// command cannot absorb a line that never answers at all. The entries stay
+    /// at the head of the queue, the buffer never frees, and the streamer stops
+    /// sending with the tool in the work.
+    ///
+    /// It reaches that state without anybody pressing anything: the pendant
+    /// firmware sends a cancel every time the wheel stops, reverses or changes
+    /// axis, and the gamepad sends one when the stick returns to centre or the
+    /// pad disconnects.
+    ///
+    /// The same condition as sending a jog, because a cancel is only ever for a
+    /// jog this sender sent. That deliberately still allows it through a tool
+    /// change, which is where a pendant dying mid-jog most needs to leave the
+    /// machine stopped rather than running on - and where nothing of the job is
+    /// in the receive buffer to lose, the streamer having stopped dead at the
+    /// M6.
+    /// </remarks>
     public void JogCancel()
     {
+        if (!CanCancelJogFromDevice) return;
         SendByteCommand(GrblHalConstants.JogCancel);
     }
     public void Connect()

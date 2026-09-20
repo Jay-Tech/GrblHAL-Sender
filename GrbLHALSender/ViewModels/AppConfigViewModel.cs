@@ -38,6 +38,15 @@ namespace GrbLHALSender.ViewModels
         private double _gamePadResponseCurveExponent = 1.5;
         private int _gamePadTriggerThreshold = 16000;
         private bool _isWebServerEnabled;
+        private bool _isPendantEnabled;
+        private int _pendantPort;
+        private double _pendantMaxJogMm;
+        private double _pendantMaxFeed;
+        private int _pendantDispatchMs;
+        private bool _pendantAllowZeroAxis;
+        private bool _pendantEchoJogs;
+        private string _pendantSerialPort = NoSerialReceiver;
+        private int _pendantSerialBaud;
         private int _webServerPort;
         private bool _useAntiAlias = true;
         private string _spindleImagePath = "spindle.png";
@@ -192,6 +201,136 @@ namespace GrbLHALSender.ViewModels
             set => this.RaiseAndSetIfChanged(ref _webServerPort, value);
         }
 
+        public bool IsPendantEnabled
+        {
+            get => _isPendantEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isPendantEnabled, value);
+        }
+
+        public int PendantPort
+        {
+            get => _pendantPort;
+            set => this.RaiseAndSetIfChanged(ref _pendantPort, value);
+        }
+
+        /// <summary>
+        /// Ceiling on the distance one pendant message may command. A jog message
+        /// carries a detent count times a step size, so a corrupted count would
+        /// otherwise command an arbitrarily long move.
+        /// </summary>
+        public double PendantMaxJogMm
+        {
+            get => _pendantMaxJogMm;
+            set => this.RaiseAndSetIfChanged(ref _pendantMaxJogMm, value);
+        }
+
+        /// <summary>
+        /// Ceiling on the feed the pendant may request, mm/min. Set it to the
+        /// machine's own maximum jog rate: the pendant already limits itself per
+        /// axis and per step size, so clamping lower here silently discards feed
+        /// it deliberately asked for.
+        /// </summary>
+        public double PendantMaxFeed
+        {
+            get => _pendantMaxFeed;
+            set => this.RaiseAndSetIfChanged(ref _pendantMaxFeed, value);
+        }
+
+        /// <summary>
+        /// Minimum gap between jog commands sent to the controller. Must stay
+        /// below the pendant's own tick, or movement from several pendant
+        /// messages is merged into one longer block - which halves the number of
+        /// blocks the controller's planner has to look ahead at, and the planner
+        /// decelerates to a stop at the end of the last block it holds.
+        /// </summary>
+        public int PendantDispatchMs
+        {
+            get => _pendantDispatchMs;
+            set => this.RaiseAndSetIfChanged(ref _pendantDispatchMs, value);
+        }
+
+        /// <summary>
+        /// Whether the pendant may rewrite a work offset. Off by default: losing a
+        /// datum to a mis-hit button on a handheld is expensive.
+        /// </summary>
+        public bool PendantAllowZeroAxis
+        {
+            get => _pendantAllowZeroAxis;
+            set => this.RaiseAndSetIfChanged(ref _pendantAllowZeroAxis, value);
+        }
+
+        public bool PendantEchoJogs
+        {
+            get => _pendantEchoJogs;
+            set => this.RaiseAndSetIfChanged(ref _pendantEchoJogs, value);
+        }
+
+        /// <summary>
+        /// Shown instead of a blank row when no receiver is fitted. A ComboBox
+        /// selected on an empty string renders as nothing at all, which on a
+        /// touchscreen is a target the operator cannot see or hit.
+        /// </summary>
+        public const string NoSerialReceiver = "(none)";
+
+        /// <summary>
+        /// Serial port of the ESP-NOW receiver board, or <see cref="NoSerialReceiver"/>
+        /// when none is fitted and only the network transport runs.
+        ///
+        /// Chosen explicitly and never scanned for: the controller is on one of
+        /// these ports too, and the two cannot be told apart by name.
+        /// </summary>
+        public string PendantSerialPort
+        {
+            get => _pendantSerialPort;
+            set => this.RaiseAndSetIfChanged(ref _pendantSerialPort, value ?? NoSerialReceiver);
+        }
+
+        /// <summary>
+        /// Baud rate for the receiver board. Only meaningful over a real UART; a
+        /// USB CDC device ignores it.
+        /// </summary>
+        public int PendantSerialBaud
+        {
+            get => _pendantSerialBaud;
+            set => this.RaiseAndSetIfChanged(ref _pendantSerialBaud, value);
+        }
+
+        /// <summary>
+        /// Ports offered for the receiver. Kept beside the pendant settings rather
+        /// than shared with the connection page, whose list is bound to the
+        /// controller's own selection.
+        /// </summary>
+        public ObservableCollection<string> PendantSerialPorts { get; } = [];
+
+        public ICommand RefreshPendantPortsCommand { get; }
+
+        private void RefreshPendantPorts()
+        {
+            List<string> ports;
+            try
+            {
+                ports = ConnectionViewModel.OrderPorts(System.IO.Ports.SerialPort.GetPortNames());
+            }
+            catch (Exception)
+            {
+                // Not every platform has serial ports at all.
+                ports = [];
+            }
+
+            // A receiver unplugged while its port is still the configured one is
+            // kept in the list. Without it the ComboBox would find no matching
+            // item, select nothing, and write that back over a setting the
+            // operator never touched - the same way refreshing the connection
+            // page's list used to lose the controller's port.
+            if (PendantSerialPort != NoSerialReceiver &&
+                !string.IsNullOrWhiteSpace(PendantSerialPort) &&
+                !ports.Contains(PendantSerialPort, StringComparer.OrdinalIgnoreCase))
+                ports.Add(PendantSerialPort);
+
+            ports.Insert(0, NoSerialReceiver);
+            ConnectionViewModel.ReconcilePorts(PendantSerialPorts, ports);
+        }
+
         /// <summary>
         /// Where uploads actually land, read live from the service rather than rebuilt here
         /// so the two can never disagree. Shown because the path is otherwise unguessable:
@@ -301,6 +440,7 @@ namespace GrbLHALSender.ViewModels
             CloseCommand = ReactiveCommand.Create(() => CloseAction?.Invoke());
             SelectAccentCommand = ReactiveCommand.Create<string>(hex => AccentColor = hex);
             ResetAccentCommand = ReactiveCommand.Create(() => AccentColor = string.Empty);
+            RefreshPendantPortsCommand = ReactiveCommand.Create(RefreshPendantPorts);
             _configManager.OnConfigLoaded += _configManager_OnConfigLoaded;
          
         }
@@ -330,6 +470,20 @@ namespace GrbLHALSender.ViewModels
             LoadGamepadMappings(_appConfig.GamepadConfig);
             IsWebServerEnabled = _appConfig.WebServerConfig.Enabled;
             WebServerPort = _appConfig.WebServerConfig.Port;
+            IsPendantEnabled = _appConfig.PendantConfig.Enabled;
+            PendantPort = _appConfig.PendantConfig.Port;
+            PendantMaxJogMm = _appConfig.PendantConfig.MaxJogDistanceMm;
+            PendantMaxFeed = _appConfig.PendantConfig.MaxJogFeedRate;
+            PendantDispatchMs = _appConfig.PendantConfig.JogDispatchIntervalMs;
+            PendantAllowZeroAxis = _appConfig.PendantConfig.AllowZeroAxis;
+            PendantEchoJogs = _appConfig.PendantConfig.EchoJogsToConsole;
+            PendantSerialPort = string.IsNullOrWhiteSpace(_appConfig.PendantConfig.SerialPortName)
+                ? NoSerialReceiver
+                : _appConfig.PendantConfig.SerialPortName;
+            PendantSerialBaud = _appConfig.PendantConfig.SerialBaudRate;
+            // After the configured port is known, so an unplugged receiver still
+            // appears in the list rather than the binding blanking the setting.
+            RefreshPendantPorts();
             UseAntiAlias = _appConfig.UseAntiAlias;
             SpindleImagePath = _appConfig.SpindleImagePath;
             RendererIndex = (int)_appConfig.Renderer;
@@ -408,6 +562,16 @@ namespace GrbLHALSender.ViewModels
             SaveGamepadMappings(_appConfig.GamepadConfig);
             _appConfig.WebServerConfig.Enabled = IsWebServerEnabled;
             _appConfig.WebServerConfig.Port = WebServerPort;
+            _appConfig.PendantConfig.Enabled = IsPendantEnabled;
+            _appConfig.PendantConfig.Port = PendantPort;
+            _appConfig.PendantConfig.MaxJogDistanceMm = PendantMaxJogMm;
+            _appConfig.PendantConfig.MaxJogFeedRate = PendantMaxFeed;
+            _appConfig.PendantConfig.JogDispatchIntervalMs = PendantDispatchMs;
+            _appConfig.PendantConfig.AllowZeroAxis = PendantAllowZeroAxis;
+            _appConfig.PendantConfig.EchoJogsToConsole = PendantEchoJogs;
+            _appConfig.PendantConfig.SerialPortName =
+                PendantSerialPort == NoSerialReceiver ? string.Empty : PendantSerialPort;
+            _appConfig.PendantConfig.SerialBaudRate = PendantSerialBaud;
              AuxOutputViewModel.Save();
             GpioOutputViewModel.Save();
             GcodeEventViewModel.Save();

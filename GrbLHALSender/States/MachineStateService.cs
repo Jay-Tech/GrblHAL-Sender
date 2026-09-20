@@ -83,6 +83,24 @@ public class MachineStateService : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref _workPositions, value);
     }
 
+    // The same two numbers in millimetres, whatever the machine reports in and
+    // whatever the interface is showing.
+    //
+    // For consumers that are not a display. A number that changes unit under a
+    // checkbox is fine on a screen a person is reading and wrong everywhere
+    // else, and the pendant is everywhere else: it takes work position and
+    // actual feed as inputs to control loops that are millimetres by
+    // construction - step sizes, feed ceilings, its lag tracker's threshold.
+    // Handed inches it does not misdisplay anything, it miscalculates, and the
+    // symptom surfaces a layer away as a machine that will not keep up with the
+    // wheel.
+    private double[] _workPositionsMm = [];
+    public double[] WorkPositionsMm
+    {
+        get => _workPositionsMm;
+        private set => this.RaiseAndSetIfChanged(ref _workPositionsMm, value);
+    }
+
     // Spindle position in machine units (work coordinates: MPos - WCO).
     // Kept in machine units because G-code toolpath geometry is in machine coordinates.
     private Point3D? _spindlePosition;
@@ -101,10 +119,51 @@ public class MachineStateService : ReactiveObject, IDisposable
 
     // Feed & speed (parsed from strings to ints)
     private int _feedRate;
+    private int _plannerBlocksFree;
+    private bool _mpgActive;
+
+    /// <summary>
+    /// The controller has handed its input stream to an MPG, via the MPG_MODE
+    /// pin or the 0x8B toggle. While this is set the sender is not the stream
+    /// in control, so anything it writes is at best ignored.
+    /// </summary>
+    public bool MpgActive
+    {
+        get => _mpgActive;
+        private set => this.RaiseAndSetIfChanged(ref _mpgActive, value);
+    }
+
+    /// <summary>Free slots in the controller's planner buffer, from Bf:.
+    /// Only populated when the buffer-state bit is set in $10. This is the
+    /// controller's lookahead depth: when it is at the maximum the planner is
+    /// empty and every block must decelerate to a stop at its own end.</summary>
+    public int PlannerBlocksFree
+    {
+        get => _plannerBlocksFree;
+        private set => this.RaiseAndSetIfChanged(ref _plannerBlocksFree, value);
+    }
+
+    /// <summary>
+    /// The controller's actual feed, rounded, in the operator's display units.
+    /// For display only - anything computing with it wants
+    /// <see cref="FeedRateMmPerMin"/>, which is neither rounded nor converted.
+    /// </summary>
     public int FeedRate
     {
         get => _feedRate;
         private set => this.RaiseAndSetIfChanged(ref _feedRate, value);
+    }
+
+    private double _feedRateMmPerMin;
+
+    /// <summary>
+    /// The controller's actual feed in mm/min, for consumers that compute with
+    /// it rather than show it. See <see cref="WorkPositionsMm"/>.
+    /// </summary>
+    public double FeedRateMmPerMin
+    {
+        get => _feedRateMmPerMin;
+        private set => this.RaiseAndSetIfChanged(ref _feedRateMmPerMin, value);
     }
 
     private int _feedOverride;
@@ -290,6 +349,7 @@ public class MachineStateService : ReactiveObject, IDisposable
         // Per-axis positions in user display units
         var machinePos = new double[axisCount];
         var workPos = new double[axisCount];
+        var workPosMm = new double[axisCount];
 
         for (int i = 0; i < axisCount; i++)
         {
@@ -297,11 +357,13 @@ public class MachineStateService : ReactiveObject, IDisposable
             if (hasWco)
             {
                 workPos[i] = ConvertUnit(mpos[i] - wcoVals[i]);
+                workPosMm[i] = ToMillimetres(mpos[i] - wcoVals[i]);
             }
         }
 
         MachinePositions = machinePos;
         WorkPositions = workPos;
+        WorkPositionsMm = workPosMm;
 
         // --- Spindle position for 3D visualizer (machine units, not display units) ---
         if (axisCount >= 3)
@@ -329,7 +391,13 @@ public class MachineStateService : ReactiveObject, IDisposable
         AlarmActive = GrblState == GrblState.Alarm;
 
         // --- Feed & speed ---
-        if (double.TryParse(state.FeedRate, NumberStyles.Float, CultureInfo.InvariantCulture, out var feedRate)) FeedRate = (int)ConvertUnit(feedRate);
+        if (double.TryParse(state.FeedRate, NumberStyles.Float, CultureInfo.InvariantCulture, out var feedRate))
+        {
+            FeedRate = (int)ConvertUnit(feedRate);
+            FeedRateMmPerMin = ToMillimetres(feedRate);
+        }
+        MpgActive = state.MpgActive;
+        if (int.TryParse(state.PlannerBlocksFree, NumberStyles.Integer, CultureInfo.InvariantCulture, out var bf)) PlannerBlocksFree = bf;
         if (int.TryParse(state.FeedOverRide, NumberStyles.Integer, CultureInfo.InvariantCulture, out var fo)) FeedOverride = fo;
         if (double.TryParse(state.ProgramRPM, NumberStyles.Float, CultureInfo.InvariantCulture, out var ps)) SpindleRpm = (int)ps;
         if (double.TryParse(state.ActualRpm, NumberStyles.Float, CultureInfo.InvariantCulture, out var rpm)) ActualRpm = (int)rpm;
@@ -376,6 +444,18 @@ public class MachineStateService : ReactiveObject, IDisposable
             _ => value
         };
     }
+
+    /// <summary>
+    /// Converts a value from machine native units to millimetres, regardless of
+    /// what the interface is showing.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not ConvertUnit with a flag. This one answers to $13 only -
+    /// what the controller is reporting in - and must not answer to the display
+    /// preference at all, because its callers are not displaying anything.
+    /// </remarks>
+    private double ToMillimetres(double value) =>
+        _machineInMetric ? value : value * 25.4;
 
     private static GrblState ParseGrblState(string? state)
     {

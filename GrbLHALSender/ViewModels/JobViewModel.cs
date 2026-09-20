@@ -297,16 +297,34 @@ namespace GrbLHALSender.ViewModels
 
         private void UpdateButtonStates()
         {
-            // Hold: enabled when connected, disabled when already in Hold state
+            // Hold: enabled when connected, disabled when already in Hold state.
+            //
+            // Deliberately not gated on MPG mode, on the understanding that Hold
+            // writes 0x82 straight to the adapter and grblHAL acts on real-time bytes
+            // from whichever stream sends them - making this the one control here that
+            // still reaches the machine while a hardware MPG drives it.
+            //
+            // UNVERIFIED. That is grblHAL's documented design as read, not something
+            // measured: this machine has no second port, so MpgActive never becomes
+            // true on it and the path cannot be exercised. What is certain is only
+            // that both streams stay open, since MPG:1 arrives on ours at all.
+            // First person with a second port: enter MPG mode, jog with the wheel,
+            // press Hold. If the machine does not stop, real-time commands are not
+            // honoured from the inactive stream, and this and SpindleOffEnabled should
+            // both collapse to ControlsEnabled - a button that silently does nothing
+            // is the fault this gating exists to remove.
             CanHoldJob = Connected &&
                          JobState is not JobState.Hold;
 
             // Start: enabled when:
             //   - Machine is in Hold or Tool state (resume, no file required)
             //   - File loaded and no job running (idle, program complete, or stopped)
-            CanStartJob = JobState is JobState.Hold or JobState.Tool ||
+            // Never while an MPG holds the stream: starting means streaming g-code,
+            // and the controller is not listening to us for that.
+            CanStartJob = !_machineStateService.MpgActive &&
+                          (JobState is JobState.Hold or JobState.Tool ||
                           (FileLoaded && !JobRunning &&
-                           JobState is (JobState.Idle or JobState.ProgramComplete or JobState.Stop));
+                           JobState is (JobState.Idle or JobState.ProgramComplete or JobState.Stop)));
 
             ToolChangeVisible = JobState == JobState.Tool;
             this.RaisePropertyChanged(nameof(TouchOffVisible));
@@ -439,6 +457,10 @@ namespace GrbLHALSender.ViewModels
                     // watching it. Left latched, the first Idle after reconnecting would
                     // put the UI back into a tool change that is long over.
                     if (!Connected) _manualToolChange.Reset();
+                    break;
+                case nameof(MachineStateService.MpgActive):
+                    // Start needs the input stream, which an MPG is holding.
+                    UpdateButtonStates();
                     break;
                 case nameof(MachineStateService.GrblState):
                     if (!JobRunning)
