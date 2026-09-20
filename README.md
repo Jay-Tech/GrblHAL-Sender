@@ -54,6 +54,8 @@ Firmware and hardware are a companion project:
 ![Gamepad](Media/GamePad.png) ![Setting Button](Media/GamePadButtons.png) ![Setting Trigger](Media/GamePadTrigger.png)
 </br>
 ## Pendant
+![PendantSetting](Media/SettingPendant.png)
+</br>
 Enable it, pick a transport, and bound what it may ask the machine for. Four of
 these fail quietly if set wrong - see [Settings that fail quietly](#settings-that-fail-quietly).
 </br>
