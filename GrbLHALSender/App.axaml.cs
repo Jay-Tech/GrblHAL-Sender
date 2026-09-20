@@ -60,7 +60,12 @@ public partial class App : Application
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
-            singleViewPlatform.MainView = new MainView
+            // RootCanvasHost rather than MainView. MainView is the *landscape* canvas,
+            // one of the two fixed layouts, so setting it here pinned this path to
+            // landscape at its authored 1920x1080 with no scaling - wrong on any panel
+            // that is not exactly that. The host picks the canvas that matches the screen
+            // and scales it to fit, which is what the window does and what this needs.
+            singleViewPlatform.MainView = new RootCanvasHost
             {
                 DataContext = vm
             };

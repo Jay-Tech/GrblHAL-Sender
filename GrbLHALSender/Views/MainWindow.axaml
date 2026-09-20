@@ -4,23 +4,16 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:views="clr-namespace:GrbLHALSender.Views"
 		xmlns:vm="clr-namespace:GrbLHALSender.ViewModels"
-		mc:Ignorable="d"  
+		mc:Ignorable="d"
         d:DesignWidth="1920" d:DesignHeight="1080"
 		x:Class="GrbLHALSender.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         WindowState="{Binding FullScreenMode, FallbackValue=Maximized}"
 		Icon="/Assets/GHalSender.ico"
 		Title="GrblHAL Sender">
-	<LayoutTransformControl x:Name="TransformControl"
-							HorizontalAlignment="Stretch"
-							VerticalAlignment="Stretch"
-							UseLayoutRounding="True"
-							ClipToBounds="True"
-							SizeChanged="Control_OnSizeChanged"  >
-		<!-- The root view is chosen in code-behind, not declared here: landscape and
-		     portrait are two separately authored canvases and only the one matching the
-		     screen is ever instantiated. See MainWindow.axaml.cs. -->
-		<ContentControl x:Name="CanvasHost" />
-	</LayoutTransformControl>
+	<!-- Everything about presenting the app is in RootCanvasHost: which of the two
+	     canvases the screen gets, the scale that fits it, and the settings that have
+	     to be made against the top level. This window supplies the chrome and nothing
+	     else, so a host that has no windows can show exactly the same thing. -->
+	<views:RootCanvasHost />
 </Window>
-

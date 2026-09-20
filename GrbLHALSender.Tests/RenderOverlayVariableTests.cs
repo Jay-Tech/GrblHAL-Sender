@@ -21,7 +21,7 @@ public class RenderOverlayVariableTests
     public void UnsetOrUnrecognised_TurnsOverlaysOff(string? value)
     {
         // A typo on a shop machine must not stop the app starting.
-        Assert.Equal(RendererDebugOverlays.None, MainWindow.ParseRenderOverlays(value));
+        Assert.Equal(RendererDebugOverlays.None, RootCanvasHost.ParseRenderOverlays(value));
     }
 
     [Theory]
@@ -35,14 +35,14 @@ public class RenderOverlayVariableTests
                      | RendererDebugOverlays.DirtyRects
                      | RendererDebugOverlays.RenderTimeGraph;
 
-        Assert.Equal(expected, MainWindow.ParseRenderOverlays(value));
+        Assert.Equal(expected, RootCanvasHost.ParseRenderOverlays(value));
     }
 
     [Fact]
     public void ASingleFlagNameIsHonoured()
     {
-        Assert.Equal(RendererDebugOverlays.DirtyRects, MainWindow.ParseRenderOverlays("DirtyRects"));
-        Assert.Equal(RendererDebugOverlays.Fps, MainWindow.ParseRenderOverlays("fps"));
+        Assert.Equal(RendererDebugOverlays.DirtyRects, RootCanvasHost.ParseRenderOverlays("DirtyRects"));
+        Assert.Equal(RendererDebugOverlays.Fps, RootCanvasHost.ParseRenderOverlays("fps"));
     }
 
     [Fact]
@@ -50,6 +50,6 @@ public class RenderOverlayVariableTests
     {
         Assert.Equal(
             RendererDebugOverlays.Fps | RendererDebugOverlays.DirtyRects,
-            MainWindow.ParseRenderOverlays("Fps,DirtyRects"));
+            RootCanvasHost.ParseRenderOverlays("Fps,DirtyRects"));
     }
 }
