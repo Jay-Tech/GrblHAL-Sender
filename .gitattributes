@@ -1,0 +1,6 @@
+# These run on Linux and nowhere else. core.autocrlf on a Windows checkout would
+# otherwise hand them CRLF line endings, and a shell script with CRLF fails on
+# the Pi as "bad interpreter: /bin/bash^M" - which is a confusing way to find out
+# you copied the file out of a Windows working tree instead of cloning it there.
+*.sh text eol=lf
+installer/linux/kiosk/xinitrc text eol=lf

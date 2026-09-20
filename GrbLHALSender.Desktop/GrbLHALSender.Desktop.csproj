@@ -9,6 +9,23 @@
          the entry assembly it is what Assembly.GetEntryAssembly() reports - so the
          update check was comparing a stale 1.0.0 against the latest release tag. -->
     <Nullable>enable</Nullable>
+    <!-- .NET on Linux refuses to start without ICU unless this is set, and a
+         Raspberry Pi OS Lite image does not ship libicu: the app exits before the
+         first frame with "Couldn't find a valid ICU package installed on the
+         system". Setting it here removes the dependency outright rather than
+         making every deployment target carry a ~35 MB library it has no other
+         use for.
+
+         Safe because the app is already invariant by construction - Main forces
+         InvariantCulture on every thread before Avalonia starts, since grblHAL
+         only ever speaks dot-decimal. Nothing in the app constructs a named
+         CultureInfo; only the tests do, which is why this lives in the entry
+         project rather than Directory.Build.props - CultureRegressionTests has
+         to be able to force de-DE to prove the parsing holds under it.
+
+         To back it out: delete this line and add libicu to the .deb's Depends
+         in installer/linux/build-deb.sh. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>

@@ -50,13 +50,34 @@ cp "$REPO_ROOT/icons/icon-16x16.png"   "$PKG_DIR/usr/share/icons/hicolor/16x16/a
 cp "$SCRIPT_DIR/grblhal-sender.desktop" "$PKG_DIR/usr/share/applications/"
 
 # Create DEBIAN/control
+#
+# Depends is the set of shared libraries Avalonia.X11 actually dlopen()s - the
+# p/invoke table in Avalonia.X11.dll names libX11, libXext, libXi, libXrandr,
+# libXcursor, libXfixes, libICE, libSM and libGL. Only libx11-6 was declared,
+# which held up on desktop images where the rest arrive with the desktop anyway
+# and fell over on a bare Raspberry Pi OS Lite install: the package installed
+# cleanly and the app then died at startup on a missing libXi.
+#
+# Skia, HarfBuzz and SDL3 are deliberately absent: those ship as native .so
+# files inside the publish output (SkiaSharp.NativeAssets.Linux.NoDependencies
+# in particular is the fontconfig-free build), so a system copy is never used.
+#
+# libicu is absent for a different reason - the Desktop project sets
+# InvariantGlobalization, so the runtime never goes looking for ICU. Remove
+# that property and this line has to grow a libicu dependency again.
+#
+# libgl1-mesa-dri is a Recommends rather than a Depends: without it libGL
+# resolves but there is no hardware driver behind it, and the 3D toolpath falls
+# back to the software renderer instead of failing. apt installs Recommends by
+# default, so the appliance case gets it and an unusual host can decline it.
 cat > "$PKG_DIR/DEBIAN/control" << EOF
 Package: $PKG_NAME
 Version: $VERSION
 Section: electronics
 Priority: optional
 Architecture: $ARCH
-Depends: libx11-6
+Depends: libx11-6, libxext6, libxi6, libxrandr2, libxcursor1, libxfixes3, libice6, libsm6, libgl1
+Recommends: libgl1-mesa-dri
 Maintainer: Jay-Tech <jay-tech@users.noreply.github.com>
 Description: GrblHAL Sender - Cross-platform G-code sender
  A feature-rich G-code sender application for grblHAL CNC controllers.

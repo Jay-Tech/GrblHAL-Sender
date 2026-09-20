@@ -1,0 +1,53 @@
+#!/bin/sh
+# ~/.xinitrc - the entire X session for a GrblHAL Sender appliance.
+#
+# There is no desktop environment here. startx runs this file, this file brings
+# up a window manager and then execs the sender, so the sender IS the session:
+# when it exits, X goes down with it and the tty falls back to autologin, which
+# starts the whole thing again.
+#
+# Installed into $HOME by installer/linux/kiosk/setup-kiosk.sh. Edit the copy in
+# $HOME - this one is the template.
+
+# normal | left | right | inverted. `left` is the usual choice for a panel
+# mounted in portrait. Rotating here rather than with video= in cmdline.txt
+# keeps the rotation and the touch matrix that has to follow it in one place.
+ROTATION=normal
+
+APP=/usr/bin/grblhal-sender
+
+# A panel that blanks mid-job is worse than useless: the operator looks up from
+# the machine at a black screen and has to touch it to find out what the machine
+# is doing. There is no screensaver in a bare X session, but the server's own
+# blanking and DPMS are on by default and will happily do it anyway.
+xset s off
+xset s noblank
+xset -dpms
+
+if [ "$ROTATION" != "normal" ]; then
+    OUTPUT=$(xrandr --query | awk '/ connected/ { print $1; exit }')
+    [ -n "$OUTPUT" ] && xrandr --output "$OUTPUT" --rotate "$ROTATION"
+
+    # Rotating the screen does not rotate the touchscreen. X goes on handing the
+    # driver's raw coordinates to a display that is now on its side, so touches
+    # land at the wrong end of it - and on a machine control screen that is a
+    # safety problem, not a cosmetic one. The matrix maps them back.
+    case "$ROTATION" in
+        left)     MATRIX="0 -1 1 1 0 0 0 0 1" ;;
+        right)    MATRIX="0 1 0 -1 0 1 0 0 1" ;;
+        inverted) MATRIX="-1 0 1 0 -1 1 0 0 1" ;;
+    esac
+    xinput list --name-only | grep -i touch | while read -r DEV; do
+        # Unquoted on purpose: set-prop wants nine separate arguments.
+        xinput set-prop "$DEV" "Coordinate Transformation Matrix" $MATRIX
+    done
+fi
+
+# openbox, rather than no window manager at all. The sender's own window asks
+# for fullscreen and would get it either way, but the file pickers - load
+# g-code, SD card upload, settings import/export - are real top-level windows,
+# and with nothing running to manage them they open unfocused or badly placed
+# and swallow keyboard input. openbox costs about 2 MB and makes that correct.
+openbox &
+
+exec "$APP"
