@@ -37,6 +37,12 @@ up in both.
 ## Supports Wireless Controller
 ![GamePad](Media/DefaultGamePad.png) 
 </br>
+## Supports a Wireless Pendant
+A handheld MPG - handwheel, touch screen, three buttons - over ESP-NOW or WiFi.
+Firmware and hardware are a companion project:
+[Jay-Tech/WirelessPendant](https://github.com/Jay-Tech/WirelessPendant). See
+[Wireless Pendant](#wireless-pendant) below.
+</br>
 # Settings Overview
 ## App
 ![AppSetting](Media/SettingApp.png)
@@ -46,6 +52,10 @@ up in both.
 </br>
 ## Wireless Gamepad
 ![Gamepad](Media/GamePad.png) ![Setting Button](Media/GamePadButtons.png) ![Setting Trigger](Media/GamePadTrigger.png)
+</br>
+## Pendant
+Enable it, pick a transport, and bound what it may ask the machine for. Four of
+these fail quietly if set wrong - see [Settings that fail quietly](#settings-that-fail-quietly).
 </br>
 ## Web Server
 ![WebServer](Media/SettingWebServer.png)
@@ -417,6 +427,79 @@ running. The mode each output was left in is saved, with one exception: an outpu
 follows something never comes back **On** after a restart. Returning from a power cut with
 the dust collector latched on is not what anyone means by remembering a setting. Manual-only
 outputs do restore On, so shop lights come back as you left them.
+
+# Wireless Pendant
+
+A handheld MPG pendant - handwheel, touch screen, three buttons - that talks to
+this application rather than to the controller. The firmware, the hardware and
+the printed enclosure are a companion project:
+**[Jay-Tech/WirelessPendant](https://github.com/Jay-Tech/WirelessPendant)**.
+
+It goes through the sender deliberately. grblHAL's telnet server accepts exactly
+one client and this app already holds it, so a pendant cannot have a session of
+its own; and on an SLB the controller sits on an isolated subnet with no route
+from the shop WiFi. Coming through the sender works with any controller and keeps
+one arbiter of the command queue, which is what GRBL needs regardless.
+
+## Two transports, and both run at once
+
+| | |
+|---|---|
+| **ESP-NOW** | the pendant talks to a small receiver board plugged into this PC, which appears here as a serial port. No network, no credentials |
+| **WiFi** | the pendant joins the shop network and opens a TCP session to the port set on the Pendant tab |
+
+Both carry the same newline-delimited JSON, so nothing above the transport knows
+which one a pendant arrived on, and naming a receiver port does not disable the
+network listener.
+
+**One pendant drives the machine at a time, and the newest wins.** That is not
+about arbitrating between two operators - it is about one operator whose pendant
+has appeared twice. Over WiFi the older connection is usually a stale half-open
+socket left by a lost link, which TCP can take minutes to give up on; over
+ESP-NOW it is a handheld just switched on while the WiFi one is still nominally
+connected. Refusing the newcomer in either case locks the operator out of the
+machine while a dead connection times out.
+
+## The receiver's port is never scanned for
+
+Pick it explicitly. A grblHAL controller and a receiver board both enumerate as
+anonymous USB serial devices and cannot be told apart by name, and pendant JSON
+written at a controller is at best noise in its console. Leave it on *(none)* if
+no receiver is fitted; the WiFi listener still runs.
+
+## Settings that fail quietly
+
+Most of the Pendant tab explains itself. These four do not:
+
+| Setting | Default | Why it matters |
+|---|---|---|
+| **Max feed rate** | 12000 | Set this to the machine's own maximum jog rate. The pendant already limits itself per axis and per step, and 12000 is the most it can ever ask for - so anything lower **silently discards feed the operator asked for**. A previous default of 5000 clamped both coarse steps, which is felt as the wheel going heavy near the top of its range and reported as nothing. |
+| **Min gap between jogs** | 10 ms | Must stay **below** the pendant's 20 ms tick. Set equal, the two free-run and beat against each other: some windows carry two messages and some carry none, and an empty window is a gap the machine decelerates into. Set above, messages merge back into the long blocks the short tick exists to avoid, which halves the count the planner can chain - and chaining is what holds a feed. This is also the only place backpressure can be applied, since the pendant cannot see the controller's planner. |
+| **Max jog per message** | 50 mm | Bounds a corrupted detent count, and clamps rather than discards. At a 20 ms tick and the 12000 mm/min ceiling a dispatch window legitimately carries 4 mm, so this leaves an order of magnitude of headroom. |
+| **Allow pendant to zero an axis** | off | Zeroing rewrites the work offset. Off by default so a mis-hit button on a handheld cannot lose your datum. |
+
+**Enabling the pendant takes an app restart.** Two more worth knowing about:
+
+- **Client timeout**, 15 s, stands the pendant down when it goes quiet. The
+  pendant pings every few seconds, so silence means it has gone away without
+  saying so - a case TCP alone can take minutes to notice, and a serial receiver
+  cannot notice at all, since its port stays open whether or not a handheld is
+  switched on. Zero disables it.
+- **Echo pendant jogs to console** is diagnostic only. Jogs arrive fifty times a
+  second, which fills the console to its cap within seconds and then costs a UI
+  update on every status tick - felt as jerk partway through a long move.
+
+## The receiver's DTR and RTS are configurable, and the board decides
+
+Behind a USB-UART bridge these are not flow control at all: they are wired to EN
+and IO0 through the auto-reset circuit, so driving them on open resets the chip
+or drops it into its bootloader. An ESP32-S3 has native USB and no such circuit,
+but a firmware using TinyUSB CDC may read DTR as "a terminal is attached" and go
+quiet without it. The two failure modes want opposite settings, which is why this
+is configuration rather than a constant.
+
+Change them only against an observed symptom - a receiver that wedges when the
+sender starts, or one that opens cleanly and then never says anything.
 
 # Testing status
 
