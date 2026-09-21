@@ -307,6 +307,19 @@ udevadm info /dev/input/event0 | grep ID_INPUT
 `libinput-tools` and `xinput` are both installed by the setup script for exactly
 this, because on a box with no desktop there is nothing else left to ask.
 
+### What actually happened
+
+Nothing had to be enabled. On a bare Xorg with `xf86-input-libinput`, the panel
+came up with working touch and working two-finger gestures on the toolpath
+straight away — no `dtoverlay`, no coordinate matrix, no device configuration.
+Pinch needs a separate pointer id per finger, so gestures working is proof of
+genuine multi-touch rather than pointer emulation.
+
+Worth setting against the effort the desktop image took. That path ran through
+the compositor and XWayland before reaching the app and needed touch enabled by
+hand; this one is the path Avalonia's X11 backend is written against, and it
+simply worked.
+
 ## Display rotation
 
 The desktop compositor was handling this for you, and it is the part most likely
