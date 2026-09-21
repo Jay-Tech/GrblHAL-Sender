@@ -103,8 +103,18 @@ sudo nmcli connection modify netplan-eth0 ipv4.never-default yes ipv4.ignore-aut
 sudo nmcli connection up netplan-eth0
 ```
 
-`ip route` should now show a single `default via` line, on the Wi-Fi. Skip this
-step if it already did.
+Confirm it took. `ip route` should show a single `default via` line, on the
+Wi-Fi, with both `/24` subnet routes still present — and the controller must still
+answer, since keeping that link is the whole point of doing it this way:
+
+```bash
+ping -c3 192.168.5.1
+```
+
+**This is a one-time fix.** It persists across reboots, and nothing later —
+the setup script included — touches network configuration, so it never needs
+repeating. Skip the step entirely if `ip route` showed a single default route
+before you started.
 
 **2. Get git, the repo and the package.** Lite does not ship `git`.
 
@@ -159,23 +169,13 @@ and then sits on `Connecting to`, `apt` stalls, and the clock quietly drifts
 because NTP cannot get out either. It all looks like a name resolution problem
 and none of it is.
 
-The fix takes away the wired connection's claim to be the default route while
-leaving the interface and its subnet route alone — that route is how the sender
-reaches the controller. Find what the connection is called first; on this build
-it is `netplan-eth0` rather than NetworkManager's usual
-`Wired connection 1`:
-
-```bash
-nmcli connection show
-```
-
-```bash
-sudo nmcli connection modify netplan-eth0 ipv4.never-default yes ipv4.ignore-auto-dns yes
-```
-
-```bash
-sudo nmcli connection up netplan-eth0
-```
+The fix is [step 1 of the quick path](#the-quick-path), and this section is
+only the reasoning behind it — nothing here needs running. It takes away the
+wired connection's claim to be the default route while leaving the interface and
+its subnet route alone. That route is how the sender reaches the controller,
+which is why disabling eth0 is not the answer. The connection is named
+`netplan-eth0` on the Lite image rather than NetworkManager's usual
+`Wired connection 1`, hence looking it up with `nmcli connection show` first.
 
 `ignore-auto-dns` because whatever serves DHCP on the machine side may be
 advertising a nameserver too, and DNS should come from the LAN side only.
@@ -223,17 +223,6 @@ Deleting the route by hand with `ip route del` is worth knowing as the fastest
 way to confirm the diagnosis before changing anything, but DHCP puts it back on
 the next renew.
 
-Afterwards you want exactly one default route, both subnet routes still present,
-and the controller still answering — then the same again after a reboot:
-
-```bash
-ip route
-```
-
-```bash
-ping -c3 192.168.5.1
-```
-
 None of this affects the web UI: `WebServerService` calls `ListenAnyIP`, so it
 binds every interface and stays reachable on the LAN address either way.
 
@@ -261,6 +250,16 @@ jogging, so X owning the touchscreen does nothing for it.
 devices and sends AT commands at them; brltty claims several USB-serial bridges
 outright, and a CH340 that vanishes seconds after appearing is almost always
 brltty. Neither has any business on a CNC panel.
+
+**And the steps that exist because something went wrong once.** If
+`apt-get update` fails, it prints your default routes and the `nmcli` fix rather
+than dying on apt's own message — see [Two networks](#two-networks). It refuses to
+install the kiosk session unless `/usr/bin/grblhal-sender` exists, because an
+`.xinitrc` that execs a missing binary is a black screen with nothing on it. It
+installs libicu only when the app's runtimeconfig says the build still needs it.
+And under "Telling X which device is the screen" it writes `99-kms-screen.conf`
+and removes fbdev, for the two reasons under
+[Things that will bite you](#things-that-will-bite-you).
 
 **Starts X from the shell profile, not a systemd service.** X needs a real
 logind session before it is handed DRM master and the input devices. A system
@@ -292,39 +291,19 @@ kiosk as before.
 
 ## Touch
 
-Worth knowing before you start: on the desktop image the Pi 5 almost certainly
-was not using X at all. Raspberry Pi OS runs Wayland there — wayfire on
-Bookworm, labwc on newer — and since Avalonia has no Wayland backend, the sender
-has been running under XWayland. Confirm on the current install with:
+**Nothing needs enabling.** On bare Xorg with `xf86-input-libinput`, the panel
+came up with working touch and working two-finger gestures on the toolpath
+straight away — no `dtoverlay`, no coordinate matrix, no device configuration.
+If yours does the same, there is nothing in this section for you to do.
 
-```bash
-echo $XDG_SESSION_TYPE
-```
-
-`wayland` means the touch events reach the app through
-kernel evdev, libinput, the compositor, XWayland, then XInput2. On Lite with a
-bare X server that becomes kernel evdev, `xf86-input-libinput`, XInput2. Two
-hops shorter, and it is the path Avalonia's X11 backend is actually written
-against.
-
-So whatever you had to enable divides in two:
-
-- **Anything in `/boot/firmware/config.txt`** — a `dtoverlay` for a DSI or DPI
-  panel, `disable_touchscreen`, display enablement — is firmware and device
-  tree. Same file on Lite, carries over verbatim. Copy it across before you
-  wipe the current install.
-- **Anything set in the desktop's Screen Configuration, Raspberry Pi
-  Configuration, `wayfire.ini` or labwc's `rc.xml`** is compositor
-  configuration and does not carry over. Under bare X the equivalents are
-  `xinput` properties: `xinput map-to-output` to bind a touch device to a
-  particular display, and the coordinate transformation matrix, which
-  `~/.xinitrc` already sets when you give it a rotation.
+The rest is for when that does not hold: a different panel, or touch that works
+while gestures do not.
 
 The app needs genuine multi-touch rather than pointer emulation:
 `CameraGestureHandler` tracks a separate pointer id per finger, because two
 fingers pinch-zoom and pan the toolpath at the same time. Single-touch that
 arrives as emulated mouse clicks will look like it works until someone tries to
-zoom.
+zoom — which is also why gestures working is proof of the real thing.
 
 Three checks, in order of how much they tell you:
 
@@ -361,18 +340,24 @@ udevadm info /dev/input/event0 | grep ID_INPUT
 `libinput-tools` and `xinput` are both installed by the setup script for exactly
 this, because on a box with no desktop there is nothing else left to ask.
 
-### What actually happened
+### Why the desktop image needed more
 
-Nothing had to be enabled. On a bare Xorg with `xf86-input-libinput`, the panel
-came up with working touch and working two-finger gestures on the toolpath
-straight away — no `dtoverlay`, no coordinate matrix, no device configuration.
-Pinch needs a separate pointer id per finger, so gestures working is proof of
-genuine multi-touch rather than pointer emulation.
+On the desktop image the sender was never running on X at all. Raspberry Pi OS
+runs Wayland there — wayfire on Bookworm, labwc on newer — and Avalonia has no
+Wayland backend, so the app ran under XWayland, and touch reached it through
+kernel evdev, libinput, the compositor, XWayland and only then XInput2. Here it
+is kernel evdev, `xf86-input-libinput`, XInput2: two hops shorter, and the path
+Avalonia's X11 backend is actually written against.
 
-Worth setting against the effort the desktop image took. That path ran through
-the compositor and XWayland before reaching the app and needed touch enabled by
-hand; this one is the path Avalonia's X11 backend is written against, and it
-simply worked.
+If a panel ever does need something, the desktop-image settings split in two.
+Anything in `/boot/firmware/config.txt` — a `dtoverlay` for a DSI or DPI panel,
+`disable_touchscreen`, display enablement — is firmware and device tree, and
+applies to Lite unchanged; a fresh flash writes a stock `config.txt`, so it has
+to be put back by hand. Anything set in the desktop's Screen Configuration,
+`wayfire.ini` or labwc's `rc.xml` was compositor configuration and has no
+equivalent here. Under bare X the substitutes are `xinput` properties:
+`xinput map-to-output` to bind a touch device to one display, and the coordinate
+transformation matrix, which `~/.xinitrc` already sets when given a rotation.
 
 ## Display rotation
 
@@ -447,7 +432,10 @@ service.
 missing piece is `libgl1-mesa-dri` — `libGL` resolves without it but there is no
 hardware driver behind it. The app degrades rather than failing here:
 `RenderControlFactory` swaps in the software renderer when GL cannot be brought
-up.
+up. It says so on stderr — `[GcodeGlRenderControl] OpenGL unavailable`, or
+`OpenGL init failed` — and on this kiosk stderr goes to `~/kiosk.log`, so
+`grep GcodeGlRenderControl ~/kiosk.log` settles it without guessing from frame
+rates.
 
 **The web UI and the pendant are unaffected.** The embedded server and the
 pendant listener on 8422 stay reachable over the network through all of this. If
@@ -457,7 +445,10 @@ installed — a Lite image is not guaranteed to have it.
 ## Getting back to a prompt
 
 The session restarts itself when the app exits, so closing the window does not
-give you a console. Any of:
+give you a console. The one exception is a session that dies within ten seconds
+of starting: that is treated as a failure rather than an exit, so it does not
+restart, and leaves you at a shell on the panel with the reason in
+`~/kiosk.log`. Otherwise, any of:
 
 - ssh in, which is the normal answer
 - `Ctrl+Alt+F2` for a second tty — the kiosk only claims tty1
