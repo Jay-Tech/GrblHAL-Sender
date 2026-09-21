@@ -221,10 +221,20 @@ brltty. Neither has any business on a CNC panel.
 logind session before it is handed DRM master and the input devices. A system
 service starts outside one and fails at exactly that point, with an error that
 points nowhere useful. So: console autologin on tty1, and a guard in
-`~/.bash_profile` that execs `startx`. That guard also checks for
+`~/.bash_profile` that runs `startx`. That guard also checks for
 `/boot/firmware/no-kiosk`, which is the recovery hatch — if the app ever comes up
 broken enough that you cannot reach a shell, put the drive in another machine
 and touch that file on the FAT partition to boot to a plain console.
+
+It runs `startx` as a child rather than `exec`-ing it, and logs to
+`~/kiosk.log`. An exec replaces the login shell, so a session that dies during
+startup ends the login with it, agetty respawns, and after five rounds systemd
+hits the restart limit and stops the tty for good — leaving a black screen with
+a blinking caret and no way to see why, because the console that would have
+shown the error is the one the loop destroyed. As a child, a session that exits
+inside ten seconds falls through to a visible shell with the reason in the log,
+and one that exits after longer is treated as an ordinary exit and restarts the
+kiosk as before.
 
 ## Touch
 
@@ -328,6 +338,17 @@ happens to be installed alongside you. Current builds set
 dot-decimal, so switching the rest of ICU off changed nothing. If you are
 deploying a `.deb` built before that change, the setup script installs
 `libicu72` (Bookworm) or `libicu76` (Trixie) for you.
+
+**X dying instantly with `Cannot run in framebuffer mode`.** With no
+`xorg.conf` present, X enumerates every video driver installed. On a Pi OS Lite
+image that is `modesetting` *and* `fbdev`. modesetting does the right thing
+unaided — it finds the display on `/dev/dri/card1` by itself — but fbdev cannot
+resolve a busID on a KMS-only machine and fails fatally, and one driver's
+failure ends the whole server. The session lasts about 150 ms. The setup script
+installs `99-vc4-modesetting.conf` to pin the KMS path and removes
+`xserver-xorg-video-fbdev`; the config is there as well as the removal because a
+later apt run can pull the driver back in, and this is an expensive thing to
+diagnose twice.
 
 **Config location.** `ConfigManager` uses `SpecialFolder.ApplicationData`, which
 is `$HOME/.config` on Linux. Launch the app from anything without a proper

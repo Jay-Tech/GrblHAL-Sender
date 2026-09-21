@@ -166,6 +166,22 @@ for PKG in modemmanager brltty; do
 done
 
 # ---------------------------------------------------------------------------
+say "Pinning X to the KMS driver"
+# See 99-vc4-modesetting.conf for why. Short version: with no xorg.conf, X
+# probes fbdev as well as modesetting, fbdev fails fatally on a KMS-only Pi,
+# and the server dies in 150 ms taking the console with it.
+sudo install -m 0644 -D "$SCRIPT_DIR/99-vc4-modesetting.conf" \
+    /etc/X11/xorg.conf.d/99-vc4-modesetting.conf
+echo "   /etc/X11/xorg.conf.d/99-vc4-modesetting.conf"
+
+# Belt and braces. The config above is enough on its own, but leaving the
+# driver installed means any future apt run can put the probe back in play, and
+# nothing on this machine has a use for framebuffer X.
+if dpkg-query -W -f='${Status}' xserver-xorg-video-fbdev 2>/dev/null | grep -q "^install ok installed$"; then
+    echo "   removing xserver-xorg-video-fbdev"
+    sudo apt-get purge -y xserver-xorg-video-fbdev
+fi
+
 say "Session files"
 # Only back up an .xinitrc that is not one of ours. Comparing against the
 # template instead would back up on every run, because the ROTATION line is
@@ -208,13 +224,42 @@ if grep -qF "$MARK_A" "$PROFILE"; then
         $0 == b { skip = 0 }
     ' "$PROFILE" > "$PROFILE.new" && mv "$PROFILE.new" "$PROFILE"
 fi
-cat >> "$PROFILE" <<PROFILE_BLOCK
-$MARK_A
-if [ -z "\${DISPLAY:-}" ] && [ "\${XDG_VTNR:-}" = "1" ] && [ ! -e /boot/firmware/no-kiosk ]; then
-    exec startx -- -nocursor
+{
+    echo "$MARK_A"
+    # Quoted heredoc: everything below is written literally, so none of the
+    # shell expansions in it need escaping here.
+    cat <<'PROFILE_BLOCK'
+if [ -z "${DISPLAY:-}" ] && [ "${XDG_VTNR:-}" = "1" ] && [ ! -e /boot/firmware/no-kiosk ]; then
+    # Deliberately not exec'd, and logged.
+    #
+    # An exec here replaces the login shell, so a session that dies during
+    # startup ends the login with it. agetty respawns, dies again, and after
+    # five rounds systemd hits the restart limit and stops the tty for good.
+    # What is left on the panel is a black screen with a blinking caret: no
+    # prompt, no error, and no console - because the console that would have
+    # shown the error is the one the loop just destroyed. Diagnosing that takes
+    # ssh and an afternoon, which is a bad trade for the one line it saves.
+    #
+    # Running it as a child instead means a fast failure falls through to a
+    # visible shell with the reason sitting in a log, and the tty never enters
+    # the loop at all.
+    KIOSK_START=$(date +%s)
+    startx -- -nocursor >> "$HOME/kiosk.log" 2>&1
+    if [ $(( $(date +%s) - KIOSK_START )) -lt 10 ]; then
+        echo
+        echo "The kiosk session exited after less than ten seconds."
+        echo "Staying at a shell rather than restarting, so this stays readable."
+        echo "See ~/kiosk.log, and /var/log/Xorg.0.log if X itself refused."
+        echo
+    else
+        # Ran long enough to have been in use, so this is an ordinary exit.
+        # Ending the login shell lets agetty bring the kiosk straight back.
+        exit
+    fi
 fi
-$MARK_B
 PROFILE_BLOCK
+    echo "$MARK_B"
+} >> "$PROFILE"
 echo "   ~/.bash_profile"
 
 # ---------------------------------------------------------------------------
