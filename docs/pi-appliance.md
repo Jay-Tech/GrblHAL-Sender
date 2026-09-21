@@ -94,6 +94,81 @@ Add `--rotate left` for a portrait panel. The script is safe to run twice, and
 takes an optional `.deb` path as an argument if you would rather it did the
 install as well.
 
+## Two networks
+
+A CNC panel usually sits on two at once: the controller on Ethernet, and the
+shop LAN on Wi-Fi for the web UI, updates and everything else. Both hand out a
+DHCP lease, and both install a default route:
+
+```
+default via 192.168.5.1 dev eth0  proto dhcp metric 100
+default via 192.168.1.1 dev wlan0 proto dhcp metric 600
+```
+
+The lowest metric wins, which is normally the wired one — and the controller
+does not route to the internet. Every connection then goes nowhere.
+
+What makes this hard to read is that DNS keeps working, because a resolver is
+still reachable on one of the two subnets. So `wget` prints a resolved address
+and then sits on `Connecting to`, `apt` stalls, and the clock quietly drifts
+because NTP cannot get out either. It all looks like a name resolution problem
+and none of it is.
+
+The fix takes away the wired connection's claim to be the default route while
+leaving the interface and its subnet route alone — that route is how the sender
+reaches the controller. Find what the connection is called first; on this build
+it is `netplan-eth0` rather than NetworkManager's usual
+`Wired connection 1`:
+
+```bash
+nmcli connection show
+```
+
+```bash
+sudo nmcli connection modify netplan-eth0 ipv4.never-default yes ipv4.ignore-auto-dns yes
+```
+
+```bash
+sudo nmcli connection up netplan-eth0
+```
+
+`ignore-auto-dns` because whatever serves DHCP on the machine side may be
+advertising a nameserver too, and DNS should come from the LAN side only.
+
+### Making it survive a reboot
+
+A `netplan-` prefix on the connection name means netplan is generating the
+profile and NetworkManager is only rendering it. Those profiles are regenerated
+from YAML at boot, so an `nmcli` change to one can take effect immediately and
+still be gone in the morning. Check with `ls /etc/netplan/`; if there is YAML
+there, set it at the source instead, on the ethernet stanza:
+
+```yaml
+      dhcp4-overrides:
+        route-metric: 1000
+        use-dns: false
+```
+
+That leaves the default route in place but ranks it below the Wi-Fi's 600, which
+reaches the same end without removing anything. Apply with `sudo netplan apply`.
+
+Deleting the route by hand with `ip route del` is worth knowing as the fastest
+way to confirm the diagnosis, but DHCP puts it back on the next renew.
+
+Afterwards you want exactly one default route, both subnet routes still present,
+and the controller still answering — then the same again after a reboot:
+
+```bash
+ip route
+```
+
+```bash
+ping -c3 192.168.5.1
+```
+
+None of this affects the web UI: `WebServerService` calls `ListenAnyIP`, so it
+binds every interface and stays reachable on the LAN address either way.
+
 ## What the script does, and why
 
 **Installs X and one window manager.** `xserver-xorg-core`,

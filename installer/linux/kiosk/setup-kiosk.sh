@@ -55,7 +55,33 @@ say "X server, one window manager, and the libraries Avalonia.X11 dlopen()s"
 # luxury here: `libinput list-devices` and `xinput test-xi2` are how you find out
 # whether a touchscreen is delivering real multi-touch or emulated mouse clicks,
 # and on a box with no desktop there is nothing else left to ask.
-sudo apt-get update
+if ! sudo apt-get update; then
+    echo >&2
+    echo "apt could not reach the mirrors." >&2
+    if [ "$(ip route show default | wc -l)" -gt 1 ]; then
+        echo >&2
+        echo "There is more than one default route installed:" >&2
+        ip route show default | sed 's/^/    /' >&2
+        echo >&2
+        echo "A CNC panel usually has two networks - the controller on Ethernet" >&2
+        echo "and the shop LAN on Wi-Fi - and both hand out a DHCP default route." >&2
+        echo "The lowest metric wins, which is normally the wired one, and the" >&2
+        echo "controller does not route to the internet. DNS still resolves," >&2
+        echo "because a resolver is reachable on one of the subnets, so this looks" >&2
+        echo "like a name problem when every connection is simply going nowhere." >&2
+        echo >&2
+        echo "Keep the interface and its subnet route - that is how the sender" >&2
+        echo "reaches the controller - and take away only its claim to be the" >&2
+        echo "default route:" >&2
+        echo >&2
+        echo "    nmcli connection show" >&2
+        echo "    sudo nmcli connection modify <wired> ipv4.never-default yes ipv4.ignore-auto-dns yes" >&2
+        echo "    sudo nmcli connection up <wired>" >&2
+        echo >&2
+        echo "See docs/pi-appliance.md, 'Two networks'." >&2
+    fi
+    exit 1
+fi
 sudo apt-get install -y \
     xserver-xorg-core xserver-xorg-input-libinput xserver-xorg-legacy \
     xfonts-base xinit x11-xserver-utils xinput libinput-tools openbox \
