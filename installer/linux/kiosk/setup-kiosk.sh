@@ -166,17 +166,32 @@ for PKG in modemmanager brltty; do
 done
 
 # ---------------------------------------------------------------------------
-say "Pinning X to the KMS driver"
-# See 99-vc4-modesetting.conf for why. Short version: with no xorg.conf, X
-# probes fbdev as well as modesetting, fbdev fails fatally on a KMS-only Pi,
-# and the server dies in 150 ms taking the console with it.
-sudo install -m 0644 -D "$SCRIPT_DIR/99-vc4-modesetting.conf" \
-    /etc/X11/xorg.conf.d/99-vc4-modesetting.conf
-echo "   /etc/X11/xorg.conf.d/99-vc4-modesetting.conf"
+say "Telling X which device is the screen"
+# See 99-kms-screen.conf.in for the two failures this covers. The node is
+# detected rather than assumed: DRM card numbering follows probe order, and on
+# a Pi 5 the display is not card0 - that one is the V3D render node.
+KMSDEV=""
+for STATUS in /sys/class/drm/card*-*/status; do
+    [ "$(cat "$STATUS")" = "connected" ] || continue
+    KMSDEV="/dev/dri/$(basename "$(dirname "$STATUS")" | cut -d- -f1)"
+    break
+done
+if [ -z "$KMSDEV" ]; then
+    echo "   No DRM connector reports 'connected'." >&2
+    echo "   Checked /sys/class/drm/card*-*/status - is the panel plugged in" >&2
+    echo "   and powered? X has nothing to draw on until one of those says so." >&2
+    exit 1
+fi
+CONF=/etc/X11/xorg.conf.d/99-kms-screen.conf
+sudo mkdir -p /etc/X11/xorg.conf.d
+sudo rm -f /etc/X11/xorg.conf.d/99-vc4-modesetting.conf
+sed "s|@KMSDEV@|$KMSDEV|" "$SCRIPT_DIR/99-kms-screen.conf.in" | sudo tee "$CONF" > /dev/null
+sudo chmod 0644 "$CONF"
+echo "   $CONF (kmsdev $KMSDEV)"
 
-# Belt and braces. The config above is enough on its own, but leaving the
-# driver installed means any future apt run can put the probe back in play, and
-# nothing on this machine has a use for framebuffer X.
+# Belt and braces alongside the config. Nothing on this machine has any use for
+# framebuffer X, and leaving the driver installed lets a later apt run put its
+# probe back in play.
 if dpkg-query -W -f='${Status}' xserver-xorg-video-fbdev 2>/dev/null | grep -q "^install ok installed$"; then
     echo "   removing xserver-xorg-video-fbdev"
     sudo apt-get purge -y xserver-xorg-video-fbdev

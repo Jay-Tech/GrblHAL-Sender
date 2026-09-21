@@ -339,16 +339,36 @@ dot-decimal, so switching the rest of ICU off changed nothing. If you are
 deploying a `.deb` built before that change, the setup script installs
 `libicu72` (Bookworm) or `libicu76` (Trixie) for you.
 
-**X dying instantly with `Cannot run in framebuffer mode`.** With no
-`xorg.conf` present, X enumerates every video driver installed. On a Pi OS Lite
-image that is `modesetting` *and* `fbdev`. modesetting does the right thing
-unaided — it finds the display on `/dev/dri/card1` by itself — but fbdev cannot
-resolve a busID on a KMS-only machine and fails fatally, and one driver's
-failure ends the whole server. The session lasts about 150 ms. The setup script
-installs `99-vc4-modesetting.conf` to pin the KMS path and removes
-`xserver-xorg-video-fbdev`; the config is there as well as the removal because a
-later apt run can pull the driver back in, and this is an expensive thing to
-diagnose twice.
+**X dying instantly — two different causes that look identical.** Either one
+kills the server in about 150 ms, and with the old `exec startx` guard that
+presented as a black screen with no explanation. Both are handled by the setup
+script; this is here so the log is recognisable if it happens again.
+
+The first is fbdev. With no configuration at all, X enumerates every video
+driver installed, and on Pi OS Lite that includes `fbdev`, which cannot resolve
+a busID on a KMS-only machine and fails fatally — one driver's failure ends the
+whole server:
+
+```
+(EE) Cannot run in framebuffer mode. Please specify busIDs
+     for all framebuffer devices
+```
+
+The second only becomes visible once the first is gone. A Pi 5 presents two DRM
+nodes — a V3D render-only device and the display — and autoconfig assigns the
+display as a *GPU device* rather than as a screen, leaving the server with none:
+
+```
+(II) modeset(G0): using drv /dev/dri/card1
+(EE) No devices detected.
+(EE) no screens found
+```
+
+The `G0` is the tell: that is an offload GPU, not `Screen 0`. The script
+installs `99-kms-screen.conf`, which declares the Device, the Screen and a
+ServerLayout explicitly so autoconfig has nothing left to get wrong, and it
+substitutes the DRM node rather than hardcoding it — card numbering follows
+probe order, and the display is not card0 on a Pi 5.
 
 **Config location.** `ConfigManager` uses `SpecialFolder.ApplicationData`, which
 is `$HOME/.config` on Linux. Launch the app from anything without a proper

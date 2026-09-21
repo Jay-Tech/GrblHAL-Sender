@@ -1,0 +1,49 @@
+# Raspberry Pi 5, bare Xorg with no desktop environment: declare the screen.
+#
+# Template. setup-kiosk.sh substitutes @KMSDEV@ for the DRM node that actually
+# has a connected output and installs the result as
+# /etc/X11/xorg.conf.d/99-kms-screen.conf.
+#
+# Two problems land here, and they look alike from the outside - X exits in
+# about 150 ms either way.
+#
+# The first is fbdev. With no configuration at all X enumerates every video
+# driver installed, and on Pi OS Lite that includes fbdev, which cannot resolve
+# a busID on a KMS-only machine and fails fatally. One driver's failure ends the
+# whole server:
+#
+#     (EE) Cannot run in framebuffer mode. Please specify busIDs
+#          for all framebuffer devices
+#
+# The second only becomes visible once the first is out of the way. A Pi 5
+# presents two DRM nodes - a V3D render-only device and the display - and
+# autoconfig assigns the display as a GPU device rather than as a screen, which
+# leaves the server with no screens at all:
+#
+#     (II) modeset(G0): using drv /dev/dri/card1
+#     (EE) No devices detected.
+#     (EE) no screens found
+#
+# The G0 is the tell: it is an offload GPU, not Screen 0. Declaring the Device
+# and the Screen explicitly, and naming them in a ServerLayout, leaves nothing
+# for autoconfig to get wrong.
+#
+# The node is substituted rather than written literally because DRM card
+# numbering follows probe order. It is card1 on this machine today; that is an
+# observation about one boot, not a guarantee.
+
+Section "ServerLayout"
+    Identifier  "Kiosk"
+    Screen      0 "Screen0" 0 0
+EndSection
+
+Section "Device"
+    Identifier  "KMS"
+    Driver      "modesetting"
+    Option      "kmsdev" "@KMSDEV@"
+EndSection
+
+Section "Screen"
+    Identifier  "Screen0"
+    Device      "KMS"
+EndSection
