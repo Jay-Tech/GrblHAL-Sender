@@ -318,12 +318,16 @@ matrix against its real name.
 
 **ICU.** A self-contained .NET build carries no ICU, and .NET on Linux refuses to
 start without it — the app exits before the first frame with `Couldn't find a
-valid ICU package installed on the system`. Current builds set
-`InvariantGlobalization`, so this no longer applies: the app already forced
+valid ICU package installed on the system`. Whether a given image satisfies that
+is luck: on the Trixie Pi OS Lite image `libicu76` was already present by the
+time the setup script looked, having come in as a dependency of something else,
+so the hazard is smaller than it sounds. It is still a dependency on what
+happens to be installed alongside you. Current builds set
+`InvariantGlobalization` and remove the question — the app already forced
 `InvariantCulture` on every thread in `Main`, because grblHAL only ever speaks
-dot-decimal, so switching the rest of ICU off changed nothing and removed a
-35 MB dependency. If you are deploying a `.deb` built before that change,
-install `libicu72` (Bookworm) or `libicu76` (Trixie).
+dot-decimal, so switching the rest of ICU off changed nothing. If you are
+deploying a `.deb` built before that change, the setup script installs
+`libicu72` (Bookworm) or `libicu76` (Trixie) for you.
 
 **Config location.** `ConfigManager` uses `SpecialFolder.ApplicationData`, which
 is `$HOME/.config` on Linux. Launch the app from anything without a proper

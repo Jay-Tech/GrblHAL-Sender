@@ -9,12 +9,15 @@
          the entry assembly it is what Assembly.GetEntryAssembly() reports - so the
          update check was comparing a stale 1.0.0 against the latest release tag. -->
     <Nullable>enable</Nullable>
-    <!-- .NET on Linux refuses to start without ICU unless this is set, and a
-         Raspberry Pi OS Lite image does not ship libicu: the app exits before the
-         first frame with "Couldn't find a valid ICU package installed on the
-         system". Setting it here removes the dependency outright rather than
-         making every deployment target carry a ~35 MB library it has no other
-         use for.
+    <!-- .NET on Linux refuses to start without ICU unless this is set: the app
+         exits before the first frame with "Couldn't find a valid ICU package
+         installed on the system", and a self-contained build does not carry one.
+         Whether a given host satisfies that is luck - on the Trixie Pi image
+         libicu76 turned out to be there already, arriving as a dependency of
+         something else - and a deployment that depends on what happens to be
+         installed alongside it is a deployment waiting to fail on the next image.
+         Setting this removes the question rather than answering it, and takes a
+         ~35 MB library the app has no other use for with it.
 
          Safe because the app is already invariant by construction - Main forces
          InvariantCulture on every thread before Avalonia starts, since grblHAL
