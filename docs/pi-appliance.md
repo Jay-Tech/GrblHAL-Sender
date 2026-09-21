@@ -69,8 +69,19 @@ is no .NET runtime to install either.
 
 ## The quick path
 
-Flash Raspberry Pi OS Lite (64-bit), boot it, and ssh in. Every step below
-needs the internet, so the order matters.
+Flash Raspberry Pi OS Lite (64-bit) with Raspberry Pi Imager, setting the
+username, SSH and Wi-Fi in its customisation screen.
+
+**Give it a 2.4 GHz SSID, not a 5 GHz one.** This Pi's onboard wifi
+(brcmfmac, BCM4345) hard-hangs the whole machine on roughly half of boots when
+it associates on 5 GHz — screen frozen, SSH refused, `reboot` hangs, only the
+reset button works. It is a driver fault rather than anything in the OS, so a
+fresh image inherits it, and no firmware update has fixed it. On 2.4 GHz it ran
+11 of 11 reboots clean. Getting this wrong makes everything after it look broken
+in ways that point nowhere near the cause.
+
+Then boot it and ssh in. Every step below needs the internet, so the order
+matters.
 
 **1. If the controller is on Ethernet, fix the network first.** Both interfaces
 hand out a DHCP default route and the wired one wins, so nothing further down
