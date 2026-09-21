@@ -17,6 +17,7 @@ public class GHalSenderConfig : ObservableObject
 {
     private bool _useMetric;
     private bool _shutDownOs;
+    private bool _borderless = true;
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ConnectionType
@@ -30,8 +31,8 @@ public class GHalSenderConfig : ObservableObject
 
     public bool Borderless
     {
-        get;
-        set => SetProperty(ref field, value);
+        get => _borderless;
+        set => SetProperty(ref _borderless, value);
     }
 
     public bool UseMetric
