@@ -69,10 +69,36 @@ is no .NET runtime to install either.
 
 ## The quick path
 
-Flash Raspberry Pi OS Lite (64-bit), boot it, ssh in, then:
+Flash Raspberry Pi OS Lite (64-bit), boot it, and ssh in. Every step below
+needs the internet, so the order matters.
+
+**1. If the controller is on Ethernet, fix the network first.** Both interfaces
+hand out a DHCP default route and the wired one wins, so nothing further down
+can reach the internet until this is done — `apt` hangs, `wget` sits on
+`Connecting to`, and it all looks like a DNS problem. [Two networks](#two-networks)
+has the full story. Find the wired connection's name:
 
 ```bash
-sudo apt install ./grblhal-sender_1.4.0_arm64.deb
+nmcli connection show
+```
+
+Then, using that name — `netplan-eth0` on the Lite image:
+
+```bash
+sudo nmcli connection modify netplan-eth0 ipv4.never-default yes ipv4.ignore-auto-dns yes
+```
+
+```bash
+sudo nmcli connection up netplan-eth0
+```
+
+`ip route` should now show a single `default via` line, on the Wi-Fi. Skip this
+step if it already did.
+
+**2. Get git, the repo and the package.** Lite does not ship `git`.
+
+```bash
+sudo apt install -y git
 ```
 
 ```bash
@@ -80,7 +106,15 @@ git clone https://github.com/Jay-Tech/GrblHAL-Sender.git
 ```
 
 ```bash
-bash GrblHAL-Sender/installer/linux/kiosk/setup-kiosk.sh
+wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.4.0/grblhal-sender_1.4.0_arm64.deb
+```
+
+No `sudo` on the `wget`: it only makes the file root-owned in your own home.
+
+**3. Run the setup, handing it the package so it installs that too.**
+
+```bash
+bash GrblHAL-Sender/installer/linux/kiosk/setup-kiosk.sh grblhal-sender_1.4.0_arm64.deb
 ```
 
 ```bash
@@ -91,8 +125,8 @@ Invoked through `bash` because scripts are stored non-executable in this
 repo, the same way `release.yml` chmods `build-deb.sh` before calling it.
 
 Add `--rotate left` for a portrait panel. The script is safe to run twice, and
-takes an optional `.deb` path as an argument if you would rather it did the
-install as well.
+refuses to install the kiosk session at all if the app is not installed — an
+`.xinitrc` that execs a missing binary is a black screen with nothing on it.
 
 ## Two networks
 
