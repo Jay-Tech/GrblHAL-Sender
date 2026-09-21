@@ -135,13 +135,34 @@ sudo nmcli connection up netplan-eth0
 `ignore-auto-dns` because whatever serves DHCP on the machine side may be
 advertising a nameserver too, and DNS should come from the LAN side only.
 
-### Making it survive a reboot
+### Does it survive a reboot?
 
-A `netplan-` prefix on the connection name means netplan is generating the
-profile and NetworkManager is only rendering it. Those profiles are regenerated
-from YAML at boot, so an `nmcli` change to one can take effect immediately and
-still be gone in the morning. Check with `ls /etc/netplan/`; if there is YAML
-there, set it at the source instead, on the ethernet stanza:
+On Raspberry Pi OS Lite it does, and the naming is what tells you so. Seeing
+`netplan-eth0` from `nmcli` and `90-NM-<uuid>.yaml` in `/etc/netplan` looks at
+first like netplan is in charge and NetworkManager is only rendering what it is
+told — which would mean an `nmcli` change gets regenerated away at boot. It is
+the other way round. NetworkManager is the source of truth here and netplan is
+just where it stores profiles, so a modification is written straight back into
+that file. Confirm it against the UUID that matches the connection:
+
+```bash
+sudo cat /etc/netplan/90-NM-<uuid>.yaml
+```
+
+```yaml
+      networkmanager:
+        uuid: "75a1216a-9d1a-30cd-8aca-ace5526ec021"
+        name: "netplan-eth0"
+        passthrough:
+          ipv4.ignore-auto-dns: "true"
+          ipv4.never-default: "true"
+```
+
+`sudo` because these are root-only — the Wi-Fi PSK lives in the other one.
+
+The arrangement that *does* lose `nmcli` changes is hand-written netplan YAML,
+as on Ubuntu Server: a `50-cloud-init.yaml` or `01-netcfg.yaml` rather than
+`90-NM-<uuid>.yaml`. There, set it at the source on the ethernet stanza:
 
 ```yaml
       dhcp4-overrides:
@@ -149,11 +170,13 @@ there, set it at the source instead, on the ethernet stanza:
         use-dns: false
 ```
 
-That leaves the default route in place but ranks it below the Wi-Fi's 600, which
-reaches the same end without removing anything. Apply with `sudo netplan apply`.
+That leaves the default route in place but ranks it below the Wi-Fi's 600,
+reaching the same end without removing anything. Apply with `sudo netplan
+apply`.
 
 Deleting the route by hand with `ip route del` is worth knowing as the fastest
-way to confirm the diagnosis, but DHCP puts it back on the next renew.
+way to confirm the diagnosis before changing anything, but DHCP puts it back on
+the next renew.
 
 Afterwards you want exactly one default route, both subnet routes still present,
 and the controller still answering — then the same again after a reboot:
