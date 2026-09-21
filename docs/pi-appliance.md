@@ -5,7 +5,9 @@ single-purpose machine control panel: no desktop environment, no login screen,
 the sender on screen a few seconds after power-on and nothing else on the box.
 
 Written against a Pi 5 (8 GB) booting from an NVMe SSD, which is the hardware
-this has actually been run on.
+this has actually been run on. The quick path was validated end to end on
+2026-09-21: a fresh Lite image, the steps followed literally, and the panel up
+on first boot with nothing done outside them.
 
 ## What you end up with
 
