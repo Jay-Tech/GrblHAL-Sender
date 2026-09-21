@@ -226,6 +226,15 @@ points nowhere useful. So: console autologin on tty1, and a guard in
 broken enough that you cannot reach a shell, put the drive in another machine
 and touch that file on the FAT partition to boot to a plain console.
 
+The app's **OS + App shutdown** option leans on that same session, which is
+easy to miss because nothing in the setup mentions it. `TryLinuxShutdown` runs
+`shutdown -h now` as the ordinary user, not root, and logind authorises that for
+the active local session — which is exactly what an autologin on tty1 is.
+Verified on the Lite appliance. Rebuild the kiosk as a systemd service and this
+goes with DRM master: the power-off is refused, the app exits normally, and the
+kiosk brings it straight back — a failure that looks exactly like a restart,
+with the only explanation written to the in-app console that just closed.
+
 It runs `startx` as a child rather than `exec`-ing it, and logs to
 `~/kiosk.log`. An exec replaces the login shell, so a session that dies during
 startup ends the login with it, agetty respawns, and after five rounds systemd
