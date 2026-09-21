@@ -95,6 +95,28 @@ if [ -n "$DEB" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+say "Checking the sender is actually installed"
+# .xinitrc ends with `exec /usr/bin/grblhal-sender`. If that is not there, the
+# session dies the instant X comes up, the tty logs straight back in and starts
+# it again, and the result on the panel is a black screen with no clue what went
+# wrong - the one failure mode of this setup that gives you nothing to read. The
+# script used to install that .xinitrc regardless. Refuse instead.
+if [ ! -x /usr/bin/grblhal-sender ]; then
+    echo >&2
+    echo "/usr/bin/grblhal-sender is not installed." >&2
+    echo >&2
+    echo "Install the package first, then run this again:" >&2
+    echo >&2
+    echo "    sudo apt install ./grblhal-sender_<version>_arm64.deb" >&2
+    echo >&2
+    echo "or pass the .deb to this script and it will do it:" >&2
+    echo >&2
+    echo "    bash $0 grblhal-sender_<version>_arm64.deb" >&2
+    echo >&2
+    exit 1
+fi
+echo "   present"
+
 say "ICU"
 # A self-contained .NET build does not carry ICU, and .NET on Linux refuses to
 # start without it unless the build sets InvariantGlobalization - which current
