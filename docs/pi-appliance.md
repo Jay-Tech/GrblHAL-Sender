@@ -129,7 +129,7 @@ git clone https://github.com/Jay-Tech/GrblHAL-Sender.git
 ```
 
 ```bash
-wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.5.0/grblhal-sender_1.5.0_arm64.deb
+wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.5.1/grblhal-sender_1.5.1_arm64.deb
 ```
 
 No `sudo` on the `wget`: it only makes the file root-owned in your own home.
@@ -137,7 +137,7 @@ No `sudo` on the `wget`: it only makes the file root-owned in your own home.
 **3. Run the setup, handing it the package so it installs that too.**
 
 ```bash
-bash GrblHAL-Sender/installer/linux/kiosk/setup-kiosk.sh grblhal-sender_1.5.0_arm64.deb
+bash GrblHAL-Sender/installer/linux/kiosk/setup-kiosk.sh grblhal-sender_1.5.1_arm64.deb
 ```
 
 ```bash
@@ -161,11 +161,11 @@ doc has been updated to it. What changed is on the
 [releases page](https://github.com/Jay-Tech/GrblHAL-Sender/releases).
 
 ```bash
-wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.5.0/grblhal-sender_1.5.0_arm64.deb
+wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.5.1/grblhal-sender_1.5.1_arm64.deb
 ```
 
 ```bash
-sudo apt install ./grblhal-sender_1.5.0_arm64.deb
+sudo apt install ./grblhal-sender_1.5.1_arm64.deb
 ```
 
 `sudo` because apt has to be root to install anything. The `./` matters as much:
