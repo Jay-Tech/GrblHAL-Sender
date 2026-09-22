@@ -11,7 +11,9 @@
          version against the latest release tag, so a stale value here makes a local
          build report an update it already has. The release job fails if the two differ.
 
-         To release: bump this, commit, tag the commit v<same number>, push the tag. -->
+         To release: bump this, bump the download/install versions in
+         docs/pi-appliance.md to match, commit, tag the commit v<same number>,
+         push the tag. The release job fails if either file disagrees with the tag. -->
     <Version>1.5.0</Version>
 
     <!-- Application metadata -->

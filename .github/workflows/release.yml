@@ -80,6 +80,41 @@ jobs:
             exit 1
           fi
 
+      # The Pi runbook installs the app by exact version: the download URL and the .deb
+      # filename, in both the quick path and the upgrade section. Nothing fails when those
+      # go stale - the previous release downloads and installs perfectly well - so after a
+      # release, anyone following the runbook literally would quietly get the one before it.
+      # Fail here instead, the same way the props check above does.
+      #
+      # Every grblhal-sender version the runbook names must be this one, and it must name at
+      # least one. Checking only that the new version appears somewhere would pass a half-done
+      # bump - quick path updated, upgrade section left on the old release. Other software
+      # versions in the doc (Avalonia, libicu, Mesa) are not matched: only the release URL and
+      # the grblhal-sender_<version>_<arch>.deb filename count.
+      - name: Verify the Pi runbook installs this version
+        if: github.event_name == 'push'
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          DOC=docs/pi-appliance.md
+          # A prerelease must not move the runbook off the stable release it points at.
+          if [ "${TAG_VERSION%%-*}" != "$TAG_VERSION" ]; then
+            echo "prerelease v$TAG_VERSION - runbook left on the last stable release, not checked"
+            exit 0
+          fi
+          FOUND=$( { grep -oE 'grblhal-sender_[0-9][^_]*_[a-z0-9]+\.deb' "$DOC" | cut -d_ -f2
+                     grep -oE 'releases/download/v[0-9][^/]*/' "$DOC" | cut -d/ -f3 | cut -c2- ; } | sort -u )
+          echo "tag:     $TAG_VERSION"
+          echo "runbook: $(echo ${FOUND:-none})"
+          if [ -z "$FOUND" ]; then
+            echo "::error file=$DOC::No grblhal-sender download or install command found in $DOC, so there is nothing to check. If they were removed on purpose, remove this step too."
+            exit 1
+          fi
+          if [ "$FOUND" != "$TAG_VERSION" ]; then
+            echo "::error file=$DOC::$DOC names $(echo $FOUND), but this release is $TAG_VERSION. Set every version in its download and install commands to $TAG_VERSION, commit, then move the tag."
+            grep -nE 'grblhal-sender_[0-9][^_]*_[a-z0-9]+\.deb|releases/download/v[0-9][^/]*/' "$DOC"
+            exit 1
+          fi
+
   build-windows:
     needs: prepare
     runs-on: windows-latest

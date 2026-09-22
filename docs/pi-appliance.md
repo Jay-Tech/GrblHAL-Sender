@@ -155,9 +155,10 @@ refuses to install the kiosk session at all if the app is not installed — an
 
 For a Pi already set up by the quick path. The kiosk does not depend on which
 version of the app is installed, so an upgrade is only the package — the setup
-script does not need to run again. Take the version from the
-[latest release](https://github.com/Jay-Tech/GrblHAL-Sender/releases/latest);
-1.5.0 here:
+script does not need to run again. The commands below always name the latest
+stable release: the release workflow refuses to publish a new version until this
+doc has been updated to it. What changed is on the
+[releases page](https://github.com/Jay-Tech/GrblHAL-Sender/releases).
 
 ```bash
 wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.5.0/grblhal-sender_1.5.0_arm64.deb
