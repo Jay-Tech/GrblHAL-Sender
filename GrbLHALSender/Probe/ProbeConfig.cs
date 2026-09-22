@@ -14,15 +14,15 @@ public class ProbeConfig
     public bool Initialized { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public ProbeToolType ToolType { get; set; } = ProbeToolType.TouchPlate;
+    public ProbeToolType ToolType { get; set; } = ProbeToolType.Probe3D;
 
-    public double TouchPlateThickness { get; set; } = 1.0;
-    public double ProbeDiameter { get; set; } = 2.0;
-    public double SearchRate { get; set; } = 100;
-    public double LatchRate { get; set; } = 20;
-    public double ProbeDistance { get; set; } = 10;
-    public double LatchDistance { get; set; } = 1;
-    public double ClearanceHeight { get; set; } = 5;
+    public double TouchPlateThickness { get; set; } = .5;
+    public double ProbeDiameter { get; set; } = 0.078;
+    public double SearchRate { get; set; } = 20;
+    public double LatchRate { get; set; } = 5;
+    public double ProbeDistance { get; set; } = 3;
+    public double LatchDistance { get; set; } = .25;
+    public double ClearanceHeight { get; set; } = .5;
 
     /// <summary>
     /// How far below the starting height the stylus drops before probing sideways, so it is
@@ -30,16 +30,16 @@ public class ProbeConfig
     /// safe height it retracts to: too shallow here and the probe passes over the edge,
     /// too deep and it can reach the table.
     /// </summary>
-    public double ProbeDepth { get; set; } = 5;
+    public double ProbeDepth { get; set; } = .5;
 
     /// <summary>
     /// Rough size of an outside feature across X, used to work out how far to stand off before
     /// dropping beside it. A round boss uses this for both axes.
     /// </summary>
-    public double ApproxWidth { get; set; } = 25;
+    public double ApproxWidth { get; set; } = 5;
 
     /// <summary>Rough size of an outside feature across Y.</summary>
-    public double ApproxHeight { get; set; } = 25;
+    public double ApproxHeight { get; set; } = 5;
 
     /// <summary>
     /// Per-operation rates and distances.
@@ -81,9 +81,9 @@ public class ProbeParameters
     /// </summary>
     public bool Initialized { get; set; }
 
-    public double SearchRate { get; set; } = 100;
-    public double LatchRate { get; set; } = 20;
-    public double LatchDistance { get; set; } = 1;
+    public double SearchRate { get; set; } = 20;
+    public double LatchRate { get; set; } = 5;
+    public double LatchDistance { get; set; } = .25;
 
     /// <summary>
     /// How far a probe travels looking for contact.
@@ -94,10 +94,10 @@ public class ProbeParameters
     /// editing, but the value still has to exist or those moves have no length.
     /// </para>
     /// </summary>
-    public double ProbeDistance { get; set; } = 10;
+    public double ProbeDistance { get; set; } = 3;
 
     /// <summary>Safe height to retract to. Used by the cycles that move over stock.</summary>
-    public double ClearanceHeight { get; set; } = 5;
+    public double ClearanceHeight { get; set; } = .5;
 
     /// <summary>
     /// How far below the starting height the stylus drops before probing sideways, so it is
@@ -105,11 +105,11 @@ public class ProbeParameters
     /// height it retracts to: too shallow and the probe passes over the edge, too deep and it
     /// can reach the table.
     /// </summary>
-    public double ProbeDepth { get; set; } = 5;
+    public double ProbeDepth { get; set; } = .5;
 
     /// <summary>Rough size of an outside feature across X. A round boss uses it for both.</summary>
-    public double ApproxWidth { get; set; } = 25;
+    public double ApproxWidth { get; set; } = 5;
 
     /// <summary>Rough size of an outside feature across Y.</summary>
-    public double ApproxHeight { get; set; } = 25;
+    public double ApproxHeight { get; set; } = 5;
 }
