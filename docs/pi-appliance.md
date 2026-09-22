@@ -129,7 +129,7 @@ git clone https://github.com/Jay-Tech/GrblHAL-Sender.git
 ```
 
 ```bash
-wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.4.0/grblhal-sender_1.4.0_arm64.deb
+wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.5.0/grblhal-sender_1.5.0_arm64.deb
 ```
 
 No `sudo` on the `wget`: it only makes the file root-owned in your own home.
@@ -137,7 +137,7 @@ No `sudo` on the `wget`: it only makes the file root-owned in your own home.
 **3. Run the setup, handing it the package so it installs that too.**
 
 ```bash
-bash GrblHAL-Sender/installer/linux/kiosk/setup-kiosk.sh grblhal-sender_1.4.0_arm64.deb
+bash GrblHAL-Sender/installer/linux/kiosk/setup-kiosk.sh grblhal-sender_1.5.0_arm64.deb
 ```
 
 ```bash
@@ -150,6 +150,43 @@ repo, the same way `release.yml` chmods `build-deb.sh` before calling it.
 Add `--rotate left` for a portrait panel. The script is safe to run twice, and
 refuses to install the kiosk session at all if the app is not installed — an
 `.xinitrc` that execs a missing binary is a black screen with nothing on it.
+
+## Upgrading
+
+For a Pi already set up by the quick path. The kiosk does not depend on which
+version of the app is installed, so an upgrade is only the package — the setup
+script does not need to run again. Take the version from the
+[latest release](https://github.com/Jay-Tech/GrblHAL-Sender/releases/latest);
+1.5.0 here:
+
+```bash
+wget https://github.com/Jay-Tech/GrblHAL-Sender/releases/download/v1.5.0/grblhal-sender_1.5.0_arm64.deb
+```
+
+```bash
+sudo apt install ./grblhal-sender_1.5.0_arm64.deb
+```
+
+`sudo` because apt has to be root to install anything. The `./` matters as much:
+without it apt treats the argument as a package name to look up in its
+repositories, rather than as the file sitting in front of it.
+
+The running app is still the old binary until it restarts. Close it from the
+panel and the kiosk brings the new one straight back, or reboot. Not `pkill` —
+SIGTERM skips the shutdown path that sends the controller its soft reset.
+
+Confirm what is installed from the package, not the app:
+
+```bash
+dpkg -s grblhal-sender | grep Version
+```
+
+The app's own version display strips any `-dev` suffix, so a test build from a
+manual workflow run reads identically to the release it was cut from.
+
+The one time the setup script does need re-running is when the kiosk itself
+changed between the two versions — anything under `installer/linux/kiosk/`.
+`git pull` in the clone first, so it is the new script that runs.
 
 ## Two networks
 
